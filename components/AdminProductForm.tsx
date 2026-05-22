@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { DragEvent, FormEvent, PointerEvent, useEffect, useMemo, useState } from 'react';
+import { DragEvent, FormEvent, MouseEvent, PointerEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminLayout } from './AdminLayout';
 import { type AdminProduct, productFromForm, readAdminProducts, saveAdminProductAsync } from './adminProductStore';
@@ -137,10 +137,24 @@ export function AdminProductForm({ slug }: { slug?: string }) {
       const removed = items[index];
       if (removed?.src.startsWith('blob:')) URL.revokeObjectURL(removed.src);
       const next = items.filter((_, itemIndex) => itemIndex !== index);
-      if (!next.length) return [{ id: 'fallback-photo', src: fallbackImage, name: 'Фото по умолчанию', settings: normalizeImageDisplaySettings({}) }];
-      if (removed?.id === selectedPhotoId) setSelectedPhotoId(next[0].id);
+
+      if (!next.length) {
+        const fallback = { id: 'fallback-photo', src: fallbackImage, name: 'Фото по умолчанию', settings: normalizeImageDisplaySettings({}) };
+        setSelectedPhotoId(fallback.id);
+        return [fallback];
+      }
+
+      if (removed?.id === selectedPhotoId || !next.some((photo) => photo.id === selectedPhotoId)) {
+        setSelectedPhotoId(next[Math.min(index, next.length - 1)].id);
+      }
+
       return next;
     });
+  }
+
+  function stopPhotoButtonEvent(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   function addPhotoFiles(fileList: FileList | null) {
@@ -405,9 +419,9 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                       <div className="adminPhotoTile__image"><AdminPreviewImage src={photo.src} alt={`Фото товара ${index + 1}`} fit={photo.settings.catalogFit} position={position} /></div>
                       <div className="adminPhotoTile__meta"><span>{index === 0 ? 'Основное' : `Фото ${index + 1}`}</span>{photo.file && <em>Новое</em>}</div>
                       <div className="adminPhotoTile__actions">
-                        <button type="button" onClick={() => movePhoto(index, -1)} disabled={index === 0}>←</button>
-                        <button type="button" onClick={() => movePhoto(index, 1)} disabled={index === photos.length - 1}>→</button>
-                        <button type="button" onClick={() => removePhoto(index)}>Удалить</button>
+                        <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); movePhoto(index, -1); }} disabled={index === 0}>←</button>
+                        <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); movePhoto(index, 1); }} disabled={index === photos.length - 1}>→</button>
+                        <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); removePhoto(index); }}>Удалить</button>
                       </div>
                     </div>
                   );
@@ -502,9 +516,9 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                         <div><AdminPreviewImage src={photo.src} alt={`${variant.name} ${photoIndex + 1}`} fit={photo.settings.catalogFit} position={imagePosition(photo.settings.catalogX, photo.settings.catalogY)} /></div>
                         <span>{photoIndex === 0 ? 'Главное' : `Фото ${photoIndex + 1}`}</span>
                         <p>
-                          <button type="button" onClick={() => moveVariantPhoto(variant.id, photoIndex, -1)} disabled={photoIndex === 0}>←</button>
-                          <button type="button" onClick={() => moveVariantPhoto(variant.id, photoIndex, 1)} disabled={photoIndex === variant.photos.length - 1}>→</button>
-                          <button type="button" onClick={() => removeVariantPhoto(variant.id, photoIndex)}>×</button>
+                          <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); moveVariantPhoto(variant.id, photoIndex, -1); }} disabled={photoIndex === 0}>←</button>
+                          <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); moveVariantPhoto(variant.id, photoIndex, 1); }} disabled={photoIndex === variant.photos.length - 1}>→</button>
+                          <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); removeVariantPhoto(variant.id, photoIndex); }}>×</button>
                         </p>
                       </div>
                     )) : <em>Фото для этого цвета пока не загружены.</em>}
