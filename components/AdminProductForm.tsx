@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminLayout } from './AdminLayout';
 import { type AdminProduct, productFromForm, readAdminProducts, saveAdminProductAsync } from './adminProductStore';
@@ -11,13 +11,85 @@ import { categories } from './shopData';
 
 const fallbackImages = ['/assets/cat-clock.jpg', '/assets/cat-swing.jpg', '/assets/cat-metal.jpg', '/assets/cat-wood.jpg', '/assets/cat-custom.jpg', '/assets/production.jpg'];
 
+function AdminPreviewImage({ src, alt }: { src: string; alt: string }) {
+  if (src.startsWith('blob:') || src.startsWith('data:')) {
+    return <img src={src} alt={alt} />;
+  }
+
+  return <Image src={src} alt={alt} fill sizes="360px" />;
+}
+
 export function AdminProductForm({ slug }: { slug?: string }) {
   const router = useRouter();
   const existing = useMemo(() => slug ? readAdminProducts().find((item) => item.slug === slug) : undefined, [slug]);
-  const [preview, setPreview] = useState(existing?.image ?? fallbackImages[0]);
-  const [files, setFiles] = useState<File[]>([]);
+  type PhotoItem = { id: string; src: string; file?: File; name?: string };
+
+  const initialPhotos = useMemo(() => {
+    const images = [existing?.image, ...(existing?.images ?? [])]
+      .filter(Boolean)
+      .filter((image, index, array) => array.indexOf(image) === index) as string[];
+
+    return (images.length ? images : [fallbackImages[0]]).map((src, index) => ({
+      id: `existing-${index}-${src}`,
+      src,
+      name: src.split('/').pop() || `Фото ${index + 1}`,
+    }));
+  }, [existing]);
+
+  const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
   const [uploadError, setUploadError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setPhotos(initialPhotos);
+  }, [initialPhotos]);
+
+  useEffect(() => {
+    return () => {
+      photos.forEach((photo) => {
+        if (photo.src.startsWith('blob:')) URL.revokeObjectURL(photo.src);
+      });
+    };
+  }, []);
+
+  const currentPreview = photos[0]?.src ?? fallbackImages[0];
+
+  function movePhoto(index: number, direction: -1 | 1) {
+    setPhotos((items) => {
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= items.length) return items;
+      const next = [...items];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
+    });
+  }
+
+  function removePhoto(index: number) {
+    setPhotos((items) => {
+      const removed = items[index];
+      if (removed?.src.startsWith('blob:')) URL.revokeObjectURL(removed.src);
+      const next = items.filter((_, itemIndex) => itemIndex !== index);
+      return next.length ? next : [{ id: 'fallback-photo', src: fallbackImages[0], name: 'Фото по умолчанию' }];
+    });
+  }
+
+  function addPhotoFiles(fileList: FileList | null) {
+    setUploadError('');
+    const nextFiles = Array.from(fileList ?? []);
+    if (!nextFiles.length) return;
+
+    const nextPhotos = nextFiles.map((file) => ({
+      id: `new-${Date.now()}-${file.name}-${file.size}-${Math.random().toString(16).slice(2)}`,
+      src: URL.createObjectURL(file),
+      file,
+      name: file.name,
+    }));
+
+    setPhotos((items) => {
+      const withoutFallback = items.length === 1 && items[0].src === fallbackImages[0] && !existing ? [] : items;
+      return [...withoutFallback, ...nextPhotos];
+    });
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,18 +99,24 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     try {
       const formData = new FormData(event.currentTarget);
       const product = productFromForm(formData, existing);
+      const uploadItems = photos.filter((photo) => photo.file);
+      const uploadedImages = uploadItems.length
+        ? await uploadProductImages(product.slug, uploadItems.map((photo) => photo.file as File))
+        : [];
+      let uploadIndex = 0;
+      const orderedImages = photos
+        .map((photo) => {
+          if (photo.file) {
+            const uploaded = uploadedImages[uploadIndex];
+            uploadIndex += 1;
+            return uploaded;
+          }
+          return photo.src;
+        })
+        .filter((item, index, array): item is string => Boolean(item) && array.indexOf(item) === index);
 
-      if (files.length) {
-        const uploadedImages = await uploadProductImages(product.slug, files);
-        const nextImages = [
-          ...uploadedImages,
-          product.image,
-          ...(product.images ?? []),
-        ].filter((item, index, array) => Boolean(item) && array.indexOf(item) === index);
-
-        product.image = uploadedImages[0] ?? product.image;
-        product.images = nextImages;
-      }
+      product.image = orderedImages[0] ?? product.image;
+      product.images = orderedImages.length ? orderedImages : [product.image];
 
       await saveAdminProductAsync(product);
       router.push('/admin/products');
@@ -81,14 +159,38 @@ export function AdminProductForm({ slug }: { slug?: string }) {
 
           <aside className="adminCard adminProductMedia">
             <h3>Фото товара</h3>
-            <div className="adminImagePreview"><Image src={preview} alt="Предпросмотр" fill sizes="360px" /></div>
-            <label>Основное фото<select name="image" value={preview} onChange={(event) => setPreview(event.target.value)}>{[preview, ...fallbackImages, ...(existing?.images ?? [])].filter((image, index, array) => image && array.indexOf(image) === index).map((image) => <option value={image} key={image}>{image}</option>)}</select></label>
+            <div className="adminImagePreview"><AdminPreviewImage src={currentPreview} alt="Предпросмотр" /></div>
+            <input type="hidden" name="image" value={photos[0]?.src ?? fallbackImages[0]} />
+            <input type="hidden" name="images" value={photos.map((photo) => photo.src).join('\n')} />
             <label className="adminUploadBox">Загрузить новые фото
-              <input type="file" accept="image/*" multiple onChange={(event) => setFiles(Array.from(event.target.files ?? []))} />
-              <span>{files.length ? `Выбрано файлов: ${files.length}` : 'JPG, PNG, WEBP · можно выбрать несколько'}</span>
+              <input type="file" accept="image/*" multiple onChange={(event) => {
+                addPhotoFiles(event.target.files);
+                event.currentTarget.value = '';
+              }} />
+              <span>JPG, PNG, WEBP · можно выбрать несколько. После выбора фото появятся ниже.</span>
             </label>
-            {files.length > 0 && <div className="adminUploadList">{files.map((file) => <span key={`${file.name}-${file.size}`}>{file.name}</span>)}</div>}
-            <label>Дополнительные фото<textarea name="images" rows={6} defaultValue={(existing?.images ?? fallbackImages.slice(1, 4)).filter((image) => image !== preview).join('\n')} placeholder="Можно вставить URL картинок вручную, каждая с новой строки" /></label>
+            <div className="adminPhotoManager">
+              <div className="adminPhotoManager__head">
+                <b>Фотографии товара</b>
+                <span>Первая миниатюра — основное фото в каталоге и карточке товара.</span>
+              </div>
+              <div className="adminPhotoGrid">
+                {photos.map((photo, index) => (
+                  <div className="adminPhotoTile" key={photo.id}>
+                    <div className="adminPhotoTile__image"><AdminPreviewImage src={photo.src} alt={`Фото товара ${index + 1}`} /></div>
+                    <div className="adminPhotoTile__meta">
+                      <span>{index === 0 ? 'Основное' : `Фото ${index + 1}`}</span>
+                      {photo.file && <em>Новое</em>}
+                    </div>
+                    <div className="adminPhotoTile__actions">
+                      <button type="button" onClick={() => movePhoto(index, -1)} disabled={index === 0}>←</button>
+                      <button type="button" onClick={() => movePhoto(index, 1)} disabled={index === photos.length - 1}>→</button>
+                      <button type="button" onClick={() => removePhoto(index)}>Удалить</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
             {uploadError && <p className="adminUploadError">{uploadError}</p>}
             <div className="adminCheckList">
               <label><input name="inStock" type="checkbox" defaultChecked={existing?.inStock ?? true} /> В наличии</label>
