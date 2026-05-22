@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { FormEvent, useEffect, useState } from 'react';
 import { AdminLayout } from './AdminLayout';
+import { getReadableError } from '../lib/errorMessages';
 import { defaultHomeSettings, HomeSettings, readHomeSettingsAsync, saveHomeSettingsAsync, uploadHomeImage } from './siteSettings';
 
 export function AdminHomeSettings() {
@@ -53,7 +54,7 @@ export function AdminHomeSettings() {
       setMessage('Главная страница обновлена. Изменения появятся на сайте сразу после обновления страницы.');
     } catch (saveError) {
       console.error(saveError);
-      setError(saveError instanceof Error ? saveError.message : 'Не удалось сохранить настройки главной страницы.');
+      setError(getReadableError(saveError, 'Не удалось сохранить настройки главной страницы'));
     } finally {
       setIsSaving(false);
     }
@@ -101,7 +102,12 @@ export function AdminHomeSettings() {
           </section>
 
           {message && <p className="adminSuccessMessage">{message}</p>}
-          {error && <p className="adminUploadError">{error}</p>}
+          {error && (
+            <div className="adminUploadError adminUploadError--details">
+              <b>{error}</b>
+              <span>Что проверить: переменные Vercel, SQL-схему, bucket product-images и RLS policies в Supabase.</span>
+            </div>
+          )}
           <button className="adminPrimaryBtn adminHomeSave" type="submit" disabled={isSaving}>{isSaving ? 'Сохраняем...' : 'Сохранить изменения'}</button>
         </form>
       </main>
