@@ -1,0 +1,99 @@
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { Header, Footer } from './HomePage';
+import { SearchIcon, ToolsIcon, TruckIcon } from './Icons';
+import { categories, products } from './shopData';
+import { useAdminProducts } from './useAdminProducts';
+import { AddToCartButton } from './AddToCartButton';
+import { FavoriteButton } from './FavoriteButton';
+
+const materialFilters = ['Металл', 'Дерево', 'Металл и дерево'];
+
+export function CatalogPage() {
+  const { items, ready } = useAdminProducts();
+  const catalogProducts = ready ? items.filter((product) => product.status !== 'draft') : products;
+
+  return (
+    <>
+      <Header />
+      <main className="catalogPage">
+        <section className="container catalogHero">
+          <div className="breadcrumbs"><Link href="/">Главная</Link><span>/</span><span>Каталог</span></div>
+          <h1 className="pageTitle">Каталог товаров</h1>
+        </section>
+
+        <section className="container catalogLayout">
+          <aside className="catalogSidebar" aria-label="Фильтры каталога">
+            <div className="filterBox">
+              <h3>Категории</h3>
+              <nav className="categoryMenu">
+                {categories.map((category) => <Link href={`/catalog?category=${encodeURIComponent(category)}`} key={category}>{category}</Link>)}
+              </nav>
+            </div>
+
+            <div className="filterBox filterBox--line">
+              <h3>Фильтр</h3>
+              <label className="filterLabel">Цена, BYN</label>
+              <div className="priceLine"><span /><i /></div>
+              <div className="priceInputs"><input defaultValue="0" /><span>до</span><input defaultValue="2000" /></div>
+              <label className="filterLabel filterLabel--space">Материал</label>
+              <div className="checks">
+                {materialFilters.map((item) => <label key={item}><input type="checkbox" /> {item}</label>)}
+              </div>
+              <button className="applyFilter">Применить</button>
+              <button className="resetFilter">Сбросить</button>
+            </div>
+          </aside>
+
+          <div className="catalogContent">
+            <div className="catalogToolbar">
+              <select defaultValue="popular" aria-label="Сортировка">
+                <option value="popular">По популярности</option>
+                <option value="price-low">Сначала дешевле</option>
+                <option value="price-high">Сначала дороже</option>
+                <option value="new">Новинки</option>
+              </select>
+              <p>Показано 1–{Math.min(12, catalogProducts.length)} из {catalogProducts.length}</p>
+              <div className="viewButtons"><button aria-label="Плитка"><GridDots /></button><button aria-label="Список"><ListLines /></button></div>
+            </div>
+
+            <div className="productCatalogGrid">
+              {catalogProducts.slice(0, 12).map((product) => (
+                <article className="catalogCard" key={product.slug}>
+                  <Link href={`/catalog/${product.slug}`} className="catalogCard__overlay" aria-label={`Открыть ${product.title}`} />
+                  <Link href={`/catalog/${product.slug}`} className="catalogCard__image">
+                    <Image src={product.image} alt={product.title} fill sizes="(max-width: 760px) 50vw, 25vw" />
+                  </Link>
+                  <div className="catalogCard__fav"><FavoriteButton product={product} /></div>
+                  <div className="catalogCard__body">
+                    <Link href={`/catalog/${product.slug}`} className="catalogCard__title">{product.title}</Link>
+                    <p>{product.short}</p>
+                    <div className="catalogCard__bottom"><b>от {product.price} BYN</b><AddToCartButton product={product} iconOnly /></div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="pagination"><span className="active">1</span><span>2</span><span>3</span><span>4</span><button>→</button></div>
+          </div>
+        </section>
+
+        <section className="container catalogInfoStrip">
+          <div><ToolsIcon /><b>Собственное производство</b><span>Изготавливаем изделия под задачи клиента</span></div>
+          <div><SearchIcon /><b>Поможем с выбором</b><span>Подскажем материал, размер и покрытие</span></div>
+          <div><TruckIcon /><b>Доставка по Беларуси</b><span>Самовывоз или отправка в ваш город</span></div>
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
+function GridDots() {
+  return <svg viewBox="0 0 24 24" fill="none"><path d="M5 5h3v3H5V5Zm0 6h3v3H5v-3Zm0 6h3v3H5v-3Zm6-12h3v3h-3V5Zm0 6h3v3h-3v-3Zm0 6h3v3h-3v-3Zm6-12h3v3h-3V5Zm0 6h3v3h-3v-3Zm0 6h3v3h-3v-3Z" fill="currentColor" /></svg>;
+}
+function ListLines() {
+  return <svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" strokeWidth="2" strokeLinecap="square" /></svg>;
+}

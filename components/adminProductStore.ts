@@ -1,0 +1,203 @@
+'use client';
+
+import type { Product } from './shopData';
+import { products as baseProducts } from './shopData';
+import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
+
+export type AdminProduct = Product & {
+  status?: 'active' | 'draft';
+  isPopular?: boolean;
+  isNew?: boolean;
+  inStock?: boolean;
+};
+
+export const ADMIN_PRODUCTS_KEY = 'bullmet-admin-products';
+
+export function makeSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[а-яё]/g, (char) => {
+      const map: Record<string, string> = {
+        а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
+      };
+      return map[char] ?? char;
+    })
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || `product-${Date.now()}`;
+}
+
+export function withAdminDefaults(product: Product): AdminProduct {
+  return {
+    ...product,
+    status: 'active',
+    isPopular: ['wall-clock-loft', 'garden-swing-bullmet', 'wooden-tree-panel'].includes(product.slug),
+    isNew: false,
+    inStock: true,
+  };
+}
+
+export function initialAdminProducts(): AdminProduct[] {
+  return baseProducts.map(withAdminDefaults);
+}
+
+function productFromDb(row: any): AdminProduct {
+  return {
+    slug: row.slug,
+    title: row.title,
+    category: row.category,
+    material: row.material,
+    short: row.short ?? '',
+    description: row.description ?? '',
+    price: Number(row.price ?? 0),
+    oldPrice: row.old_price === null || row.old_price === undefined ? undefined : Number(row.old_price),
+    image: row.image ?? '/assets/cat-clock.jpg',
+    images: Array.isArray(row.images) && row.images.length ? row.images : [row.image ?? '/assets/cat-clock.jpg'],
+    sizes: Array.isArray(row.sizes) ? row.sizes : [],
+    specs: Array.isArray(row.specs) ? row.specs : [],
+    status: row.status === 'draft' ? 'draft' : 'active',
+    isPopular: Boolean(row.is_popular),
+    isNew: Boolean(row.is_new),
+    inStock: row.in_stock !== false,
+  };
+}
+
+function productToDb(product: AdminProduct) {
+  return {
+    slug: product.slug,
+    title: product.title,
+    category: product.category,
+    material: product.material,
+    short: product.short,
+    description: product.description,
+    price: product.price,
+    old_price: product.oldPrice ?? null,
+    image: product.image,
+    images: product.images ?? [product.image],
+    sizes: product.sizes ?? [],
+    specs: product.specs ?? [],
+    status: product.status ?? 'active',
+    is_popular: Boolean(product.isPopular),
+    is_new: Boolean(product.isNew),
+    in_stock: product.inStock !== false,
+  };
+}
+
+export function readAdminProducts(): AdminProduct[] {
+  if (typeof window === 'undefined') return initialAdminProducts();
+  try {
+    const raw = window.localStorage.getItem(ADMIN_PRODUCTS_KEY);
+    if (!raw) {
+      const initial = initialAdminProducts();
+      writeAdminProducts(initial);
+      return initial;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : initialAdminProducts();
+  } catch {
+    return initialAdminProducts();
+  }
+}
+
+export async function readAdminProductsAsync(): Promise<AdminProduct[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      if (data && data.length) {
+        const items = data.map(productFromDb);
+        writeAdminProducts(items);
+        return items;
+      }
+    } catch (error) {
+      console.warn('Supabase products fallback to localStorage:', error);
+    }
+  }
+  return readAdminProducts();
+}
+
+export function writeAdminProducts(items: AdminProduct[]) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(items));
+  window.dispatchEvent(new Event('bullmet-products-updated'));
+}
+
+export function saveAdminProduct(product: AdminProduct) {
+  const items = readAdminProducts();
+  const index = items.findIndex((item) => item.slug === product.slug);
+  const next = index >= 0 ? items.map((item) => item.slug === product.slug ? product : item) : [product, ...items];
+  writeAdminProducts(next);
+  return product;
+}
+
+export async function saveAdminProductAsync(product: AdminProduct) {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .upsert(productToDb(product), { onConflict: 'slug' });
+      if (error) throw error;
+    } catch (error) {
+      console.warn('Supabase save product fallback to localStorage:', error);
+    }
+  }
+  return saveAdminProduct(product);
+}
+
+export function deleteAdminProduct(slug: string) {
+  writeAdminProducts(readAdminProducts().filter((item) => item.slug !== slug));
+}
+
+export async function deleteAdminProductAsync(slug: string) {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase.from('products').delete().eq('slug', slug);
+      if (error) throw error;
+    } catch (error) {
+      console.warn('Supabase delete product fallback to localStorage:', error);
+    }
+  }
+  deleteAdminProduct(slug);
+}
+
+export function productFromForm(formData: FormData, old?: AdminProduct): AdminProduct {
+  const title = String(formData.get('title') || '').trim() || 'Новый товар Bullmet';
+  const slug = old?.slug || makeSlug(title);
+  const price = Number(formData.get('price')) || 0;
+  const oldPriceRaw = Number(formData.get('oldPrice'));
+  const image = String(formData.get('image') || '').trim() || '/assets/cat-clock.jpg';
+  const extraImages = String(formData.get('images') || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const sizes = String(formData.get('sizes') || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const specs = String(formData.get('specs') || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return {
+    slug,
+    title,
+    category: String(formData.get('category') || 'Изделия на заказ'),
+    material: String(formData.get('material') || 'Металл + дерево'),
+    short: String(formData.get('short') || 'Изделие Bullmet'),
+    description: String(formData.get('description') || 'Описание товара Bullmet.'),
+    price,
+    oldPrice: oldPriceRaw > 0 ? oldPriceRaw : undefined,
+    image,
+    images: [image, ...extraImages].filter((item, index, array) => array.indexOf(item) === index),
+    sizes: sizes.length ? sizes : ['Индивидуально'],
+    specs: specs.length ? specs : ['Материал по согласованию', 'Размер под проект', 'Контроль качества'],
+    status: formData.get('status') === 'draft' ? 'draft' : 'active',
+    isPopular: formData.get('isPopular') === 'on',
+    isNew: formData.get('isNew') === 'on',
+    inStock: formData.get('inStock') !== null,
+  };
+}
