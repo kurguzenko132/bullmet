@@ -76,9 +76,7 @@ export async function readHomeSettingsAsync(): Promise<HomeSettings> {
 
       if (error) throw error;
       if (data?.value) {
-        const settings = normalizeSettings(data.value as Partial<HomeSettings>);
-        writeLocalHomeSettings(settings);
-        return settings;
+        return normalizeSettings(data.value as Partial<HomeSettings>);
       }
     } catch (error) {
       console.warn('Supabase site_settings read failed:', error);

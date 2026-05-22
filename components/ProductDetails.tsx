@@ -10,22 +10,24 @@ import type { Product } from './shopData';
 import { getImageSettings } from '../lib/imageDisplay';
 
 export function ProductDetails({ product }: { product: Product }) {
-  const [activeImage, setActiveImage] = useState(product.images[0]);
+  const productImages = (product.images?.length ? product.images : [product.image]).filter(Boolean);
+  const [activeImage, setActiveImage] = useState(productImages[0]);
   const [activeSize, setActiveSize] = useState(product.sizes?.[1] ?? product.sizes?.[0] ?? '60 см');
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
-    setActiveImage(product.images[0]);
+    const nextImages = (product.images?.length ? product.images : [product.image]).filter(Boolean);
+    setActiveImage(nextImages[0]);
     setActiveSize(product.sizes?.[1] ?? product.sizes?.[0] ?? '60 см');
     setQty(1);
-  }, [product.slug, product.images, product.sizes]);
+  }, [product.slug]);
 
   return (
     <section className="container productDetails">
       <div className="productGallery">
         <div className="thumbs">
-          {product.images.map((image) => (
-            <button className={activeImage === image ? 'active' : ''} onClick={() => setActiveImage(image)} key={image} aria-label="Показать фото товара">
+          {productImages.map((image, index) => (
+            <button className={activeImage === image ? 'active' : ''} onClick={() => setActiveImage(image)} key={`${image}-${index}`} aria-label={`Показать фото товара ${index + 1}`}>
               <Image src={image} alt="" fill sizes="90px" />
             </button>
           ))}

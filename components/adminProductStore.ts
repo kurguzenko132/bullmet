@@ -14,6 +14,13 @@ export type AdminProduct = Product & {
 
 export const ADMIN_PRODUCTS_KEY = 'bullmet-admin-products';
 
+function withTimeout<T>(promise: Promise<T>, ms = 6500, label = 'Операция заняла слишком много времени') {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => window.setTimeout(() => reject(new Error(label)), ms)),
+  ]);
+}
+
 export function makeSlug(value: string) {
   return value
     .toLowerCase()
@@ -114,17 +121,15 @@ export function readAdminProducts(): AdminProduct[] {
 export async function readAdminProductsAsync(): Promise<AdminProduct[]> {
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
+      const { data, error } = await withTimeout(query, 6500, 'Supabase долго не отвечает при загрузке товаров');
       if (error) throw error;
-      const items = Array.isArray(data) ? data.map(productFromDb) : [];
-      writeAdminProducts(items);
-      return items;
+      return Array.isArray(data) ? data.map(productFromDb) : [];
     } catch (error) {
-      console.warn('Supabase products read failed. Local stale demo products were cleared:', error);
-      writeAdminProducts([]);
+      console.warn('Supabase products read failed. Returning empty list to avoid stale demo products:', error);
       return [];
     }
   }

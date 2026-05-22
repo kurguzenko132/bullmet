@@ -2386,3 +2386,13 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
   .adminCropWorkbench--modal .adminCropPreview,
   .adminCropWorkbench--modal .adminCropPreview--product { min-height: 280px; }
 }
+
+
+/* Stability fixes: photo switching, admin loading and drag sorting */
+.thumbs button { z-index: 2; }
+.thumbs button img { pointer-events: none; }
+.mainProductImage img { transition: opacity .12s ease; }
+.adminPhotoGrid { touch-action: none; }
+.adminPhotoTile { touch-action: none; user-select: none; cursor: grab; }
+.adminPhotoTile:active, .adminPhotoTile.isDragging { cursor: grabbing; }
+.adminHeroPreview img, .promo__bg img { transform: translateZ(0); }

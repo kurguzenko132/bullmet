@@ -7,7 +7,7 @@ import { AdminLayout } from './AdminLayout';
 import { CartIcon, DraftIcon, UserIcon } from './Icons';
 import { type AdminProduct, readAdminProductsAsync } from './adminProductStore';
 import { type AdminOrder, type AdminRequest, readAdminOrdersAsync, readAdminRequestsAsync } from './adminBusinessStore';
-import { readHomeSettingsAsync, readLocalHomeSettings, type HomeSettings } from './siteSettings';
+import { defaultHomeSettings, readHomeSettingsAsync, type HomeSettings } from './siteSettings';
 
 function statusType(status: string) {
   if (status === 'Новый' || status === 'Новая') return 'new';
@@ -28,7 +28,7 @@ export function AdminDashboard() {
   const [requests, setRequests] = useState<AdminRequest[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [homeSettings, setHomeSettings] = useState<HomeSettings>(() => readLocalHomeSettings());
+  const [homeSettings, setHomeSettings] = useState<HomeSettings | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -107,7 +107,7 @@ export function AdminDashboard() {
           <div className="adminCard adminHeroCard">
             <div className="adminCardTitle">Главный слайд</div>
             <div className="adminHeroPreview">
-              <Image src={homeSettings.heroImage} alt="Главный слайд Bullmet" fill sizes="50vw" />
+              <Image key={homeSettings?.heroImage ?? 'loading-hero'} src={homeSettings?.heroImage ?? defaultHomeSettings.heroImage} alt="Главный слайд Bullmet" fill sizes="50vw" />
               <div className="adminHeroText">
                 <h2>Bullmet — собственное производство изделий из металла и дерева</h2>
                 <p>Фото главного экрана, категории и ссылки можно менять в разделе настроек главной страницы.</p>

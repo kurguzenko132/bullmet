@@ -152,6 +152,12 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     setDragOverPhotoId(targetId);
   }
 
+  function handleManualReorder(targetId: string) {
+    if (!draggedPhotoId || draggedPhotoId === targetId) return;
+    setPhotos((items) => reorderPhotos(items, draggedPhotoId, targetId));
+    setDragOverPhotoId(targetId);
+  }
+
   function handleDrop(event: DragEvent<HTMLDivElement>, targetId: string) {
     event.preventDefault();
     const sourceId = event.dataTransfer.getData('text/plain') || draggedPhotoId;
@@ -172,13 +178,11 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
     if (!draggedPhotoId) return;
     if (event.pointerType === 'mouse' && event.buttons !== 1) return;
+    event.preventDefault();
     const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
     const tile = element?.closest<HTMLElement>('[data-photo-id]');
     const targetId = tile?.dataset.photoId;
-    if (targetId && targetId !== draggedPhotoId) {
-      setPhotos((items) => reorderPhotos(items, draggedPhotoId, targetId));
-      setDragOverPhotoId(targetId);
-    }
+    if (targetId) handleManualReorder(targetId);
   }
 
   function handlePointerUp() {
@@ -297,7 +301,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                       onDragEnter={() => handleDragEnter(photo.id)}
                       onDrop={(event) => handleDrop(event, photo.id)}
                       onDragEnd={() => { setDraggedPhotoId(null); setDragOverPhotoId(null); }}
-                      onPointerDown={(event) => handlePointerDown(event, photo.id)}
+                      onPointerDown={(event) => { handlePointerDown(event, photo.id); event.currentTarget.setPointerCapture?.(event.pointerId); }}
                     >
                       <div className="adminPhotoTile__image"><AdminPreviewImage src={photo.src} alt={`Фото товара ${index + 1}`} fit={photo.settings.catalogFit} position={position} /></div>
                       <div className="adminPhotoTile__meta"><span>{index === 0 ? 'Основное' : `Фото ${index + 1}`}</span>{photo.file && <em>Новое</em>}</div>

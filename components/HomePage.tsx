@@ -76,7 +76,7 @@ export function Header() {
 function Promo({ settings }: { settings: HomeSettings }) {
   return (
     <section className="promo">
-      <div className="promo__bg"><Image src={settings.heroImage} alt="Производство Bullmet" fill priority sizes="100vw" /></div>
+      <div className="promo__bg"><Image key={settings.heroImage} src={settings.heroImage} alt="Производство Bullmet" fill priority sizes="100vw" /></div>
       <div className="container promo__content">
         <h1>Bullmet — собственное производство изделий из металла и дерева</h1>
         <p className="promo__text">Производим часы, садовые качели, элементы декора, а также выполняем резку металла и дерева под заказ.</p>

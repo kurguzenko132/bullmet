@@ -10,7 +10,7 @@ import { categories } from './shopData';
 import { EditIcon, PlusIcon, TrashIcon } from './AdminLayout';
 
 export function AdminProductsPage() {
-  const { items, ready } = useAdminProducts();
+  const { items, ready, error } = useAdminProducts();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Все категории');
 
@@ -48,6 +48,8 @@ export function AdminProductsPage() {
           <div className="adminProductsCounter">{ready ? `${filtered.length} товаров` : 'Загрузка...'}</div>
         </section>
 
+        {error && <section className="adminUploadError">Не удалось загрузить товары: {error}</section>}
+
         <section className="adminCard adminProductsTable">
           <div className="adminProductsHeader">
             <span>Товар</span><span>Категория</span><span>Цена</span><span>Статус</span><span>Действия</span>
@@ -72,6 +74,7 @@ export function AdminProductsPage() {
               </div>
             </div>
           ))}
+          {!ready && <div className="adminEmpty">Загружаем товары из Supabase...</div>}
           {ready && filtered.length === 0 && <div className="adminEmpty">Товары не найдены</div>}
         </section>
       </main>
