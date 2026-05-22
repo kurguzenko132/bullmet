@@ -5,11 +5,12 @@ import { Header, Footer } from './HomePage';
 
 import { useAdminProducts } from './useAdminProducts';
 import { ProductDetails, ProductServiceStrip, RelatedProducts } from './ProductDetails';
+import { expandProductVariants, findProductByVariantSlug } from './shopData';
 
 export function ProductPage({ slug }: { slug: string }) {
   const { items, ready } = useAdminProducts();
   const sourceProducts = ready ? items.filter((item) => item.status !== 'draft') : [];
-  const product = sourceProducts.find((item) => item.slug === slug) ?? null;
+  const product = findProductByVariantSlug(sourceProducts, slug);
 
   if (ready && !product) {
     return (
@@ -30,7 +31,8 @@ export function ProductPage({ slug }: { slug: string }) {
 
   if (!product) return null;
 
-  const related = sourceProducts.filter((item) => item.slug !== product.slug && item.category === product.category).concat(sourceProducts.filter((item) => item.slug !== product.slug));
+  const expanded = expandProductVariants(sourceProducts);
+  const related = expanded.filter((item) => item.slug !== product.slug && item.category === product.category).concat(expanded.filter((item) => item.slug !== product.slug));
 
   return (
     <>

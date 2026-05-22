@@ -10,17 +10,26 @@ import type { Product } from './shopData';
 import { getImageSettings } from '../lib/imageDisplay';
 
 export function ProductDetails({ product }: { product: Product }) {
-  const productImages = (product.images?.length ? product.images : [product.image]).filter(Boolean);
+  const [activeVariantId, setActiveVariantId] = useState(product.activeVariantId ?? product.variants?.[0]?.id ?? '');
+  const activeVariant = product.variants?.find((variant) => variant.id === activeVariantId);
+  const visibleProduct = activeVariant ? { ...product, slug: `${product.parentSlug ?? product.slug}-${activeVariant.slug}`, image: activeVariant.image, images: activeVariant.images, imageSettings: activeVariant.imageSettings ?? product.imageSettings, variantName: activeVariant.name, variantColorHex: activeVariant.colorHex } : product;
+  const productImages = (visibleProduct.images?.length ? visibleProduct.images : [visibleProduct.image]).filter(Boolean);
   const [activeImage, setActiveImage] = useState(productImages[0]);
   const [activeSize, setActiveSize] = useState(product.sizes?.[1] ?? product.sizes?.[0] ?? '60 см');
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
-    const nextImages = (product.images?.length ? product.images : [product.image]).filter(Boolean);
+    setActiveVariantId(product.activeVariantId ?? product.variants?.[0]?.id ?? '');
+    const initialVariant = product.variants?.find((variant) => variant.id === (product.activeVariantId ?? product.variants?.[0]?.id ?? ''));
+    const nextImages = (initialVariant?.images?.length ? initialVariant.images : product.images?.length ? product.images : [product.image]).filter(Boolean);
     setActiveImage(nextImages[0]);
     setActiveSize(product.sizes?.[1] ?? product.sizes?.[0] ?? '60 см');
     setQty(1);
   }, [product.slug]);
+
+  useEffect(() => {
+    setActiveImage(productImages[0]);
+  }, [activeVariantId]);
 
   return (
     <section className="container productDetails">
@@ -33,16 +42,31 @@ export function ProductDetails({ product }: { product: Product }) {
           ))}
         </div>
         <div className="mainProductImage">
-          <Image src={activeImage} alt={product.title} fill priority sizes="55vw" style={{ objectFit: getImageSettings(product, activeImage).productFit, objectPosition: getImageSettings(product, activeImage).productPosition }} />
+          <Image src={activeImage} alt={visibleProduct.title} fill priority sizes="55vw" style={{ objectFit: getImageSettings(visibleProduct, activeImage).productFit, objectPosition: getImageSettings(visibleProduct, activeImage).productPosition }} />
         </div>
       </div>
 
       <div className="productPanel">
-        <h1>{product.title}</h1>
-        <p className="productMaterial">Материал: {product.material}</p>
+        <h1>{visibleProduct.title}</h1>
+        {visibleProduct.variantName && <p className="productColorName">Цвет: {visibleProduct.variantName}</p>}
+        <p className="productMaterial">Материал: {visibleProduct.material}</p>
         <p className="availability"><span />В наличии</p>
         <div className="productPrice">от {product.price} BYN {product.oldPrice && <em>{product.oldPrice} BYN</em>}</div>
-        <p className="productDescription">{product.description}</p>
+        <p className="productDescription">{visibleProduct.description}</p>
+
+        {product.variants?.length ? (
+          <div className="choiceBlock productColorChooser">
+            <p>Расцветка</p>
+            <div className="colorOptions">
+              {product.variants.map((variant) => (
+                <button type="button" className={activeVariantId === variant.id ? 'active' : ''} onClick={() => setActiveVariantId(variant.id)} key={variant.id}>
+                  <i style={{ background: variant.colorHex || '#111' }} />
+                  <span>{variant.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <ul className="specList">
           {product.specs.map((spec, index) => <li key={spec}><SpecIcon index={index} />{spec}</li>)}
@@ -60,7 +84,7 @@ export function ProductDetails({ product }: { product: Product }) {
           <div className="qtyControl"><button onClick={() => setQty(Math.max(1, qty - 1))}>−</button><span>{qty}</span><button onClick={() => setQty(qty + 1)}>+</button></div>
         </div>
 
-        <div className="productActions"><AddToCartButton product={product} quantity={qty} size={activeSize} className="button button--orange">В корзину</AddToCartButton><FavoriteButton product={product} variant="text" /><Link href={`/request?product=${product.slug}`} className="button button--outline">Заказать похожее</Link><Link href="/checkout" className="button button--ghost">Купить в 1 клик</Link></div>
+        <div className="productActions"><AddToCartButton product={visibleProduct} quantity={qty} size={activeSize} className="button button--orange">В корзину</AddToCartButton><FavoriteButton product={product} variant="text" /><Link href={`/request?product=${visibleProduct.slug}`} className="button button--outline">Заказать похожее</Link><Link href="/checkout" className="button button--ghost">Купить в 1 клик</Link></div>
       </div>
     </section>
   );

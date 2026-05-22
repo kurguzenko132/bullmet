@@ -47,6 +47,7 @@ export function withAdminDefaults(product: Product): AdminProduct {
     productImageFit: product.productImageFit ?? 'cover',
     productImagePosition: product.productImagePosition ?? 'center center',
     imageSettings: product.imageSettings ?? {},
+    variants: product.variants ?? [],
   };
 }
 
@@ -77,6 +78,7 @@ function productFromDb(row: any): AdminProduct {
     productImageFit: row.product_image_fit === 'contain' ? 'contain' : 'cover',
     productImagePosition: row.product_image_position || 'center center',
     imageSettings: row.image_settings && typeof row.image_settings === 'object' ? row.image_settings as Record<string, ImageDisplaySettings> : {},
+    variants: Array.isArray(row.variants) ? row.variants : [],
   };
 }
 
@@ -103,6 +105,7 @@ function productToDb(product: AdminProduct) {
     product_image_fit: product.productImageFit ?? 'cover',
     product_image_position: product.productImagePosition ?? 'center center',
     image_settings: product.imageSettings ?? {},
+    variants: product.variants ?? [],
   };
 }
 
@@ -225,5 +228,6 @@ export function productFromForm(formData: FormData, old?: AdminProduct): AdminPr
     productImageFit: formData.get('productImageFit') === 'contain' ? 'contain' : 'cover',
     productImagePosition: String(formData.get('productImagePosition') || 'center center'),
     imageSettings: old?.imageSettings ?? {},
+    variants: old?.variants ?? [],
   };
 }

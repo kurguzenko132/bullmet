@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { AdminLayout } from './AdminLayout';
 import { type AdminProduct, productFromForm, readAdminProducts, saveAdminProductAsync } from './adminProductStore';
 import { uploadProductImages } from '../lib/productImages';
-import { categories } from './shopData';
+import { categories, slugifyVariant, type ProductVariant } from './shopData';
 import { clampPercent, getImageSettings, imagePosition, normalizeImageDisplaySettings, type ImageDisplaySettings, type ImageFit } from '../lib/imageDisplay';
 
 const fallbackImage = '/assets/cat-clock.jpg';
@@ -21,6 +21,13 @@ type PhotoItem = {
 };
 
 type CropTarget = 'catalog' | 'product';
+
+type VariantDraft = {
+  id: string;
+  name: string;
+  colorHex: string;
+  photos: PhotoItem[];
+};
 
 function AdminPreviewImage({ src, alt, fit = 'cover', position = '50% 50%' }: { src: string; alt: string; fit?: ImageFit; position?: string }) {
   const style = { objectFit: fit, objectPosition: position } as const;
@@ -50,6 +57,22 @@ function buildInitialPhotos(product?: AdminProduct): PhotoItem[] {
   });
 }
 
+
+function buildInitialVariants(product?: AdminProduct): VariantDraft[] {
+  const source = product?.variants?.length ? product.variants : [];
+  return source.map((variant, index) => ({
+    id: variant.id || `variant-${index}-${variant.slug}`,
+    name: variant.name || `Цвет ${index + 1}`,
+    colorHex: variant.colorHex || '#111111',
+    photos: (variant.images?.length ? variant.images : [variant.image]).filter(Boolean).map((src, photoIndex) => ({
+      id: makePhotoId(`${variant.id}-${src}`, photoIndex),
+      src,
+      name: src.split('/').pop() || `Фото ${photoIndex + 1}`,
+      settings: normalizeImageDisplaySettings(variant.imageSettings?.[src] ?? {}),
+    })),
+  }));
+}
+
 function reorderPhotos(items: PhotoItem[], fromId: string, toId: string) {
   if (fromId === toId) return items;
   const fromIndex = items.findIndex((item) => item.id === fromId);
@@ -67,6 +90,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const initialPhotos = useMemo(() => buildInitialPhotos(existing), [existing]);
 
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
+  const [variants, setVariants] = useState<VariantDraft[]>(() => buildInitialVariants(existing));
   const [selectedPhotoId, setSelectedPhotoId] = useState(initialPhotos[0]?.id ?? '');
   const [uploadError, setUploadError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -79,7 +103,8 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   useEffect(() => {
     setPhotos(initialPhotos);
     setSelectedPhotoId(initialPhotos[0]?.id ?? '');
-  }, [initialPhotos]);
+    setVariants(buildInitialVariants(existing));
+  }, [initialPhotos, existing]);
 
   useEffect(() => {
     return () => {
@@ -198,6 +223,47 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogX: x, catalogY: y } : { productX: x, productY: y });
   }
 
+
+  function addVariant() {
+    setVariants((items) => [...items, { id: `variant-${Date.now()}-${Math.random().toString(16).slice(2)}`, name: `Цвет ${items.length + 1}`, colorHex: '#111111', photos: [] }]);
+  }
+
+  function updateVariant(id: string, patch: Partial<Omit<VariantDraft, 'photos'>>) {
+    setVariants((items) => items.map((variant) => variant.id === id ? { ...variant, ...patch } : variant));
+  }
+
+  function removeVariant(id: string) {
+    setVariants((items) => items.filter((variant) => variant.id !== id));
+  }
+
+  function addVariantFiles(id: string, fileList: FileList | null) {
+    const files = Array.from(fileList ?? []);
+    if (!files.length) return;
+    const nextPhotos = files.map((file) => ({
+      id: `variant-photo-${Date.now()}-${file.name}-${Math.random().toString(16).slice(2)}`,
+      src: URL.createObjectURL(file),
+      file,
+      name: file.name,
+      settings: normalizeImageDisplaySettings({}),
+    }));
+    setVariants((items) => items.map((variant) => variant.id === id ? { ...variant, photos: [...variant.photos, ...nextPhotos] } : variant));
+  }
+
+  function moveVariantPhoto(variantId: string, index: number, direction: -1 | 1) {
+    setVariants((items) => items.map((variant) => {
+      if (variant.id !== variantId) return variant;
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= variant.photos.length) return variant;
+      const photosNext = [...variant.photos];
+      [photosNext[index], photosNext[nextIndex]] = [photosNext[nextIndex], photosNext[index]];
+      return { ...variant, photos: photosNext };
+    }));
+  }
+
+  function removeVariantPhoto(variantId: string, index: number) {
+    setVariants((items) => items.map((variant) => variant.id === variantId ? { ...variant, photos: variant.photos.filter((_, photoIndex) => photoIndex !== index) } : variant));
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setUploadError('');
@@ -226,6 +292,39 @@ export function AdminProductForm({ slug }: { slug?: string }) {
       product.catalogImagePosition = imagePosition(firstSettings.catalogX, firstSettings.catalogY);
       product.productImageFit = firstSettings.productFit;
       product.productImagePosition = imagePosition(firstSettings.productX, firstSettings.productY);
+
+      const savedVariants: ProductVariant[] = [];
+      for (const variant of variants) {
+        const name = variant.name.trim();
+        if (!name) continue;
+        const files = variant.photos.filter((photo) => photo.file).map((photo) => photo.file as File);
+        const uploaded = files.length ? await uploadProductImages(`${product.slug}/${slugifyVariant(name)}`, files) : [];
+        let uploadedIndex = 0;
+        const variantSettings: Record<string, ImageDisplaySettings> = {};
+        const variantImages = variant.photos
+          .map((photo) => {
+            const url = photo.file ? uploaded[uploadedIndex++] : photo.src;
+            if (url) variantSettings[url] = photo.settings;
+            return url;
+          })
+          .filter((item, index, array): item is string => Boolean(item) && array.indexOf(item) === index);
+        if (!variantImages.length) continue;
+        const firstVariantSettings = normalizeImageDisplaySettings(variantSettings[variantImages[0]]);
+        savedVariants.push({
+          id: variant.id,
+          name,
+          slug: slugifyVariant(name),
+          colorHex: variant.colorHex || '#111111',
+          image: variantImages[0],
+          images: variantImages,
+          imageSettings: variantSettings,
+          catalogImageFit: firstVariantSettings.catalogFit,
+          catalogImagePosition: imagePosition(firstVariantSettings.catalogX, firstVariantSettings.catalogY),
+          productImageFit: firstVariantSettings.productFit,
+          productImagePosition: imagePosition(firstVariantSettings.productX, firstVariantSettings.productY),
+        });
+      }
+      product.variants = savedVariants;
 
       await saveAdminProductAsync(product);
       router.push('/admin/products');
@@ -379,6 +478,41 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                 </div>
               </div>
             )}
+
+
+            <div className="adminVariantManager">
+              <div className="adminPhotoManager__head">
+                <b>Расцветки товара</b>
+                <span>Каждая расцветка появится в каталоге отдельной карточкой. На странице товара покупатель сможет переключать цвет, и фотографии будут меняться.</span>
+              </div>
+              {variants.map((variant, variantIndex) => (
+                <div className="adminVariantCard" key={variant.id}>
+                  <div className="adminVariantCard__top">
+                    <label>Название цвета<input value={variant.name} onChange={(event) => updateVariant(variant.id, { name: event.target.value })} placeholder="Черный / белый / дерево" /></label>
+                    <label>Цвет маркера<input type="color" value={variant.colorHex} onChange={(event) => updateVariant(variant.id, { colorHex: event.target.value })} /></label>
+                    <button type="button" className="adminSecondaryBtn" onClick={() => removeVariant(variant.id)}>Удалить цвет</button>
+                  </div>
+                  <label className="adminUploadBox adminUploadBox--small">Загрузить фото цвета
+                    <input type="file" accept="image/*" multiple onChange={(event) => { addVariantFiles(variant.id, event.target.files); event.currentTarget.value = ''; }} />
+                    <span>Можно выбрать несколько фото для этой расцветки.</span>
+                  </label>
+                  <div className="adminVariantPhotos">
+                    {variant.photos.length ? variant.photos.map((photo, photoIndex) => (
+                      <div className="adminVariantPhotoTile" key={photo.id}>
+                        <div><AdminPreviewImage src={photo.src} alt={`${variant.name} ${photoIndex + 1}`} fit={photo.settings.catalogFit} position={imagePosition(photo.settings.catalogX, photo.settings.catalogY)} /></div>
+                        <span>{photoIndex === 0 ? 'Главное' : `Фото ${photoIndex + 1}`}</span>
+                        <p>
+                          <button type="button" onClick={() => moveVariantPhoto(variant.id, photoIndex, -1)} disabled={photoIndex === 0}>←</button>
+                          <button type="button" onClick={() => moveVariantPhoto(variant.id, photoIndex, 1)} disabled={photoIndex === variant.photos.length - 1}>→</button>
+                          <button type="button" onClick={() => removeVariantPhoto(variant.id, photoIndex)}>×</button>
+                        </p>
+                      </div>
+                    )) : <em>Фото для этого цвета пока не загружены.</em>}
+                  </div>
+                </div>
+              ))}
+              <button className="adminPrimaryBtn" type="button" onClick={addVariant}>Добавить расцветку</button>
+            </div>
 
             {uploadError && <p className="adminUploadError">{uploadError}</p>}
             <div className="adminCheckList">

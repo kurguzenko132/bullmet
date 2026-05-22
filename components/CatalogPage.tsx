@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Header, Footer } from './HomePage';
 import { SearchIcon, ToolsIcon, TruckIcon } from './Icons';
-import { categories } from './shopData';
+import { categories, expandProductVariants } from './shopData';
 import { useAdminProducts } from './useAdminProducts';
 import { AddToCartButton } from './AddToCartButton';
 import { FavoriteButton } from './FavoriteButton';
@@ -14,7 +14,7 @@ const materialFilters = ['Металл', 'Дерево', 'Металл и дер
 
 export function CatalogPage() {
   const { items, ready } = useAdminProducts();
-  const catalogProducts = ready ? items.filter((product) => product.status !== 'draft') : [];
+  const catalogProducts = ready ? expandProductVariants(items.filter((product) => product.status !== 'draft')) : [];
 
   return (
     <>
@@ -70,7 +70,7 @@ export function CatalogPage() {
                   <div className="catalogCard__fav"><FavoriteButton product={product} /></div>
                   <div className="catalogCard__body">
                     <Link href={`/catalog/${product.slug}`} className="catalogCard__title">{product.title}</Link>
-                    <p>{product.short}</p>
+                    <p>{product.variantName ? `${product.short} · ${product.variantName}` : product.short}</p>
                     <div className="catalogCard__bottom"><b>от {product.price} BYN</b><AddToCartButton product={product} iconOnly /></div>
                   </div>
                 </article>

@@ -26,6 +26,7 @@ create table if not exists public.products (
   product_image_fit text not null default 'cover' check (product_image_fit in ('cover', 'contain')),
   product_image_position text not null default 'center center',
   image_settings jsonb not null default '{}'::jsonb,
+  variants jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -37,6 +38,7 @@ alter table public.products add column if not exists catalog_image_position text
 alter table public.products add column if not exists product_image_fit text not null default 'cover';
 alter table public.products add column if not exists product_image_position text not null default 'center center';
 alter table public.products add column if not exists image_settings jsonb not null default '{}'::jsonb;
+alter table public.products add column if not exists variants jsonb not null default '[]'::jsonb;
 
 create table if not exists public.orders (
   id text primary key,

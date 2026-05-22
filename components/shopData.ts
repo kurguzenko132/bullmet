@@ -1,5 +1,19 @@
 import type { ImageDisplaySettings } from '../lib/imageDisplay';
 
+export type ProductVariant = {
+  id: string;
+  name: string;
+  slug: string;
+  colorHex?: string;
+  image: string;
+  images: string[];
+  imageSettings?: Record<string, ImageDisplaySettings>;
+  catalogImageFit?: 'cover' | 'contain';
+  catalogImagePosition?: string;
+  productImageFit?: 'cover' | 'contain';
+  productImagePosition?: string;
+};
+
 export type Product = {
   slug: string;
   title: string;
@@ -18,7 +32,70 @@ export type Product = {
   productImageFit?: 'cover' | 'contain';
   productImagePosition?: string;
   imageSettings?: Record<string, ImageDisplaySettings>;
+  variants?: ProductVariant[];
+  activeVariantId?: string;
+  parentSlug?: string;
+  variantName?: string;
+  variantSlug?: string;
+  variantColorHex?: string;
 };
+
+
+export function slugifyVariant(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[а-яё]/g, (char) => {
+      const map: Record<string, string> = {
+        а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
+      };
+      return map[char] ?? char;
+    })
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'color';
+}
+
+export function getProductVariantSlug(product: Product, variant: ProductVariant) {
+  return `${product.slug}-${variant.slug}`;
+}
+
+export function applyVariantToProduct(product: Product, variant?: ProductVariant): Product {
+  if (!variant) return product;
+  return {
+    ...product,
+    slug: getProductVariantSlug(product, variant),
+    parentSlug: product.slug,
+    activeVariantId: variant.id,
+    variantName: variant.name,
+    variantSlug: variant.slug,
+    variantColorHex: variant.colorHex,
+    image: variant.image,
+    images: variant.images?.length ? variant.images : [variant.image],
+    imageSettings: variant.imageSettings ?? product.imageSettings ?? {},
+    catalogImageFit: variant.catalogImageFit ?? product.catalogImageFit,
+    catalogImagePosition: variant.catalogImagePosition ?? product.catalogImagePosition,
+    productImageFit: variant.productImageFit ?? product.productImageFit,
+    productImagePosition: variant.productImagePosition ?? product.productImagePosition,
+  };
+}
+
+export function expandProductVariants(items: Product[]): Product[] {
+  return items.flatMap((product) => {
+    const variants = product.variants?.filter((variant) => variant.name && variant.image) ?? [];
+    if (!variants.length) return [product];
+    return variants.map((variant) => applyVariantToProduct(product, variant));
+  });
+}
+
+export function findProductByVariantSlug(items: Product[], slug: string): Product | null {
+  for (const product of items) {
+    if (product.slug === slug) return product;
+    for (const variant of product.variants ?? []) {
+      if (getProductVariantSlug(product, variant) === slug) return applyVariantToProduct(product, variant);
+    }
+  }
+  return null;
+}
 
 export const categories = [
   'Часы собственного производства',

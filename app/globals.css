@@ -2396,3 +2396,33 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
 .adminPhotoTile { touch-action: none; user-select: none; cursor: grab; }
 .adminPhotoTile:active, .adminPhotoTile.isDragging { cursor: grabbing; }
 .adminHeroPreview img, .promo__bg img { transform: translateZ(0); }
+
+/* Product color variants */
+.productColorName { margin: -4px 0 10px; color: #e65a12; font-size: 14px; font-weight: 800; }
+.productColorChooser { margin-top: 18px; }
+.colorOptions { display: flex; flex-wrap: wrap; gap: 10px; }
+.colorOptions button { min-height: 44px; padding: 0 14px; border: 1px solid #ddd5cd; background: #fff; display: inline-flex; align-items: center; gap: 9px; cursor: pointer; font-weight: 800; transition: .2s ease; }
+.colorOptions button.active { border-color: var(--orange); color: var(--orange); box-shadow: inset 0 0 0 1px var(--orange); }
+.colorOptions i { width: 18px; height: 18px; border-radius: 999px; border: 1px solid rgba(0,0,0,.18); display: inline-block; }
+
+/* Admin product variants */
+.adminVariantManager { margin-top: 26px; padding-top: 22px; border-top: 1px solid #e9e1d9; }
+.adminVariantCard { margin-top: 16px; padding: 16px; border: 1px solid #e7ded6; background: #fffaf6; border-radius: 14px; }
+.adminVariantCard__top { display: grid; grid-template-columns: 1fr 120px auto; gap: 12px; align-items: end; }
+.adminVariantCard__top label { display: grid; gap: 8px; color: #5f5750; font-weight: 800; }
+.adminVariantCard__top input:not([type='color']) { height: 42px; border: 1px solid #ded6ce; padding: 0 12px; font: inherit; background: #fff; }
+.adminVariantCard__top input[type='color'] { width: 100%; height: 42px; border: 1px solid #ded6ce; background: #fff; padding: 4px; }
+.adminUploadBox--small { margin-top: 14px; }
+.adminVariantPhotos { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+.adminVariantPhotos > em { color: #7d756d; font-style: normal; font-size: 14px; }
+.adminVariantPhotoTile { border: 1px solid #e2d9d0; background: #fff; padding: 8px; border-radius: 12px; }
+.adminVariantPhotoTile > div { position: relative; height: 92px; overflow: hidden; border-radius: 9px; background: #eee; }
+.adminVariantPhotoTile img { width: 100%; height: 100%; object-fit: cover; }
+.adminVariantPhotoTile span { display: block; margin-top: 7px; font-size: 12px; font-weight: 800; }
+.adminVariantPhotoTile p { margin: 7px 0 0; display: flex; gap: 5px; }
+.adminVariantPhotoTile button { height: 28px; min-width: 28px; border: 1px solid #e2d9d0; background: #fff; cursor: pointer; }
+.adminVariantPhotoTile button:disabled { opacity: .35; cursor: not-allowed; }
+
+@media (max-width: 760px) {
+  .adminVariantCard__top { grid-template-columns: 1fr; }
+}

@@ -8,6 +8,7 @@ import { CartHeaderButton } from './CartHeaderButton';
 import { HomeSettings, readHomeSettingsAsync } from './siteSettings';
 import { useAdminProducts } from './useAdminProducts';
 import type { AdminProduct } from './adminProductStore';
+import { expandProductVariants } from './shopData';
 import { getImageSettings } from '../lib/imageDisplay';
 
 const nav = [
@@ -132,8 +133,7 @@ function Feature({ icon: Icon, title }: { icon: typeof FactoryIcon; title: strin
 }
 
 function ProductsAndServices({ products }: { products: AdminProduct[] }) {
-  const visibleProducts = products
-    .filter((product) => product.status !== 'draft')
+  const visibleProducts = expandProductVariants(products.filter((product) => product.status !== 'draft'))
     .filter((product) => product.isPopular || product.inStock !== false)
     .slice(0, 4);
 
@@ -147,7 +147,7 @@ function ProductsAndServices({ products }: { products: AdminProduct[] }) {
               {visibleProducts.map((product) => (
                 <Link className="product product--link" href={`/catalog/${product.slug}`} key={product.slug}>
                   <div className="product__image"><Image src={product.image} alt={product.title} fill sizes="25vw" style={{ objectFit: getImageSettings(product, product.image).catalogFit, objectPosition: getImageSettings(product, product.image).catalogPosition }} /></div>
-                  <div className="product__body"><h4>{product.title}</h4><p>{product.short}</p><div><b>от {product.price} BYN</b><span className="miniCart" aria-label="Перейти к товару"><CartIcon /></span></div></div>
+                  <div className="product__body"><h4>{product.title}</h4><p>{product.variantName ? `${product.short} · ${product.variantName}` : product.short}</p><div><b>от {product.price} BYN</b><span className="miniCart" aria-label="Перейти к товару"><CartIcon /></span></div></div>
                 </Link>
               ))}
             </div>
