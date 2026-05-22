@@ -33,6 +33,10 @@ export type Product = {
   productImagePosition?: string;
   imageSettings?: Record<string, ImageDisplaySettings>;
   variants?: ProductVariant[];
+  status?: 'active' | 'draft';
+  isPopular?: boolean;
+  isNew?: boolean;
+  inStock?: boolean;
   activeVariantId?: string;
   parentSlug?: string;
   variantName?: string;
