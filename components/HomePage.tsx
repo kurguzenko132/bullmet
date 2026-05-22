@@ -11,10 +11,10 @@ import type { AdminProduct } from './adminProductStore';
 
 const nav = [
   { title: 'Каталог', href: '/catalog' },
-  { title: 'Производство', href: '/#производство' },
-  { title: 'Услуги', href: '/#услуги' },
-  { title: 'О компании', href: '/#производство' },
-  { title: 'Контакты', href: '/#контакты' },
+  { title: 'Производство', href: '/production' },
+  { title: 'Услуги', href: '/services' },
+  { title: 'О компании', href: '/about' },
+  { title: 'Контакты', href: '/contacts' },
 ];
 
 const benefits = [
@@ -112,7 +112,7 @@ function Production() {
           <p className="sectionLabel">Мы производим сами</p>
           <h2>Собственное производство Bullmet</h2>
           <p>Мы не просто продаем готовые изделия — мы создаем их сами. Работаем с металлом и деревом, выполняем резку, сборку, покраску и изготовление изделий по индивидуальным размерам.</p>
-          <Link className="button button--orange" href="/#производство">Подробнее о производстве</Link>
+          <Link className="button button--orange" href="/production">Подробнее о производстве</Link>
         </div>
         <div className="production__image"><Image src="/assets/production.jpg" alt="Цех Bullmet" fill sizes="50vw" /></div>
         <div className="production__list">
@@ -216,8 +216,8 @@ export function Footer() {
       <div className="container footer__grid">
         <div className="footer__brand"><Logo /><p>Собственное производство изделий из металла и дерева с 2017 года.</p><div className="socials"><Link href="/contacts">IG</Link><Link href="/contacts">TG</Link><Link href="/contacts">WA</Link></div></div>
         <FooterCol title="Каталог" items={[{ label: 'Часы', href: '/catalog?category=Часы собственного производства' }, { label: 'Садовые качели', href: '/catalog?category=Садовые качели' }, { label: 'Изделия из металла', href: '/request?type=metal-cutting' }, { label: 'Изделия из дерева', href: '/request?type=wood-cutting' }]} />
-        <FooterCol title="Услуги" items={[{ label: 'Резка металла', href: '/request?type=metal-cutting' }, { label: 'Резка дерева', href: '/request?type=wood-cutting' }, { label: 'Индивидуальные заказы', href: '/request?type=custom' }]} />
-        <FooterCol title="Компания" items={[{ label: 'О нас', href: '/#производство' }, { label: 'Производство', href: '/#производство' }, { label: 'Доставка и оплата', href: '/delivery' }, { label: 'Контакты', href: '/contacts' }]} />
+        <FooterCol title="Услуги" items={[{ label: 'Резка металла', href: '/services' }, { label: 'Резка дерева', href: '/services' }, { label: 'Индивидуальные заказы', href: '/request?type=custom' }]} />
+        <FooterCol title="Компания" items={[{ label: 'О нас', href: '/about' }, { label: 'Производство', href: '/production' }, { label: 'Доставка и оплата', href: '/delivery' }, { label: 'Контакты', href: '/contacts' }]} />
         <div className="footerCol"><h4>Контакты</h4><p><PhoneIcon /> +375 29 123-45-67</p><p><MailIcon /> info@bullmet.by</p><p><PinIcon /> г. Минск, ул. Промышленная, 11</p><p><ClockIcon /> Пн–Пт: 9:00 — 18:00</p></div>
       </div>
     </footer>

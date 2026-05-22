@@ -10,15 +10,35 @@ import { getCurrentSession, signOutBullmet, type BullmetSession } from '@/lib/au
 
 const menuGroups = [
   { title: '', items: [
-    { label: 'Главная', href: '/admin', icon: HomeIcon },
+    { label: 'Главная', href: '/admin', icon: HomeIcon, enabled: true },
   ] },
   { title: 'Контент', items: [
-    { label: 'Главная страница', href: '/admin/home', icon: LayoutIcon },
-    { label: 'Каталог товаров', href: '/admin/products', icon: GridIcon },
+    { label: 'Главная страница', href: '/admin/home', icon: LayoutIcon, enabled: true },
+    { label: 'Страницы', href: '/admin/pages', icon: DocumentIcon, enabled: false },
+    { label: 'Каталог товаров', href: '/admin/products', icon: GridIcon, enabled: true },
+    { label: 'Услуги', href: '/admin/services', icon: ToolsIcon, enabled: false },
+    { label: 'Производство', href: '/admin/production', icon: FactoryIcon, enabled: false },
+    { label: 'Отзывы', href: '/admin/reviews', icon: StarIcon, enabled: false },
+    { label: 'Фото главной', href: '/admin/home-media', icon: ImageIcon, enabled: false },
+    { label: 'Медиафайлы', href: '/admin/media', icon: FolderIcon, enabled: false },
   ] },
   { title: 'Интернет-магазин', items: [
-    { label: 'Заказы', href: '/admin/orders', icon: CartIcon },
-    { label: 'Заявки на расчет', href: '/admin/requests', icon: DocumentIcon },
+    { label: 'Заказы', href: '/admin/orders', icon: CartIcon, enabled: true },
+    { label: 'Заявки на расчет', href: '/admin/requests', icon: DocumentIcon, enabled: true },
+    { label: 'Покупатели', href: '/admin/customers', icon: UserIcon, enabled: false },
+    { label: 'Купоны и скидки', href: '/admin/coupons', icon: TicketIcon, enabled: false },
+    { label: 'Доставка', href: '/admin/delivery', icon: TruckIcon, enabled: false },
+    { label: 'Оплата', href: '/admin/payment', icon: CardIcon, enabled: false },
+  ] },
+  { title: 'Аналитика', items: [
+    { label: 'Статистика', href: '/admin/stats', icon: ChartIcon, enabled: false },
+    { label: 'Отчеты', href: '/admin/reports', icon: ReportIcon, enabled: false },
+  ] },
+  { title: 'Настройки', items: [
+    { label: 'Настройки сайта', href: '/admin/settings', icon: SettingsIcon, enabled: false },
+    { label: 'Пользователи', href: '/admin/users', icon: UserIcon, enabled: false },
+    { label: 'Роли и права', href: '/admin/roles', icon: ShieldIcon, enabled: false },
+    { label: 'Резервное копирование', href: '/admin/backups', icon: BackupIcon, enabled: false },
   ] },
 ];
 
@@ -70,9 +90,22 @@ export function AdminLayout({ title, children }: { title: string; children: Reac
               {group.title && <p>{group.title}</p>}
               {group.items.map((item) => {
                 const Icon = item.icon;
-                const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(`${item.href}/`));
+                const active = item.enabled && (pathname === item.href || (item.href !== '/admin' && pathname.startsWith(`${item.href}/`)));
+                const className = [
+                  'adminMenuItem',
+                  active ? 'adminMenuItem--active' : '',
+                  !item.enabled ? 'adminMenuItem--disabled' : '',
+                ].filter(Boolean).join(' ');
+                if (!item.enabled) {
+                  return (
+                    <span className={className} key={item.label} title="Раздел будет реализован позже">
+                      <Icon />
+                      <span>{item.label}</span>
+                    </span>
+                  );
+                }
                 return (
-                  <Link className={active ? 'adminMenuItem adminMenuItem--active' : 'adminMenuItem'} href={item.href} key={item.label}>
+                  <Link className={className} href={item.href} key={item.label}>
                     <Icon />
                     <span>{item.label}</span>
                   </Link>
