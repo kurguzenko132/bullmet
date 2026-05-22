@@ -7,6 +7,7 @@ import { AdminLayout } from './AdminLayout';
 import { CartIcon, DraftIcon, UserIcon } from './Icons';
 import { type AdminProduct, readAdminProductsAsync } from './adminProductStore';
 import { type AdminOrder, type AdminRequest, readAdminOrdersAsync, readAdminRequestsAsync } from './adminBusinessStore';
+import { readHomeSettingsAsync, readLocalHomeSettings, type HomeSettings } from './siteSettings';
 
 function statusType(status: string) {
   if (status === 'Новый' || status === 'Новая') return 'new';
@@ -27,20 +28,23 @@ export function AdminDashboard() {
   const [requests, setRequests] = useState<AdminRequest[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [homeSettings, setHomeSettings] = useState<HomeSettings>(() => readLocalHomeSettings());
 
   useEffect(() => {
     let mounted = true;
 
     async function load() {
-      const [nextOrders, nextRequests, nextProducts] = await Promise.all([
+      const [nextOrders, nextRequests, nextProducts, nextHomeSettings] = await Promise.all([
         readAdminOrdersAsync(),
         readAdminRequestsAsync(),
         readAdminProductsAsync(),
+        readHomeSettingsAsync(),
       ]);
       if (!mounted) return;
       setOrders(nextOrders);
       setRequests(nextRequests);
       setProducts(nextProducts);
+      setHomeSettings(nextHomeSettings);
       setLoading(false);
     }
 
@@ -48,6 +52,7 @@ export function AdminDashboard() {
     window.addEventListener('bullmet-admin-orders-updated', load);
     window.addEventListener('bullmet-admin-requests-updated', load);
     window.addEventListener('bullmet-products-updated', load);
+    window.addEventListener('bullmet-home-settings-updated', load);
     window.addEventListener('storage', load);
 
     return () => {
@@ -55,6 +60,7 @@ export function AdminDashboard() {
       window.removeEventListener('bullmet-admin-orders-updated', load);
       window.removeEventListener('bullmet-admin-requests-updated', load);
       window.removeEventListener('bullmet-products-updated', load);
+      window.removeEventListener('bullmet-home-settings-updated', load);
       window.removeEventListener('storage', load);
     };
   }, []);
@@ -101,7 +107,7 @@ export function AdminDashboard() {
           <div className="adminCard adminHeroCard">
             <div className="adminCardTitle">Главный слайд</div>
             <div className="adminHeroPreview">
-              <Image src="/assets/hero-machine.jpg" alt="Главный слайд Bullmet" fill sizes="50vw" />
+              <Image src={homeSettings.heroImage} alt="Главный слайд Bullmet" fill sizes="50vw" />
               <div className="adminHeroText">
                 <h2>Bullmet — собственное производство изделий из металла и дерева</h2>
                 <p>Фото главного экрана, категории и ссылки можно менять в разделе настроек главной страницы.</p>

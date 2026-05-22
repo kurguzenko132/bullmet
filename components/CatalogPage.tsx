@@ -4,16 +4,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Header, Footer } from './HomePage';
 import { SearchIcon, ToolsIcon, TruckIcon } from './Icons';
-import { categories, products } from './shopData';
+import { categories } from './shopData';
 import { useAdminProducts } from './useAdminProducts';
 import { AddToCartButton } from './AddToCartButton';
 import { FavoriteButton } from './FavoriteButton';
+import { getImageSettings } from '../lib/imageDisplay';
 
 const materialFilters = ['Металл', 'Дерево', 'Металл и дерево'];
 
 export function CatalogPage() {
   const { items, ready } = useAdminProducts();
-  const catalogProducts = ready ? items.filter((product) => product.status !== 'draft') : products;
+  const catalogProducts = ready ? items.filter((product) => product.status !== 'draft') : [];
 
   return (
     <>
@@ -64,7 +65,7 @@ export function CatalogPage() {
                 <article className="catalogCard" key={product.slug}>
                   <Link href={`/catalog/${product.slug}`} className="catalogCard__overlay" aria-label={`Открыть ${product.title}`} />
                   <Link href={`/catalog/${product.slug}`} className="catalogCard__image">
-                    <Image src={product.image} alt={product.title} fill sizes="(max-width: 760px) 50vw, 25vw" style={{ objectFit: product.catalogImageFit ?? 'cover', objectPosition: product.catalogImagePosition ?? 'center center' }} />
+                    <Image src={product.image} alt={product.title} fill sizes="(max-width: 760px) 50vw, 25vw" style={{ objectFit: getImageSettings(product, product.image).catalogFit, objectPosition: getImageSettings(product, product.image).catalogPosition }} />
                   </Link>
                   <div className="catalogCard__fav"><FavoriteButton product={product} /></div>
                   <div className="catalogCard__body">

@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowIcon, CartIcon, ClockIcon, DraftIcon, FactoryIcon, MailIcon, PhoneIcon, PinIcon, SearchIcon, ShieldIcon, ToolsIcon, TruckIcon, UserIcon } from './Icons';
 import { CartHeaderButton } from './CartHeaderButton';
-import { defaultHomeSettings, HomeSettings, readHomeSettingsAsync } from './siteSettings';
+import { HomeSettings, readHomeSettingsAsync, readLocalHomeSettings } from './siteSettings';
 import { useAdminProducts } from './useAdminProducts';
 import type { AdminProduct } from './adminProductStore';
+import { getImageSettings } from '../lib/imageDisplay';
 
 const nav = [
   { title: 'Каталог', href: '/catalog' },
@@ -145,7 +146,7 @@ function ProductsAndServices({ products }: { products: AdminProduct[] }) {
             <div className="productsGrid">
               {visibleProducts.map((product) => (
                 <Link className="product product--link" href={`/catalog/${product.slug}`} key={product.slug}>
-                  <div className="product__image"><Image src={product.image} alt={product.title} fill sizes="25vw" style={{ objectFit: product.catalogImageFit ?? 'cover', objectPosition: product.catalogImagePosition ?? 'center center' }} /></div>
+                  <div className="product__image"><Image src={product.image} alt={product.title} fill sizes="25vw" style={{ objectFit: getImageSettings(product, product.image).catalogFit, objectPosition: getImageSettings(product, product.image).catalogPosition }} /></div>
                   <div className="product__body"><h4>{product.title}</h4><p>{product.short}</p><div><b>от {product.price} BYN</b><span className="miniCart" aria-label="Перейти к товару"><CartIcon /></span></div></div>
                 </Link>
               ))}
@@ -229,7 +230,7 @@ function FooterCol({ title, items }: { title: string; items: { label: string; hr
 }
 
 export function HomePage() {
-  const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
+  const [settings, setSettings] = useState<HomeSettings>(() => readLocalHomeSettings());
   const { items: adminProducts } = useAdminProducts();
 
   useEffect(() => {

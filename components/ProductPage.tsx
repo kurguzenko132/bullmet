@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { Header, Footer } from './HomePage';
-import { getProduct, products } from './shopData';
+
 import { useAdminProducts } from './useAdminProducts';
 import { ProductDetails, ProductServiceStrip, RelatedProducts } from './ProductDetails';
 
 export function ProductPage({ slug }: { slug: string }) {
   const { items, ready } = useAdminProducts();
-  const sourceProducts = ready ? items.filter((item) => item.status !== 'draft') : products;
-  const product = sourceProducts.find((item) => item.slug === slug) ?? (!ready ? getProduct(slug) : null);
+  const sourceProducts = ready ? items.filter((item) => item.status !== 'draft') : [];
+  const product = sourceProducts.find((item) => item.slug === slug) ?? null;
 
   if (ready && !product) {
     return (

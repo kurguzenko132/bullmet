@@ -1,3 +1,5 @@
+import type { ImageDisplaySettings } from '../lib/imageDisplay';
+
 export type Product = {
   slug: string;
   title: string;
@@ -15,6 +17,7 @@ export type Product = {
   catalogImagePosition?: string;
   productImageFit?: 'cover' | 'contain';
   productImagePosition?: string;
+  imageSettings?: Record<string, ImageDisplaySettings>;
 };
 
 export const categories = [

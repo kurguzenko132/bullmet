@@ -1,4 +1,3 @@
-import { getReadableError } from './errorMessages';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
 
 export const PRODUCT_IMAGES_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_IMAGES_BUCKET || 'product-images';
@@ -35,9 +34,7 @@ export async function uploadProductImages(slug: string, files: File[]) {
         contentType: file.type || 'image/jpeg',
       });
 
-    if (error) {
-      throw new Error(getReadableError(error, `Не удалось загрузить фото в Supabase Storage (${PRODUCT_IMAGES_BUCKET})`));
-    }
+    if (error) throw error;
 
     const { data } = supabase.storage
       .from(PRODUCT_IMAGES_BUCKET)

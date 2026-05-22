@@ -2155,3 +2155,97 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
 @media (max-width: 760px) {
   .adminImageTuning__grid { grid-template-columns: 1fr; }
 }
+
+/* Final photo manager fixes */
+.adminPhotoTile.isSelected {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 2px rgba(230, 90, 18, .18), 0 12px 28px rgba(28, 24, 20, .08);
+}
+.adminPhotoTile__image img,
+.adminImagePreview img,
+.adminCropPreview img {
+  pointer-events: none;
+  user-select: none;
+}
+.adminImageTuning--advanced {
+  display: grid;
+  gap: 14px;
+}
+.adminCropTabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.adminCropTabs button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #ded5cc;
+  border-radius: 999px;
+  background: #fff;
+  color: #25211d;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+}
+.adminCropTabs button.active {
+  border-color: var(--orange);
+  background: var(--orange);
+  color: #fff;
+}
+.adminCropWorkbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(220px, .9fr);
+  gap: 14px;
+  align-items: start;
+}
+.adminCropPreview {
+  position: relative;
+  min-height: 230px;
+  overflow: hidden;
+  border: 1px solid #ded5cc;
+  border-radius: 12px;
+  background: #eee;
+  cursor: crosshair;
+  touch-action: none;
+}
+.adminCropPreview--product {
+  min-height: 320px;
+}
+.adminCropPoint {
+  position: absolute;
+  z-index: 3;
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  background: var(--orange);
+  box-shadow: 0 6px 16px rgba(0,0,0,.28);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.adminCropControls {
+  display: grid;
+  gap: 12px;
+}
+.adminCropControls label {
+  display: grid;
+  gap: 8px;
+}
+.adminCropControls input[type="range"] {
+  width: 100%;
+  accent-color: var(--orange);
+}
+.adminCropControls small {
+  color: #756c63;
+  font-size: 12px;
+  line-height: 1.45;
+}
+@media (max-width: 760px) {
+  .adminCropWorkbench { grid-template-columns: 1fr; }
+  .adminCropPreview, .adminCropPreview--product { min-height: 240px; }
+}
+
+.promo--loading {
+  min-height: 455px;
+  background: #f7f4f0;
+}

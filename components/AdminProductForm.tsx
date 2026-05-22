@@ -2,38 +2,52 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { FormEvent, PointerEvent, useEffect, useMemo, useState } from 'react';
+import { DragEvent, FormEvent, PointerEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminLayout } from './AdminLayout';
 import { type AdminProduct, productFromForm, readAdminProducts, saveAdminProductAsync } from './adminProductStore';
 import { uploadProductImages } from '../lib/productImages';
 import { categories } from './shopData';
+import { clampPercent, getImageSettings, imagePosition, normalizeImageDisplaySettings, type ImageDisplaySettings, type ImageFit } from '../lib/imageDisplay';
 
-const fallbackImages = ['/assets/cat-clock.jpg', '/assets/cat-swing.jpg', '/assets/cat-metal.jpg', '/assets/cat-wood.jpg', '/assets/cat-custom.jpg', '/assets/production.jpg'];
+const fallbackImage = '/assets/cat-clock.jpg';
 
-type PhotoItem = { id: string; src: string; file?: File; name?: string };
-type ImageFit = 'cover' | 'contain';
+type PhotoItem = {
+  id: string;
+  src: string;
+  file?: File;
+  name?: string;
+  settings: Required<ImageDisplaySettings>;
+};
 
-const positionOptions = [
-  { value: 'center center', label: 'По центру' },
-  { value: 'center top', label: 'Верх' },
-  { value: 'center bottom', label: 'Низ' },
-  { value: 'left center', label: 'Лево' },
-  { value: 'right center', label: 'Право' },
-  { value: 'left top', label: 'Левый верх' },
-  { value: 'right top', label: 'Правый верх' },
-  { value: 'left bottom', label: 'Левый низ' },
-  { value: 'right bottom', label: 'Правый низ' },
-];
+type CropTarget = 'catalog' | 'product';
 
-function AdminPreviewImage({ src, alt, fit = 'cover', position = 'center center' }: { src: string; alt: string; fit?: ImageFit; position?: string }) {
+function AdminPreviewImage({ src, alt, fit = 'cover', position = '50% 50%' }: { src: string; alt: string; fit?: ImageFit; position?: string }) {
   const style = { objectFit: fit, objectPosition: position } as const;
+  if (src.startsWith('blob:') || src.startsWith('data:')) return <img src={src} alt={alt} style={style} draggable={false} />;
+  return <Image src={src} alt={alt} fill sizes="360px" style={style} draggable={false} />;
+}
 
-  if (src.startsWith('blob:') || src.startsWith('data:')) {
-    return <img src={src} alt={alt} style={style} />;
-  }
+function makePhotoId(src: string, index: number) {
+  return `photo-${index}-${src}`.replace(/[^a-zA-Z0-9_-]/g, '-');
+}
 
-  return <Image src={src} alt={alt} fill sizes="360px" style={style} />;
+function buildInitialPhotos(product?: AdminProduct): PhotoItem[] {
+  const images = [product?.image, ...(product?.images ?? [])]
+    .filter(Boolean)
+    .filter((image, index, array) => array.indexOf(image) === index) as string[];
+
+  const safeImages = images.length ? images : [fallbackImage];
+
+  return safeImages.map((src, index) => {
+    const settingsFromProduct = getImageSettings(product ?? {}, src).raw;
+    return {
+      id: makePhotoId(src, index),
+      src,
+      name: src.split('/').pop() || `Фото ${index + 1}`,
+      settings: settingsFromProduct,
+    };
+  });
 }
 
 function reorderPhotos(items: PhotoItem[], fromId: string, toId: string) {
@@ -50,36 +64,21 @@ function reorderPhotos(items: PhotoItem[], fromId: string, toId: string) {
 export function AdminProductForm({ slug }: { slug?: string }) {
   const router = useRouter();
   const existing = useMemo(() => slug ? readAdminProducts().find((item) => item.slug === slug) : undefined, [slug]);
-
-  const initialPhotos = useMemo(() => {
-    const images = [existing?.image, ...(existing?.images ?? [])]
-      .filter(Boolean)
-      .filter((image, index, array) => array.indexOf(image) === index) as string[];
-
-    return (images.length ? images : [fallbackImages[0]]).map((src, index) => ({
-      id: `existing-${index}-${src}`,
-      src,
-      name: src.split('/').pop() || `Фото ${index + 1}`,
-    }));
-  }, [existing]);
+  const initialPhotos = useMemo(() => buildInitialPhotos(existing), [existing]);
 
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
+  const [selectedPhotoId, setSelectedPhotoId] = useState(initialPhotos[0]?.id ?? '');
   const [uploadError, setUploadError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [draggedPhotoId, setDraggedPhotoId] = useState<string | null>(null);
   const [dragOverPhotoId, setDragOverPhotoId] = useState<string | null>(null);
-  const [catalogImageFit, setCatalogImageFit] = useState<ImageFit>(existing?.catalogImageFit ?? 'cover');
-  const [catalogImagePosition, setCatalogImagePosition] = useState(existing?.catalogImagePosition ?? 'center center');
-  const [productImageFit, setProductImageFit] = useState<ImageFit>(existing?.productImageFit ?? 'cover');
-  const [productImagePosition, setProductImagePosition] = useState(existing?.productImagePosition ?? 'center center');
+  const [cropTarget, setCropTarget] = useState<CropTarget>('catalog');
+  const [isDraggingCrop, setIsDraggingCrop] = useState(false);
 
   useEffect(() => {
     setPhotos(initialPhotos);
-    setCatalogImageFit(existing?.catalogImageFit ?? 'cover');
-    setCatalogImagePosition(existing?.catalogImagePosition ?? 'center center');
-    setProductImageFit(existing?.productImageFit ?? 'cover');
-    setProductImagePosition(existing?.productImagePosition ?? 'center center');
-  }, [initialPhotos, existing]);
+    setSelectedPhotoId(initialPhotos[0]?.id ?? '');
+  }, [initialPhotos]);
 
   useEffect(() => {
     return () => {
@@ -89,7 +88,13 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     };
   }, []);
 
-  const currentPreview = photos[0]?.src ?? fallbackImages[0];
+  const selectedPhoto = photos.find((photo) => photo.id === selectedPhotoId) ?? photos[0];
+  const currentPreview = selectedPhoto?.src ?? photos[0]?.src ?? fallbackImage;
+  const selectedSettings = selectedPhoto?.settings ?? normalizeImageDisplaySettings({});
+
+  function updatePhotoSettings(photoId: string, patch: Partial<ImageDisplaySettings>) {
+    setPhotos((items) => items.map((photo) => photo.id === photoId ? { ...photo, settings: normalizeImageDisplaySettings({ ...photo.settings, ...patch }) } : photo));
+  }
 
   function movePhoto(index: number, direction: -1 | 1) {
     setPhotos((items) => {
@@ -106,7 +111,9 @@ export function AdminProductForm({ slug }: { slug?: string }) {
       const removed = items[index];
       if (removed?.src.startsWith('blob:')) URL.revokeObjectURL(removed.src);
       const next = items.filter((_, itemIndex) => itemIndex !== index);
-      return next.length ? next : [{ id: 'fallback-photo', src: fallbackImages[0], name: 'Фото по умолчанию' }];
+      if (!next.length) return [{ id: 'fallback-photo', src: fallbackImage, name: 'Фото по умолчанию', settings: normalizeImageDisplaySettings({}) }];
+      if (removed?.id === selectedPhotoId) setSelectedPhotoId(next[0].id);
+      return next;
     });
   }
 
@@ -120,22 +127,29 @@ export function AdminProductForm({ slug }: { slug?: string }) {
       src: URL.createObjectURL(file),
       file,
       name: file.name,
+      settings: normalizeImageDisplaySettings({}),
     }));
 
     setPhotos((items) => {
-      const withoutFallback = items.length === 1 && items[0].src === fallbackImages[0] && !existing ? [] : items;
-      return [...withoutFallback, ...nextPhotos];
+      const withoutFallback = items.length === 1 && items[0].src === fallbackImage && !existing ? [] : items;
+      const merged = [...withoutFallback, ...nextPhotos];
+      if (!selectedPhotoId || !withoutFallback.length) setSelectedPhotoId(merged[0]?.id ?? '');
+      return merged;
     });
   }
 
-  function handleNativeDragStart(photoId: string) {
+  function handleDragStart(event: DragEvent<HTMLDivElement>, photoId: string) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', photoId);
     setDraggedPhotoId(photoId);
     setDragOverPhotoId(photoId);
   }
 
-  function handleNativeDrop(targetId: string) {
-    if (!draggedPhotoId) return;
-    setPhotos((items) => reorderPhotos(items, draggedPhotoId, targetId));
+  function handleDrop(event: DragEvent<HTMLDivElement>, targetId: string) {
+    event.preventDefault();
+    const sourceId = event.dataTransfer.getData('text/plain') || draggedPhotoId;
+    if (!sourceId) return;
+    setPhotos((items) => reorderPhotos(items, sourceId, targetId));
     setDraggedPhotoId(null);
     setDragOverPhotoId(null);
   }
@@ -145,23 +159,32 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     if (target.closest('button')) return;
     setDraggedPhotoId(photoId);
     setDragOverPhotoId(photoId);
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setSelectedPhotoId(photoId);
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (!draggedPhotoId) return;
+    if (!draggedPhotoId || event.pointerType === 'mouse') return;
     const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
     const tile = element?.closest<HTMLElement>('[data-photo-id]');
-    const nextId = tile?.dataset.photoId;
-    if (nextId) setDragOverPhotoId(nextId);
+    const targetId = tile?.dataset.photoId;
+    if (targetId && targetId !== draggedPhotoId) {
+      setPhotos((items) => reorderPhotos(items, draggedPhotoId, targetId));
+      setDraggedPhotoId(targetId);
+      setDragOverPhotoId(targetId);
+    }
   }
 
   function handlePointerUp() {
-    if (draggedPhotoId && dragOverPhotoId) {
-      setPhotos((items) => reorderPhotos(items, draggedPhotoId, dragOverPhotoId));
-    }
     setDraggedPhotoId(null);
     setDragOverPhotoId(null);
+  }
+
+  function setCropFromPointer(event: PointerEvent<HTMLDivElement>) {
+    if (!selectedPhoto) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = clampPercent(((event.clientX - rect.left) / rect.width) * 100);
+    const y = clampPercent(((event.clientY - rect.top) / rect.height) * 100);
+    updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogX: x, catalogY: y } : { productX: x, productY: y });
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -173,27 +196,25 @@ export function AdminProductForm({ slug }: { slug?: string }) {
       const formData = new FormData(event.currentTarget);
       const product = productFromForm(formData, existing);
       const uploadItems = photos.filter((photo) => photo.file);
-      const uploadedImages = uploadItems.length
-        ? await uploadProductImages(product.slug, uploadItems.map((photo) => photo.file as File))
-        : [];
+      const uploadedImages = uploadItems.length ? await uploadProductImages(product.slug, uploadItems.map((photo) => photo.file as File)) : [];
       let uploadIndex = 0;
+      const imageSettings: Record<string, ImageDisplaySettings> = {};
       const orderedImages = photos
         .map((photo) => {
-          if (photo.file) {
-            const uploaded = uploadedImages[uploadIndex];
-            uploadIndex += 1;
-            return uploaded;
-          }
-          return photo.src;
+          const url = photo.file ? uploadedImages[uploadIndex++] : photo.src;
+          if (url) imageSettings[url] = photo.settings;
+          return url;
         })
         .filter((item, index, array): item is string => Boolean(item) && array.indexOf(item) === index);
 
       product.image = orderedImages[0] ?? product.image;
       product.images = orderedImages.length ? orderedImages : [product.image];
-      product.catalogImageFit = catalogImageFit;
-      product.catalogImagePosition = catalogImagePosition;
-      product.productImageFit = productImageFit;
-      product.productImagePosition = productImagePosition;
+      product.imageSettings = imageSettings;
+      const firstSettings = normalizeImageDisplaySettings(imageSettings[product.image]);
+      product.catalogImageFit = firstSettings.catalogFit;
+      product.catalogImagePosition = imagePosition(firstSettings.catalogX, firstSettings.catalogY);
+      product.productImageFit = firstSettings.productFit;
+      product.productImagePosition = imagePosition(firstSettings.productX, firstSettings.productY);
 
       await saveAdminProductAsync(product);
       router.push('/admin/products');
@@ -206,6 +227,10 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   }
 
   const title = existing ? 'Редактировать товар' : 'Добавить товар';
+  const catalogPosition = imagePosition(selectedSettings.catalogX, selectedSettings.catalogY);
+  const productPosition = imagePosition(selectedSettings.productX, selectedSettings.productY);
+  const activeFit = cropTarget === 'catalog' ? selectedSettings.catalogFit : selectedSettings.productFit;
+  const activePosition = cropTarget === 'catalog' ? catalogPosition : productPosition;
 
   return (
     <AdminLayout title={title}>
@@ -236,89 +261,85 @@ export function AdminProductForm({ slug }: { slug?: string }) {
 
           <aside className="adminCard adminProductMedia">
             <h3>Фото товара</h3>
-            <div className="adminImagePreview"><AdminPreviewImage src={currentPreview} alt="Предпросмотр" fit={catalogImageFit} position={catalogImagePosition} /></div>
-            <input type="hidden" name="image" value={photos[0]?.src ?? fallbackImages[0]} />
+            <div className="adminImagePreview"><AdminPreviewImage src={photos[0]?.src ?? fallbackImage} alt="Главное фото" fit={photos[0]?.settings.catalogFit} position={imagePosition(photos[0]?.settings.catalogX, photos[0]?.settings.catalogY)} /></div>
+            <input type="hidden" name="image" value={photos[0]?.src ?? fallbackImage} />
             <input type="hidden" name="images" value={photos.map((photo) => photo.src).join('\n')} />
-            <input type="hidden" name="catalogImageFit" value={catalogImageFit} />
-            <input type="hidden" name="catalogImagePosition" value={catalogImagePosition} />
-            <input type="hidden" name="productImageFit" value={productImageFit} />
-            <input type="hidden" name="productImagePosition" value={productImagePosition} />
 
             <label className="adminUploadBox">Загрузить новые фото
-              <input type="file" accept="image/*" multiple onChange={(event) => {
-                addPhotoFiles(event.target.files);
-                event.currentTarget.value = '';
-              }} />
-              <span>JPG, PNG, WEBP · можно выбрать несколько. После выбора фото появятся ниже.</span>
+              <input type="file" accept="image/*" multiple onChange={(event) => { addPhotoFiles(event.target.files); event.currentTarget.value = ''; }} />
+              <span>JPG, PNG, WEBP · можно выбрать несколько.</span>
             </label>
 
             <div className="adminPhotoManager">
               <div className="adminPhotoManager__head">
                 <b>Фотографии товара</b>
-                <span>Первая миниатюра — основное фото. Фото можно перетаскивать мышкой или пальцем.</span>
+                <span>Перетаскивай миниатюры мышкой или пальцем. Первая миниатюра — основное фото.</span>
               </div>
               <div className="adminPhotoGrid" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp}>
-                {photos.map((photo, index) => (
-                  <div
-                    className={`adminPhotoTile ${draggedPhotoId === photo.id ? 'isDragging' : ''} ${dragOverPhotoId === photo.id && draggedPhotoId !== photo.id ? 'isDragOver' : ''}`}
-                    key={photo.id}
-                    data-photo-id={photo.id}
-                    draggable
-                    onDragStart={() => handleNativeDragStart(photo.id)}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      setDragOverPhotoId(photo.id);
-                    }}
-                    onDrop={() => handleNativeDrop(photo.id)}
-                    onDragEnd={() => {
-                      setDraggedPhotoId(null);
-                      setDragOverPhotoId(null);
-                    }}
-                    onPointerDown={(event) => handlePointerDown(event, photo.id)}
-                  >
-                    <div className="adminPhotoTile__image"><AdminPreviewImage src={photo.src} alt={`Фото товара ${index + 1}`} fit={catalogImageFit} position={catalogImagePosition} /></div>
-                    <div className="adminPhotoTile__meta">
-                      <span>{index === 0 ? 'Основное' : `Фото ${index + 1}`}</span>
-                      {photo.file && <em>Новое</em>}
+                {photos.map((photo, index) => {
+                  const position = imagePosition(photo.settings.catalogX, photo.settings.catalogY);
+                  return (
+                    <div
+                      className={`adminPhotoTile ${selectedPhotoId === photo.id ? 'isSelected' : ''} ${draggedPhotoId === photo.id ? 'isDragging' : ''} ${dragOverPhotoId === photo.id && draggedPhotoId !== photo.id ? 'isDragOver' : ''}`}
+                      key={photo.id}
+                      data-photo-id={photo.id}
+                      draggable
+                      onClick={() => setSelectedPhotoId(photo.id)}
+                      onDragStart={(event) => handleDragStart(event, photo.id)}
+                      onDragOver={(event) => { event.preventDefault(); setDragOverPhotoId(photo.id); }}
+                      onDrop={(event) => handleDrop(event, photo.id)}
+                      onDragEnd={() => { setDraggedPhotoId(null); setDragOverPhotoId(null); }}
+                      onPointerDown={(event) => handlePointerDown(event, photo.id)}
+                    >
+                      <div className="adminPhotoTile__image"><AdminPreviewImage src={photo.src} alt={`Фото товара ${index + 1}`} fit={photo.settings.catalogFit} position={position} /></div>
+                      <div className="adminPhotoTile__meta"><span>{index === 0 ? 'Основное' : `Фото ${index + 1}`}</span>{photo.file && <em>Новое</em>}</div>
+                      <div className="adminPhotoTile__actions">
+                        <button type="button" onClick={() => movePhoto(index, -1)} disabled={index === 0}>←</button>
+                        <button type="button" onClick={() => movePhoto(index, 1)} disabled={index === photos.length - 1}>→</button>
+                        <button type="button" onClick={() => removePhoto(index)}>Удалить</button>
+                      </div>
                     </div>
-                    <div className="adminPhotoTile__actions">
-                      <button type="button" onClick={() => movePhoto(index, -1)} disabled={index === 0}>←</button>
-                      <button type="button" onClick={() => movePhoto(index, 1)} disabled={index === photos.length - 1}>→</button>
-                      <button type="button" onClick={() => removePhoto(index)}>Удалить</button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            <div className="adminImageTuning">
-              <h4>Как фото будет выглядеть на сайте</h4>
-              <div className="adminImageTuning__grid">
-                <label>Каталог: масштаб
-                  <select value={catalogImageFit} onChange={(event) => setCatalogImageFit(event.target.value as ImageFit)}>
-                    <option value="cover">Заполнить карточку</option>
-                    <option value="contain">Показать целиком</option>
-                  </select>
-                </label>
-                <label>Каталог: позиция
-                  <select value={catalogImagePosition} onChange={(event) => setCatalogImagePosition(event.target.value)}>
-                    {positionOptions.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}
-                  </select>
-                </label>
-                <label>Карточка товара: масштаб
-                  <select value={productImageFit} onChange={(event) => setProductImageFit(event.target.value as ImageFit)}>
-                    <option value="cover">Заполнить область</option>
-                    <option value="contain">Показать целиком</option>
-                  </select>
-                </label>
-                <label>Карточка товара: позиция
-                  <select value={productImagePosition} onChange={(event) => setProductImagePosition(event.target.value)}>
-                    {positionOptions.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}
-                  </select>
-                </label>
+            {selectedPhoto && (
+              <div className="adminImageTuning adminImageTuning--advanced">
+                <h4>Настройка выбранного фото</h4>
+                <p>Выбрано: <b>{selectedPhoto.name || 'Фото товара'}</b>. Настройки сохраняются отдельно для каждой фотографии.</p>
+                <div className="adminCropTabs">
+                  <button type="button" className={cropTarget === 'catalog' ? 'active' : ''} onClick={() => setCropTarget('catalog')}>Карточка каталога</button>
+                  <button type="button" className={cropTarget === 'product' ? 'active' : ''} onClick={() => setCropTarget('product')}>Страница товара</button>
+                </div>
+                <div className="adminCropWorkbench">
+                  <div className={`adminCropPreview ${cropTarget === 'product' ? 'adminCropPreview--product' : ''}`}
+                    onPointerDown={(event) => { setIsDraggingCrop(true); setCropFromPointer(event); event.currentTarget.setPointerCapture?.(event.pointerId); }}
+                    onPointerMove={(event) => { if (isDraggingCrop) setCropFromPointer(event); }}
+                    onPointerUp={() => setIsDraggingCrop(false)}
+                    onPointerCancel={() => setIsDraggingCrop(false)}
+                  >
+                    <AdminPreviewImage src={currentPreview} alt="Настройка кадра" fit={activeFit} position={activePosition} />
+                    <span className="adminCropPoint" style={{ left: `${cropTarget === 'catalog' ? selectedSettings.catalogX : selectedSettings.productX}%`, top: `${cropTarget === 'catalog' ? selectedSettings.catalogY : selectedSettings.productY}%` }} />
+                  </div>
+                  <div className="adminCropControls">
+                    <label>Масштаб
+                      <select value={cropTarget === 'catalog' ? selectedSettings.catalogFit : selectedSettings.productFit} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogFit: event.target.value as ImageFit } : { productFit: event.target.value as ImageFit })}>
+                        <option value="cover">Заполнить область</option>
+                        <option value="contain">Показать целиком</option>
+                      </select>
+                    </label>
+                    <label>Положение по горизонтали
+                      <input type="range" min="0" max="100" value={cropTarget === 'catalog' ? selectedSettings.catalogX : selectedSettings.productX} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogX: Number(event.target.value) } : { productX: Number(event.target.value) })} />
+                    </label>
+                    <label>Положение по вертикали
+                      <input type="range" min="0" max="100" value={cropTarget === 'catalog' ? selectedSettings.catalogY : selectedSettings.productY} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogY: Number(event.target.value) } : { productY: Number(event.target.value) })} />
+                    </label>
+                    <small>Можно двигать точку прямо на превью мышкой или пальцем.</small>
+                  </div>
+                </div>
               </div>
-              <p>Если важная часть фото обрезается, выбери “Показать целиком” или поменяй позицию кадра.</p>
-            </div>
+            )}
 
             {uploadError && <p className="adminUploadError">{uploadError}</p>}
             <div className="adminCheckList">

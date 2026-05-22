@@ -3,6 +3,7 @@
 import type { Product } from './shopData';
 import { products as baseProducts } from './shopData';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
+import { type ImageDisplaySettings } from '../lib/imageDisplay';
 
 export type AdminProduct = Product & {
   status?: 'active' | 'draft';
@@ -38,6 +39,7 @@ export function withAdminDefaults(product: Product): AdminProduct {
     catalogImagePosition: product.catalogImagePosition ?? 'center center',
     productImageFit: product.productImageFit ?? 'cover',
     productImagePosition: product.productImagePosition ?? 'center center',
+    imageSettings: product.imageSettings ?? {},
   };
 }
 
@@ -67,6 +69,7 @@ function productFromDb(row: any): AdminProduct {
     catalogImagePosition: row.catalog_image_position || 'center center',
     productImageFit: row.product_image_fit === 'contain' ? 'contain' : 'cover',
     productImagePosition: row.product_image_position || 'center center',
+    imageSettings: row.image_settings && typeof row.image_settings === 'object' ? row.image_settings as Record<string, ImageDisplaySettings> : {},
   };
 }
 
@@ -92,6 +95,7 @@ function productToDb(product: AdminProduct) {
     catalog_image_position: product.catalogImagePosition ?? 'center center',
     product_image_fit: product.productImageFit ?? 'cover',
     product_image_position: product.productImagePosition ?? 'center center',
+    image_settings: product.imageSettings ?? {},
   };
 }
 
@@ -119,7 +123,9 @@ export async function readAdminProductsAsync(): Promise<AdminProduct[]> {
       writeAdminProducts(items);
       return items;
     } catch (error) {
-      console.warn('Supabase products fallback to localStorage:', error);
+      console.warn('Supabase products read failed. Local stale demo products were cleared:', error);
+      writeAdminProducts([]);
+      return [];
     }
   }
   return readAdminProducts();
@@ -209,5 +215,6 @@ export function productFromForm(formData: FormData, old?: AdminProduct): AdminPr
     catalogImagePosition: String(formData.get('catalogImagePosition') || 'center center'),
     productImageFit: formData.get('productImageFit') === 'contain' ? 'contain' : 'cover',
     productImagePosition: String(formData.get('productImagePosition') || 'center center'),
+    imageSettings: old?.imageSettings ?? {},
   };
 }

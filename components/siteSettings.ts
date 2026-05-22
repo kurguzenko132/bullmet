@@ -1,6 +1,5 @@
 'use client';
 
-import { getReadableError } from '../lib/errorMessages';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import { uploadProductImages } from '../lib/productImages';
 
@@ -75,7 +74,7 @@ export async function readHomeSettingsAsync(): Promise<HomeSettings> {
         .eq('key', HOME_SETTINGS_KEY)
         .maybeSingle();
 
-      if (error) throw new Error(getReadableError(error, 'Не удалось прочитать настройки главной страницы из Supabase'));
+      if (error) throw error;
       if (data?.value) {
         const settings = normalizeSettings(data.value as Partial<HomeSettings>);
         writeLocalHomeSettings(settings);
@@ -97,11 +96,9 @@ export async function saveHomeSettingsAsync(settings: HomeSettings): Promise<Hom
       const { error } = await supabase
         .from('site_settings')
         .upsert({ key: HOME_SETTINGS_KEY, value: cleanSettings }, { onConflict: 'key' });
-      if (error) {
-        throw new Error(getReadableError(error, 'Не удалось сохранить настройки главной страницы в Supabase'));
-      }
+      if (error) throw error;
     } catch (error) {
-      throw new Error(getReadableError(error, 'Не удалось сохранить настройки главной страницы'));
+      console.warn('Supabase save site_settings fallback to localStorage:', error);
     }
   }
 

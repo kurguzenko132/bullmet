@@ -25,6 +25,7 @@ create table if not exists public.products (
   catalog_image_position text not null default 'center center',
   product_image_fit text not null default 'cover' check (product_image_fit in ('cover', 'contain')),
   product_image_position text not null default 'center center',
+  image_settings jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -35,6 +36,7 @@ alter table public.products add column if not exists catalog_image_fit text not 
 alter table public.products add column if not exists catalog_image_position text not null default 'center center';
 alter table public.products add column if not exists product_image_fit text not null default 'cover';
 alter table public.products add column if not exists product_image_position text not null default 'center center';
+alter table public.products add column if not exists image_settings jsonb not null default '{}'::jsonb;
 
 create table if not exists public.orders (
   id text primary key,
@@ -179,13 +181,8 @@ create policy "profiles_admin_read_all" on public.profiles for select using (pub
 -- update public.profiles set role = 'admin' where email = 'admin@bullmet.by';
 
 
--- Optional seed products. Run after tables are created if you want initial data in Supabase.
-insert into public.products (slug, title, category, material, short, description, price, old_price, image, images, sizes, specs, status, is_popular, is_new, in_stock)
-values
-('wall-clock-loft', 'Настенные часы Loft', 'Часы собственного производства', 'Металл + дерево', 'Металл · дерево', 'Стильные настенные часы в стиле Loft.', 120, 150, '/assets/cat-clock.jpg', array['/assets/cat-clock.jpg','/assets/prod-clock-loft.jpg','/assets/prod-clock-classic.jpg'], array['40 см','60 см','80 см'], array['Диаметр: 60 см','Материал: металл, дерево дуб','Покрытие: порошковая покраска'], 'active', true, false, true),
-('garden-swing-bullmet', 'Садовые качели Bullmet', 'Садовые качели', 'Профильная труба, дерево', 'Прочная металлическая рама', 'Надежные садовые качели для участка, дачи или зоны отдыха.', 650, null, '/assets/cat-swing.jpg', array['/assets/cat-swing.jpg','/assets/prod-swing.jpg'], array['160 см','180 см','200 см'], array['Каркас: профильная труба','Сиденье: дерево','Покрытие: порошковая покраска'], 'active', true, false, true)
-on conflict (slug) do nothing;
-
+-- Demo product inserts were removed intentionally.
+-- Re-running this schema will not restore deleted products.
 
 -- Favorites
 create table if not exists public.favorites (
@@ -235,18 +232,5 @@ create policy "site_settings_select_public" on public.site_settings for select u
 drop policy if exists "site_settings_write_demo" on public.site_settings;
 create policy "site_settings_write_demo" on public.site_settings for all using (true) with check (true);
 
-insert into public.site_settings (key, value)
-values (
-  'home',
-  '{
-    "heroImage": "/assets/hero-machine.jpg",
-    "categories": [
-      {"key":"clock","title":"Часы собственного производства","image":"/assets/cat-clock.jpg","href":"/catalog"},
-      {"key":"swing","title":"Садовые качели","image":"/assets/cat-swing.jpg","href":"/catalog"},
-      {"key":"metal","title":"Резка металла","image":"/assets/cat-metal.jpg","href":"/request?type=metal-cutting"},
-      {"key":"wood","title":"Резка дерева","image":"/assets/cat-wood.jpg","href":"/request?type=wood-cutting"},
-      {"key":"custom","title":"Изделия на заказ","image":"/assets/cat-custom.jpg","href":"/request?type=custom"}
-    ]
-  }'::jsonb
-)
-on conflict (key) do nothing;
+-- Default home settings insert was removed intentionally.
+-- Re-running this schema will not restore old hero/category images.
