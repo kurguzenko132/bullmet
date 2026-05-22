@@ -81,8 +81,11 @@ export async function readHomeSettingsAsync(): Promise<HomeSettings> {
         return settings;
       }
     } catch (error) {
-      console.warn('Supabase site_settings fallback to localStorage:', error);
+      console.warn('Supabase site_settings read failed:', error);
+      return defaultHomeSettings;
     }
+
+    return defaultHomeSettings;
   }
 
   return readLocalHomeSettings();

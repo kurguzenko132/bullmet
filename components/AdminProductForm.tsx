@@ -74,6 +74,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const [dragOverPhotoId, setDragOverPhotoId] = useState<string | null>(null);
   const [cropTarget, setCropTarget] = useState<CropTarget>('catalog');
   const [isDraggingCrop, setIsDraggingCrop] = useState(false);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
 
   useEffect(() => {
     setPhotos(initialPhotos);
@@ -145,6 +146,12 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     setDragOverPhotoId(photoId);
   }
 
+  function handleDragEnter(targetId: string) {
+    if (!draggedPhotoId || draggedPhotoId === targetId) return;
+    setPhotos((items) => reorderPhotos(items, draggedPhotoId, targetId));
+    setDragOverPhotoId(targetId);
+  }
+
   function handleDrop(event: DragEvent<HTMLDivElement>, targetId: string) {
     event.preventDefault();
     const sourceId = event.dataTransfer.getData('text/plain') || draggedPhotoId;
@@ -163,13 +170,13 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (!draggedPhotoId || event.pointerType === 'mouse') return;
+    if (!draggedPhotoId) return;
+    if (event.pointerType === 'mouse' && event.buttons !== 1) return;
     const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
     const tile = element?.closest<HTMLElement>('[data-photo-id]');
     const targetId = tile?.dataset.photoId;
     if (targetId && targetId !== draggedPhotoId) {
       setPhotos((items) => reorderPhotos(items, draggedPhotoId, targetId));
-      setDraggedPhotoId(targetId);
       setDragOverPhotoId(targetId);
     }
   }
@@ -287,6 +294,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                       onClick={() => setSelectedPhotoId(photo.id)}
                       onDragStart={(event) => handleDragStart(event, photo.id)}
                       onDragOver={(event) => { event.preventDefault(); setDragOverPhotoId(photo.id); }}
+                      onDragEnter={() => handleDragEnter(photo.id)}
                       onDrop={(event) => handleDrop(event, photo.id)}
                       onDragEnd={() => { setDraggedPhotoId(null); setDragOverPhotoId(null); }}
                       onPointerDown={(event) => handlePointerDown(event, photo.id)}
@@ -305,37 +313,64 @@ export function AdminProductForm({ slug }: { slug?: string }) {
             </div>
 
             {selectedPhoto && (
-              <div className="adminImageTuning adminImageTuning--advanced">
+              <div className="adminImageTuning adminImageTuning--compact">
                 <h4>Настройка выбранного фото</h4>
-                <p>Выбрано: <b>{selectedPhoto.name || 'Фото товара'}</b>. Настройки сохраняются отдельно для каждой фотографии.</p>
-                <div className="adminCropTabs">
-                  <button type="button" className={cropTarget === 'catalog' ? 'active' : ''} onClick={() => setCropTarget('catalog')}>Карточка каталога</button>
-                  <button type="button" className={cropTarget === 'product' ? 'active' : ''} onClick={() => setCropTarget('product')}>Страница товара</button>
+                <p>Выбрано: <b>{selectedPhoto.name || 'Фото товара'}</b>. Порядок и кадр сохраняются отдельно для каждой фотографии.</p>
+                <div className="adminSelectedPreviewGrid">
+                  <div className="adminSelectedPreview"><AdminPreviewImage src={currentPreview} alt="В каталоге" fit={selectedSettings.catalogFit} position={catalogPosition} /><span>Каталог</span></div>
+                  <div className="adminSelectedPreview adminSelectedPreview--product"><AdminPreviewImage src={currentPreview} alt="В карточке" fit={selectedSettings.productFit} position={productPosition} /><span>Страница товара</span></div>
                 </div>
-                <div className="adminCropWorkbench">
-                  <div className={`adminCropPreview ${cropTarget === 'product' ? 'adminCropPreview--product' : ''}`}
-                    onPointerDown={(event) => { setIsDraggingCrop(true); setCropFromPointer(event); event.currentTarget.setPointerCapture?.(event.pointerId); }}
-                    onPointerMove={(event) => { if (isDraggingCrop) setCropFromPointer(event); }}
-                    onPointerUp={() => setIsDraggingCrop(false)}
-                    onPointerCancel={() => setIsDraggingCrop(false)}
-                  >
-                    <AdminPreviewImage src={currentPreview} alt="Настройка кадра" fit={activeFit} position={activePosition} />
-                    <span className="adminCropPoint" style={{ left: `${cropTarget === 'catalog' ? selectedSettings.catalogX : selectedSettings.productX}%`, top: `${cropTarget === 'catalog' ? selectedSettings.catalogY : selectedSettings.productY}%` }} />
+                <button className="adminPrimaryBtn adminCropOpenBtn" type="button" onClick={() => setCropModalOpen(true)}>Настроить кадр</button>
+              </div>
+            )}
+
+            {selectedPhoto && cropModalOpen && (
+              <div className="adminCropModal" role="dialog" aria-modal="true">
+                <div className="adminCropModal__overlay" onClick={() => setCropModalOpen(false)} />
+                <div className="adminCropModal__panel">
+                  <div className="adminCropModal__head">
+                    <div>
+                      <h3>Настройка фото</h3>
+                      <p>{selectedPhoto.name || 'Фото товара'}</p>
+                    </div>
+                    <button type="button" onClick={() => setCropModalOpen(false)}>×</button>
                   </div>
-                  <div className="adminCropControls">
-                    <label>Масштаб
-                      <select value={cropTarget === 'catalog' ? selectedSettings.catalogFit : selectedSettings.productFit} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogFit: event.target.value as ImageFit } : { productFit: event.target.value as ImageFit })}>
-                        <option value="cover">Заполнить область</option>
-                        <option value="contain">Показать целиком</option>
-                      </select>
-                    </label>
-                    <label>Положение по горизонтали
-                      <input type="range" min="0" max="100" value={cropTarget === 'catalog' ? selectedSettings.catalogX : selectedSettings.productX} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogX: Number(event.target.value) } : { productX: Number(event.target.value) })} />
-                    </label>
-                    <label>Положение по вертикали
-                      <input type="range" min="0" max="100" value={cropTarget === 'catalog' ? selectedSettings.catalogY : selectedSettings.productY} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogY: Number(event.target.value) } : { productY: Number(event.target.value) })} />
-                    </label>
-                    <small>Можно двигать точку прямо на превью мышкой или пальцем.</small>
+                  <div className="adminCropTabs">
+                    <button type="button" className={cropTarget === 'catalog' ? 'active' : ''} onClick={() => setCropTarget('catalog')}>Карточка каталога</button>
+                    <button type="button" className={cropTarget === 'product' ? 'active' : ''} onClick={() => setCropTarget('product')}>Страница товара</button>
+                  </div>
+                  <div className="adminCropWorkbench adminCropWorkbench--modal">
+                    <div className={`adminCropPreview ${cropTarget === 'product' ? 'adminCropPreview--product' : ''}`}
+                      onPointerDown={(event) => { setIsDraggingCrop(true); setCropFromPointer(event); event.currentTarget.setPointerCapture?.(event.pointerId); }}
+                      onPointerMove={(event) => { if (isDraggingCrop) setCropFromPointer(event); }}
+                      onPointerUp={() => setIsDraggingCrop(false)}
+                      onPointerCancel={() => setIsDraggingCrop(false)}
+                    >
+                      <AdminPreviewImage src={currentPreview} alt="Настройка кадра" fit={activeFit} position={activePosition} />
+                      <span className="adminCropPoint" style={{ left: `${cropTarget === 'catalog' ? selectedSettings.catalogX : selectedSettings.productX}%`, top: `${cropTarget === 'catalog' ? selectedSettings.catalogY : selectedSettings.productY}%` }} />
+                    </div>
+                    <div className="adminCropControls">
+                      <label>Масштаб
+                        <select value={cropTarget === 'catalog' ? selectedSettings.catalogFit : selectedSettings.productFit} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogFit: event.target.value as ImageFit } : { productFit: event.target.value as ImageFit })}>
+                          <option value="cover">Заполнить область</option>
+                          <option value="contain">Показать целиком</option>
+                        </select>
+                      </label>
+                      <label>Положение по горизонтали
+                        <input type="range" min="0" max="100" value={cropTarget === 'catalog' ? selectedSettings.catalogX : selectedSettings.productX} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogX: Number(event.target.value) } : { productX: Number(event.target.value) })} />
+                      </label>
+                      <label>Положение по вертикали
+                        <input type="range" min="0" max="100" value={cropTarget === 'catalog' ? selectedSettings.catalogY : selectedSettings.productY} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogY: Number(event.target.value) } : { productY: Number(event.target.value) })} />
+                      </label>
+                      <small>Двигай оранжевую точку на большом превью мышкой или пальцем. Справа сразу видно, какое положение сохранится.</small>
+                      <div className="adminCropLivePair">
+                        <div><AdminPreviewImage src={currentPreview} alt="Каталог" fit={selectedSettings.catalogFit} position={catalogPosition} /><span>Каталог</span></div>
+                        <div><AdminPreviewImage src={currentPreview} alt="Карточка" fit={selectedSettings.productFit} position={productPosition} /><span>Карточка</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="adminCropModal__foot">
+                    <button className="adminSecondaryBtn" type="button" onClick={() => setCropModalOpen(false)}>Готово</button>
                   </div>
                 </div>
               </div>

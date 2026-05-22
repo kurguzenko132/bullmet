@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowIcon, CartIcon, ClockIcon, DraftIcon, FactoryIcon, MailIcon, PhoneIcon, PinIcon, SearchIcon, ShieldIcon, ToolsIcon, TruckIcon, UserIcon } from './Icons';
 import { CartHeaderButton } from './CartHeaderButton';
-import { HomeSettings, readHomeSettingsAsync, readLocalHomeSettings } from './siteSettings';
+import { HomeSettings, readHomeSettingsAsync } from './siteSettings';
 import { useAdminProducts } from './useAdminProducts';
 import type { AdminProduct } from './adminProductStore';
 import { getImageSettings } from '../lib/imageDisplay';
@@ -230,7 +230,7 @@ function FooterCol({ title, items }: { title: string; items: { label: string; hr
 }
 
 export function HomePage() {
-  const [settings, setSettings] = useState<HomeSettings>(() => readLocalHomeSettings());
+  const [settings, setSettings] = useState<HomeSettings | null>(null);
   const { items: adminProducts } = useAdminProducts();
 
   useEffect(() => {
@@ -245,5 +245,5 @@ export function HomePage() {
     };
   }, []);
 
-  return <><Header /><main><Promo settings={settings} /><Categories settings={settings} /><Production /><ProductsAndServices products={adminProducts} /><WorkProcess /><Gallery /><CustomOrder /></main><Footer /></>;
+  return <><Header /><main>{settings ? <><Promo settings={settings} /><Categories settings={settings} /></> : <section className="promo promo--loading" aria-label="Загрузка главного экрана" />}<Production /><ProductsAndServices products={adminProducts} /><WorkProcess /><Gallery /><CustomOrder /></main><Footer /></>;
 }
