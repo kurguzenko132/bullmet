@@ -34,6 +34,10 @@ export function withAdminDefaults(product: Product): AdminProduct {
     isPopular: ['wall-clock-loft', 'garden-swing-bullmet', 'wooden-tree-panel'].includes(product.slug),
     isNew: false,
     inStock: true,
+    catalogImageFit: product.catalogImageFit ?? 'cover',
+    catalogImagePosition: product.catalogImagePosition ?? 'center center',
+    productImageFit: product.productImageFit ?? 'cover',
+    productImagePosition: product.productImagePosition ?? 'center center',
   };
 }
 
@@ -59,6 +63,10 @@ function productFromDb(row: any): AdminProduct {
     isPopular: Boolean(row.is_popular),
     isNew: Boolean(row.is_new),
     inStock: row.in_stock !== false,
+    catalogImageFit: row.catalog_image_fit === 'contain' ? 'contain' : 'cover',
+    catalogImagePosition: row.catalog_image_position || 'center center',
+    productImageFit: row.product_image_fit === 'contain' ? 'contain' : 'cover',
+    productImagePosition: row.product_image_position || 'center center',
   };
 }
 
@@ -80,6 +88,10 @@ function productToDb(product: AdminProduct) {
     is_popular: Boolean(product.isPopular),
     is_new: Boolean(product.isNew),
     in_stock: product.inStock !== false,
+    catalog_image_fit: product.catalogImageFit ?? 'cover',
+    catalog_image_position: product.catalogImagePosition ?? 'center center',
+    product_image_fit: product.productImageFit ?? 'cover',
+    product_image_position: product.productImagePosition ?? 'center center',
   };
 }
 
@@ -193,5 +205,9 @@ export function productFromForm(formData: FormData, old?: AdminProduct): AdminPr
     isPopular: formData.get('isPopular') === 'on',
     isNew: formData.get('isNew') === 'on',
     inStock: formData.get('inStock') !== null,
+    catalogImageFit: formData.get('catalogImageFit') === 'contain' ? 'contain' : 'cover',
+    catalogImagePosition: String(formData.get('catalogImagePosition') || 'center center'),
+    productImageFit: formData.get('productImageFit') === 'contain' ? 'contain' : 'cover',
+    productImagePosition: String(formData.get('productImagePosition') || 'center center'),
   };
 }

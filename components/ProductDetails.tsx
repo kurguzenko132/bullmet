@@ -30,7 +30,7 @@ export function ProductDetails({ product }: { product: Product }) {
           ))}
         </div>
         <div className="mainProductImage">
-          <Image src={activeImage} alt={product.title} fill priority sizes="55vw" />
+          <Image src={activeImage} alt={product.title} fill priority sizes="55vw" style={{ objectFit: product.productImageFit ?? 'cover', objectPosition: product.productImagePosition ?? 'center center' }} />
         </div>
       </div>
 
@@ -83,7 +83,7 @@ export function RelatedProducts({ products }: { products: Product[] }) {
         {products.slice(0, 4).map((product) => (
           <article className="catalogCard" key={product.slug}>
             <Link href={`/catalog/${product.slug}`} className="catalogCard__overlay" aria-label={`Открыть ${product.title}`} />
-            <Link href={`/catalog/${product.slug}`} className="catalogCard__image"><Image src={product.image} alt={product.title} fill sizes="25vw" /></Link><div className="catalogCard__fav"><FavoriteButton product={product} /></div>
+            <Link href={`/catalog/${product.slug}`} className="catalogCard__image"><Image src={product.image} alt={product.title} fill sizes="25vw" style={{ objectFit: product.catalogImageFit ?? 'cover', objectPosition: product.catalogImagePosition ?? 'center center' }} /></Link><div className="catalogCard__fav"><FavoriteButton product={product} /></div>
             <div className="catalogCard__body"><Link href={`/catalog/${product.slug}`} className="catalogCard__title">{product.title}</Link><p>{product.short}</p><div className="catalogCard__bottom"><b>от {product.price} BYN</b><AddToCartButton product={product} iconOnly /></div></div>
           </article>
         ))}

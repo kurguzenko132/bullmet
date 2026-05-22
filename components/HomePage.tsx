@@ -145,7 +145,7 @@ function ProductsAndServices({ products }: { products: AdminProduct[] }) {
             <div className="productsGrid">
               {visibleProducts.map((product) => (
                 <Link className="product product--link" href={`/catalog/${product.slug}`} key={product.slug}>
-                  <div className="product__image"><Image src={product.image} alt={product.title} fill sizes="25vw" /></div>
+                  <div className="product__image"><Image src={product.image} alt={product.title} fill sizes="25vw" style={{ objectFit: product.catalogImageFit ?? 'cover', objectPosition: product.catalogImagePosition ?? 'center center' }} /></div>
                   <div className="product__body"><h4>{product.title}</h4><p>{product.short}</p><div><b>от {product.price} BYN</b><span className="miniCart" aria-label="Перейти к товару"><CartIcon /></span></div></div>
                 </Link>
               ))}

@@ -21,9 +21,20 @@ create table if not exists public.products (
   is_popular boolean not null default false,
   is_new boolean not null default false,
   in_stock boolean not null default true,
+  catalog_image_fit text not null default 'cover' check (catalog_image_fit in ('cover', 'contain')),
+  catalog_image_position text not null default 'center center',
+  product_image_fit text not null default 'cover' check (product_image_fit in ('cover', 'contain')),
+  product_image_position text not null default 'center center',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+
+-- Add image display settings for existing projects.
+alter table public.products add column if not exists catalog_image_fit text not null default 'cover';
+alter table public.products add column if not exists catalog_image_position text not null default 'center center';
+alter table public.products add column if not exists product_image_fit text not null default 'cover';
+alter table public.products add column if not exists product_image_position text not null default 'center center';
 
 create table if not exists public.orders (
   id text primary key,
@@ -168,8 +179,13 @@ create policy "profiles_admin_read_all" on public.profiles for select using (pub
 -- update public.profiles set role = 'admin' where email = 'admin@bullmet.by';
 
 
--- Products are managed from /admin/products.
--- Demo seed products were removed so deleted products do not return after rerunning SQL.
+-- Optional seed products. Run after tables are created if you want initial data in Supabase.
+insert into public.products (slug, title, category, material, short, description, price, old_price, image, images, sizes, specs, status, is_popular, is_new, in_stock)
+values
+('wall-clock-loft', 'Настенные часы Loft', 'Часы собственного производства', 'Металл + дерево', 'Металл · дерево', 'Стильные настенные часы в стиле Loft.', 120, 150, '/assets/cat-clock.jpg', array['/assets/cat-clock.jpg','/assets/prod-clock-loft.jpg','/assets/prod-clock-classic.jpg'], array['40 см','60 см','80 см'], array['Диаметр: 60 см','Материал: металл, дерево дуб','Покрытие: порошковая покраска'], 'active', true, false, true),
+('garden-swing-bullmet', 'Садовые качели Bullmet', 'Садовые качели', 'Профильная труба, дерево', 'Прочная металлическая рама', 'Надежные садовые качели для участка, дачи или зоны отдыха.', 650, null, '/assets/cat-swing.jpg', array['/assets/cat-swing.jpg','/assets/prod-swing.jpg'], array['160 см','180 см','200 см'], array['Каркас: профильная труба','Сиденье: дерево','Покрытие: порошковая покраска'], 'active', true, false, true)
+on conflict (slug) do nothing;
+
 
 -- Favorites
 create table if not exists public.favorites (

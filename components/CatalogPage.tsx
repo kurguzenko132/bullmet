@@ -64,7 +64,7 @@ export function CatalogPage() {
                 <article className="catalogCard" key={product.slug}>
                   <Link href={`/catalog/${product.slug}`} className="catalogCard__overlay" aria-label={`Открыть ${product.title}`} />
                   <Link href={`/catalog/${product.slug}`} className="catalogCard__image">
-                    <Image src={product.image} alt={product.title} fill sizes="(max-width: 760px) 50vw, 25vw" />
+                    <Image src={product.image} alt={product.title} fill sizes="(max-width: 760px) 50vw, 25vw" style={{ objectFit: product.catalogImageFit ?? 'cover', objectPosition: product.catalogImagePosition ?? 'center center' }} />
                   </Link>
                   <div className="catalogCard__fav"><FavoriteButton product={product} /></div>
                   <div className="catalogCard__body">

@@ -11,6 +11,10 @@ export type Product = {
   images: string[];
   sizes?: string[];
   specs: string[];
+  catalogImageFit?: 'cover' | 'contain';
+  catalogImagePosition?: string;
+  productImageFit?: 'cover' | 'contain';
+  productImagePosition?: string;
 };
 
 export const categories = [
