@@ -14,9 +14,9 @@ export type AdminProduct = Product & {
 
 export const ADMIN_PRODUCTS_KEY = 'bullmet-admin-products';
 
-function withTimeout<T>(promise: Promise<T>, ms = 6500, label = 'Операция заняла слишком много времени') {
-  return Promise.race([
-    promise,
+function withTimeout<T>(promise: PromiseLike<T>, ms = 6500, label = 'Операция заняла слишком много времени'): Promise<T> {
+  return Promise.race<T>([
+    Promise.resolve(promise),
     new Promise<T>((_, reject) => window.setTimeout(() => reject(new Error(label)), ms)),
   ]);
 }
@@ -125,9 +125,13 @@ export async function readAdminProductsAsync(): Promise<AdminProduct[]> {
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
-      const { data, error } = await withTimeout(query, 6500, 'Supabase долго не отвечает при загрузке товаров');
-      if (error) throw error;
-      return Array.isArray(data) ? data.map(productFromDb) : [];
+      const result = await withTimeout<{ data: unknown[] | null; error: { message?: string } | null }>(
+        query as unknown as PromiseLike<{ data: unknown[] | null; error: { message?: string } | null }>,
+        6500,
+        'Supabase долго не отвечает при загрузке товаров'
+      );
+      if (result.error) throw result.error;
+      return Array.isArray(result.data) ? result.data.map(productFromDb) : [];
     } catch (error) {
       console.warn('Supabase products read failed. Returning empty list to avoid stale demo products:', error);
       return [];
