@@ -84,18 +84,14 @@ function productToDb(product: AdminProduct) {
 }
 
 export function readAdminProducts(): AdminProduct[] {
-  if (typeof window === 'undefined') return initialAdminProducts();
+  if (typeof window === 'undefined') return [];
   try {
     const raw = window.localStorage.getItem(ADMIN_PRODUCTS_KEY);
-    if (!raw) {
-      const initial = initialAdminProducts();
-      writeAdminProducts(initial);
-      return initial;
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : initialAdminProducts();
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return initialAdminProducts();
+    return [];
   }
 }
 
@@ -107,11 +103,9 @@ export async function readAdminProductsAsync(): Promise<AdminProduct[]> {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      if (data && data.length) {
-        const items = data.map(productFromDb);
-        writeAdminProducts(items);
-        return items;
-      }
+      const items = Array.isArray(data) ? data.map(productFromDb) : [];
+      writeAdminProducts(items);
+      return items;
     } catch (error) {
       console.warn('Supabase products fallback to localStorage:', error);
     }

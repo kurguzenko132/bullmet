@@ -60,7 +60,7 @@ export function CatalogPage() {
             </div>
 
             <div className="productCatalogGrid">
-              {catalogProducts.slice(0, 12).map((product) => (
+              {catalogProducts.length ? catalogProducts.slice(0, 12).map((product) => (
                 <article className="catalogCard" key={product.slug}>
                   <Link href={`/catalog/${product.slug}`} className="catalogCard__overlay" aria-label={`Открыть ${product.title}`} />
                   <Link href={`/catalog/${product.slug}`} className="catalogCard__image">
@@ -73,10 +73,10 @@ export function CatalogPage() {
                     <div className="catalogCard__bottom"><b>от {product.price} BYN</b><AddToCartButton product={product} iconOnly /></div>
                   </div>
                 </article>
-              ))}
+              )) : <div className="catalogEmpty"><b>Товаров пока нет</b><p>Добавьте товары через админку или проверьте подключение Supabase.</p></div>}
             </div>
 
-            <div className="pagination"><span className="active">1</span><span>2</span><span>3</span><span>4</span><button>→</button></div>
+            {catalogProducts.length > 12 && <div className="pagination"><span className="active">1</span><span>2</span><span>3</span><span>4</span><button>→</button></div>}
           </div>
         </section>
 

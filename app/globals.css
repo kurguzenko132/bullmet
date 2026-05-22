@@ -1810,3 +1810,53 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
 .adminEmpty--left { text-align: left; }
 .adminEmpty--left b { display: block; margin-bottom: 8px; color: #151515; }
 .adminStatusList--wide { display: grid; gap: 12px; }
+
+.frontEmptyProducts,
+.catalogEmpty,
+.productMissing {
+  border: 1px solid #e8ded4;
+  background: #fbf7f2;
+  padding: 28px;
+}
+.frontEmptyProducts b,
+.catalogEmpty b {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 900;
+}
+.frontEmptyProducts p,
+.catalogEmpty p,
+.productMissing p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.frontEmptyProducts a {
+  display: inline-flex;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.catalogEmpty {
+  grid-column: 1 / -1;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.productMissing {
+  margin-top: 34px;
+  margin-bottom: 50px;
+}
+.productMissing .button {
+  width: fit-content;
+}

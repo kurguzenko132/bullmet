@@ -9,34 +9,16 @@ import { useEffect, useState } from 'react';
 import { getCurrentSession, signOutBullmet, type BullmetSession } from '@/lib/auth';
 
 const menuGroups = [
-  { title: '', items: [{ label: 'Главная', href: '/admin', icon: HomeIcon }] },
+  { title: '', items: [
+    { label: 'Главная', href: '/admin', icon: HomeIcon },
+  ] },
   { title: 'Контент', items: [
     { label: 'Главная страница', href: '/admin/home', icon: LayoutIcon },
-    { label: 'Страницы', href: '/admin', icon: DocumentIcon },
     { label: 'Каталог товаров', href: '/admin/products', icon: GridIcon },
-    { label: 'Услуги', href: '/admin', icon: ToolsIcon },
-    { label: 'Производство', href: '/admin', icon: FactoryIcon },
-    { label: 'Отзывы', href: '/admin', icon: StarIcon },
-    { label: 'Фото главной', href: '/admin/home', icon: ImageIcon },
-    { label: 'Медиафайлы', href: '/admin', icon: FolderIcon },
   ] },
   { title: 'Интернет-магазин', items: [
     { label: 'Заказы', href: '/admin/orders', icon: CartIcon },
     { label: 'Заявки на расчет', href: '/admin/requests', icon: DocumentIcon },
-    { label: 'Покупатели', href: '/admin', icon: UserIcon },
-    { label: 'Купоны и скидки', href: '/admin', icon: TicketIcon },
-    { label: 'Доставка', href: '/admin', icon: TruckIcon },
-    { label: 'Оплата', href: '/admin', icon: CardIcon },
-  ] },
-  { title: 'Аналитика', items: [
-    { label: 'Статистика', href: '/admin', icon: ChartIcon },
-    { label: 'Отчеты', href: '/admin', icon: ReportIcon },
-  ] },
-  { title: 'Настройки', items: [
-    { label: 'Настройки сайта', href: '/admin', icon: SettingsIcon },
-    { label: 'Пользователи', href: '/admin', icon: UserIcon },
-    { label: 'Роли и права', href: '/admin', icon: ShieldIcon },
-    { label: 'Резервное копирование', href: '/admin', icon: BackupIcon },
   ] },
 ];
 
@@ -88,7 +70,7 @@ export function AdminLayout({ title, children }: { title: string; children: Reac
               {group.title && <p>{group.title}</p>}
               {group.items.map((item) => {
                 const Icon = item.icon;
-                const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
+                const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(`${item.href}/`));
                 return (
                   <Link className={active ? 'adminMenuItem adminMenuItem--active' : 'adminMenuItem'} href={item.href} key={item.label}>
                     <Icon />

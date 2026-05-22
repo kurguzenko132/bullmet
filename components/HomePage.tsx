@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { ArrowIcon, CartIcon, ClockIcon, DraftIcon, FactoryIcon, MailIcon, PhoneIcon, PinIcon, SearchIcon, ShieldIcon, ToolsIcon, TruckIcon, UserIcon } from './Icons';
 import { CartHeaderButton } from './CartHeaderButton';
 import { defaultHomeSettings, HomeSettings, readHomeSettingsAsync } from './siteSettings';
+import { useAdminProducts } from './useAdminProducts';
+import type { AdminProduct } from './adminProductStore';
 
 const nav = [
   { title: 'Каталог', href: '/catalog' },
@@ -22,12 +24,6 @@ const benefits = [
   { icon: TruckIcon, title: 'Доставка по', text: 'Беларуси' },
 ];
 
-const productCards = [
-  { title: 'Настенные часы Loft', text: 'Металл + дерево', price: 'от 120 BYN', image: '/assets/prod-clock-loft.jpg' },
-  { title: 'Садовые качели Bullmet', text: 'Прочная металлическая рама', price: 'от 650 BYN', image: '/assets/prod-swing.jpg' },
-  { title: 'Настенные часы Classic', text: 'Металл', price: 'от 140 BYN', image: '/assets/prod-clock-classic.jpg' },
-  { title: 'Качели Garden Comfort', text: 'Для дачи и сада', price: 'от 700 BYN', image: '/assets/prod-swing-comfort.jpg' },
-];
 
 const serviceCards = [
   { title: 'Резка металла', text: 'Для декора, деталей, табличек, конструкций и других изделий.', image: '/assets/service-metal.jpg', href: '/request?type=metal-cutting' },
@@ -134,15 +130,29 @@ function Feature({ icon: Icon, title }: { icon: typeof FactoryIcon; title: strin
   return <div className="feature"><Icon /><span>{title}</span></div>;
 }
 
-function ProductsAndServices() {
+function ProductsAndServices({ products }: { products: AdminProduct[] }) {
+  const visibleProducts = products
+    .filter((product) => product.status !== 'draft')
+    .filter((product) => product.isPopular || product.inStock !== false)
+    .slice(0, 4);
+
   return (
     <section className="section shopPreview" id="услуги">
       <div className="container shopPreview__grid">
         <div>
           <h3 className="blockTitle">Популярные товары</h3>
-          <div className="productsGrid">
-            {productCards.map((p, index) => <Link className="product product--link" href={index === 0 ? '/catalog/wall-clock-loft' : '/catalog'} key={p.title}><div className="product__image"><Image src={p.image} alt={p.title} fill sizes="25vw" /></div><div className="product__body"><h4>{p.title}</h4><p>{p.text}</p><div><b>{p.price}</b><span className="miniCart" aria-label="Перейти к товару"><CartIcon /></span></div></div></Link>)}
-          </div>
+          {visibleProducts.length ? (
+            <div className="productsGrid">
+              {visibleProducts.map((product) => (
+                <Link className="product product--link" href={`/catalog/${product.slug}`} key={product.slug}>
+                  <div className="product__image"><Image src={product.image} alt={product.title} fill sizes="25vw" /></div>
+                  <div className="product__body"><h4>{product.title}</h4><p>{product.short}</p><div><b>от {product.price} BYN</b><span className="miniCart" aria-label="Перейти к товару"><CartIcon /></span></div></div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="frontEmptyProducts"><b>Товаров пока нет</b><p>Добавьте товары в админке — они появятся на главной и в каталоге.</p><Link href="/catalog">Открыть каталог</Link></div>
+          )}
         </div>
         <div>
           <h3 className="blockTitle">Услуги резки</h3>
@@ -220,6 +230,7 @@ function FooterCol({ title, items }: { title: string; items: { label: string; hr
 
 export function HomePage() {
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
+  const { items: adminProducts } = useAdminProducts();
 
   useEffect(() => {
     readHomeSettingsAsync().then(setSettings);
@@ -233,5 +244,5 @@ export function HomePage() {
     };
   }, []);
 
-  return <><Header /><main><Promo settings={settings} /><Categories settings={settings} /><Production /><ProductsAndServices /><WorkProcess /><Gallery /><CustomOrder /></main><Footer /></>;
+  return <><Header /><main><Promo settings={settings} /><Categories settings={settings} /><Production /><ProductsAndServices products={adminProducts} /><WorkProcess /><Gallery /><CustomOrder /></main><Footer /></>;
 }

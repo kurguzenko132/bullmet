@@ -9,7 +9,27 @@ import { ProductDetails, ProductServiceStrip, RelatedProducts } from './ProductD
 export function ProductPage({ slug }: { slug: string }) {
   const { items, ready } = useAdminProducts();
   const sourceProducts = ready ? items.filter((item) => item.status !== 'draft') : products;
-  const product = sourceProducts.find((item) => item.slug === slug) ?? getProduct(slug);
+  const product = sourceProducts.find((item) => item.slug === slug) ?? (!ready ? getProduct(slug) : null);
+
+  if (ready && !product) {
+    return (
+      <>
+        <Header />
+        <main className="productPage">
+          <section className="container productMissing">
+            <div className="breadcrumbs"><Link href="/">Главная</Link><span>/</span><Link href="/catalog">Каталог</Link></div>
+            <h1 className="pageTitle">Товар не найден</h1>
+            <p>Этот товар удален из админки или пока не опубликован.</p>
+            <Link className="button button--orange" href="/catalog">Вернуться в каталог</Link>
+          </section>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (!product) return null;
+
   const related = sourceProducts.filter((item) => item.slug !== product.slug && item.category === product.category).concat(sourceProducts.filter((item) => item.slug !== product.slug));
 
   return (
