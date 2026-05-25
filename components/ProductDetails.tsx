@@ -12,7 +12,27 @@ import { getImageSettings } from '../lib/imageDisplay';
 export function ProductDetails({ product }: { product: Product }) {
   const [activeVariantId, setActiveVariantId] = useState(product.activeVariantId ?? product.variants?.[0]?.id ?? '');
   const activeVariant = product.variants?.find((variant) => variant.id === activeVariantId);
-  const visibleProduct = activeVariant ? { ...product, slug: `${product.parentSlug ?? product.slug}-${activeVariant.slug}`, image: activeVariant.image, images: activeVariant.images, imageSettings: activeVariant.imageSettings ?? product.imageSettings, variantName: activeVariant.name, variantColorHex: activeVariant.colorHex } : product;
+  const visibleProduct = activeVariant ? {
+    ...product,
+    slug: activeVariant.slug,
+    image: activeVariant.image,
+    images: activeVariant.images,
+    imageSettings: activeVariant.imageSettings ?? product.imageSettings,
+    catalogImageFit: activeVariant.catalogImageFit ?? product.catalogImageFit,
+    catalogImagePosition: activeVariant.catalogImagePosition ?? product.catalogImagePosition,
+    productImageFit: activeVariant.productImageFit ?? product.productImageFit,
+    productImagePosition: activeVariant.productImagePosition ?? product.productImagePosition,
+    title: activeVariant.title ?? product.title,
+    short: activeVariant.short ?? product.short,
+    material: activeVariant.material ?? product.material,
+    description: activeVariant.description ?? product.description,
+    price: activeVariant.price ?? product.price,
+    oldPrice: activeVariant.oldPrice ?? product.oldPrice,
+    sizes: activeVariant.sizes ?? product.sizes,
+    specs: activeVariant.specs ?? product.specs,
+    variantName: activeVariant.name,
+    variantColorHex: activeVariant.colorHex,
+  } : product;
   const productImages = (visibleProduct.images?.length ? visibleProduct.images : [visibleProduct.image]).filter(Boolean);
   const [activeImage, setActiveImage] = useState(productImages[0]);
   const [activeSize, setActiveSize] = useState(product.sizes?.[1] ?? product.sizes?.[0] ?? '60 см');
@@ -51,7 +71,7 @@ export function ProductDetails({ product }: { product: Product }) {
         {visibleProduct.variantName && <p className="productColorName">Цвет: {visibleProduct.variantName}</p>}
         <p className="productMaterial">Материал: {visibleProduct.material}</p>
         <p className="availability"><span />В наличии</p>
-        <div className="productPrice">от {product.price} BYN {product.oldPrice && <em>{product.oldPrice} BYN</em>}</div>
+        <div className="productPrice">от {visibleProduct.price} BYN {visibleProduct.oldPrice && <em>{visibleProduct.oldPrice} BYN</em>}</div>
         <p className="productDescription">{visibleProduct.description}</p>
 
         {product.variants?.length ? (
@@ -69,13 +89,13 @@ export function ProductDetails({ product }: { product: Product }) {
         ) : null}
 
         <ul className="specList">
-          {product.specs.map((spec, index) => <li key={spec}><SpecIcon index={index} />{spec}</li>)}
+          {visibleProduct.specs.map((spec, index) => <li key={spec}><SpecIcon index={index} />{spec}</li>)}
         </ul>
 
         <div className="choiceBlock">
           <p>Диаметр</p>
           <div className="sizeOptions">
-            {(product.sizes ?? ['40 см', '60 см', '80 см']).map((size) => <button className={activeSize === size ? 'active' : ''} onClick={() => setActiveSize(size)} key={size}>{size}</button>)}
+            {(visibleProduct.sizes ?? ['40 см', '60 см', '80 см']).map((size) => <button className={activeSize === size ? 'active' : ''} onClick={() => setActiveSize(size)} key={size}>{size}</button>)}
           </div>
         </div>
 

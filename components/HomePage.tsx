@@ -147,7 +147,7 @@ function ProductsAndServices({ products }: { products: AdminProduct[] }) {
               {visibleProducts.map((product) => (
                 <Link className="product product--link" href={`/catalog/${product.slug}`} key={product.slug}>
                   <div className="product__image"><Image src={product.image} alt={product.title} fill sizes="25vw" style={{ objectFit: getImageSettings(product, product.image).catalogFit, objectPosition: getImageSettings(product, product.image).catalogPosition }} /></div>
-                  <div className="product__body"><h4>{product.title}</h4><p>{product.variantName ? `${product.short} · ${product.variantName}` : product.short}</p><div><b>от {product.price} BYN</b><span className="miniCart" aria-label="Перейти к товару"><CartIcon /></span></div></div>
+                  <div className="product__body"><h4>{product.colorName ? `${product.title} — ${product.colorName}` : product.title}</h4><p>{product.colorName ? `${product.short} · ${product.colorName}` : product.short}</p><div><b>от {product.price} BYN</b><span className="miniCart" aria-label="Перейти к товару"><CartIcon /></span></div></div>
                 </Link>
               ))}
             </div>

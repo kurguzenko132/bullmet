@@ -47,7 +47,10 @@ export function withAdminDefaults(product: Product): AdminProduct {
     productImageFit: product.productImageFit ?? 'cover',
     productImagePosition: product.productImagePosition ?? 'center center',
     imageSettings: product.imageSettings ?? {},
-    variants: product.variants ?? [],
+    variants: [],
+    colorGroupId: product.colorGroupId ?? '',
+    colorName: product.colorName ?? '',
+    colorHex: product.colorHex ?? '#111111',
   };
 }
 
@@ -78,7 +81,10 @@ function productFromDb(row: any): AdminProduct {
     productImageFit: row.product_image_fit === 'contain' ? 'contain' : 'cover',
     productImagePosition: row.product_image_position || 'center center',
     imageSettings: row.image_settings && typeof row.image_settings === 'object' ? row.image_settings as Record<string, ImageDisplaySettings> : {},
-    variants: Array.isArray(row.variants) ? row.variants : [],
+    variants: [],
+    colorGroupId: row.color_group_id ?? '',
+    colorName: row.color_name ?? '',
+    colorHex: row.color_hex ?? '#111111',
   };
 }
 
@@ -105,7 +111,10 @@ function productToDb(product: AdminProduct) {
     product_image_fit: product.productImageFit ?? 'cover',
     product_image_position: product.productImagePosition ?? 'center center',
     image_settings: product.imageSettings ?? {},
-    variants: product.variants ?? [],
+    variants: [],
+    color_group_id: product.colorGroupId || null,
+    color_name: product.colorName || null,
+    color_hex: product.colorHex || null,
   };
 }
 
@@ -228,6 +237,9 @@ export function productFromForm(formData: FormData, old?: AdminProduct): AdminPr
     productImageFit: formData.get('productImageFit') === 'contain' ? 'contain' : 'cover',
     productImagePosition: String(formData.get('productImagePosition') || 'center center'),
     imageSettings: old?.imageSettings ?? {},
-    variants: old?.variants ?? [],
+    variants: [],
+    colorGroupId: String(formData.get('colorGroupId') || '').trim(),
+    colorName: String(formData.get('colorName') || '').trim(),
+    colorHex: String(formData.get('colorHex') || old?.colorHex || '#111111'),
   };
 }

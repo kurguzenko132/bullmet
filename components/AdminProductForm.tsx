@@ -123,6 +123,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const currentPreview = selectedPhoto?.src ?? photos[0]?.src ?? fallbackImage;
   const selectedSettings = selectedPhoto?.settings ?? normalizeImageDisplaySettings({});
   const activeVariant = variants.find((variant) => variant.id === activeVariantId) ?? variants[0];
+  const productGroupOptions = useMemo(() => readAdminProducts().filter((item) => item.slug !== existing?.slug), [existing?.slug]);
 
   function updatePhotoSettings(photoId: string, patch: Partial<ImageDisplaySettings>) {
     setPhotos((items) => items.map((photo) => photo.id === photoId ? { ...photo, settings: normalizeImageDisplaySettings({ ...photo.settings, ...patch }) } : photo));
@@ -369,38 +370,9 @@ export function AdminProductForm({ slug }: { slug?: string }) {
       product.productImageFit = firstSettings.productFit;
       product.productImagePosition = imagePosition(firstSettings.productX, firstSettings.productY);
 
-      const savedVariants: ProductVariant[] = [];
-      for (const variant of variants) {
-        const name = variant.name.trim();
-        if (!name) continue;
-        const files = variant.photos.filter((photo) => photo.file).map((photo) => photo.file as File);
-        const uploaded = files.length ? await uploadProductImages(`${product.slug}/${slugifyVariant(name)}`, files) : [];
-        let uploadedIndex = 0;
-        const variantSettings: Record<string, ImageDisplaySettings> = {};
-        const variantImages = variant.photos
-          .map((photo) => {
-            const url = photo.file ? uploaded[uploadedIndex++] : photo.src;
-            if (url) variantSettings[url] = photo.settings;
-            return url;
-          })
-          .filter((item, index, array): item is string => Boolean(item) && array.indexOf(item) === index);
-        if (!variantImages.length) continue;
-        const firstVariantSettings = normalizeImageDisplaySettings(variantSettings[variantImages[0]]);
-        savedVariants.push({
-          id: variant.id,
-          name,
-          slug: slugifyVariant(name),
-          colorHex: variant.colorHex || '#111111',
-          image: variantImages[0],
-          images: variantImages,
-          imageSettings: variantSettings,
-          catalogImageFit: firstVariantSettings.catalogFit,
-          catalogImagePosition: imagePosition(firstVariantSettings.catalogX, firstVariantSettings.catalogY),
-          productImageFit: firstVariantSettings.productFit,
-          productImagePosition: imagePosition(firstVariantSettings.productX, firstVariantSettings.productY),
-        });
-      }
-      product.variants = savedVariants;
+      // Новая логика цветов: каждый цвет создается как отдельный товар.
+      // Связь цветов хранится через colorGroupId/colorName/colorHex, а не через вложенные variants.
+      product.variants = [];
 
       await saveAdminProductAsync(product);
       router.push('/admin/products');
@@ -436,6 +408,13 @@ export function AdminProductForm({ slug }: { slug?: string }) {
               <label>Старая цена, BYN<input name="oldPrice" type="number" min="0" defaultValue={existing?.oldPrice ?? ''} placeholder="Для псевдо-скидки" /></label>
               <label>Материал<input name="material" defaultValue={existing?.material ?? 'Металл + дерево'} /></label>
               <label>Краткое описание<input name="short" defaultValue={existing?.short ?? 'Металл · дерево'} /></label>
+              <label>Группа модели / цвета<select name="colorGroupId" defaultValue={existing?.colorGroupId ?? ''}>
+                <option value="">Не объединять</option>
+                <option value={existing?.slug ?? ''}>Создать группу из этого товара</option>
+                {productGroupOptions.map((item) => <option key={item.slug} value={item.colorGroupId || item.slug}>Объединить с: {item.title}{item.colorName ? ` — ${item.colorName}` : ''}</option>)}
+              </select></label>
+              <label>Название цвета<input name="colorName" defaultValue={existing?.colorName ?? ''} placeholder="Черный / белый / дуб" /></label>
+              <label>Цвет маркера<input name="colorHex" type="color" defaultValue={existing?.colorHex ?? '#111111'} /></label>
             </div>
             <label className="adminFullLabel">Описание<textarea name="description" rows={5} defaultValue={existing?.description ?? 'Описание товара Bullmet.'} /></label>
             <div className="adminFormGrid adminFormGrid--two">
@@ -568,82 +547,14 @@ export function AdminProductForm({ slug }: { slug?: string }) {
           <section className="adminCard adminProductVariantsFull">
             <div className="adminVariantHeader">
               <div>
-                <h3>Расцветки товара</h3>
-                <p>Одна модель может иметь несколько цветов. В каталоге каждая расцветка отображается отдельной карточкой, а на странице товара покупатель сможет переключать цвет.</p>
+                <h3>Связанные цвета</h3>
+                <p>Новая логика проще: сначала создайте отдельные карточки товаров для каждого цвета, потом в поле «Группа модели / цвета» объедините их между собой. В каталоге они будут отдельными карточками, а на странице товара появится переключатель цветов.</p>
               </div>
-              <button className="adminPrimaryBtn" type="button" onClick={addVariant}>Добавить расцветку</button>
             </div>
-
-            {variants.length > 0 ? (
-              <>
-                <div className="adminVariantTabs" role="tablist" aria-label="Расцветки товара">
-                  {variants.map((variant) => (
-                    <button
-                      key={variant.id}
-                      type="button"
-                      className={activeVariant?.id === variant.id ? 'active' : ''}
-                      onClick={() => setActiveVariantId(variant.id)}
-                    >
-                      <i style={{ background: variant.colorHex || '#111111' }} />
-                      <span>{variant.name || 'Без названия'}</span>
-                      <small>{variant.photos.length} фото</small>
-                    </button>
-                  ))}
-                </div>
-
-                {activeVariant && (
-                  <div className="adminVariantEditor">
-                    <div className="adminVariantEditor__fields">
-                      <label>Название цвета<input value={activeVariant.name} onChange={(event) => updateVariant(activeVariant.id, { name: event.target.value })} placeholder="Черный / белый / дуб" /></label>
-                      <label>Цвет маркера<input type="color" value={activeVariant.colorHex} onChange={(event) => updateVariant(activeVariant.id, { colorHex: event.target.value })} /></label>
-                      <button type="button" className="adminSecondaryBtn" onClick={() => removeVariant(activeVariant.id)}>Удалить расцветку</button>
-                    </div>
-
-                    <label className="adminUploadBox adminUploadBox--variant">Загрузить фото этой расцветки
-                      <input type="file" accept="image/*" multiple onChange={(event) => { addVariantFiles(activeVariant.id, event.target.files); event.currentTarget.value = ''; }} />
-                      <span>Можно выбрать несколько фото. Первое фото станет главным для этой расцветки.</span>
-                    </label>
-
-                    <div className="adminVariantPhotoManager">
-                      <div className="adminPhotoManager__head">
-                        <b>Фото цвета «{activeVariant.name || 'Без названия'}»</b>
-                        <span>Перетаскивай миниатюры мышкой или пальцем. Кнопки ← и → оставлены как запасной вариант.</span>
-                      </div>
-                      <div className="adminVariantPhotoGrid" onPointerMove={(event) => handleVariantPointerMove(event, activeVariant.id)} onPointerUp={handleVariantPointerUp} onPointerCancel={handleVariantPointerUp}>
-                        {activeVariant.photos.length ? activeVariant.photos.map((photo, photoIndex) => (
-                          <div
-                            className={`adminVariantPhotoCard ${draggedVariantPhoto?.photoId === photo.id ? 'isDragging' : ''} ${dragOverVariantPhotoId === photo.id && draggedVariantPhoto?.photoId !== photo.id ? 'isDragOver' : ''}`}
-                            key={photo.id}
-                            data-variant-photo-id={photo.id}
-                            draggable
-                            onDragStart={(event) => handleVariantDragStart(event, activeVariant.id, photo.id)}
-                            onDragOver={(event) => { event.preventDefault(); setDragOverVariantPhotoId(photo.id); }}
-                            onDragEnter={() => { if (draggedVariantPhoto?.variantId === activeVariant.id) reorderVariantPhotos(activeVariant.id, draggedVariantPhoto.photoId, photo.id); }}
-                            onDrop={(event) => handleVariantDrop(event, activeVariant.id, photo.id)}
-                            onDragEnd={() => { setDraggedVariantPhoto(null); setDragOverVariantPhotoId(null); }}
-                            onPointerDown={(event) => { handleVariantPointerDown(event, activeVariant.id, photo.id); event.currentTarget.setPointerCapture?.(event.pointerId); }}
-                          >
-                            <div className="adminVariantPhotoCard__image"><AdminPreviewImage src={photo.src} alt={`${activeVariant.name} ${photoIndex + 1}`} fit={photo.settings.catalogFit} position={imagePosition(photo.settings.catalogX, photo.settings.catalogY)} /></div>
-                            <div className="adminVariantPhotoCard__meta"><b>{photoIndex === 0 ? 'Главное фото цвета' : `Фото ${photoIndex + 1}`}</b>{photo.file && <em>Новое</em>}</div>
-                            <div className="adminVariantPhotoCard__actions">
-                              <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); moveVariantPhoto(activeVariant.id, photoIndex, -1); }} disabled={photoIndex === 0}>←</button>
-                              <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); moveVariantPhoto(activeVariant.id, photoIndex, 1); }} disabled={photoIndex === activeVariant.photos.length - 1}>→</button>
-                              <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); removeVariantPhoto(activeVariant.id, photoIndex); }}>Удалить</button>
-                            </div>
-                          </div>
-                        )) : <div className="adminVariantEmpty">Фото для этой расцветки пока не загружены.</div>}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="adminVariantEmpty adminVariantEmpty--large">
-                <b>Расцветки пока не добавлены</b>
-                <p>Товар будет отображаться как одна карточка. Добавь расцветку, если у одной модели есть несколько цветов.</p>
-                <button className="adminPrimaryBtn" type="button" onClick={addVariant}>Добавить первую расцветку</button>
-              </div>
-            )}
+            <div className="adminVariantEmpty adminVariantEmpty--large">
+              <b>Как объединить цвета</b>
+              <p>1. Создайте товар «Часы — черные» и загрузите его фото. 2. Создайте товар «Часы — белые». 3. В обоих товарах выберите одну и ту же группу модели. 4. Укажите название цвета и цвет маркера.</p>
+            </div>
           </section>
 
         </form>

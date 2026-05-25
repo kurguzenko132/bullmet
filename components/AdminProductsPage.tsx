@@ -58,7 +58,7 @@ export function AdminProductsPage() {
             <div className="adminProductsRow" key={product.slug}>
               <div className="adminProductMain">
                 <Image src={product.image} alt="" width={62} height={62} />
-                <div><b>{product.title}</b><small>{product.material}</small>{product.variants?.length ? <span className="adminVariantCount">{product.variants.length} расцветки</span> : null}<em>{product.slug}</em></div>
+                <div><b>{product.title}</b><small>{product.material}</small>{product.colorName ? <span className="adminVariantCount">Цвет: {product.colorName}</span> : null}{product.colorGroupId ? <span className="adminVariantCount">Группа: {product.colorGroupId}</span> : null}<em>{product.slug}</em></div>
               </div>
               <span>{product.category}</span>
               <strong>{product.price} BYN {product.oldPrice && <small>{product.oldPrice} BYN</small>}</strong>

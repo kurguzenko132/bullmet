@@ -5,12 +5,14 @@ import { Header, Footer } from './HomePage';
 
 import { useAdminProducts } from './useAdminProducts';
 import { ProductDetails, ProductServiceStrip, RelatedProducts } from './ProductDetails';
-import { expandProductVariants, findProductByVariantSlug } from './shopData';
+import { expandProductVariants, findProductByVariantSlug, getProductGroup, productToColorVariant } from './shopData';
 
 export function ProductPage({ slug }: { slug: string }) {
   const { items, ready } = useAdminProducts();
   const sourceProducts = ready ? items.filter((item) => item.status !== 'draft') : [];
-  const product = findProductByVariantSlug(sourceProducts, slug);
+  const baseProduct = findProductByVariantSlug(sourceProducts, slug);
+  const group = baseProduct ? getProductGroup(sourceProducts, baseProduct) : [];
+  const product = baseProduct ? { ...baseProduct, variants: group.length > 1 ? group.map(productToColorVariant) : [], activeVariantId: baseProduct.slug, variantName: baseProduct.colorName, variantColorHex: baseProduct.colorHex } : null;
 
   if (ready && !product) {
     return (

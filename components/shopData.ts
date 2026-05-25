@@ -5,6 +5,14 @@ export type ProductVariant = {
   name: string;
   slug: string;
   colorHex?: string;
+  title?: string;
+  short?: string;
+  material?: string;
+  description?: string;
+  price?: number;
+  oldPrice?: number;
+  sizes?: string[];
+  specs?: string[];
   image: string;
   images: string[];
   imageSettings?: Record<string, ImageDisplaySettings>;
@@ -33,6 +41,10 @@ export type Product = {
   productImagePosition?: string;
   imageSettings?: Record<string, ImageDisplaySettings>;
   variants?: ProductVariant[];
+  /** Group products that are the same model but different colors. */
+  colorGroupId?: string;
+  colorName?: string;
+  colorHex?: string;
   status?: 'active' | 'draft';
   isPopular?: boolean;
   isNew?: boolean;
@@ -42,6 +54,7 @@ export type Product = {
   variantName?: string;
   variantSlug?: string;
   variantColorHex?: string;
+  variantProductSlug?: string;
 };
 
 
@@ -84,21 +97,47 @@ export function applyVariantToProduct(product: Product, variant?: ProductVariant
 }
 
 export function expandProductVariants(items: Product[]): Product[] {
-  return items.flatMap((product) => {
-    const variants = product.variants?.filter((variant) => variant.name && variant.image) ?? [];
-    if (!variants.length) return [product];
-    return variants.map((variant) => applyVariantToProduct(product, variant));
-  });
+  // Новая логика: каждая цветовая карточка создается как отдельный товар в админке.
+  // Поэтому каталог больше не разворачивает variants внутри одной карточки.
+  return items;
 }
 
 export function findProductByVariantSlug(items: Product[], slug: string): Product | null {
-  for (const product of items) {
-    if (product.slug === slug) return product;
-    for (const variant of product.variants ?? []) {
-      if (getProductVariantSlug(product, variant) === slug) return applyVariantToProduct(product, variant);
-    }
-  }
-  return null;
+  return items.find((product) => product.slug === slug) ?? null;
+}
+
+export function getProductGroup(items: Product[], product: Product): Product[] {
+  // Группа строится вокруг slug главного товара или общего colorGroupId.
+  // Это позволяет сначала создать первую карточку без группы, а потом присоединять к ней другие цвета.
+  const groupId = product.colorGroupId || product.slug;
+  const group = items
+    .filter((item) => item.status !== 'draft' && (item.slug === groupId || item.colorGroupId === groupId || item.slug === product.slug))
+    .sort((a, b) => (a.colorName || a.title).localeCompare(b.colorName || b.title, 'ru'));
+  return group.length ? group : [product];
+}
+
+export function productToColorVariant(item: Product): ProductVariant {
+  return {
+    id: item.slug,
+    name: item.colorName || item.title,
+    slug: item.slug,
+    colorHex: item.colorHex || '#111111',
+    title: item.title,
+    short: item.short,
+    material: item.material,
+    description: item.description,
+    price: item.price,
+    oldPrice: item.oldPrice,
+    sizes: item.sizes,
+    specs: item.specs,
+    image: item.image,
+    images: item.images?.length ? item.images : [item.image],
+    imageSettings: item.imageSettings ?? {},
+    catalogImageFit: item.catalogImageFit,
+    catalogImagePosition: item.catalogImagePosition,
+    productImageFit: item.productImageFit,
+    productImagePosition: item.productImagePosition,
+  };
 }
 
 export const categories = [

@@ -27,6 +27,9 @@ create table if not exists public.products (
   product_image_position text not null default 'center center',
   image_settings jsonb not null default '{}'::jsonb,
   variants jsonb not null default '[]'::jsonb,
+  color_group_id text,
+  color_name text,
+  color_hex text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -39,6 +42,10 @@ alter table public.products add column if not exists product_image_fit text not 
 alter table public.products add column if not exists product_image_position text not null default 'center center';
 alter table public.products add column if not exists image_settings jsonb not null default '{}'::jsonb;
 alter table public.products add column if not exists variants jsonb not null default '[]'::jsonb;
+alter table public.products add column if not exists color_group_id text;
+alter table public.products add column if not exists color_name text;
+alter table public.products add column if not exists color_hex text;
+create index if not exists products_color_group_id_idx on public.products(color_group_id);
 
 create table if not exists public.orders (
   id text primary key,
