@@ -1,7 +1,7 @@
 'use client';
 
 import type { Product } from './shopData';
-import { products as baseProducts } from './shopData';
+import { clockCategory, products as baseProducts } from './shopData';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import { type ImageDisplaySettings } from '../lib/imageDisplay';
 
@@ -63,6 +63,7 @@ function productFromDb(row: any): AdminProduct {
     slug: row.slug,
     title: row.title,
     category: row.category,
+    clockTheme: row.clock_theme ?? '',
     material: row.material,
     short: row.short ?? '',
     description: row.description ?? '',
@@ -93,6 +94,7 @@ function productToDb(product: AdminProduct) {
     slug: product.slug,
     title: product.title,
     category: product.category,
+    clock_theme: product.category === clockCategory ? (product.clockTheme || null) : null,
     material: product.material,
     short: product.short,
     description: product.description,
@@ -219,6 +221,7 @@ export function productFromForm(formData: FormData, old?: AdminProduct): AdminPr
     slug,
     title,
     category: String(formData.get('category') || 'Изделия на заказ'),
+    clockTheme: String(formData.get('clockTheme') || '').trim(),
     material: String(formData.get('material') || 'Металл + дерево'),
     short: String(formData.get('short') || 'Изделие Bullmet'),
     description: String(formData.get('description') || 'Описание товара Bullmet.'),

@@ -474,7 +474,7 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
 .thumbs { display: grid; gap: 10px; align-content: start; }
 .thumbs button { position: relative; width: 84px; height: 96px; border: 2px solid transparent; background: #eee; overflow: hidden; cursor: pointer; }
 .thumbs button.active { border-color: var(--orange); }
-.mainProductImage { position: relative; min-height: 610px; background: #f7f4ef; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.mainProductImage { position: relative; min-height: 610px; background: #eee; overflow: hidden; }
 .productPanel { padding: 6px 0 0; }
 .productPanel h1 { max-width: 560px; font-size: 33px; line-height: 1.12; letter-spacing: 0; text-transform: none; font-weight: 900; }
 .productMaterial { margin: 10px 0 9px; font-size: 12px; color: #777; }
@@ -2274,15 +2274,6 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
   width: 100%;
   min-height: 46px;
 }
-.adminCropCatalogBtn {
-  width: 100%;
-  min-height: 42px;
-  margin-top: -6px;
-}
-.adminCropResetBtn {
-  width: 100%;
-  min-height: 40px;
-}
 .adminCropModal {
   position: fixed;
   inset: 0;
@@ -2659,3 +2650,11 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
   .adminGroupCard__head { flex-direction: column; }
   .adminGroupRow__actions { justify-content: flex-start; flex-wrap: wrap; }
 }
+
+/* Clock themes filter */
+.categoryMenu a.active { color: var(--orange); font-weight: 900; }
+.categoryMenu--compact { max-height: 270px; overflow: auto; padding-right: 4px; }
+.categoryMenu--compact a { font-size: 12px; }
+.catalogCard__theme { display: inline-flex; width: max-content; margin: -10px 0 16px; padding: 4px 8px; border-radius: 999px; background: #f7f1ec; color: #6b625a; font-size: 11px; font-style: normal; font-weight: 800; }
+.adminClockThemeHint { display: block; margin-top: 6px; color: #777; font-size: 11px; line-height: 1.35; }
+.adminCategorySub { display: block; margin-top: 5px; color: var(--orange); font-size: 11px; font-weight: 800; }

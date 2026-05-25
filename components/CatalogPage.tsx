@@ -2,9 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Header, Footer } from './HomePage';
 import { SearchIcon, ToolsIcon, TruckIcon } from './Icons';
-import { categories, expandProductVariants } from './shopData';
+import { categories, clockCategory, clockThemes, expandProductVariants } from './shopData';
 import { useAdminProducts } from './useAdminProducts';
 import { AddToCartButton } from './AddToCartButton';
 import { FavoriteButton } from './FavoriteButton';
@@ -13,8 +14,16 @@ import { getImageSettings } from '../lib/imageDisplay';
 const materialFilters = ['Металл', 'Дерево', 'Металл и дерево'];
 
 export function CatalogPage() {
+  const searchParams = useSearchParams();
+  const activeCategory = searchParams.get('category') || '';
+  const activeClockTheme = searchParams.get('clockTheme') || '';
   const { items, ready } = useAdminProducts();
-  const catalogProducts = ready ? expandProductVariants(items.filter((product) => product.status !== 'draft')) : [];
+  const catalogProducts = ready ? expandProductVariants(items.filter((product) => {
+    if (product.status === 'draft') return false;
+    if (activeCategory && product.category !== activeCategory) return false;
+    if (activeClockTheme && product.clockTheme !== activeClockTheme) return false;
+    return true;
+  })) : [];
 
   return (
     <>
@@ -30,7 +39,19 @@ export function CatalogPage() {
             <div className="filterBox">
               <h3>Категории</h3>
               <nav className="categoryMenu">
-                {categories.map((category) => <Link href={`/catalog?category=${encodeURIComponent(category)}`} key={category}>{category}</Link>)}
+                <Link href="/catalog" className={!activeCategory ? 'active' : ''}>Все товары</Link>
+                {categories.map((category) => <Link className={activeCategory === category ? 'active' : ''} href={`/catalog?category=${encodeURIComponent(category)}`} key={category}>{category}</Link>)}
+              </nav>
+            </div>
+
+            <div className="filterBox filterBox--line">
+              <h3>Тематика часов</h3>
+              <nav className="categoryMenu categoryMenu--compact">
+                <Link className={!activeClockTheme ? 'active' : ''} href={activeCategory ? `/catalog?category=${encodeURIComponent(activeCategory)}` : '/catalog'}>Все тематики</Link>
+                {clockThemes.map((theme) => {
+                  const href = `/catalog?category=${encodeURIComponent(clockCategory)}&clockTheme=${encodeURIComponent(theme)}`;
+                  return <Link className={activeClockTheme === theme ? 'active' : ''} href={href} key={theme}>{theme}</Link>;
+                })}
               </nav>
             </div>
 
@@ -71,7 +92,7 @@ export function CatalogPage() {
                   <div className="catalogCard__body">
                     {(product.colorName || product.variantName) && <span className="catalogCard__variantBadge" style={{ borderColor: product.colorHex ?? product.variantColorHex ?? undefined }}>{product.colorName || product.variantName}</span>}
                     <Link href={`/catalog/${product.slug}`} className="catalogCard__title">{product.colorName ? `${product.title} — ${product.colorName}` : product.variantName ? `${product.title} — ${product.variantName}` : product.title}</Link>
-                    <p>{product.short}</p>
+                    <p>{product.short}</p>{product.clockTheme && <em className="catalogCard__theme">{product.clockTheme}</em>}
                     <div className="catalogCard__bottom"><b>от {product.price} BYN</b><AddToCartButton product={product} iconOnly /></div>
                   </div>
                 </article>

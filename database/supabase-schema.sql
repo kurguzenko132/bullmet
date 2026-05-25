@@ -8,6 +8,7 @@ create table if not exists public.products (
   slug text not null unique,
   title text not null,
   category text not null,
+  clock_theme text,
   material text not null,
   short text not null default '',
   description text not null default '',
@@ -36,6 +37,9 @@ create table if not exists public.products (
 
 
 -- Add image display settings for existing projects.
+alter table public.products add column if not exists clock_theme text;
+create index if not exists products_clock_theme_idx on public.products(clock_theme);
+
 alter table public.products add column if not exists catalog_image_fit text not null default 'cover';
 alter table public.products add column if not exists catalog_image_position text not null default 'center center';
 alter table public.products add column if not exists product_image_fit text not null default 'cover';

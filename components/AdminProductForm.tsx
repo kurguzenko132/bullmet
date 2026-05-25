@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { AdminLayout } from './AdminLayout';
 import { type AdminProduct, productFromForm, readAdminProducts, saveAdminProductAsync } from './adminProductStore';
 import { uploadProductImages } from '../lib/productImages';
-import { categories, slugifyVariant, type ProductVariant } from './shopData';
+import { categories, clockCategory, clockThemes, slugifyVariant, type ProductVariant } from './shopData';
 import { clampPercent, getImageSettings, imagePosition, normalizeImageDisplaySettings, type ImageDisplaySettings, type ImageFit } from '../lib/imageDisplay';
 
 const fallbackImage = '/assets/cat-clock.jpg';
@@ -102,6 +102,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const [cropTarget, setCropTarget] = useState<CropTarget>('catalog');
   const [isDraggingCrop, setIsDraggingCrop] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(existing?.category ?? categories[0]);
 
   useEffect(() => {
     setPhotos(initialPhotos);
@@ -109,6 +110,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     const nextVariants = buildInitialVariants(existing);
     setVariants(nextVariants);
     setActiveVariantId(nextVariants[0]?.id ?? '');
+    setSelectedCategory(existing?.category ?? categories[0]);
   }, [initialPhotos, existing]);
 
   useEffect(() => {
@@ -403,7 +405,13 @@ export function AdminProductForm({ slug }: { slug?: string }) {
             <h3>Основная информация</h3>
             <div className="adminFormGrid">
               <label>Название товара<input name="title" defaultValue={existing?.title} required placeholder="Настенные часы Loft" /></label>
-              <label>Категория<select name="category" defaultValue={existing?.category ?? categories[0]}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
+              <label>Категория<select name="category" value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
+              {selectedCategory === clockCategory && (
+                <label>Тематика часов<select name="clockTheme" defaultValue={existing?.clockTheme ?? ''}>
+                  <option value="">Не выбрано</option>
+                  {clockThemes.map((theme) => <option key={theme} value={theme}>{theme}</option>)}
+                </select></label>
+              )}
               <label>Цена, BYN<input name="price" type="number" min="0" defaultValue={existing?.price ?? 120} /></label>
               <label>Старая цена, BYN<input name="oldPrice" type="number" min="0" defaultValue={existing?.oldPrice ?? ''} placeholder="Для псевдо-скидки" /></label>
               <label>Материал<input name="material" defaultValue={existing?.material ?? 'Металл + дерево'} /></label>
@@ -474,13 +482,12 @@ export function AdminProductForm({ slug }: { slug?: string }) {
             {selectedPhoto && (
               <div className="adminImageTuning adminImageTuning--compact">
                 <h4>Настройка выбранного фото</h4>
-                <p>Выбрано: <b>{selectedPhoto.name || 'Фото товара'}</b>. Для каждой фотографии отдельно настраивается вид в каталоге и большое фото на странице товара.</p>
+                <p>Выбрано: <b>{selectedPhoto.name || 'Фото товара'}</b>. Порядок и кадр сохраняются отдельно для каждой фотографии.</p>
                 <div className="adminSelectedPreviewGrid">
                   <div className="adminSelectedPreview"><AdminPreviewImage src={currentPreview} alt="В каталоге" fit={selectedSettings.catalogFit} position={catalogPosition} /><span>Каталог</span></div>
                   <div className="adminSelectedPreview adminSelectedPreview--product"><AdminPreviewImage src={currentPreview} alt="В карточке" fit={selectedSettings.productFit} position={productPosition} /><span>Страница товара</span></div>
                 </div>
-                <button className="adminPrimaryBtn adminCropOpenBtn" type="button" onClick={() => { setCropTarget('product'); setCropModalOpen(true); }}>Настроить главное фото товара</button>
-                <button className="adminSecondaryBtn adminCropCatalogBtn" type="button" onClick={() => { setCropTarget('catalog'); setCropModalOpen(true); }}>Настроить фото для каталога</button>
+                <button className="adminPrimaryBtn adminCropOpenBtn" type="button" onClick={() => setCropModalOpen(true)}>Настроить кадр</button>
               </div>
             )}
 
@@ -497,7 +504,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                   </div>
                   <div className="adminCropTabs">
                     <button type="button" className={cropTarget === 'catalog' ? 'active' : ''} onClick={() => setCropTarget('catalog')}>Карточка каталога</button>
-                    <button type="button" className={cropTarget === 'product' ? 'active' : ''} onClick={() => setCropTarget('product')}>Главное фото товара</button>
+                    <button type="button" className={cropTarget === 'product' ? 'active' : ''} onClick={() => setCropTarget('product')}>Страница товара</button>
                   </div>
                   <div className="adminCropWorkbench adminCropWorkbench--modal">
                     <div className={`adminCropPreview ${cropTarget === 'product' ? 'adminCropPreview--product' : ''}`}
@@ -522,12 +529,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                       <label>Положение по вертикали
                         <input type="range" min="0" max="100" value={cropTarget === 'catalog' ? selectedSettings.catalogY : selectedSettings.productY} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogY: Number(event.target.value) } : { productY: Number(event.target.value) })} />
                       </label>
-                      {cropTarget === 'product' ? (
-                        <button className="adminSecondaryBtn adminCropResetBtn" type="button" onClick={() => updatePhotoSettings(selectedPhoto.id, { productFit: 'contain', productX: 50, productY: 50 })}>Показать главное фото целиком</button>
-                      ) : (
-                        <button className="adminSecondaryBtn adminCropResetBtn" type="button" onClick={() => updatePhotoSettings(selectedPhoto.id, { catalogFit: 'cover', catalogX: 50, catalogY: 50 })}>Сбросить карточку каталога</button>
-                      )}
-                      <small>Для главного фото товара по умолчанию используется режим «Показать целиком», чтобы изображение не обрезалось. Если нужно заполнить область — выбери «Заполнить область» и подвинь кадр.</small>
+                      <small>Двигай оранжевую точку на большом превью мышкой или пальцем. Справа сразу видно, какое положение сохранится.</small>
                       <div className="adminCropLivePair">
                         <div><AdminPreviewImage src={currentPreview} alt="Каталог" fit={selectedSettings.catalogFit} position={catalogPosition} /><span>Каталог</span></div>
                         <div><AdminPreviewImage src={currentPreview} alt="Карточка" fit={selectedSettings.productFit} position={productPosition} /><span>Карточка</span></div>

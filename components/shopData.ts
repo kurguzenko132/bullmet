@@ -26,6 +26,7 @@ export type Product = {
   slug: string;
   title: string;
   category: string;
+  clockTheme?: string;
   material: string;
   short: string;
   description: string;
@@ -140,8 +141,29 @@ export function productToColorVariant(item: Product): ProductVariant {
   };
 }
 
+export const clockThemes = [
+  'Авто-мир',
+  'Барбер',
+  'Парилка',
+  'Детские',
+  'Кухонные',
+  'Классика',
+  'Медицина',
+  'Музыка',
+  'Парикмахерская',
+  'Природа',
+  'Ремонт и стройка',
+  'Романтика',
+  'Рукоделие и ремесло',
+  'Рыбалка',
+  'Животные',
+  'Спорт',
+];
+
+export const clockCategory = 'Часы собственного производства';
+
 export const categories = [
-  'Часы собственного производства',
+  clockCategory,
   'Садовые качели',
   'Резка металла',
   'Резка дерева',
@@ -155,6 +177,7 @@ export const products: Product[] = [
     slug: 'wall-clock-loft',
     title: 'Настенные часы Loft',
     category: 'Часы собственного производства',
+    clockTheme: 'Классика',
     material: 'Металл + дерево',
     short: 'Металл · дерево',
     description: 'Стильные настенные часы в стиле Loft. Сочетание натурального дерева и металлического каркаса делает изделие акцентом для гостиной, офиса или загородного дома.',
@@ -182,6 +205,7 @@ export const products: Product[] = [
     slug: 'wall-clock-classic',
     title: 'Настенные часы Classic',
     category: 'Часы собственного производства',
+    clockTheme: 'Классика',
     material: 'Металл',
     short: 'Металл',
     description: 'Лаконичные металлические часы для современного интерьера. Подходят для дома, офиса, кафе и шоурума.',
@@ -195,6 +219,7 @@ export const products: Product[] = [
     slug: 'wall-clock-industrial',
     title: 'Часы Industrial',
     category: 'Часы собственного производства',
+    clockTheme: 'Классика',
     material: 'Металл + дерево',
     short: 'Металл · дерево',
     description: 'Крупные декоративные часы с индустриальным характером. Хорошо смотрятся в loft-интерьерах и коммерческих пространствах.',

@@ -16,7 +16,7 @@ export function AdminProductsPage() {
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
-      const byQuery = !query || `${item.title} ${item.category} ${item.material}`.toLowerCase().includes(query.toLowerCase());
+      const byQuery = !query || `${item.title} ${item.category} ${item.clockTheme ?? ''} ${item.material}`.toLowerCase().includes(query.toLowerCase());
       const byCategory = category === 'Все категории' || item.category === category;
       return byQuery && byCategory;
     });
@@ -60,7 +60,7 @@ export function AdminProductsPage() {
                 <Image src={product.image} alt="" width={62} height={62} />
                 <div><b>{product.title}</b><small>{product.material}</small>{product.colorName ? <span className="adminVariantCount">Цвет: {product.colorName}</span> : null}{product.colorGroupId ? <span className="adminVariantCount">Группа: {product.colorGroupId}</span> : null}<em>{product.slug}</em></div>
               </div>
-              <span>{product.category}</span>
+              <span>{product.category}{product.clockTheme ? <small className="adminCategorySub">{product.clockTheme}</small> : null}</span>
               <strong>{product.price} BYN {product.oldPrice && <small>{product.oldPrice} BYN</small>}</strong>
               <div className="adminProductFlags">
                 <i className={product.status === 'draft' ? 'draft' : 'active'}>{product.status === 'draft' ? 'Черновик' : 'Активен'}</i>
