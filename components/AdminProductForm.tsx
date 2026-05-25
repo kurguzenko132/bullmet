@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { DragEvent, FormEvent, MouseEvent, PointerEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminLayout } from './AdminLayout';
-import { type AdminProduct, productFromForm, readAdminProducts, saveAdminProductAsync } from './adminProductStore';
+import { type AdminProduct, makeUniqueProductSlug, productFromForm, readAdminProducts, saveAdminProductAsync } from './adminProductStore';
 import { uploadProductImages } from '../lib/productImages';
 import { categories, clockCategory, clockThemes, slugifyVariant, type ProductVariant } from './shopData';
 import { clampPercent, getImageSettings, imagePosition, normalizeImageDisplaySettings, type ImageDisplaySettings, type ImageFit } from '../lib/imageDisplay';
@@ -351,6 +351,9 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     try {
       const formData = new FormData(event.currentTarget);
       const product = productFromForm(formData, existing);
+      if (!existing) {
+        product.slug = await makeUniqueProductSlug(product.slug);
+      }
       const uploadItems = photos.filter((photo) => photo.file);
       const uploadedImages = uploadItems.length ? await uploadProductImages(product.slug, uploadItems.map((photo) => photo.file as File)) : [];
       let uploadIndex = 0;

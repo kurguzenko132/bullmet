@@ -35,6 +35,45 @@ export function makeSlug(value: string) {
     .replace(/^-+|-+$/g, '') || `product-${Date.now()}`;
 }
 
+
+export async function makeUniqueProductSlug(baseSlug: string, currentSlug?: string): Promise<string> {
+  const safeBase = makeSlug(baseSlug || `product-${Date.now()}`);
+  try {
+    let items: Pick<AdminProduct, 'slug'>[] = [];
+
+    if (isSupabaseConfigured && supabase) {
+      const result = await withTimeout<{ data: { slug: string }[] | null; error: { message?: string } | null }>(
+        supabase.from('products').select('slug') as unknown as PromiseLike<{ data: { slug: string }[] | null; error: { message?: string } | null }>,
+        6500,
+        'Supabase долго не отвечает при проверке уникальности товара'
+      );
+      if (result.error) throw result.error;
+      items = Array.isArray(result.data) ? result.data : [];
+    } else {
+      items = readAdminProducts();
+    }
+
+    const used = new Set(
+      items
+        .map((item) => item.slug)
+        .filter((slug) => slug && slug !== currentSlug)
+    );
+
+    if (!used.has(safeBase)) return safeBase;
+
+    let counter = 2;
+    let nextSlug = `${safeBase}-${counter}`;
+    while (used.has(nextSlug)) {
+      counter += 1;
+      nextSlug = `${safeBase}-${counter}`;
+    }
+    return nextSlug;
+  } catch (error) {
+    console.warn('Unique slug check failed, using timestamp fallback:', error);
+    return `${safeBase}-${Date.now()}`;
+  }
+}
+
 export function withAdminDefaults(product: Product): AdminProduct {
   return {
     ...product,
