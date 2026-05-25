@@ -77,11 +77,13 @@ export function ProductDetails({ product }: { product: Product }) {
         {product.variants?.length ? (
           <div className="choiceBlock productColorChooser">
             <p>Расцветка</p>
-            <div className="colorOptions">
+            <div className="colorOptions colorOptions--photo">
               {product.variants.map((variant) => (
-                <button type="button" className={activeVariantId === variant.id ? 'active' : ''} onClick={() => setActiveVariantId(variant.id)} key={variant.id}>
-                  <i style={{ background: variant.colorHex || '#111' }} />
-                  <span>{variant.name}</span>
+                <button type="button" className={activeVariantId === variant.id ? 'active' : ''} onClick={() => setActiveVariantId(variant.id)} key={variant.id} aria-label={`Выбрать цвет ${variant.name}`}>
+                  <span className="colorOptionImage">
+                    <Image src={variant.image} alt={variant.name} fill sizes="82px" style={{ objectFit: getImageSettings(variant as unknown as Product, variant.image).catalogFit, objectPosition: getImageSettings(variant as unknown as Product, variant.image).catalogPosition }} />
+                  </span>
+                  <span className="colorOptionText">{variant.name}</span>
                 </button>
               ))}
             </div>

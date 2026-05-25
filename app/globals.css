@@ -2527,3 +2527,65 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
   .adminVariantEditor__fields { display: grid; }
   .adminProductVariantsFull { padding: 18px; }
 }
+
+/* Marketplace-style color selector: image + color name */
+.colorOptions--photo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.colorOptions--photo button {
+  width: 94px;
+  min-height: auto;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+  align-items: start;
+  justify-items: center;
+  border: 1px solid #ded6ce;
+  background: #fff;
+  color: #1f1f1f;
+  text-align: center;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.colorOptions--photo button:hover {
+  border-color: rgba(230, 90, 18, .55);
+  transform: translateY(-1px);
+}
+.colorOptions--photo button.active {
+  border-color: var(--orange);
+  color: #1f1f1f;
+  box-shadow: 0 0 0 2px rgba(230, 90, 18, .16);
+}
+.colorOptionImage {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+  background: #f3f0ec;
+  border: 1px solid #ece3dc;
+  display: block;
+}
+.colorOptionImage img {
+  pointer-events: none;
+}
+.colorOptionText {
+  display: block;
+  width: 100%;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
+}
+.colorOptions--photo button.active .colorOptionText {
+  color: var(--orange);
+}
+
+@media (max-width: 620px) {
+  .colorOptions--photo { gap: 9px; }
+  .colorOptions--photo button { width: 82px; padding: 7px; }
+  .colorOptionImage { width: 66px; height: 66px; }
+  .colorOptionText { font-size: 11px; }
+}

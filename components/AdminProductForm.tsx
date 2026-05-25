@@ -414,7 +414,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                 {productGroupOptions.map((item) => <option key={item.slug} value={item.colorGroupId || item.slug}>Объединить с: {item.title}{item.colorName ? ` — ${item.colorName}` : ''}</option>)}
               </select></label>
               <label>Название цвета<input name="colorName" defaultValue={existing?.colorName ?? ''} placeholder="Черный / белый / дуб" /></label>
-              <label>Цвет маркера<input name="colorHex" type="color" defaultValue={existing?.colorHex ?? '#111111'} /></label>
+              <input name="colorHex" type="hidden" defaultValue={existing?.colorHex ?? '#111111'} />
             </div>
             <label className="adminFullLabel">Описание<textarea name="description" rows={5} defaultValue={existing?.description ?? 'Описание товара Bullmet.'} /></label>
             <div className="adminFormGrid adminFormGrid--two">
