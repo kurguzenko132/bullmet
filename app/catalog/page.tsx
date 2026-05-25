@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { CatalogPage } from '@/components/CatalogPage';
 
 export const metadata: Metadata = {
@@ -7,6 +8,24 @@ export const metadata: Metadata = {
   alternates: { canonical: '/catalog' },
 };
 
+function CatalogFallback() {
+  return (
+    <main className="catalogPage">
+      <section className="container catalogHero">
+        <div className="breadcrumbs"><span>Главная</span><span>/</span><span>Каталог</span></div>
+        <h1 className="pageTitle">Каталог товаров</h1>
+      </section>
+      <section className="container catalogLayout">
+        <div className="catalogLoading">Загружаем каталог...</div>
+      </section>
+    </main>
+  );
+}
+
 export default function Page() {
-  return <CatalogPage />;
+  return (
+    <Suspense fallback={<CatalogFallback />}>
+      <CatalogPage />
+    </Suspense>
+  );
 }
