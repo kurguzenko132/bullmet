@@ -96,6 +96,9 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const [isSaving, setIsSaving] = useState(false);
   const [draggedPhotoId, setDraggedPhotoId] = useState<string | null>(null);
   const [dragOverPhotoId, setDragOverPhotoId] = useState<string | null>(null);
+  const [draggedVariantPhoto, setDraggedVariantPhoto] = useState<{ variantId: string; photoId: string } | null>(null);
+  const [dragOverVariantPhotoId, setDragOverVariantPhotoId] = useState<string | null>(null);
+  const [activeVariantId, setActiveVariantId] = useState(() => buildInitialVariants(existing)[0]?.id ?? '');
   const [cropTarget, setCropTarget] = useState<CropTarget>('catalog');
   const [isDraggingCrop, setIsDraggingCrop] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -103,7 +106,9 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   useEffect(() => {
     setPhotos(initialPhotos);
     setSelectedPhotoId(initialPhotos[0]?.id ?? '');
-    setVariants(buildInitialVariants(existing));
+    const nextVariants = buildInitialVariants(existing);
+    setVariants(nextVariants);
+    setActiveVariantId(nextVariants[0]?.id ?? '');
   }, [initialPhotos, existing]);
 
   useEffect(() => {
@@ -117,6 +122,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const selectedPhoto = photos.find((photo) => photo.id === selectedPhotoId) ?? photos[0];
   const currentPreview = selectedPhoto?.src ?? photos[0]?.src ?? fallbackImage;
   const selectedSettings = selectedPhoto?.settings ?? normalizeImageDisplaySettings({});
+  const activeVariant = variants.find((variant) => variant.id === activeVariantId) ?? variants[0];
 
   function updatePhotoSettings(photoId: string, patch: Partial<ImageDisplaySettings>) {
     setPhotos((items) => items.map((photo) => photo.id === photoId ? { ...photo, settings: normalizeImageDisplaySettings({ ...photo.settings, ...patch }) } : photo));
@@ -239,7 +245,9 @@ export function AdminProductForm({ slug }: { slug?: string }) {
 
 
   function addVariant() {
-    setVariants((items) => [...items, { id: `variant-${Date.now()}-${Math.random().toString(16).slice(2)}`, name: `Цвет ${items.length + 1}`, colorHex: '#111111', photos: [] }]);
+    const id = `variant-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setVariants((items) => [...items, { id, name: `Цвет ${items.length + 1}`, colorHex: '#111111', photos: [] }]);
+    setActiveVariantId(id);
   }
 
   function updateVariant(id: string, patch: Partial<Omit<VariantDraft, 'photos'>>) {
@@ -247,7 +255,11 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   }
 
   function removeVariant(id: string) {
-    setVariants((items) => items.filter((variant) => variant.id !== id));
+    setVariants((items) => {
+      const next = items.filter((variant) => variant.id !== id);
+      if (activeVariantId === id) setActiveVariantId(next[0]?.id ?? '');
+      return next;
+    });
   }
 
   function addVariantFiles(id: string, fileList: FileList | null) {
@@ -275,7 +287,57 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   }
 
   function removeVariantPhoto(variantId: string, index: number) {
-    setVariants((items) => items.map((variant) => variant.id === variantId ? { ...variant, photos: variant.photos.filter((_, photoIndex) => photoIndex !== index) } : variant));
+    setVariants((items) => items.map((variant) => {
+      if (variant.id !== variantId) return variant;
+      const removed = variant.photos[index];
+      if (removed?.src.startsWith('blob:')) URL.revokeObjectURL(removed.src);
+      return { ...variant, photos: variant.photos.filter((_, photoIndex) => photoIndex !== index) };
+    }));
+  }
+
+  function reorderVariantPhotos(variantId: string, fromId: string, toId: string) {
+    setVariants((items) => items.map((variant) => variant.id === variantId ? { ...variant, photos: reorderPhotos(variant.photos, fromId, toId) } : variant));
+  }
+
+  function handleVariantDragStart(event: DragEvent<HTMLDivElement>, variantId: string, photoId: string) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', photoId);
+    setDraggedVariantPhoto({ variantId, photoId });
+    setDragOverVariantPhotoId(photoId);
+  }
+
+  function handleVariantDrop(event: DragEvent<HTMLDivElement>, variantId: string, targetId: string) {
+    event.preventDefault();
+    const sourceId = event.dataTransfer.getData('text/plain') || draggedVariantPhoto?.photoId;
+    if (sourceId) reorderVariantPhotos(variantId, sourceId, targetId);
+    setDraggedVariantPhoto(null);
+    setDragOverVariantPhotoId(null);
+  }
+
+  function handleVariantPointerDown(event: PointerEvent<HTMLDivElement>, variantId: string, photoId: string) {
+    const target = event.target as HTMLElement;
+    if (target.closest('button')) return;
+    setDraggedVariantPhoto({ variantId, photoId });
+    setDragOverVariantPhotoId(photoId);
+  }
+
+  function handleVariantPointerMove(event: PointerEvent<HTMLDivElement>, variantId: string) {
+    if (!draggedVariantPhoto || draggedVariantPhoto.variantId !== variantId) return;
+    if (event.pointerType === 'mouse' && event.buttons !== 1) return;
+    event.preventDefault();
+    const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
+    const tile = element?.closest<HTMLElement>('[data-variant-photo-id]');
+    const targetId = tile?.dataset.variantPhotoId;
+    if (targetId && targetId !== draggedVariantPhoto.photoId) {
+      reorderVariantPhotos(variantId, draggedVariantPhoto.photoId, targetId);
+      setDraggedVariantPhoto({ variantId, photoId: targetId });
+      setDragOverVariantPhotoId(targetId);
+    }
+  }
+
+  function handleVariantPointerUp() {
+    setDraggedVariantPhoto(null);
+    setDragOverVariantPhotoId(null);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -361,10 +423,10 @@ export function AdminProductForm({ slug }: { slug?: string }) {
       <main className="adminContent adminProductEditPage">
         <div className="adminPageHead">
           <div><p>Контент / Каталог товаров</p><h2>{title}</h2></div>
-          <Link className="adminSecondaryBtn" href="/admin/products">Назад к товарам</Link>
+          <div className="adminPageActions"><Link className="adminSecondaryBtn" href="/admin/products">Назад к товарам</Link><button className="adminPrimaryBtn" form="adminProductForm" type="submit" disabled={isSaving}>{isSaving ? 'Сохраняем...' : 'Сохранить товар'}</button></div>
         </div>
 
-        <form className="adminProductForm" onSubmit={submit}>
+        <form id="adminProductForm" className="adminProductForm" onSubmit={submit}>
           <section className="adminCard adminProductFormMain">
             <h3>Основная информация</h3>
             <div className="adminFormGrid">
@@ -494,40 +556,6 @@ export function AdminProductForm({ slug }: { slug?: string }) {
             )}
 
 
-            <div className="adminVariantManager">
-              <div className="adminPhotoManager__head">
-                <b>Расцветки товара</b>
-                <span>Каждая расцветка появится в каталоге отдельной карточкой. На странице товара покупатель сможет переключать цвет, и фотографии будут меняться.</span>
-              </div>
-              {variants.map((variant, variantIndex) => (
-                <div className="adminVariantCard" key={variant.id}>
-                  <div className="adminVariantCard__top">
-                    <label>Название цвета<input value={variant.name} onChange={(event) => updateVariant(variant.id, { name: event.target.value })} placeholder="Черный / белый / дерево" /></label>
-                    <label>Цвет маркера<input type="color" value={variant.colorHex} onChange={(event) => updateVariant(variant.id, { colorHex: event.target.value })} /></label>
-                    <button type="button" className="adminSecondaryBtn" onClick={() => removeVariant(variant.id)}>Удалить цвет</button>
-                  </div>
-                  <label className="adminUploadBox adminUploadBox--small">Загрузить фото цвета
-                    <input type="file" accept="image/*" multiple onChange={(event) => { addVariantFiles(variant.id, event.target.files); event.currentTarget.value = ''; }} />
-                    <span>Можно выбрать несколько фото для этой расцветки.</span>
-                  </label>
-                  <div className="adminVariantPhotos">
-                    {variant.photos.length ? variant.photos.map((photo, photoIndex) => (
-                      <div className="adminVariantPhotoTile" key={photo.id}>
-                        <div><AdminPreviewImage src={photo.src} alt={`${variant.name} ${photoIndex + 1}`} fit={photo.settings.catalogFit} position={imagePosition(photo.settings.catalogX, photo.settings.catalogY)} /></div>
-                        <span>{photoIndex === 0 ? 'Главное' : `Фото ${photoIndex + 1}`}</span>
-                        <p>
-                          <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); moveVariantPhoto(variant.id, photoIndex, -1); }} disabled={photoIndex === 0}>←</button>
-                          <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); moveVariantPhoto(variant.id, photoIndex, 1); }} disabled={photoIndex === variant.photos.length - 1}>→</button>
-                          <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); removeVariantPhoto(variant.id, photoIndex); }}>×</button>
-                        </p>
-                      </div>
-                    )) : <em>Фото для этого цвета пока не загружены.</em>}
-                  </div>
-                </div>
-              ))}
-              <button className="adminPrimaryBtn" type="button" onClick={addVariant}>Добавить расцветку</button>
-            </div>
-
             {uploadError && <p className="adminUploadError">{uploadError}</p>}
             <div className="adminCheckList">
               <label><input name="inStock" type="checkbox" defaultChecked={existing?.inStock ?? true} /> В наличии</label>
@@ -536,6 +564,88 @@ export function AdminProductForm({ slug }: { slug?: string }) {
             </div>
             <button className="adminPrimaryBtn adminProductSave" type="submit" disabled={isSaving}>{isSaving ? 'Сохраняем...' : 'Сохранить товар'}</button>
           </aside>
+
+          <section className="adminCard adminProductVariantsFull">
+            <div className="adminVariantHeader">
+              <div>
+                <h3>Расцветки товара</h3>
+                <p>Одна модель может иметь несколько цветов. В каталоге каждая расцветка отображается отдельной карточкой, а на странице товара покупатель сможет переключать цвет.</p>
+              </div>
+              <button className="adminPrimaryBtn" type="button" onClick={addVariant}>Добавить расцветку</button>
+            </div>
+
+            {variants.length > 0 ? (
+              <>
+                <div className="adminVariantTabs" role="tablist" aria-label="Расцветки товара">
+                  {variants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      className={activeVariant?.id === variant.id ? 'active' : ''}
+                      onClick={() => setActiveVariantId(variant.id)}
+                    >
+                      <i style={{ background: variant.colorHex || '#111111' }} />
+                      <span>{variant.name || 'Без названия'}</span>
+                      <small>{variant.photos.length} фото</small>
+                    </button>
+                  ))}
+                </div>
+
+                {activeVariant && (
+                  <div className="adminVariantEditor">
+                    <div className="adminVariantEditor__fields">
+                      <label>Название цвета<input value={activeVariant.name} onChange={(event) => updateVariant(activeVariant.id, { name: event.target.value })} placeholder="Черный / белый / дуб" /></label>
+                      <label>Цвет маркера<input type="color" value={activeVariant.colorHex} onChange={(event) => updateVariant(activeVariant.id, { colorHex: event.target.value })} /></label>
+                      <button type="button" className="adminSecondaryBtn" onClick={() => removeVariant(activeVariant.id)}>Удалить расцветку</button>
+                    </div>
+
+                    <label className="adminUploadBox adminUploadBox--variant">Загрузить фото этой расцветки
+                      <input type="file" accept="image/*" multiple onChange={(event) => { addVariantFiles(activeVariant.id, event.target.files); event.currentTarget.value = ''; }} />
+                      <span>Можно выбрать несколько фото. Первое фото станет главным для этой расцветки.</span>
+                    </label>
+
+                    <div className="adminVariantPhotoManager">
+                      <div className="adminPhotoManager__head">
+                        <b>Фото цвета «{activeVariant.name || 'Без названия'}»</b>
+                        <span>Перетаскивай миниатюры мышкой или пальцем. Кнопки ← и → оставлены как запасной вариант.</span>
+                      </div>
+                      <div className="adminVariantPhotoGrid" onPointerMove={(event) => handleVariantPointerMove(event, activeVariant.id)} onPointerUp={handleVariantPointerUp} onPointerCancel={handleVariantPointerUp}>
+                        {activeVariant.photos.length ? activeVariant.photos.map((photo, photoIndex) => (
+                          <div
+                            className={`adminVariantPhotoCard ${draggedVariantPhoto?.photoId === photo.id ? 'isDragging' : ''} ${dragOverVariantPhotoId === photo.id && draggedVariantPhoto?.photoId !== photo.id ? 'isDragOver' : ''}`}
+                            key={photo.id}
+                            data-variant-photo-id={photo.id}
+                            draggable
+                            onDragStart={(event) => handleVariantDragStart(event, activeVariant.id, photo.id)}
+                            onDragOver={(event) => { event.preventDefault(); setDragOverVariantPhotoId(photo.id); }}
+                            onDragEnter={() => { if (draggedVariantPhoto?.variantId === activeVariant.id) reorderVariantPhotos(activeVariant.id, draggedVariantPhoto.photoId, photo.id); }}
+                            onDrop={(event) => handleVariantDrop(event, activeVariant.id, photo.id)}
+                            onDragEnd={() => { setDraggedVariantPhoto(null); setDragOverVariantPhotoId(null); }}
+                            onPointerDown={(event) => { handleVariantPointerDown(event, activeVariant.id, photo.id); event.currentTarget.setPointerCapture?.(event.pointerId); }}
+                          >
+                            <div className="adminVariantPhotoCard__image"><AdminPreviewImage src={photo.src} alt={`${activeVariant.name} ${photoIndex + 1}`} fit={photo.settings.catalogFit} position={imagePosition(photo.settings.catalogX, photo.settings.catalogY)} /></div>
+                            <div className="adminVariantPhotoCard__meta"><b>{photoIndex === 0 ? 'Главное фото цвета' : `Фото ${photoIndex + 1}`}</b>{photo.file && <em>Новое</em>}</div>
+                            <div className="adminVariantPhotoCard__actions">
+                              <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); moveVariantPhoto(activeVariant.id, photoIndex, -1); }} disabled={photoIndex === 0}>←</button>
+                              <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); moveVariantPhoto(activeVariant.id, photoIndex, 1); }} disabled={photoIndex === activeVariant.photos.length - 1}>→</button>
+                              <button type="button" draggable={false} onMouseDown={stopPhotoButtonEvent} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { stopPhotoButtonEvent(event); removeVariantPhoto(activeVariant.id, photoIndex); }}>Удалить</button>
+                            </div>
+                          </div>
+                        )) : <div className="adminVariantEmpty">Фото для этой расцветки пока не загружены.</div>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="adminVariantEmpty adminVariantEmpty--large">
+                <b>Расцветки пока не добавлены</b>
+                <p>Товар будет отображаться как одна карточка. Добавь расцветку, если у одной модели есть несколько цветов.</p>
+                <button className="adminPrimaryBtn" type="button" onClick={addVariant}>Добавить первую расцветку</button>
+              </div>
+            )}
+          </section>
+
         </form>
       </main>
     </AdminLayout>

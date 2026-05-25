@@ -69,8 +69,9 @@ export function CatalogPage() {
                   </Link>
                   <div className="catalogCard__fav"><FavoriteButton product={product} /></div>
                   <div className="catalogCard__body">
-                    <Link href={`/catalog/${product.slug}`} className="catalogCard__title">{product.title}</Link>
-                    <p>{product.variantName ? `${product.short} · ${product.variantName}` : product.short}</p>
+                    {product.variantName && <span className="catalogCard__variantBadge" style={{ borderColor: product.variantColorHex ?? undefined }}>{product.variantName}</span>}
+                    <Link href={`/catalog/${product.slug}`} className="catalogCard__title">{product.variantName ? `${product.title} — ${product.variantName}` : product.title}</Link>
+                    <p>{product.short}</p>
                     <div className="catalogCard__bottom"><b>от {product.price} BYN</b><AddToCartButton product={product} iconOnly /></div>
                   </div>
                 </article>

@@ -2485,3 +2485,45 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
   .adminCropWorkbench--modal .adminCropPreview { aspect-ratio: 4 / 3; }
   .adminCropWorkbench--modal .adminCropPreview--product { aspect-ratio: 3 / 4; }
 }
+
+/* Variant editor redesign */
+.adminPageActions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.adminProductVariantsFull { grid-column: 1 / -1; padding: 24px; }
+.adminVariantHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.adminVariantHeader h3 { margin: 0 0 8px; font-size: 19px; }
+.adminVariantHeader p { margin: 0; max-width: 740px; color: #70685f; font-size: 13px; line-height: 1.55; }
+.adminVariantTabs { display: flex; gap: 10px; overflow-x: auto; padding: 2px 0 14px; margin-bottom: 18px; border-bottom: 1px solid #ece5dd; }
+.adminVariantTabs button { min-width: 170px; min-height: 58px; padding: 10px 14px; border: 1px solid #e2d9d0; background: #fff; border-radius: 12px; display: grid; grid-template-columns: 18px 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; text-align: left; cursor: pointer; transition: .2s ease; }
+.adminVariantTabs button.active { border-color: #e65a12; box-shadow: inset 0 0 0 1px #e65a12; background: #fff8f3; }
+.adminVariantTabs i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,.18); grid-row: 1 / 3; }
+.adminVariantTabs span { font-size: 13px; font-weight: 900; }
+.adminVariantTabs small { color: #8b827a; font-size: 11px; font-weight: 800; }
+.adminVariantEditor { display: grid; gap: 18px; }
+.adminVariantEditor__fields { display: grid; grid-template-columns: minmax(220px, 1fr) 160px auto; gap: 14px; align-items: end; }
+.adminVariantEditor__fields label { display: grid; gap: 7px; color: #4d4741; font-size: 12px; font-weight: 900; }
+.adminVariantEditor__fields input:not([type='color']) { width: 100%; height: 42px; border: 1px solid #e3ddd5; background: #fff; padding: 0 12px; outline: none; font-family: inherit; font-size: 13px; }
+.adminVariantEditor__fields input[type='color'] { width: 100%; height: 42px; border: 1px solid #e3ddd5; background: #fff; padding: 4px; }
+.adminUploadBox--variant { max-width: 760px; }
+.adminVariantPhotoManager { padding: 16px; border: 1px solid #eee4da; background: #fffcf8; border-radius: 16px; }
+.adminVariantPhotoGrid { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; touch-action: none; }
+.adminVariantPhotoCard { border: 1px solid #e2d9d0; background: #fff; border-radius: 14px; overflow: hidden; cursor: grab; user-select: none; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.adminVariantPhotoCard.isDragging { opacity: .65; cursor: grabbing; transform: scale(.98); }
+.adminVariantPhotoCard.isDragOver { border-color: #e65a12; box-shadow: 0 0 0 2px rgba(230,90,18,.12); }
+.adminVariantPhotoCard__image { position: relative; height: 150px; background: #eee; overflow: hidden; }
+.adminVariantPhotoCard__meta { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px 0; }
+.adminVariantPhotoCard__meta b { font-size: 13px; line-height: 1.25; }
+.adminVariantPhotoCard__meta em { padding: 4px 8px; border-radius: 999px; background: #fff0e8; color: #e65a12; font-size: 11px; font-style: normal; font-weight: 900; }
+.adminVariantPhotoCard__actions { display: flex; gap: 7px; padding: 10px 12px 12px; }
+.adminVariantPhotoCard__actions button { min-width: 34px; height: 34px; padding: 0 10px; border: 1px solid #e2d9d0; background: #fff; cursor: pointer; font-size: 12px; font-weight: 900; }
+.adminVariantPhotoCard__actions button:last-child { margin-left: auto; }
+.adminVariantPhotoCard__actions button:disabled { opacity: .35; cursor: not-allowed; }
+.adminVariantEmpty { padding: 24px; border: 1px dashed #e2d9d0; border-radius: 14px; color: #756d65; background: #fff; }
+.adminVariantEmpty--large { display: grid; gap: 10px; justify-items: start; }
+.adminProductMain .adminVariantCount { display: inline-flex; width: max-content; margin-top: 6px; padding: 4px 8px; border-radius: 999px; background: #fff0e8; color: #e65a12; font-size: 11px; font-weight: 900; }
+.catalogCard__variantBadge { display: inline-flex; width: max-content; margin-bottom: 8px; padding: 4px 8px; border-radius: 999px; background: #fff0e8; color: #e65a12; font-size: 11px; font-weight: 900; }
+.adminProductSave { position: sticky; bottom: 14px; z-index: 3; box-shadow: 0 12px 32px rgba(230,90,18,.18); }
+@media (max-width: 980px) {
+  .adminVariantHeader, .adminVariantEditor__fields { grid-template-columns: 1fr; flex-direction: column; }
+  .adminVariantEditor__fields { display: grid; }
+  .adminProductVariantsFull { padding: 18px; }
+}
