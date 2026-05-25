@@ -4348,3 +4348,242 @@ textarea:focus { box-shadow: 0 0 0 3px rgba(230, 90, 18, .1); }
     display: none !important;
   }
 }
+
+/* Mobile catalog marketplace layout + collapsible filters */
+.mobileFilterToggle,
+.mobileFilterHead { display: none; }
+.catalogCard__rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 14px;
+  color: #7a746e;
+  font-size: 12px;
+  line-height: 1.2;
+}
+.catalogCard__rating span { color: #f28a00; font-size: 15px; line-height: 1; }
+
+.productReviews { margin-top: 42px; margin-bottom: 52px; }
+.productReviews__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+  margin-bottom: 22px;
+}
+.productReviews__head h2 { margin: 0; font-size: clamp(28px, 2.2vw, 42px); line-height: 1.04; letter-spacing: .06em; text-transform: uppercase; }
+.productReviews__summary { min-width: 160px; padding: 18px 20px; border: 1px solid #eadfd5; background: #fbf8f4; text-align: right; }
+.productReviews__summary strong { display: block; font-size: 34px; line-height: 1; }
+.productReviews__summary span { display: block; margin-top: 7px; color: #6f6860; font-size: 13px; }
+.productReviews__grid { display: grid; grid-template-columns: minmax(320px, .85fr) minmax(0, 1.15fr); gap: 22px; align-items: start; }
+.reviewForm,
+.reviewCard,
+.reviewsEmpty { border: 1px solid #eadfd5; background: #fff; }
+.reviewForm { display: grid; gap: 14px; padding: 24px; }
+.reviewForm b { font-size: 20px; text-transform: uppercase; letter-spacing: .06em; }
+.reviewForm p { margin: 0; color: #6c655e; font-size: 14px; line-height: 1.45; }
+.reviewForm textarea { width: 100%; resize: vertical; border: 1px solid #ddd4ca; padding: 14px; font: inherit; font-size: 14px; outline: none; }
+.reviewForm em { color: #6c655e; font-size: 13px; font-style: normal; line-height: 1.35; }
+.reviewStars { display: flex; gap: 4px; }
+.reviewStars button { border: 0; background: transparent; color: #d2cbc4; font-size: 28px; line-height: 1; cursor: pointer; }
+.reviewStars button.active { color: #f28a00; }
+.reviewsList { display: grid; gap: 12px; }
+.reviewCard { padding: 20px; }
+.reviewCard > div { display: flex; justify-content: space-between; gap: 14px; align-items: center; margin-bottom: 10px; }
+.reviewCard b { font-size: 15px; }
+.reviewCard span { color: #9a928a; font-size: 12px; }
+.reviewCard strong { display: block; color: #f28a00; letter-spacing: 1px; font-size: 15px; }
+.reviewCard strong i { color: #d2cbc4; font-style: normal; }
+.reviewCard p { margin: 12px 0 0; color: #4c4640; font-size: 14px; line-height: 1.55; }
+.reviewsEmpty { padding: 28px; }
+.reviewsEmpty b { font-size: 20px; }
+.reviewsEmpty p { margin: 8px 0 0; color: #6c655e; font-size: 14px; }
+
+@media (max-width: 760px) {
+  .catalogHero { padding: 22px 0 10px !important; }
+  .catalogLayout {
+    display: block !important;
+    padding-bottom: 34px !important;
+  }
+  .mobileFilterToggle {
+    width: 100%;
+    min-height: 48px;
+    margin: 0 0 14px;
+    padding: 0 15px;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #e2d8cf;
+    background: #fbf8f4;
+    color: #171717;
+    font: inherit;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .mobileFilterToggle b { color: var(--orange); font-size: 11px; }
+  .mobileFilterHead {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .mobileFilterHead b { font-size: 16px; text-transform: uppercase; letter-spacing: .06em; }
+  .mobileFilterHead button {
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid #e2d8cf;
+    background: #fff;
+    color: #171717;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .catalogSidebar {
+    position: static !important;
+    top: auto !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 18px !important;
+    margin-bottom: 0 !important;
+    border-width: 0 !important;
+    box-shadow: none !important;
+    opacity: 0;
+    transition: max-height .25s ease, padding .25s ease, opacity .2s ease, margin .25s ease;
+  }
+  .catalogSidebar--open {
+    max-height: 1200px !important;
+    overflow: auto !important;
+    padding: 18px !important;
+    margin-bottom: 18px !important;
+    border-width: 1px !important;
+    opacity: 1;
+    background: #fff;
+  }
+  .catalogSidebar .filterBox { padding: 0 !important; }
+  .catalogSidebar .filterBox + .filterBox { margin-top: 16px !important; padding-top: 16px !important; border-top: 1px solid #eee5dc; }
+  .categoryMenu { display: flex !important; gap: 8px !important; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .categoryMenu::-webkit-scrollbar { display: none; }
+  .categoryMenu a {
+    flex: 0 0 auto;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    border: 1px solid #e7ded4;
+    background: #fbf8f4;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+  .categoryMenu a.active { border-color: var(--orange); color: var(--orange); background: #fff4ed; }
+  .catalogToolbar {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+  .catalogToolbar select { width: 100% !important; }
+  .catalogToolbar p { font-size: 12px !important; }
+  .viewButtons { display: none !important; }
+  .productCatalogGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  .catalogCard--mobileMarket {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  .catalogCard--mobileMarket:hover { transform: none !important; box-shadow: none !important; }
+  .catalogCard--mobileMarket .catalogCard__image {
+    height: auto !important;
+    aspect-ratio: 1 / 1.22;
+    border-radius: 17px;
+    background: #f0ede9;
+    overflow: hidden;
+  }
+  .catalogCard--mobileMarket .catalogCard__image img { transform: none !important; }
+  .catalogCard--mobileMarket .catalogCard__fav {
+    top: 8px !important;
+    right: 8px !important;
+    width: 34px !important;
+    height: 34px !important;
+  }
+  .catalogCard--mobileMarket .catalogCard__fav button {
+    width: 34px !important;
+    height: 34px !important;
+    background: rgba(255,255,255,.92) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 5px 14px rgba(0,0,0,.12) !important;
+  }
+  .catalogCard--mobileMarket .catalogCard__body {
+    padding: 9px 0 0 !important;
+    background: transparent !important;
+  }
+  .catalogCard--mobileMarket .catalogCard__variantBadge,
+  .catalogCard--mobileMarket .catalogCard__theme {
+    max-width: 100%;
+    margin: 0 0 5px !important;
+    padding: 2px 7px !important;
+    font-size: 10px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .catalogCard--mobileMarket .catalogCard__title {
+    display: -webkit-box !important;
+    min-height: 0 !important;
+    font-size: 13px !important;
+    line-height: 1.22 !important;
+    letter-spacing: 0 !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .catalogCard--mobileMarket .catalogCard__body p {
+    display: none !important;
+  }
+  .catalogCard--mobileMarket .catalogCard__rating {
+    margin: 6px 0 8px !important;
+    font-size: 11px !important;
+    color: #77716a;
+  }
+  .catalogCard--mobileMarket .catalogCard__bottom {
+    margin-top: 0 !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  .catalogCard--mobileMarket .catalogCard__bottom b {
+    font-size: 16px !important;
+    line-height: 1.1 !important;
+    letter-spacing: .02em;
+  }
+  .catalogCard--mobileMarket .catalogCard__bottom button {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border-radius: 50% !important;
+    border-color: var(--orange) !important;
+    background: var(--orange) !important;
+    color: #fff !important;
+  }
+  .catalogInfoStrip { grid-template-columns: 1fr !important; }
+  .catalogInfoStrip div { min-height: auto !important; border-left: 0 !important; border-top: 1px solid #eee4db; padding: 18px !important; }
+  .catalogInfoStrip div:first-child { border-top: 0 !important; }
+
+  .productReviews { margin-top: 28px !important; margin-bottom: 34px !important; }
+  .productReviews__head { display: grid !important; gap: 14px !important; align-items: start !important; }
+  .productReviews__summary { width: 100%; min-width: 0; text-align: left; }
+  .productReviews__grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+  .reviewForm { padding: 18px !important; }
+  .reviewStars button { font-size: 26px !important; }
+  .reviewCard { padding: 17px !important; }
+}
+
+@media (max-width: 420px) {
+  .productCatalogGrid { gap: 9px !important; }
+  .catalogCard--mobileMarket .catalogCard__title { font-size: 12px !important; }
+  .catalogCard--mobileMarket .catalogCard__bottom b { font-size: 15px !important; }
+  .catalogCard--mobileMarket .catalogCard__bottom button { width: 39px !important; height: 39px !important; min-width: 39px !important; }
+}

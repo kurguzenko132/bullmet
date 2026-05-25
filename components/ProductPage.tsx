@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Header, Footer } from './HomePage';
 
 import { useAdminProducts } from './useAdminProducts';
-import { ProductDetails, ProductServiceStrip, RelatedProducts } from './ProductDetails';
+import { ProductDetails, ProductReviewsBlock, ProductServiceStrip, RelatedProducts } from './ProductDetails';
 import { expandProductVariants, findProductByVariantSlug, getProductGroup, productToColorVariant } from './shopData';
 
 export function ProductPage({ slug }: { slug: string }) {
@@ -45,6 +45,7 @@ export function ProductPage({ slug }: { slug: string }) {
         </section>
         <ProductDetails product={product} />
         <ProductServiceStrip />
+        <ProductReviewsBlock productSlug={product.slug} />
         <RelatedProducts products={related} />
       </main>
       <Footer />

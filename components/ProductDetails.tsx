@@ -8,6 +8,7 @@ import { AddToCartButton } from './AddToCartButton';
 import { FavoriteButton } from './FavoriteButton';
 import type { Product } from './shopData';
 import { getImageSettings } from '../lib/imageDisplay';
+import { ProductReviews } from './ProductReviews';
 
 export function ProductDetails({ product }: { product: Product }) {
   const [activeVariantId, setActiveVariantId] = useState(product.activeVariantId ?? product.variants?.[0]?.id ?? '');
@@ -110,6 +111,10 @@ export function ProductDetails({ product }: { product: Product }) {
       </div>
     </section>
   );
+}
+
+export function ProductReviewsBlock({ productSlug }: { productSlug: string }) {
+  return <ProductReviews productSlug={productSlug} />;
 }
 
 export function ProductServiceStrip() {

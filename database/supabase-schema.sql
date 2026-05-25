@@ -247,3 +247,43 @@ create policy "site_settings_write_demo" on public.site_settings for all using (
 
 -- Default home settings insert was removed intentionally.
 -- Re-running this schema will not restore old hero/category images.
+
+-- Product reviews and ratings.
+create table if not exists public.product_reviews (
+  id uuid primary key default gen_random_uuid(),
+  product_slug text not null,
+  user_id uuid references auth.users(id) on delete cascade,
+  user_email text,
+  user_name text,
+  rating integer not null check (rating between 1 and 5),
+  comment text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(product_slug, user_id)
+);
+
+create index if not exists product_reviews_product_slug_idx on public.product_reviews(product_slug);
+create index if not exists product_reviews_user_id_idx on public.product_reviews(user_id);
+
+alter table public.product_reviews enable row level security;
+
+drop trigger if exists product_reviews_set_updated_at on public.product_reviews;
+create trigger product_reviews_set_updated_at
+before update on public.product_reviews
+for each row execute function public.set_updated_at();
+
+drop policy if exists "product_reviews_select_public" on public.product_reviews;
+create policy "product_reviews_select_public" on public.product_reviews
+  for select using (true);
+
+drop policy if exists "product_reviews_insert_registered" on public.product_reviews;
+create policy "product_reviews_insert_registered" on public.product_reviews
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "product_reviews_update_own" on public.product_reviews;
+create policy "product_reviews_update_own" on public.product_reviews
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "product_reviews_delete_own_or_admin" on public.product_reviews;
+create policy "product_reviews_delete_own_or_admin" on public.product_reviews
+  for delete using (auth.uid() = user_id or public.is_admin());

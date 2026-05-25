@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -10,20 +11,31 @@ import { useAdminProducts } from './useAdminProducts';
 import { AddToCartButton } from './AddToCartButton';
 import { FavoriteButton } from './FavoriteButton';
 import { getImageSettings } from '../lib/imageDisplay';
+import { loadReviewSummaries, type ProductReviewSummary } from '../lib/reviews';
 
 const materialFilters = ['Металл', 'Дерево', 'Металл и дерево'];
 
 export function CatalogPage() {
   const searchParams = useSearchParams();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [reviewSummaries, setReviewSummaries] = useState<Record<string, ProductReviewSummary>>({});
   const activeCategory = searchParams.get('category') || '';
   const activeClockTheme = searchParams.get('clockTheme') || '';
   const { items, ready } = useAdminProducts();
-  const catalogProducts = ready ? expandProductVariants(items.filter((product) => {
+  const catalogProducts = useMemo(() => ready ? expandProductVariants(items.filter((product) => {
     if (product.status === 'draft') return false;
     if (activeCategory && product.category !== activeCategory) return false;
     if (activeClockTheme && product.clockTheme !== activeClockTheme) return false;
     return true;
-  })) : [];
+  })) : [], [items, ready, activeCategory, activeClockTheme]);
+
+  useEffect(() => {
+    let mounted = true;
+    loadReviewSummaries(catalogProducts.slice(0, 24).map((product) => product.slug))
+      .then((summaries) => { if (mounted) setReviewSummaries(summaries); })
+      .catch(() => { if (mounted) setReviewSummaries({}); });
+    return () => { mounted = false; };
+  }, [catalogProducts]);
 
   return (
     <>
@@ -35,7 +47,12 @@ export function CatalogPage() {
         </section>
 
         <section className="container catalogLayout">
-          <aside className="catalogSidebar" aria-label="Фильтры каталога">
+          <button type="button" className="mobileFilterToggle" onClick={() => setFiltersOpen((value) => !value)} aria-expanded={filtersOpen}>
+            <span>Фильтры</span>
+            <b>{filtersOpen ? 'Свернуть' : 'Открыть'}</b>
+          </button>
+          <aside className={`catalogSidebar ${filtersOpen ? 'catalogSidebar--open' : ''}`} aria-label="Фильтры каталога">
+            <div className="mobileFilterHead"><b>Фильтры каталога</b><button type="button" onClick={() => setFiltersOpen(false)}>Закрыть</button></div>
             <div className="filterBox">
               <h3>Категории</h3>
               <nav className="categoryMenu">
@@ -82,8 +99,10 @@ export function CatalogPage() {
             </div>
 
             <div className="productCatalogGrid">
-              {catalogProducts.length ? catalogProducts.slice(0, 12).map((product) => (
-                <article className="catalogCard" key={product.slug}>
+              {catalogProducts.length ? catalogProducts.slice(0, 12).map((product) => {
+                const review = reviewSummaries[product.slug];
+                return (
+                <article className="catalogCard catalogCard--mobileMarket" key={product.slug}>
                   <Link href={`/catalog/${product.slug}`} className="catalogCard__overlay" aria-label={`Открыть ${product.title}`} />
                   <Link href={`/catalog/${product.slug}`} className="catalogCard__image">
                     <Image src={product.image} alt={product.title} fill sizes="(max-width: 760px) 50vw, 25vw" style={{ objectFit: getImageSettings(product, product.image).catalogFit, objectPosition: getImageSettings(product, product.image).catalogPosition }} />
@@ -93,10 +112,12 @@ export function CatalogPage() {
                     {(product.colorName || product.variantName) && <span className="catalogCard__variantBadge" style={{ borderColor: product.colorHex ?? product.variantColorHex ?? undefined }}>{product.colorName || product.variantName}</span>}
                     <Link href={`/catalog/${product.slug}`} className="catalogCard__title">{product.colorName ? `${product.title} — ${product.colorName}` : product.variantName ? `${product.title} — ${product.variantName}` : product.title}</Link>
                     <p>{product.short}</p>{product.clockTheme && <em className="catalogCard__theme">{product.clockTheme}</em>}
+                    <div className="catalogCard__rating"><span>★</span>{review ? `${review.average.toFixed(1).replace('.', ',')} · ${review.count} ${review.count === 1 ? 'отзыв' : 'отзывов'}` : 'Пока нет отзывов'}</div>
                     <div className="catalogCard__bottom"><b>от {product.price} BYN</b><AddToCartButton product={product} iconOnly /></div>
                   </div>
                 </article>
-              )) : <div className="catalogEmpty"><b>Товаров пока нет</b><p>Добавьте товары через админку или проверьте подключение Supabase.</p></div>}
+              );
+              }) : <div className="catalogEmpty"><b>Товаров пока нет</b><p>Добавьте товары через админку или проверьте подключение Supabase.</p></div>}
             </div>
 
             {catalogProducts.length > 12 && <div className="pagination"><span className="active">1</span><span>2</span><span>3</span><span>4</span><button>→</button></div>}
