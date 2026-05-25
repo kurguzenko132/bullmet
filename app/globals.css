@@ -2426,3 +2426,62 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
 @media (max-width: 760px) {
   .adminVariantCard__top { grid-template-columns: 1fr; }
 }
+
+
+/* Crop modal layout repair */
+.adminCropModal__panel {
+  width: min(1320px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+.adminCropWorkbench--modal {
+  display: grid;
+  grid-template-columns: minmax(420px, 760px) minmax(320px, 1fr);
+  align-items: start;
+}
+.adminCropWorkbench--modal .adminCropPreview {
+  min-height: 0;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  max-height: calc(100vh - 260px);
+}
+.adminCropWorkbench--modal .adminCropPreview--product {
+  min-height: 0;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  max-height: calc(100vh - 230px);
+}
+.adminCropPreview > img,
+.adminCropLivePair > div > img,
+.adminSelectedPreview > img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.adminCropControls {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+.adminCropLivePair > div {
+  min-height: 0;
+  aspect-ratio: 4 / 3;
+}
+.adminCropLivePair > div:nth-child(2) {
+  min-height: 0;
+  aspect-ratio: 3 / 4;
+}
+@media (max-width: 980px) {
+  .adminCropWorkbench--modal {
+    grid-template-columns: 1fr;
+  }
+  .adminCropControls { position: static; }
+  .adminCropWorkbench--modal .adminCropPreview,
+  .adminCropWorkbench--modal .adminCropPreview--product {
+    max-height: none;
+  }
+}
+@media (max-width: 560px) {
+  .adminCropWorkbench--modal .adminCropPreview { aspect-ratio: 4 / 3; }
+  .adminCropWorkbench--modal .adminCropPreview--product { aspect-ratio: 3 / 4; }
+}

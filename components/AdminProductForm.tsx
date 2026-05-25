@@ -30,7 +30,7 @@ type VariantDraft = {
 };
 
 function AdminPreviewImage({ src, alt, fit = 'cover', position = '50% 50%' }: { src: string; alt: string; fit?: ImageFit; position?: string }) {
-  const style = { objectFit: fit, objectPosition: position } as const;
+  const style = { objectFit: fit, objectPosition: position, width: '100%', height: '100%', display: 'block' } as const;
   if (src.startsWith('blob:') || src.startsWith('data:')) return <img src={src} alt={alt} style={style} draggable={false} />;
   return <Image src={src} alt={alt} fill sizes="360px" style={style} draggable={false} />;
 }
