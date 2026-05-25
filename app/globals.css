@@ -4011,3 +4011,340 @@ textarea:focus { box-shadow: 0 0 0 3px rgba(230, 90, 18, .1); }
   .cartItem, .orderItem, .favoriteItem { grid-template-columns: 1fr !important; }
   .cartItem__image, .orderItem__image, .favoriteItem__image { width: 100% !important; height: 180px !important; }
 }
+
+/* Mobile hard fix: menu, spacing, one-column auth and card proportions */
+.mobileMenu {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .header {
+    overflow: visible;
+  }
+
+  .header__inner {
+    position: relative;
+    z-index: 60;
+  }
+
+  .burger {
+    position: relative;
+    border-left: 1px solid #eee !important;
+    background: #f5f5f5 !important;
+  }
+
+  .burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #111;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+
+  .header--menuOpen .burger span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .header--menuOpen .burger span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .header--menuOpen .burger span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .mobileMenu {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 55;
+    background: #fff;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #e6ded6;
+    box-shadow: 0 22px 42px rgba(18, 16, 14, .12);
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+  }
+
+  .header--menuOpen .mobileMenu {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  .mobileMenu__inner {
+    display: grid;
+    gap: 0;
+    padding: 12px 0 16px;
+  }
+
+  .mobileMenu__inner a {
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #eee7df;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .mobileMenu__inner a::after {
+    content: '→';
+    color: var(--orange);
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .mobileMenu__cta {
+    margin-top: 12px;
+    padding: 0 18px;
+    justify-content: center !important;
+    background: var(--orange);
+    color: #fff;
+    border-bottom: 0 !important;
+  }
+
+  .mobileMenu__cta::after {
+    display: none;
+  }
+
+  .promo {
+    padding-bottom: 0 !important;
+  }
+
+  .promo__content {
+    padding-top: 26px !important;
+    padding-bottom: 22px !important;
+  }
+
+  .promo__buttons {
+    gap: 10px !important;
+  }
+
+  .benefits {
+    width: min(100% - 28px, 720px) !important;
+    margin: 0 auto 24px !important;
+    padding: 18px !important;
+    background: #f6f2ed !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 18px 16px !important;
+  }
+
+  .benefit {
+    min-width: 0;
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    align-items: center;
+  }
+
+  .benefit b,
+  .benefit span {
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    font-size: 15px !important;
+    line-height: 1.18 !important;
+  }
+
+  .categoryGrid {
+    gap: 12px !important;
+  }
+
+  .category {
+    min-height: 225px !important;
+  }
+
+  .shopPreview {
+    padding-top: 38px !important;
+    padding-bottom: 42px !important;
+  }
+
+  .blockTitle {
+    font-size: clamp(24px, 7vw, 34px) !important;
+    line-height: 1.08 !important;
+    margin-bottom: 18px !important;
+    letter-spacing: .08em !important;
+  }
+
+  .productsGrid,
+  .servicesGrid,
+  .productCatalogGrid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .product__image,
+  .service__image,
+  .catalogCard__image {
+    height: clamp(245px, 64vw, 330px) !important;
+    min-height: 0 !important;
+  }
+
+  .product__body,
+  .service__body,
+  .catalogCard__body {
+    padding: 20px 18px !important;
+  }
+
+  .product h4,
+  .service h4,
+  .catalogCard__title {
+    font-size: 18px !important;
+    line-height: 1.22 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .product p,
+  .service p,
+  .catalogCard__body p {
+    font-size: 15px !important;
+    line-height: 1.42 !important;
+    min-height: 0 !important;
+    overflow-wrap: normal !important;
+  }
+
+  .product__body div,
+  .catalogCard__bottom {
+    margin-top: 22px !important;
+  }
+
+  .product b,
+  .catalogCard__bottom b {
+    font-size: 21px !important;
+  }
+
+  .product button,
+  .miniCart,
+  .catalogCard__bottom button {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+  }
+
+  .accountShell,
+  .accountShell.authShell {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    padding: 16px 0 34px !important;
+  }
+
+  .accountIntro,
+  .loginPanel {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 22px 18px !important;
+  }
+
+  .accountIntro h2,
+  .loginPanel h2 {
+    font-size: 26px !important;
+    line-height: 1.05 !important;
+    letter-spacing: .08em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .accountIntro p,
+  .loginHint {
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .loginForm input {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .container {
+    width: min(100% - 26px, 520px) !important;
+  }
+
+  .header__inner {
+    gap: 6px !important;
+  }
+
+  .logo b {
+    font-size: 24px !important;
+    letter-spacing: .08em !important;
+  }
+
+  .logo__mark {
+    width: 34px !important;
+    min-width: 34px !important;
+  }
+
+  .iconButton,
+  .accountButton,
+  .cartButton,
+  .burger {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  .iconButton {
+    display: none !important;
+  }
+
+  .promo__text {
+    font-size: 18px !important;
+    line-height: 1.58 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .benefits {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 18px 14px !important;
+    padding: 18px 8px !important;
+  }
+
+  .benefit svg:first-child {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .benefit b,
+  .benefit span {
+    font-size: 14px !important;
+  }
+
+  .category {
+    min-height: 205px !important;
+    padding-right: 78px !important;
+  }
+
+  .category span {
+    font-size: 22px !important;
+    line-height: 1.08 !important;
+  }
+
+  .product__image,
+  .service__image,
+  .catalogCard__image {
+    height: 260px !important;
+  }
+
+  .catalogHero h1,
+  .pageTitle {
+    font-size: clamp(32px, 11vw, 44px) !important;
+    line-height: 1.02 !important;
+  }
+
+  .accountIntro {
+    display: none !important;
+  }
+}

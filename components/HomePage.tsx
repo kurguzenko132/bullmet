@@ -55,8 +55,14 @@ function Logo() {
 }
 
 export function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
   return (
-    <header className="header" id="top">
+    <header className={menuOpen ? 'header header--menuOpen' : 'header'} id="top">
       <div className="container header__inner">
         <Logo />
         <nav className="nav" aria-label="Основное меню">
@@ -67,7 +73,22 @@ export function Header() {
           <Link className="accountButton" href="/account" aria-label="Войти в аккаунт"><UserIcon /></Link>
           <CartHeaderButton />
           <Link className="topCta" href="/request">Заказать расчет</Link>
-          <button className="burger" aria-label="Открыть меню"><span /><span /><span /></button>
+          <button
+            className="burger"
+            type="button"
+            aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            onClick={() => setMenuOpen((value) => !value)}
+          >
+            <span /><span /><span />
+          </button>
+        </div>
+      </div>
+      <div className="mobileMenu" id="mobile-menu" aria-hidden={!menuOpen}>
+        <div className="container mobileMenu__inner">
+          {nav.map((item) => <Link href={item.href} key={item.title} onClick={closeMenu}>{item.title}</Link>)}
+          <Link className="mobileMenu__cta" href="/request" onClick={closeMenu}>Заказать расчет</Link>
         </div>
       </div>
     </header>
