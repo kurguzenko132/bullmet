@@ -2589,3 +2589,64 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
   .colorOptionImage { width: 66px; height: 66px; }
   .colorOptionText { font-size: 11px; }
 }
+
+.adminColorGroupHint {
+  grid-column: 1 / -1;
+  border: 1px dashed #e2d7cd;
+  background: #fff9f4;
+  padding: 14px 16px;
+  display: grid;
+  gap: 5px;
+}
+.adminColorGroupHint b { font-size: 13px; }
+.adminColorGroupHint span { color: #6f6a64; font-size: 12px; line-height: 1.45; }
+.adminColorGroupHint a { color: var(--orange); font-weight: 800; font-size: 12px; }
+
+.adminGroupsPage { display: grid; gap: 24px; }
+.adminGroupBuilder { display: grid; gap: 18px; }
+.adminGroupBuilder__head { display: grid; grid-template-columns: 1fr minmax(320px, 460px); gap: 24px; align-items: start; }
+.adminGroupBuilder__head h3,
+.adminSectionTitle h3,
+.adminGroupCard h4 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+.adminGroupBuilder__head p,
+.adminGroupCard__head p { margin: 8px 0 0; color: #6d6760; line-height: 1.55; }
+.adminGroupBuilder__actions { display: grid; gap: 10px; }
+.adminGroupBuilder__actions input { height: 48px; border: 1px solid #ddd5ce; padding: 0 16px; font: inherit; background: #fff; }
+.adminInlineMessage { margin: 0; padding: 12px 14px; border: 1px solid #e5d7c8; background: #fff8f0; color: #5d5146; font-weight: 700; }
+.adminGroupProductGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.adminGroupProductCard { position: relative; min-height: 112px; display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: center; border: 1px solid #e8e0d8; background: #fff; padding: 12px; cursor: pointer; transition: .18s ease; }
+.adminGroupProductCard:hover { border-color: #efb28d; }
+.adminGroupProductCard.isSelected { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(230,90,18,.12); }
+.adminGroupProductCard input { position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; accent-color: var(--orange); }
+.adminGroupProductCard__image { position: relative; width: 72px; height: 72px; overflow: hidden; background: #f4f1ed; }
+.adminGroupProductCard__body { display: grid; gap: 5px; padding-right: 24px; }
+.adminGroupProductCard__body b { font-size: 13px; line-height: 1.25; }
+.adminGroupProductCard__body em { font-style: normal; color: var(--orange); font-weight: 800; font-size: 12px; }
+.adminGroupProductCard__body small { color: #777; font-size: 11px; overflow-wrap: anywhere; }
+.adminGroupsList { display: grid; gap: 14px; }
+.adminSectionTitle { display: flex; justify-content: space-between; align-items: center; }
+.adminSectionTitle span { color: #777; font-weight: 800; }
+.adminGroupCard { display: grid; gap: 18px; }
+.adminGroupCard__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.adminGroupCard__head > div:last-child { display: flex; gap: 10px; }
+.adminDangerBtn { min-height: 42px; padding: 0 16px; border: 1px solid #e6b9a8; background: #fff4ef; color: #c8490b; font-weight: 900; cursor: pointer; }
+.adminGroupRows { display: grid; border: 1px solid #eee6df; }
+.adminGroupRow { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(220px, 320px) auto; gap: 18px; align-items: center; padding: 14px; border-top: 1px solid #eee6df; }
+.adminGroupRow:first-child { border-top: 0; }
+.adminGroupRow__product { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.adminGroupRow__product > span { position: relative; width: 58px; height: 58px; flex: 0 0 auto; overflow: hidden; background: #f4f1ed; }
+.adminGroupRow__product b { display: block; font-size: 13px; }
+.adminGroupRow__product small { display: block; margin-top: 4px; color: #777; overflow-wrap: anywhere; }
+.adminGroupRow label { display: grid; gap: 6px; font-weight: 800; font-size: 12px; color: #69625c; }
+.adminGroupRow input { height: 42px; border: 1px solid #ddd5ce; padding: 0 12px; font: inherit; background: #fff; }
+.adminGroupRow__actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.adminGroupRow__actions a,
+.adminGroupRow__actions button { min-height: 38px; border: 1px solid #ddd5ce; background: #fff; padding: 0 12px; display: inline-flex; align-items: center; font-weight: 800; font-size: 12px; cursor: pointer; color: #1d1d1d; }
+.adminGroupRow__actions button { color: #c8490b; }
+
+@media (max-width: 1100px) {
+  .adminGroupBuilder__head,
+  .adminGroupRow { grid-template-columns: 1fr; }
+  .adminGroupCard__head { flex-direction: column; }
+  .adminGroupRow__actions { justify-content: flex-start; flex-wrap: wrap; }
+}

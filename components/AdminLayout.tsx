@@ -16,6 +16,7 @@ const menuGroups = [
     { label: 'Главная страница', href: '/admin/home', icon: LayoutIcon, enabled: true },
     { label: 'Страницы', href: '/admin/pages', icon: DocumentIcon, enabled: false },
     { label: 'Каталог товаров', href: '/admin/products', icon: GridIcon, enabled: true },
+    { label: 'Группы товаров', href: '/admin/product-groups', icon: LinkIcon, enabled: true },
     { label: 'Услуги', href: '/admin/services', icon: ToolsIcon, enabled: false },
     { label: 'Производство', href: '/admin/production', icon: FactoryIcon, enabled: false },
     { label: 'Отзывы', href: '/admin/reviews', icon: StarIcon, enabled: false },
@@ -136,6 +137,7 @@ export function HomeIcon() { return <svg viewBox="0 0 24 24"><path d="M4 11 12 4
 export function LayoutIcon() { return <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M4 10h16M9 10v9"/></svg>; }
 export function DocumentIcon() { return <svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>; }
 export function GridIcon() { return <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>; }
+export function LinkIcon() { return <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1"/></svg>; }
 export function StarIcon() { return <svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2 7.5 14 3 9.6l6.2-.9z"/></svg>; }
 export function ImageIcon() { return <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="m4 16 5-5 4 4 2-2 5 5"/><circle cx="15" cy="9" r="1.5"/></svg>; }
 export function FolderIcon() { return <svg viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10H3z"/></svg>; }

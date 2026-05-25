@@ -408,13 +408,14 @@ export function AdminProductForm({ slug }: { slug?: string }) {
               <label>Старая цена, BYN<input name="oldPrice" type="number" min="0" defaultValue={existing?.oldPrice ?? ''} placeholder="Для псевдо-скидки" /></label>
               <label>Материал<input name="material" defaultValue={existing?.material ?? 'Металл + дерево'} /></label>
               <label>Краткое описание<input name="short" defaultValue={existing?.short ?? 'Металл · дерево'} /></label>
-              <label>Группа модели / цвета<select name="colorGroupId" defaultValue={existing?.colorGroupId ?? ''}>
-                <option value="">Не объединять</option>
-                <option value={existing?.slug ?? ''}>Создать группу из этого товара</option>
-                {productGroupOptions.map((item) => <option key={item.slug} value={item.colorGroupId || item.slug}>Объединить с: {item.title}{item.colorName ? ` — ${item.colorName}` : ''}</option>)}
-              </select></label>
+              <input name="colorGroupId" type="hidden" value={existing?.colorGroupId ?? ''} />
               <label>Название цвета<input name="colorName" defaultValue={existing?.colorName ?? ''} placeholder="Черный / белый / дуб" /></label>
               <input name="colorHex" type="hidden" defaultValue={existing?.colorHex ?? '#111111'} />
+              <div className="adminColorGroupHint">
+                <b>Объединение цветов вынесено отдельно</b>
+                <span>Создайте несколько карточек товаров, затем объедините их на странице «Группы товаров».</span>
+                <Link href="/admin/product-groups">Перейти к группам</Link>
+              </div>
             </div>
             <label className="adminFullLabel">Описание<textarea name="description" rows={5} defaultValue={existing?.description ?? 'Описание товара Bullmet.'} /></label>
             <div className="adminFormGrid adminFormGrid--two">
