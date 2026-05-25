@@ -20,7 +20,7 @@ export function normalizeImageDisplaySettings(value: Partial<ImageDisplaySetting
     catalogFit: value?.catalogFit === 'contain' ? 'contain' : 'cover',
     catalogX: clampPercent(value?.catalogX, 50),
     catalogY: clampPercent(value?.catalogY, 50),
-    productFit: value?.productFit === 'contain' ? 'contain' : 'cover',
+    productFit: value?.productFit === 'cover' ? 'cover' : 'contain',
     productX: clampPercent(value?.productX, 50),
     productY: clampPercent(value?.productY, 50),
   };

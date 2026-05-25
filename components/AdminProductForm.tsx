@@ -474,12 +474,13 @@ export function AdminProductForm({ slug }: { slug?: string }) {
             {selectedPhoto && (
               <div className="adminImageTuning adminImageTuning--compact">
                 <h4>Настройка выбранного фото</h4>
-                <p>Выбрано: <b>{selectedPhoto.name || 'Фото товара'}</b>. Порядок и кадр сохраняются отдельно для каждой фотографии.</p>
+                <p>Выбрано: <b>{selectedPhoto.name || 'Фото товара'}</b>. Для каждой фотографии отдельно настраивается вид в каталоге и большое фото на странице товара.</p>
                 <div className="adminSelectedPreviewGrid">
                   <div className="adminSelectedPreview"><AdminPreviewImage src={currentPreview} alt="В каталоге" fit={selectedSettings.catalogFit} position={catalogPosition} /><span>Каталог</span></div>
                   <div className="adminSelectedPreview adminSelectedPreview--product"><AdminPreviewImage src={currentPreview} alt="В карточке" fit={selectedSettings.productFit} position={productPosition} /><span>Страница товара</span></div>
                 </div>
-                <button className="adminPrimaryBtn adminCropOpenBtn" type="button" onClick={() => setCropModalOpen(true)}>Настроить кадр</button>
+                <button className="adminPrimaryBtn adminCropOpenBtn" type="button" onClick={() => { setCropTarget('product'); setCropModalOpen(true); }}>Настроить главное фото товара</button>
+                <button className="adminSecondaryBtn adminCropCatalogBtn" type="button" onClick={() => { setCropTarget('catalog'); setCropModalOpen(true); }}>Настроить фото для каталога</button>
               </div>
             )}
 
@@ -496,7 +497,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                   </div>
                   <div className="adminCropTabs">
                     <button type="button" className={cropTarget === 'catalog' ? 'active' : ''} onClick={() => setCropTarget('catalog')}>Карточка каталога</button>
-                    <button type="button" className={cropTarget === 'product' ? 'active' : ''} onClick={() => setCropTarget('product')}>Страница товара</button>
+                    <button type="button" className={cropTarget === 'product' ? 'active' : ''} onClick={() => setCropTarget('product')}>Главное фото товара</button>
                   </div>
                   <div className="adminCropWorkbench adminCropWorkbench--modal">
                     <div className={`adminCropPreview ${cropTarget === 'product' ? 'adminCropPreview--product' : ''}`}
@@ -521,7 +522,12 @@ export function AdminProductForm({ slug }: { slug?: string }) {
                       <label>Положение по вертикали
                         <input type="range" min="0" max="100" value={cropTarget === 'catalog' ? selectedSettings.catalogY : selectedSettings.productY} onChange={(event) => updatePhotoSettings(selectedPhoto.id, cropTarget === 'catalog' ? { catalogY: Number(event.target.value) } : { productY: Number(event.target.value) })} />
                       </label>
-                      <small>Двигай оранжевую точку на большом превью мышкой или пальцем. Справа сразу видно, какое положение сохранится.</small>
+                      {cropTarget === 'product' ? (
+                        <button className="adminSecondaryBtn adminCropResetBtn" type="button" onClick={() => updatePhotoSettings(selectedPhoto.id, { productFit: 'contain', productX: 50, productY: 50 })}>Показать главное фото целиком</button>
+                      ) : (
+                        <button className="adminSecondaryBtn adminCropResetBtn" type="button" onClick={() => updatePhotoSettings(selectedPhoto.id, { catalogFit: 'cover', catalogX: 50, catalogY: 50 })}>Сбросить карточку каталога</button>
+                      )}
+                      <small>Для главного фото товара по умолчанию используется режим «Показать целиком», чтобы изображение не обрезалось. Если нужно заполнить область — выбери «Заполнить область» и подвинь кадр.</small>
                       <div className="adminCropLivePair">
                         <div><AdminPreviewImage src={currentPreview} alt="Каталог" fit={selectedSettings.catalogFit} position={catalogPosition} /><span>Каталог</span></div>
                         <div><AdminPreviewImage src={currentPreview} alt="Карточка" fit={selectedSettings.productFit} position={productPosition} /><span>Карточка</span></div>

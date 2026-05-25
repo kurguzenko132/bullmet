@@ -474,7 +474,7 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
 .thumbs { display: grid; gap: 10px; align-content: start; }
 .thumbs button { position: relative; width: 84px; height: 96px; border: 2px solid transparent; background: #eee; overflow: hidden; cursor: pointer; }
 .thumbs button.active { border-color: var(--orange); }
-.mainProductImage { position: relative; min-height: 610px; background: #eee; overflow: hidden; }
+.mainProductImage { position: relative; min-height: 610px; background: #f7f4ef; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .productPanel { padding: 6px 0 0; }
 .productPanel h1 { max-width: 560px; font-size: 33px; line-height: 1.12; letter-spacing: 0; text-transform: none; font-weight: 900; }
 .productMaterial { margin: 10px 0 9px; font-size: 12px; color: #777; }
@@ -2273,6 +2273,15 @@ h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; }
 .adminCropOpenBtn {
   width: 100%;
   min-height: 46px;
+}
+.adminCropCatalogBtn {
+  width: 100%;
+  min-height: 42px;
+  margin-top: -6px;
+}
+.adminCropResetBtn {
+  width: 100%;
+  min-height: 40px;
 }
 .adminCropModal {
   position: fixed;
