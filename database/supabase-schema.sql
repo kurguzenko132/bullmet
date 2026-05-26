@@ -57,6 +57,7 @@ create table if not exists public.orders (
   customer jsonb not null,
   delivery text not null default 'Доставка по Беларуси',
   comment text,
+  admin_note text not null default '',
   items jsonb not null default '[]'::jsonb,
   total numeric(12,2) not null default 0,
   status text not null default 'Новый'
@@ -66,15 +67,34 @@ create table if not exists public.requests (
   id text primary key,
   created_at timestamptz not null default now(),
   customer jsonb not null,
+  kind text not null default 'calculation' check (kind in ('calculation', 'quick_order', 'contact', 'service')),
+  contact_method text,
   type text not null,
   material text not null,
   sizes text,
   comment text not null default '',
+  admin_note text not null default '',
   product_slug text,
   product_title text,
+  product_image text,
+  product_price numeric(12,2),
+  quantity integer,
   file_name text,
+  file_urls text[] not null default '{}',
   status text not null default 'Новая'
 );
+
+alter table public.requests add column if not exists kind text not null default 'calculation';
+alter table public.requests add column if not exists contact_method text;
+alter table public.requests add column if not exists product_image text;
+alter table public.requests add column if not exists product_price numeric(12,2);
+alter table public.requests add column if not exists quantity integer;
+alter table public.requests add column if not exists file_urls text[] not null default '{}';
+
+alter table public.orders add column if not exists admin_note text not null default '';
+alter table public.requests add column if not exists admin_note text not null default '';
+create index if not exists requests_kind_idx on public.requests(kind);
+create index if not exists requests_status_idx on public.requests(status);
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -162,6 +182,33 @@ drop policy if exists "product_images_delete_demo" on storage.objects;
 create policy "product_images_delete_demo"
 on storage.objects for delete
 using (bucket_id = 'product-images');
+
+
+-- Supabase Storage bucket for request attachments.
+insert into storage.buckets (id, name, public)
+values ('request-files', 'request-files', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "request_files_select_public" on storage.objects;
+create policy "request_files_select_public"
+on storage.objects for select
+using (bucket_id = 'request-files');
+
+drop policy if exists "request_files_insert_demo" on storage.objects;
+create policy "request_files_insert_demo"
+on storage.objects for insert
+with check (bucket_id = 'request-files');
+
+drop policy if exists "request_files_update_demo" on storage.objects;
+create policy "request_files_update_demo"
+on storage.objects for update
+using (bucket_id = 'request-files')
+with check (bucket_id = 'request-files');
+
+drop policy if exists "request_files_delete_demo" on storage.objects;
+create policy "request_files_delete_demo"
+on storage.objects for delete
+using (bucket_id = 'request-files');
 
 
 -- Demo policies for prototype launch. For production, restrict writes to admin role.
@@ -257,13 +304,19 @@ create table if not exists public.product_reviews (
   user_name text,
   rating integer not null check (rating between 1 and 5),
   comment text not null default '',
+  photo_urls text[] not null default '{}',
+  status text not null default 'pending' check (status in ('pending', 'published', 'hidden')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique(product_slug, user_id)
 );
 
+alter table public.product_reviews add column if not exists photo_urls text[] not null default '{}';
+alter table public.product_reviews add column if not exists status text not null default 'pending' check (status in ('pending', 'published', 'hidden'));
+
 create index if not exists product_reviews_product_slug_idx on public.product_reviews(product_slug);
 create index if not exists product_reviews_user_id_idx on public.product_reviews(user_id);
+create index if not exists product_reviews_status_idx on public.product_reviews(status);
 
 alter table public.product_reviews enable row level security;
 
@@ -274,7 +327,7 @@ for each row execute function public.set_updated_at();
 
 drop policy if exists "product_reviews_select_public" on public.product_reviews;
 create policy "product_reviews_select_public" on public.product_reviews
-  for select using (true);
+  for select using (status = 'published' or auth.uid() = user_id or public.is_admin());
 
 drop policy if exists "product_reviews_insert_registered" on public.product_reviews;
 create policy "product_reviews_insert_registered" on public.product_reviews
@@ -282,8 +335,33 @@ create policy "product_reviews_insert_registered" on public.product_reviews
 
 drop policy if exists "product_reviews_update_own" on public.product_reviews;
 create policy "product_reviews_update_own" on public.product_reviews
-  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  for update using (auth.uid() = user_id or public.is_admin()) with check (auth.uid() = user_id or public.is_admin());
 
 drop policy if exists "product_reviews_delete_own_or_admin" on public.product_reviews;
 create policy "product_reviews_delete_own_or_admin" on public.product_reviews
   for delete using (auth.uid() = user_id or public.is_admin());
+
+-- Admin notification center.
+create table if not exists public.admin_notifications (
+  id text primary key,
+  type text not null default 'system' check (type in ('order', 'request', 'review', 'system')),
+  title text not null default '',
+  body text not null default '',
+  href text not null default '/admin',
+  status text not null default 'unread' check (status in ('unread', 'read')),
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  read_at timestamptz
+);
+
+create index if not exists admin_notifications_created_at_idx on public.admin_notifications(created_at desc);
+create index if not exists admin_notifications_status_idx on public.admin_notifications(status);
+create index if not exists admin_notifications_type_idx on public.admin_notifications(type);
+
+alter table public.admin_notifications enable row level security;
+
+drop policy if exists "admin_notifications_select_demo" on public.admin_notifications;
+create policy "admin_notifications_select_demo" on public.admin_notifications for select using (true);
+
+drop policy if exists "admin_notifications_write_demo" on public.admin_notifications;
+create policy "admin_notifications_write_demo" on public.admin_notifications for all using (true) with check (true);

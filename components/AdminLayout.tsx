@@ -7,6 +7,7 @@ import { CartIcon, FactoryIcon, ShieldIcon, ToolsIcon, TruckIcon, UserIcon } fro
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { getCurrentSession, signOutBullmet, type BullmetSession } from '@/lib/auth';
+import { AdminNotificationsDropdown } from './AdminNotificationsDropdown';
 
 const menuGroups = [
   { title: '', items: [
@@ -14,18 +15,19 @@ const menuGroups = [
   ] },
   { title: 'Контент', items: [
     { label: 'Главная страница', href: '/admin/home', icon: LayoutIcon, enabled: true },
-    { label: 'Страницы', href: '/admin/pages', icon: DocumentIcon, enabled: false },
+    { label: 'Контент сайта', href: '/admin/content', icon: DocumentIcon, enabled: true },
     { label: 'Каталог товаров', href: '/admin/products', icon: GridIcon, enabled: true },
+    { label: 'Категории', href: '/admin/categories', icon: FolderIcon, enabled: true },
     { label: 'Группы товаров', href: '/admin/product-groups', icon: LinkIcon, enabled: true },
     { label: 'Услуги', href: '/admin/services', icon: ToolsIcon, enabled: false },
     { label: 'Производство', href: '/admin/production', icon: FactoryIcon, enabled: false },
-    { label: 'Отзывы', href: '/admin/reviews', icon: StarIcon, enabled: false },
+    { label: 'Отзывы', href: '/admin/reviews', icon: StarIcon, enabled: true },
     { label: 'Фото главной', href: '/admin/home-media', icon: ImageIcon, enabled: false },
     { label: 'Медиафайлы', href: '/admin/media', icon: FolderIcon, enabled: false },
   ] },
   { title: 'Интернет-магазин', items: [
     { label: 'Заказы', href: '/admin/orders', icon: CartIcon, enabled: true },
-    { label: 'Заявки на расчет', href: '/admin/requests', icon: DocumentIcon, enabled: true },
+    { label: 'Заявки', href: '/admin/requests', icon: DocumentIcon, enabled: true },
     { label: 'Покупатели', href: '/admin/customers', icon: UserIcon, enabled: false },
     { label: 'Купоны и скидки', href: '/admin/coupons', icon: TicketIcon, enabled: false },
     { label: 'Доставка', href: '/admin/delivery', icon: TruckIcon, enabled: false },
@@ -36,7 +38,8 @@ const menuGroups = [
     { label: 'Отчеты', href: '/admin/reports', icon: ReportIcon, enabled: false },
   ] },
   { title: 'Настройки', items: [
-    { label: 'Настройки сайта', href: '/admin/settings', icon: SettingsIcon, enabled: false },
+    { label: 'Настройки сайта', href: '/admin/settings', icon: SettingsIcon, enabled: true },
+    { label: 'Уведомления', href: '/admin/notifications', icon: BellIcon, enabled: true },
     { label: 'Пользователи', href: '/admin/users', icon: UserIcon, enabled: false },
     { label: 'Роли и права', href: '/admin/roles', icon: ShieldIcon, enabled: false },
     { label: 'Резервное копирование', href: '/admin/backups', icon: BackupIcon, enabled: false },
@@ -123,7 +126,7 @@ export function AdminLayout({ title, children }: { title: string; children: Reac
           <div className="adminTopbar__left"><button aria-label="Меню"><MenuIcon /></button><h1>{title}</h1></div>
           <div className="adminTopbar__right">
             <Link className="adminSiteLink" href="/">Перейти на сайт <ExternalIcon /></Link>
-            <button className="adminBell" aria-label="Уведомления"><BellIcon /><em>3</em></button>
+            <AdminNotificationsDropdown />
             <div className="adminProfile"><div className="adminAvatar">{session.email.slice(0, 1).toUpperCase()}</div><div><b>Администратор</b><span>{session.email}</span></div><ChevronIcon /></div>
           </div>
         </header>

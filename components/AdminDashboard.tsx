@@ -6,12 +6,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from './AdminLayout';
 import { CartIcon, DraftIcon, UserIcon } from './Icons';
 import { type AdminProduct, readAdminProductsAsync } from './adminProductStore';
-import { type AdminOrder, type AdminRequest, readAdminOrdersAsync, readAdminRequestsAsync } from './adminBusinessStore';
+import { ORDER_STATUSES, type AdminOrder, type AdminRequest, readAdminOrdersAsync, readAdminRequestsAsync } from './adminBusinessStore';
 import { defaultHomeSettings, readHomeSettingsAsync, type HomeSettings } from './siteSettings';
+import { loadAllReviews, type ProductReview } from '@/lib/reviews';
 
 function statusType(status: string) {
   if (status === 'Новый' || status === 'Новая') return 'new';
-  if (status === 'Оплачен' || status === 'Завершен' || status === 'Заказ принят') return 'paid';
+  if (status === 'Оплачен' || status === 'Завершен' || status === 'Заказ принят' || status === 'Готово' || status === 'Готов к выдаче') return 'paid';
   return 'process';
 }
 
@@ -27,6 +28,7 @@ export function AdminDashboard() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [requests, setRequests] = useState<AdminRequest[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [homeSettings, setHomeSettings] = useState<HomeSettings | null>(null);
 
@@ -34,17 +36,19 @@ export function AdminDashboard() {
     let mounted = true;
 
     async function load() {
-      const [nextOrders, nextRequests, nextProducts, nextHomeSettings] = await Promise.all([
+      const [nextOrders, nextRequests, nextProducts, nextHomeSettings, nextReviews] = await Promise.all([
         readAdminOrdersAsync(),
         readAdminRequestsAsync(),
         readAdminProductsAsync(),
         readHomeSettingsAsync(),
+        loadAllReviews().catch(() => [] as ProductReview[]),
       ]);
       if (!mounted) return;
       setOrders(nextOrders);
       setRequests(nextRequests);
       setProducts(nextProducts);
       setHomeSettings(nextHomeSettings);
+      setReviews(nextReviews);
       setLoading(false);
     }
 
@@ -68,8 +72,11 @@ export function AdminDashboard() {
   const revenue = useMemo(() => orders.reduce((sum, order) => sum + Number(order.total || 0), 0), [orders]);
   const customersCount = useMemo(() => new Set(orders.map((order) => String(order.customer.email || order.customer.phone || '').toLowerCase()).filter(Boolean)).size, [orders]);
   const activeOrders = useMemo(() => orders.filter((order) => !['Завершен', 'Отменен'].includes(order.status)).length, [orders]);
-  const activeRequests = useMemo(() => requests.filter((request) => !['Закрыта'].includes(request.status)).length, [requests]);
+  const activeRequests = useMemo(() => requests.filter((request) => !['Закрыта', 'Отменена'].includes(request.status)).length, [requests]);
   const popularProducts = useMemo(() => products.filter((product) => product.isPopular || product.status === 'active').slice(0, 5), [products]);
+  const pendingReviews = useMemo(() => reviews.filter((review) => (review.status || 'pending') === 'pending').length, [reviews]);
+  const productsWithoutPhoto = useMemo(() => products.filter((product) => !product.image || product.image.includes('cat-')).length, [products]);
+  const productsWithoutPrice = useMemo(() => products.filter((product) => Number(product.price || 0) <= 0).length, [products]);
   const latestOrders = orders.slice(0, 6);
   const latestActivity = useMemo(() => {
     const orderItems = orders.slice(0, 4).map((order) => ({
@@ -92,7 +99,7 @@ export function AdminDashboard() {
   }, [orders, requests]);
 
   const statusRows = useMemo(() => {
-    const source = ['Новый', 'В обработке', 'Оплачен', 'Доставляется', 'Завершен', 'Отменен'];
+    const source = ORDER_STATUSES;
     return source.map((label) => {
       const count = orders.filter((order) => order.status === label).length;
       const percent = orders.length ? Math.round((count / orders.length) * 100) : 0;
@@ -111,7 +118,7 @@ export function AdminDashboard() {
               <div className="adminHeroText">
                 <h2>Bullmet — собственное производство изделий из металла и дерева</h2>
                 <p>Фото главного экрана, категории и ссылки можно менять в разделе настроек главной страницы.</p>
-                <div><Link href="/admin/home">Редактировать главную</Link><Link href="/admin/products/new">Добавить товар</Link></div>
+                <div><Link href="/admin/home">Редактировать главную</Link><Link href="/admin/content">Контент сайта</Link><Link href="/admin/products/new">Добавить товар</Link></div>
               </div>
             </div>
           </div>
@@ -119,7 +126,9 @@ export function AdminDashboard() {
             <MetricCard label="Заказы" value={String(orders.length)} note={`${activeOrders} активных`} color="orange" />
             <MetricCard label="Выручка" value={money(revenue)} note="по оформленным заказам" color="green" />
             <MetricCard label="Заявки" value={String(requests.length)} note={`${activeRequests} в работе`} color="blue" />
+            <MetricCard label="Отзывы" value={String(reviews.length)} note={`${pendingReviews} на модерации`} color="orange" />
             <MetricCard label="Товары" value={String(products.length)} note="в каталоге" color="purple" />
+            <MetricCard label="Проверить" value={String(productsWithoutPhoto + productsWithoutPrice)} note="товары без фото/цены" color="blue" />
           </div>
         </section>
 
@@ -129,8 +138,11 @@ export function AdminDashboard() {
             <div className="adminQuickGrid">
               <Link href="/admin/products/new"><CartIcon /><span>Добавить товар</span></Link>
               <Link href="/admin/products"><CartIcon /><span>Каталог товаров</span></Link>
+              <Link href="/admin/categories"><DraftIcon /><span>Категории</span></Link>
               <Link href="/admin/orders"><CartIcon /><span>Открыть заказы</span></Link>
               <Link href="/admin/requests"><DraftIcon /><span>Открыть заявки</span></Link>
+              <Link href="/admin/reviews"><UserIcon /><span>Модерация отзывов</span></Link>
+              <Link href="/admin/content"><DraftIcon /><span>Контент сайта</span></Link>
             </div>
           </div>
 
@@ -201,10 +213,12 @@ export function AdminDashboard() {
             ) : <EmptyAdmin text="Статистика появится после первого заказа." />}
           </div>
           <div className="adminCard adminStatuses">
-            <div className="adminCardTitle">Важно</div>
-            <div className="adminEmpty adminEmpty--left">
-              <b>Демо-заглушки удалены</b>
-              <p>На этой странице отображаются только реальные товары, заказы и заявки из Supabase или localStorage.</p>
+            <div className="adminCardHead"><div className="adminCardTitle">Что требует внимания</div><Link href="/admin/reviews">Отзывы</Link></div>
+            <div className="adminTodoList">
+              <span><b>{pendingReviews}</b><em>отзывов на модерации</em></span>
+              <span><b>{productsWithoutPhoto}</b><em>товаров без нормального фото</em></span>
+              <span><b>{productsWithoutPrice}</b><em>товаров без цены</em></span>
+              <span><b>{activeRequests}</b><em>активных заявок</em></span>
             </div>
           </div>
         </section>

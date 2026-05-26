@@ -78,7 +78,7 @@ export function withAdminDefaults(product: Product): AdminProduct {
   return {
     ...product,
     status: 'active',
-    isPopular: ['wall-clock-loft', 'garden-swing-bullmet', 'wooden-tree-panel'].includes(product.slug),
+    isPopular: ['wall-clock-loft', 'garden-swing-bullmet', 'wood-tree-panel'].includes(product.slug),
     isNew: false,
     inStock: true,
     catalogImageFit: product.catalogImageFit ?? 'cover',

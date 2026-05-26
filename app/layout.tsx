@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
+import type { ReactNode } from 'react';
 import './globals.css';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bullmet.by';
 
@@ -58,10 +60,10 @@ export const viewport: Viewport = {
   themeColor: '#e65a12',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body>{children}<MobileBottomNav /></body>
     </html>
   );
 }

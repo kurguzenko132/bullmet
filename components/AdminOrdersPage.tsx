@@ -3,15 +3,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AdminLayout } from './AdminLayout';
-import { AdminOrder, AdminOrderStatus, formatDateTime, readAdminOrdersAsync, updateAdminOrderStatusAsync } from './adminBusinessStore';
+import { AdminOrder, AdminOrderStatus, ORDER_STATUSES, formatDateTime, readAdminOrdersAsync, updateAdminOrderAsync, updateAdminOrderStatusAsync } from './adminBusinessStore';
 
-const statuses: AdminOrderStatus[] = ['Новый', 'В обработке', 'Оплачен', 'Доставляется', 'Завершен', 'Отменен'];
+const statuses: AdminOrderStatus[] = ORDER_STATUSES;
 
 export function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('Все статусы');
   const [opened, setOpened] = useState<string | null>(null);
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [savedNoteId, setSavedNoteId] = useState<string | null>(null);
 
   useEffect(() => {
     readAdminOrdersAsync().then(setOrders);
@@ -31,6 +33,13 @@ export function AdminOrdersPage() {
 
   async function changeStatus(id: string, nextStatus: AdminOrderStatus) {
     setOrders(await updateAdminOrderStatusAsync(id, nextStatus));
+  }
+
+  async function saveAdminNote(order: AdminOrder) {
+    const adminNote = noteDrafts[order.id] ?? order.adminNote ?? '';
+    setOrders(await updateAdminOrderAsync(order.id, { adminNote }));
+    setSavedNoteId(order.id);
+    window.setTimeout(() => setSavedNoteId(null), 1800);
   }
 
   return (
@@ -68,7 +77,7 @@ export function AdminOrdersPage() {
               <div className="adminEntityRow adminEntityRow--orders">
                 <div><b>#{order.id}</b><small>{formatDateTime(order.createdAt)}</small></div>
                 <div><b>{order.customer.name}</b><small>{order.customer.phone}</small><small>{order.customer.city || 'Город не указан'}</small></div>
-                <div><b>{order.items.length} поз.</b><small>{order.items.map((item) => `${item.title} × ${item.quantity}`).join(', ')}</small></div>
+                <div><b>{order.items.length} поз.</b><small>{order.items.map((item) => `${item.title} × ${item.quantity}`).join(', ')}</small>{order.adminNote && <em className="adminClientNotePill">есть ответ клиенту</em>}</div>
                 <strong>{order.total} BYN</strong>
                 <select value={order.status} onChange={(event) => changeStatus(order.id, event.target.value as AdminOrderStatus)}>
                   {statuses.map((item) => <option key={item}>{item}</option>)}
@@ -92,6 +101,17 @@ export function AdminOrdersPage() {
                   <div>
                     <h4>Товары</h4>
                     {order.items.map((item) => <p key={`${item.slug}-${item.size ?? 'default'}`}>{item.title}{item.size ? `, ${item.size}` : ''} — {item.quantity} × {item.price} BYN</p>)}
+                  </div>
+                  <div className="adminClientNoteEditor">
+                    <h4>Комментарий для клиента</h4>
+                    <textarea
+                      value={noteDrafts[order.id] ?? order.adminNote ?? ''}
+                      onChange={(event) => setNoteDrafts((drafts) => ({ ...drafts, [order.id]: event.target.value }))}
+                      placeholder="Например: заказ принят, срок изготовления 3–4 дня, сумма к оплате 85 BYN."
+                      rows={5}
+                    />
+                    <button className="adminSecondaryBtn" type="button" onClick={() => saveAdminNote(order)}>{savedNoteId === order.id ? 'Сохранено' : 'Сохранить комментарий'}</button>
+                    <small>Этот текст клиент увидит в личном кабинете.</small>
                   </div>
                 </div>
               )}

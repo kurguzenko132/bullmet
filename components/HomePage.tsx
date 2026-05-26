@@ -2,10 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useEffect, useState } from 'react';
 import { ArrowIcon, CartIcon, ClockIcon, DraftIcon, FactoryIcon, MailIcon, PhoneIcon, PinIcon, SearchIcon, ShieldIcon, ToolsIcon, TruckIcon, UserIcon } from './Icons';
 import { CartHeaderButton } from './CartHeaderButton';
-import { HomeSettings, readHomeSettingsAsync } from './siteSettings';
+import { defaultSiteContent, HomeSettings, readHomeSettingsAsync, readSiteContentAsync, SiteContentSettings } from './siteSettings';
 import { useAdminProducts } from './useAdminProducts';
 import type { AdminProduct } from './adminProductStore';
 import { expandProductVariants } from './shopData';
@@ -42,37 +43,61 @@ const process = [
 
 const gallery = ['gallery-1.jpg', 'gallery-2.jpg', 'gallery-3.jpg', 'gallery-4.jpg', 'gallery-5.jpg', 'gallery-6.jpg'];
 
-function Logo() {
+function Logo({ subtitle = defaultSiteContent.brandSubtitle }: { subtitle?: string } = {}) {
   return (
     <Link className="logo" href="/" aria-label="Bullmet">
       <Image src="/assets/logo-mark.png" alt="" width={38} height={42} className="logo__mark" priority />
       <span>
         <b>BULLMET</b>
-        <small>производство металла и дерева</small>
+        <small>{subtitle}</small>
       </span>
     </Link>
   );
 }
 
 export function Header() {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [content, setContent] = useState<SiteContentSettings>(defaultSiteContent);
+
+  useEffect(() => {
+    readSiteContentAsync().then(setContent);
+    const updateContent = () => readSiteContentAsync().then(setContent);
+    window.addEventListener('bullmet-content-settings-updated', updateContent);
+    window.addEventListener('storage', updateContent);
+    return () => {
+      window.removeEventListener('bullmet-content-settings-updated', updateContent);
+      window.removeEventListener('storage', updateContent);
+    };
+  }, []);
 
   function closeMenu() {
     setMenuOpen(false);
   }
 
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (!query) return;
+    setSearchOpen(false);
+    setMenuOpen(false);
+    router.push(`/catalog?q=${encodeURIComponent(query)}`);
+  }
+
   return (
     <header className={menuOpen ? 'header header--menuOpen' : 'header'} id="top">
       <div className="container header__inner">
-        <Logo />
+        <Logo subtitle={content.brandSubtitle} />
         <nav className="nav" aria-label="Основное меню">
           {nav.map((item) => <Link href={item.href} key={item.title}>{item.title}</Link>)}
         </nav>
         <div className="header__actions">
-          <button className="iconButton" aria-label="Поиск"><SearchIcon /></button>
+          <button className="iconButton" type="button" aria-label="Поиск" aria-expanded={searchOpen} onClick={() => setSearchOpen((value) => !value)}><SearchIcon /></button>
           <Link className="accountButton" href="/account" aria-label="Войти в аккаунт"><UserIcon /></Link>
           <CartHeaderButton />
-          <Link className="topCta" href="/request">Заказать расчет</Link>
+          <Link className="topCta" href="/request">{content.homeSecondaryButton}</Link>
           <button
             className="burger"
             type="button"
@@ -85,26 +110,37 @@ export function Header() {
           </button>
         </div>
       </div>
+      <form className={searchOpen ? 'headerSearch headerSearch--open' : 'headerSearch'} onSubmit={submitSearch} role="search">
+        <div className="container headerSearch__inner">
+          <SearchIcon />
+          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Найти часы, качели или услугу" aria-label="Поиск по каталогу" />
+          <button type="submit">Найти</button>
+        </div>
+      </form>
       <div className="mobileMenu" id="mobile-menu" aria-hidden={!menuOpen}>
         <div className="container mobileMenu__inner">
+          <form className="mobileMenu__search" onSubmit={submitSearch} role="search">
+            <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Поиск по каталогу" aria-label="Поиск по каталогу" />
+            <button type="submit"><SearchIcon /></button>
+          </form>
           {nav.map((item) => <Link href={item.href} key={item.title} onClick={closeMenu}>{item.title}</Link>)}
-          <Link className="mobileMenu__cta" href="/request" onClick={closeMenu}>Заказать расчет</Link>
+          <Link className="mobileMenu__cta" href="/request" onClick={closeMenu}>{content.homeSecondaryButton}</Link>
         </div>
       </div>
     </header>
   );
 }
 
-function Promo({ settings }: { settings: HomeSettings }) {
+function Promo({ settings, content }: { settings: HomeSettings; content: SiteContentSettings }) {
   return (
     <section className="promo">
       <div className="promo__bg"><Image key={settings.heroImage} src={settings.heroImage} alt="Производство Bullmet" fill priority sizes="100vw" /></div>
       <div className="container promo__content">
-        <h1>Bullmet — собственное производство изделий из металла и дерева</h1>
-        <p className="promo__text">Производим часы, садовые качели, элементы декора, а также выполняем резку металла и дерева под заказ.</p>
+        <h1>{content.homeHeroTitle}</h1>
+        <p className="promo__text">{content.homeHeroText}</p>
         <div className="promo__buttons">
-          <Link className="button button--orange" href="/catalog">Перейти в каталог</Link>
-          <Link className="button button--outline" href="/request">Заказать расчет</Link>
+          <Link className="button button--orange" href="/catalog">{content.homePrimaryButton}</Link>
+          <Link className="button button--outline" href="/request">{content.homeSecondaryButton}</Link>
         </div>
       </div>
       <div className="container benefits">
@@ -233,14 +269,27 @@ function CustomOrder() {
 }
 
 export function Footer() {
+  const [content, setContent] = useState<SiteContentSettings>(defaultSiteContent);
+
+  useEffect(() => {
+    readSiteContentAsync().then(setContent);
+    const updateContent = () => readSiteContentAsync().then(setContent);
+    window.addEventListener('bullmet-content-settings-updated', updateContent);
+    window.addEventListener('storage', updateContent);
+    return () => {
+      window.removeEventListener('bullmet-content-settings-updated', updateContent);
+      window.removeEventListener('storage', updateContent);
+    };
+  }, []);
+
   return (
     <footer className="footer" id="контакты">
       <div className="container footer__grid">
-        <div className="footer__brand"><Logo /><p>Собственное производство изделий из металла и дерева с 2017 года.</p><div className="socials"><Link href="/contacts">IG</Link><Link href="/contacts">TG</Link><Link href="/contacts">WA</Link></div></div>
-        <FooterCol title="Каталог" items={[{ label: 'Часы', href: '/catalog?category=Часы собственного производства' }, { label: 'Садовые качели', href: '/catalog?category=Садовые качели' }, { label: 'Изделия из металла', href: '/request?type=metal-cutting' }, { label: 'Изделия из дерева', href: '/request?type=wood-cutting' }]} />
-        <FooterCol title="Услуги" items={[{ label: 'Резка металла', href: '/services' }, { label: 'Резка дерева', href: '/services' }, { label: 'Индивидуальные заказы', href: '/request?type=custom' }]} />
+        <div className="footer__brand"><Logo subtitle={content.brandSubtitle} /><p>{content.footerText}</p><div className="socials"><Link href={content.contacts.instagramUrl}>IG</Link><Link href={content.contacts.telegramUrl}>TG</Link><Link href={content.contacts.whatsappUrl}>WA</Link></div></div>
+        <FooterCol title="Каталог" items={[{ label: 'Часы на заказ', href: '/chasy-na-zakaz' }, { label: 'Часы для бани', href: '/chasy-dlya-bani' }, { label: 'Садовые качели', href: '/catalog?category=Садовые качели' }, { label: 'Изделия на заказ', href: '/izdeliya-na-zakaz' }]} />
+        <FooterCol title="Услуги" items={[{ label: 'Резка металла', href: '/lazernaya-rezka-metalla' }, { label: 'Резка дерева', href: '/lazernaya-rezka-dereva' }, { label: 'Декор из металла', href: '/dekor-iz-metalla' }, { label: 'Индивидуальные заказы', href: '/izdeliya-na-zakaz' }]} />
         <FooterCol title="Компания" items={[{ label: 'О нас', href: '/about' }, { label: 'Производство', href: '/production' }, { label: 'Доставка и оплата', href: '/delivery' }, { label: 'Контакты', href: '/contacts' }]} />
-        <div className="footerCol"><h4>Контакты</h4><p><PhoneIcon /> +375 29 123-45-67</p><p><MailIcon /> info@bullmet.by</p><p><PinIcon /> г. Минск, ул. Промышленная, 11</p><p><ClockIcon /> Пн–Пт: 9:00 — 18:00</p></div>
+        <div className="footerCol"><h4>Контакты</h4><p><PhoneIcon /> {content.contacts.phone}</p><p><MailIcon /> {content.contacts.email}</p><p><PinIcon /> {content.contacts.address}</p><p><ClockIcon /> {content.contacts.worktime}</p></div>
       </div>
     </footer>
   );
@@ -252,19 +301,26 @@ function FooterCol({ title, items }: { title: string; items: { label: string; hr
 
 export function HomePage() {
   const [settings, setSettings] = useState<HomeSettings | null>(null);
+  const [content, setContent] = useState<SiteContentSettings>(defaultSiteContent);
   const { items: adminProducts } = useAdminProducts();
 
   useEffect(() => {
     readHomeSettingsAsync().then(setSettings);
+    readSiteContentAsync().then(setContent);
 
     const updateSettings = () => readHomeSettingsAsync().then(setSettings);
+    const updateContent = () => readSiteContentAsync().then(setContent);
     window.addEventListener('bullmet-home-settings-updated', updateSettings);
+    window.addEventListener('bullmet-content-settings-updated', updateContent);
     window.addEventListener('storage', updateSettings);
+    window.addEventListener('storage', updateContent);
     return () => {
       window.removeEventListener('bullmet-home-settings-updated', updateSettings);
+      window.removeEventListener('bullmet-content-settings-updated', updateContent);
       window.removeEventListener('storage', updateSettings);
+      window.removeEventListener('storage', updateContent);
     };
   }, []);
 
-  return <><Header /><main>{settings ? <><Promo settings={settings} /><Categories settings={settings} /></> : <section className="promo promo--loading" aria-label="Загрузка главного экрана" />}<Production /><ProductsAndServices products={adminProducts} /><WorkProcess /><Gallery /><CustomOrder /></main><Footer /></>;
+  return <><Header /><main>{settings ? <><Promo settings={settings} content={content} /><Categories settings={settings} /></> : <section className="promo promo--loading" aria-label="Загрузка главного экрана" />}<Production /><ProductsAndServices products={adminProducts} /><WorkProcess /><Gallery /><CustomOrder /></main><Footer /></>;
 }

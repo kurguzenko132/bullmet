@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { DragEvent, FormEvent, MouseEvent, PointerEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminLayout } from './AdminLayout';
-import { type AdminProduct, makeUniqueProductSlug, productFromForm, readAdminProducts, saveAdminProductAsync } from './adminProductStore';
+import { type AdminProduct, makeUniqueProductSlug, productFromForm, readAdminProductsAsync, saveAdminProductAsync } from './adminProductStore';
 import { uploadProductImages } from '../lib/productImages';
-import { categories, clockCategory, clockThemes, slugifyVariant, type ProductVariant } from './shopData';
+import { categories as fallbackCategories, clockCategory, clockThemes as fallbackClockThemes, slugifyVariant, type ProductVariant } from './shopData';
+import { getActiveCategoryNames, getActiveClockThemeNames, readCatalogSettingsAsync } from './categoryStore';
 import { clampPercent, getImageSettings, imagePosition, normalizeImageDisplaySettings, type ImageDisplaySettings, type ImageFit } from '../lib/imageDisplay';
 
 const fallbackImage = '/assets/cat-clock.jpg';
@@ -86,7 +87,9 @@ function reorderPhotos(items: PhotoItem[], fromId: string, toId: string) {
 
 export function AdminProductForm({ slug }: { slug?: string }) {
   const router = useRouter();
-  const existing = useMemo(() => slug ? readAdminProducts().find((item) => item.slug === slug) : undefined, [slug]);
+  const [allProducts, setAllProducts] = useState<AdminProduct[]>([]);
+  const [loadingExisting, setLoadingExisting] = useState(Boolean(slug));
+  const existing = useMemo(() => slug ? allProducts.find((item) => item.slug === slug) : undefined, [slug, allProducts]);
   const initialPhotos = useMemo(() => buildInitialPhotos(existing), [existing]);
 
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
@@ -102,7 +105,22 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const [cropTarget, setCropTarget] = useState<CropTarget>('catalog');
   const [isDraggingCrop, setIsDraggingCrop] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(existing?.category ?? categories[0]);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(fallbackCategories);
+  const [clockThemeOptions, setClockThemeOptions] = useState<string[]>(fallbackClockThemes);
+  const [selectedCategory, setSelectedCategory] = useState(fallbackCategories[0]);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoadingExisting(Boolean(slug));
+    readAdminProductsAsync()
+      .then((products) => { if (mounted) setAllProducts(products); })
+      .catch((error) => {
+        console.warn('Admin product load failed:', error);
+        if (mounted) setUploadError(error instanceof Error ? error.message : 'Не удалось загрузить товар.');
+      })
+      .finally(() => { if (mounted) setLoadingExisting(false); });
+    return () => { mounted = false; };
+  }, [slug]);
 
   useEffect(() => {
     setPhotos(initialPhotos);
@@ -110,8 +128,20 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     const nextVariants = buildInitialVariants(existing);
     setVariants(nextVariants);
     setActiveVariantId(nextVariants[0]?.id ?? '');
-    setSelectedCategory(existing?.category ?? categories[0]);
-  }, [initialPhotos, existing]);
+    setSelectedCategory(existing?.category ?? categoryOptions[0] ?? fallbackCategories[0]);
+  }, [initialPhotos, existing, categoryOptions]);
+
+  useEffect(() => {
+    let mounted = true;
+    readCatalogSettingsAsync().then((settings) => {
+      if (!mounted) return;
+      const nextCategories = getActiveCategoryNames(settings);
+      const nextThemes = getActiveClockThemeNames(settings);
+      setCategoryOptions(nextCategories.length ? nextCategories : fallbackCategories);
+      setClockThemeOptions(nextThemes.length ? nextThemes : fallbackClockThemes);
+    });
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -125,7 +155,18 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const currentPreview = selectedPhoto?.src ?? photos[0]?.src ?? fallbackImage;
   const selectedSettings = selectedPhoto?.settings ?? normalizeImageDisplaySettings({});
   const activeVariant = variants.find((variant) => variant.id === activeVariantId) ?? variants[0];
-  const productGroupOptions = useMemo(() => readAdminProducts().filter((item) => item.slug !== existing?.slug), [existing?.slug]);
+  const productGroupOptions = useMemo(() => allProducts.filter((item) => item.slug !== existing?.slug), [allProducts, existing?.slug]);
+  const categorySelectOptions = useMemo(() => {
+    const list = [...categoryOptions];
+    if (existing?.category && !list.includes(existing.category)) list.unshift(existing.category);
+    if (selectedCategory && !list.includes(selectedCategory)) list.unshift(selectedCategory);
+    return list;
+  }, [categoryOptions, existing?.category, selectedCategory]);
+  const themeSelectOptions = useMemo(() => {
+    const list = [...clockThemeOptions];
+    if (existing?.clockTheme && !list.includes(existing.clockTheme)) list.unshift(existing.clockTheme);
+    return list;
+  }, [clockThemeOptions, existing?.clockTheme]);
 
   function updatePhotoSettings(photoId: string, patch: Partial<ImageDisplaySettings>) {
     setPhotos((items) => items.map((photo) => photo.id === photoId ? { ...photo, settings: normalizeImageDisplaySettings({ ...photo.settings, ...patch }) } : photo));
@@ -389,11 +430,31 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     }
   }
 
-  const title = existing ? 'Редактировать товар' : 'Добавить товар';
+  const title = slug ? 'Редактировать товар' : 'Добавить товар';
   const catalogPosition = imagePosition(selectedSettings.catalogX, selectedSettings.catalogY);
   const productPosition = imagePosition(selectedSettings.productX, selectedSettings.productY);
   const activeFit = cropTarget === 'catalog' ? selectedSettings.catalogFit : selectedSettings.productFit;
   const activePosition = cropTarget === 'catalog' ? catalogPosition : productPosition;
+
+  if (loadingExisting) {
+    return (
+      <AdminLayout title={title}>
+        <main className="adminContent adminProductEditPage">
+          <div className="adminCard adminLoadingCard"><b>Загружаем товар...</b><p>Подтягиваем данные из каталога.</p></div>
+        </main>
+      </AdminLayout>
+    );
+  }
+
+  if (slug && !existing) {
+    return (
+      <AdminLayout title={title}>
+        <main className="adminContent adminProductEditPage">
+          <div className="adminCard adminLoadingCard"><b>Товар не найден</b><p>Он мог быть удален или еще не загрузился из Supabase.</p><Link className="adminSecondaryBtn" href="/admin/products">Вернуться к товарам</Link></div>
+        </main>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title={title}>
@@ -408,11 +469,11 @@ export function AdminProductForm({ slug }: { slug?: string }) {
             <h3>Основная информация</h3>
             <div className="adminFormGrid">
               <label>Название товара<input name="title" defaultValue={existing?.title} required placeholder="Настенные часы Loft" /></label>
-              <label>Категория<select name="category" value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
+              <label>Категория<select name="category" value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)}>{categorySelectOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
               {selectedCategory === clockCategory && (
                 <label>Тематика часов<select name="clockTheme" defaultValue={existing?.clockTheme ?? ''}>
                   <option value="">Не выбрано</option>
-                  {clockThemes.map((theme) => <option key={theme} value={theme}>{theme}</option>)}
+                  {themeSelectOptions.map((theme) => <option key={theme} value={theme}>{theme}</option>)}
                 </select></label>
               )}
               <label>Цена, BYN<input name="price" type="number" min="0" defaultValue={existing?.price ?? 120} /></label>
