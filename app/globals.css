@@ -2959,6 +2959,38 @@ textarea:focus { box-shadow: 0 0 0 3px rgba(230, 90, 18, .1); }
   .thumbs button { height: 82px; }
   .productServiceStrip { margin-top: 28px; }
   .customOrder__inner { padding: 26px 20px; }
+
+/* Sticky mobile bar for product page */
+.productMobileBar {
+  display: none;
+}
+@media (max-width: 640px) {
+  .productMobileBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    background: #fff;
+    border-top: 1px solid #eee7df;
+    box-shadow: 0 -4px 12px rgba(18, 20, 22, .05);
+    z-index: 200;
+  }
+  .productMobileBar b {
+    font-size: 18px;
+    font-weight: 900;
+    margin-right: 16px;
+  }
+  .productMobileBar .button {
+    flex: 1 1 auto;
+    min-height: 48px;
+    text-align: center;
+  }
+}
 }
 
 /* Services page redesign */
@@ -6333,5 +6365,135 @@ textarea:focus { box-shadow: 0 0 0 3px rgba(230, 90, 18, .1); }
 
   .adminTelegramChecklist {
     min-width: 0;
+  }
+}
+
+/* Production hotfix 2026-05-27: главная + админка */
+.shopPreview .product,
+.shopPreview .service {
+  border-radius: 0 !important;
+  overflow: hidden;
+  min-height: 100%;
+}
+
+.shopPreview .product__image,
+.shopPreview .service__image {
+  border-radius: 0 !important;
+}
+
+.shopPreview .product {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.shopPreview .product__body {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.shopPreview .product__body > div:last-child {
+  margin-top: auto !important;
+  padding-top: 24px;
+}
+
+.shopPreview .service {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.shopPreview .service__body {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.shopPreview .service__body p {
+  flex: 1 1 auto !important;
+}
+
+.shopPreview .service__body a {
+  margin-top: auto !important;
+  align-self: flex-start;
+  min-width: 190px;
+}
+
+.adminSiteContentPage .adminContentCard {
+  padding: 22px 24px !important;
+}
+
+.adminSiteContentPage .adminContentCard label {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  color: #4d4741;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.adminSiteContentPage .adminContentCard input,
+.adminSiteContentPage .adminContentCard textarea {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 46px !important;
+  border: 1px solid #e3ddd5 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  padding: 0 14px !important;
+  color: #251913 !important;
+  font: 500 14px/1.45 Arial, Helvetica, sans-serif !important;
+  outline: none !important;
+  box-shadow: none !important;
+  appearance: none !important;
+}
+
+.adminSiteContentPage .adminContentCard textarea {
+  min-height: 118px !important;
+  padding: 14px !important;
+  resize: vertical;
+}
+
+.adminSiteContentPage .adminFormGrid,
+.adminSiteContentPage .adminFormGrid--two,
+.adminSiteContentPage .adminFormGrid--three {
+  display: grid !important;
+  gap: 16px !important;
+  align-items: start !important;
+}
+
+.adminSiteContentPage .adminFormGrid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.adminSiteContentPage .adminFormGrid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.adminSiteContentPage .adminContentCard input:focus,
+.adminSiteContentPage .adminContentCard textarea:focus {
+  border-color: rgba(230, 90, 18, .55) !important;
+  box-shadow: 0 0 0 3px rgba(230, 90, 18, .1) !important;
+}
+
+.adminMetric svg {
+  opacity: .9;
+}
+
+.adminMetric polyline {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 760px) {
+  .adminSiteContentPage .adminFormGrid--two,
+  .adminSiteContentPage .adminFormGrid--three {
+    grid-template-columns: 1fr !important;
+  }
+
+  .shopPreview .service__body a {
+    width: 100%;
+    justify-content: center;
   }
 }

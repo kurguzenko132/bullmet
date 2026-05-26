@@ -109,6 +109,19 @@ export function ProductDetails({ product }: { product: Product }) {
         </div>
 
         <div className="productActions"><AddToCartButton product={visibleProduct} quantity={qty} size={activeSize} className="button button--orange">В корзину</AddToCartButton><QuickOrderButton product={visibleProduct} quantity={qty} size={activeSize} className="button button--ghost" /><FavoriteButton product={product} variant="text" /><Link href={`/request?product=${visibleProduct.slug}`} className="button button--outline">Заказать похожее</Link></div>
+
+        {/* Sticky mobile bar: on small screens shows price and add-to-cart button fixed at bottom */}
+        <div className="productMobileBar">
+          <b>от {visibleProduct.price} BYN</b>
+          <AddToCartButton
+            product={visibleProduct}
+            quantity={qty}
+            size={activeSize}
+            className="button button--orange"
+          >
+            В корзину
+          </AddToCartButton>
+        </div>
       </div>
     </section>
   );
