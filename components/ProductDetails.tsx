@@ -37,39 +37,21 @@ export function ProductDetails({ product }: { product: Product }) {
   } : product;
   const productImages = (visibleProduct.images?.length ? visibleProduct.images : [visibleProduct.image]).filter(Boolean);
   const [activeImage, setActiveImage] = useState(productImages[0]);
-  const [activeSize, setActiveSize] = useState(visibleProduct.sizes?.[1] ?? visibleProduct.sizes?.[0] ?? '60 см');
+  const [activeSize, setActiveSize] = useState(product.sizes?.[1] ?? product.sizes?.[0] ?? '60 см');
   const [qty, setQty] = useState(1);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const activeImageIndex = Math.max(0, productImages.indexOf(activeImage));
 
   useEffect(() => {
     setActiveVariantId(product.activeVariantId ?? product.variants?.[0]?.id ?? '');
     const initialVariant = product.variants?.find((variant) => variant.id === (product.activeVariantId ?? product.variants?.[0]?.id ?? ''));
     const nextImages = (initialVariant?.images?.length ? initialVariant.images : product.images?.length ? product.images : [product.image]).filter(Boolean);
-    const nextSizes = initialVariant?.sizes ?? product.sizes;
     setActiveImage(nextImages[0]);
-    setActiveSize(nextSizes?.[1] ?? nextSizes?.[0] ?? '60 см');
+    setActiveSize(product.sizes?.[1] ?? product.sizes?.[0] ?? '60 см');
     setQty(1);
   }, [product.slug]);
 
   useEffect(() => {
     setActiveImage(productImages[0]);
-    setActiveSize(visibleProduct.sizes?.[1] ?? visibleProduct.sizes?.[0] ?? '60 см');
   }, [activeVariantId]);
-
-  function showImage(index: number) {
-    if (!productImages.length) return;
-    const safeIndex = (index + productImages.length) % productImages.length;
-    setActiveImage(productImages[safeIndex]);
-  }
-
-  function handleTouchEnd(clientX: number) {
-    if (touchStartX === null || productImages.length < 2) return;
-    const diff = touchStartX - clientX;
-    setTouchStartX(null);
-    if (Math.abs(diff) < 36) return;
-    showImage(activeImageIndex + (diff > 0 ? 1 : -1));
-  }
 
   return (
     <section className="container productDetails">
@@ -81,19 +63,8 @@ export function ProductDetails({ product }: { product: Product }) {
             </button>
           ))}
         </div>
-        <div
-          className="mainProductImage"
-          onTouchStart={(event) => setTouchStartX(event.touches[0]?.clientX ?? null)}
-          onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0]?.clientX ?? 0)}
-        >
+        <div className="mainProductImage">
           <Image src={activeImage} alt={visibleProduct.title} fill priority sizes="55vw" style={{ objectFit: getImageSettings(visibleProduct, activeImage).productFit, objectPosition: getImageSettings(visibleProduct, activeImage).productPosition }} />
-          {productImages.length > 1 && (
-            <>
-              <button className="productImageNav productImageNav--prev" type="button" onClick={() => showImage(activeImageIndex - 1)} aria-label="Предыдущее фото">‹</button>
-              <button className="productImageNav productImageNav--next" type="button" onClick={() => showImage(activeImageIndex + 1)} aria-label="Следующее фото">›</button>
-              <div className="productImageDots" aria-hidden="true">{productImages.map((image, index) => <span className={index === activeImageIndex ? 'active' : ''} key={`${image}-dot-${index}`} />)}</div>
-            </>
-          )}
         </div>
       </div>
 
@@ -137,7 +108,7 @@ export function ProductDetails({ product }: { product: Product }) {
           <div className="qtyControl"><button onClick={() => setQty(Math.max(1, qty - 1))}>−</button><span>{qty}</span><button onClick={() => setQty(qty + 1)}>+</button></div>
         </div>
 
-        <div className="productActions"><AddToCartButton product={visibleProduct} quantity={qty} size={activeSize} className="button button--orange">В корзину</AddToCartButton><QuickOrderButton product={visibleProduct} quantity={qty} size={activeSize} className="button button--ghost" /><FavoriteButton product={visibleProduct} variant="text" /><Link href={`/request?product=${visibleProduct.slug}`} className="button button--outline">Заказать похожее</Link></div>
+        <div className="productActions"><AddToCartButton product={visibleProduct} quantity={qty} size={activeSize} className="button button--orange">В корзину</AddToCartButton><QuickOrderButton product={visibleProduct} quantity={qty} size={activeSize} className="button button--ghost" /><FavoriteButton product={product} variant="text" /><Link href={`/request?product=${visibleProduct.slug}`} className="button button--outline">Заказать похожее</Link></div>
       </div>
     </section>
   );

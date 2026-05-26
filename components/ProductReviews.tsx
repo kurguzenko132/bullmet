@@ -38,7 +38,7 @@ export function ProductReviews({ productSlug }: { productSlug: string }) {
   }, [files]);
 
   function changeFiles(event: ChangeEvent<HTMLInputElement>) {
-    const selected = (Array.from(event.target.files ?? []) as File[])
+    const selected = Array.from(event.target.files || [])
       .filter((file) => file.type.startsWith('image/'))
       .slice(0, 5);
     setFiles(selected);

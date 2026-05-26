@@ -14,9 +14,9 @@ export function AdminHomeSettings() {
   const [isSaving, setIsSaving] = useState(false);
 
   const heroPreview = useMemo(() => heroFile ? URL.createObjectURL(heroFile) : settings.heroImage, [heroFile, settings.heroImage]);
-  const categoryPreviews = useMemo<Record<string, string>>(() => {
+  const categoryPreviews = useMemo(() => {
     const entries = Object.entries(categoryFiles).filter(([, file]) => Boolean(file)) as [string, File][];
-    return Object.fromEntries(entries.map(([key, file]) => [key, URL.createObjectURL(file)])) as Record<string, string>;
+    return Object.fromEntries(entries.map(([key, file]) => [key, URL.createObjectURL(file)]));
   }, [categoryFiles]);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export function AdminHomeSettings() {
 
   useEffect(() => () => {
     if (heroPreview.startsWith('blob:')) URL.revokeObjectURL(heroPreview);
-    (Object.values(categoryPreviews) as string[]).forEach((url) => { if (url.startsWith('blob:')) URL.revokeObjectURL(url); });
+    Object.values(categoryPreviews).forEach((url) => { if (url.startsWith('blob:')) URL.revokeObjectURL(url); });
   }, [heroPreview, categoryPreviews]);
 
   function updateCategory(key: string, field: 'title' | 'href' | 'image', value: string) {

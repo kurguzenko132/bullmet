@@ -2,8 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { FormEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowIcon, CartIcon, ClockIcon, DraftIcon, FactoryIcon, MailIcon, PhoneIcon, PinIcon, SearchIcon, ShieldIcon, ToolsIcon, TruckIcon, UserIcon } from './Icons';
 import { CartHeaderButton } from './CartHeaderButton';
 import { defaultSiteContent, HomeSettings, readHomeSettingsAsync, readSiteContentAsync, SiteContentSettings } from './siteSettings';
@@ -56,10 +55,7 @@ function Logo({ subtitle = defaultSiteContent.brandSubtitle }: { subtitle?: stri
 }
 
 export function Header() {
-  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [content, setContent] = useState<SiteContentSettings>(defaultSiteContent);
 
   useEffect(() => {
@@ -77,15 +73,6 @@ export function Header() {
     setMenuOpen(false);
   }
 
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const query = searchQuery.trim();
-    if (!query) return;
-    setSearchOpen(false);
-    setMenuOpen(false);
-    router.push(`/catalog?q=${encodeURIComponent(query)}`);
-  }
-
   return (
     <header className={menuOpen ? 'header header--menuOpen' : 'header'} id="top">
       <div className="container header__inner">
@@ -94,7 +81,7 @@ export function Header() {
           {nav.map((item) => <Link href={item.href} key={item.title}>{item.title}</Link>)}
         </nav>
         <div className="header__actions">
-          <button className="iconButton" type="button" aria-label="Поиск" aria-expanded={searchOpen} onClick={() => setSearchOpen((value) => !value)}><SearchIcon /></button>
+          <button className="iconButton" aria-label="Поиск"><SearchIcon /></button>
           <Link className="accountButton" href="/account" aria-label="Войти в аккаунт"><UserIcon /></Link>
           <CartHeaderButton />
           <Link className="topCta" href="/request">{content.homeSecondaryButton}</Link>
@@ -110,19 +97,8 @@ export function Header() {
           </button>
         </div>
       </div>
-      <form className={searchOpen ? 'headerSearch headerSearch--open' : 'headerSearch'} onSubmit={submitSearch} role="search">
-        <div className="container headerSearch__inner">
-          <SearchIcon />
-          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Найти часы, качели или услугу" aria-label="Поиск по каталогу" />
-          <button type="submit">Найти</button>
-        </div>
-      </form>
       <div className="mobileMenu" id="mobile-menu" aria-hidden={!menuOpen}>
         <div className="container mobileMenu__inner">
-          <form className="mobileMenu__search" onSubmit={submitSearch} role="search">
-            <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Поиск по каталогу" aria-label="Поиск по каталогу" />
-            <button type="submit"><SearchIcon /></button>
-          </form>
           {nav.map((item) => <Link href={item.href} key={item.title} onClick={closeMenu}>{item.title}</Link>)}
           <Link className="mobileMenu__cta" href="/request" onClick={closeMenu}>{content.homeSecondaryButton}</Link>
         </div>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { DragEvent, FormEvent, MouseEvent, PointerEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminLayout } from './AdminLayout';
-import { type AdminProduct, makeUniqueProductSlug, productFromForm, readAdminProductsAsync, saveAdminProductAsync } from './adminProductStore';
+import { type AdminProduct, makeUniqueProductSlug, productFromForm, readAdminProducts, saveAdminProductAsync } from './adminProductStore';
 import { uploadProductImages } from '../lib/productImages';
 import { categories as fallbackCategories, clockCategory, clockThemes as fallbackClockThemes, slugifyVariant, type ProductVariant } from './shopData';
 import { getActiveCategoryNames, getActiveClockThemeNames, readCatalogSettingsAsync } from './categoryStore';
@@ -87,9 +87,7 @@ function reorderPhotos(items: PhotoItem[], fromId: string, toId: string) {
 
 export function AdminProductForm({ slug }: { slug?: string }) {
   const router = useRouter();
-  const [allProducts, setAllProducts] = useState<AdminProduct[]>([]);
-  const [loadingExisting, setLoadingExisting] = useState(Boolean(slug));
-  const existing = useMemo(() => slug ? allProducts.find((item) => item.slug === slug) : undefined, [slug, allProducts]);
+  const existing = useMemo(() => slug ? readAdminProducts().find((item) => item.slug === slug) : undefined, [slug]);
   const initialPhotos = useMemo(() => buildInitialPhotos(existing), [existing]);
 
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
@@ -107,20 +105,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [categoryOptions, setCategoryOptions] = useState<string[]>(fallbackCategories);
   const [clockThemeOptions, setClockThemeOptions] = useState<string[]>(fallbackClockThemes);
-  const [selectedCategory, setSelectedCategory] = useState(fallbackCategories[0]);
-
-  useEffect(() => {
-    let mounted = true;
-    setLoadingExisting(Boolean(slug));
-    readAdminProductsAsync()
-      .then((products) => { if (mounted) setAllProducts(products); })
-      .catch((error) => {
-        console.warn('Admin product load failed:', error);
-        if (mounted) setUploadError(error instanceof Error ? error.message : 'Не удалось загрузить товар.');
-      })
-      .finally(() => { if (mounted) setLoadingExisting(false); });
-    return () => { mounted = false; };
-  }, [slug]);
+  const [selectedCategory, setSelectedCategory] = useState(existing?.category ?? fallbackCategories[0]);
 
   useEffect(() => {
     setPhotos(initialPhotos);
@@ -155,7 +140,7 @@ export function AdminProductForm({ slug }: { slug?: string }) {
   const currentPreview = selectedPhoto?.src ?? photos[0]?.src ?? fallbackImage;
   const selectedSettings = selectedPhoto?.settings ?? normalizeImageDisplaySettings({});
   const activeVariant = variants.find((variant) => variant.id === activeVariantId) ?? variants[0];
-  const productGroupOptions = useMemo(() => allProducts.filter((item) => item.slug !== existing?.slug), [allProducts, existing?.slug]);
+  const productGroupOptions = useMemo(() => readAdminProducts().filter((item) => item.slug !== existing?.slug), [existing?.slug]);
   const categorySelectOptions = useMemo(() => {
     const list = [...categoryOptions];
     if (existing?.category && !list.includes(existing.category)) list.unshift(existing.category);
@@ -430,31 +415,11 @@ export function AdminProductForm({ slug }: { slug?: string }) {
     }
   }
 
-  const title = slug ? 'Редактировать товар' : 'Добавить товар';
+  const title = existing ? 'Редактировать товар' : 'Добавить товар';
   const catalogPosition = imagePosition(selectedSettings.catalogX, selectedSettings.catalogY);
   const productPosition = imagePosition(selectedSettings.productX, selectedSettings.productY);
   const activeFit = cropTarget === 'catalog' ? selectedSettings.catalogFit : selectedSettings.productFit;
   const activePosition = cropTarget === 'catalog' ? catalogPosition : productPosition;
-
-  if (loadingExisting) {
-    return (
-      <AdminLayout title={title}>
-        <main className="adminContent adminProductEditPage">
-          <div className="adminCard adminLoadingCard"><b>Загружаем товар...</b><p>Подтягиваем данные из каталога.</p></div>
-        </main>
-      </AdminLayout>
-    );
-  }
-
-  if (slug && !existing) {
-    return (
-      <AdminLayout title={title}>
-        <main className="adminContent adminProductEditPage">
-          <div className="adminCard adminLoadingCard"><b>Товар не найден</b><p>Он мог быть удален или еще не загрузился из Supabase.</p><Link className="adminSecondaryBtn" href="/admin/products">Вернуться к товарам</Link></div>
-        </main>
-      </AdminLayout>
-    );
-  }
 
   return (
     <AdminLayout title={title}>

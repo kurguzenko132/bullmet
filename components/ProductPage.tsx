@@ -31,21 +31,7 @@ export function ProductPage({ slug }: { slug: string }) {
     );
   }
 
-  if (!product) {
-    return (
-      <>
-        <Header />
-        <main className="productPage">
-          <section className="container productMissing productLoading">
-            <div className="breadcrumbs"><Link href="/">Главная</Link><span>/</span><Link href="/catalog">Каталог</Link></div>
-            <h1 className="pageTitle">Загружаем товар...</h1>
-            <p>Подтягиваем карточку, фото и варианты товара.</p>
-          </section>
-        </main>
-        <Footer />
-      </>
-    );
-  }
+  if (!product) return null;
 
   const expanded = expandProductVariants(sourceProducts);
   const related = expanded.filter((item) => item.slug !== product.slug && item.category === product.category).concat(expanded.filter((item) => item.slug !== product.slug));

@@ -188,18 +188,7 @@ export function AccountDashboardPage() {
 
             <nav className="accountTabs" aria-label="Разделы личного кабинета">
               {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  className={activeTab === tab.id ? 'active' : ''}
-                  type="button"
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    window.history.replaceState(null, '', `#${tab.id}`);
-                    window.dispatchEvent(new Event('hashchange'));
-                  }}
-                >
-                  {tab.label}
-                </button>
+                <button key={tab.id} className={activeTab === tab.id ? 'active' : ''} type="button" onClick={() => setActiveTab(tab.id)}>{tab.label}</button>
               ))}
             </nav>
 

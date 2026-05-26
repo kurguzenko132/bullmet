@@ -16,34 +16,6 @@ import { getImageSettings } from '../lib/imageDisplay';
 import { loadReviewSummaries, type ProductReviewSummary } from '../lib/reviews';
 
 const materialFilters = ['Металл', 'Дерево', 'Металл и дерево'];
-const PAGE_SIZE = 12;
-
-type SortValue = 'popular' | 'price-low' | 'price-high' | 'new';
-
-function normalizeText(value: string) {
-  return value.toLowerCase().replace(/ё/g, 'е');
-}
-
-function matchesMaterial(productMaterial: string, selectedMaterial: string) {
-  if (!selectedMaterial) return true;
-  const material = normalizeText(productMaterial);
-  const hasMetal = material.includes('металл');
-  const hasWood = material.includes('дерев') || material.includes('фанер') || material.includes('дуб');
-
-  if (selectedMaterial === 'Металл и дерево') return hasMetal && hasWood;
-  if (selectedMaterial === 'Металл') return hasMetal && !hasWood;
-  if (selectedMaterial === 'Дерево') return hasWood && !hasMetal;
-  return true;
-}
-
-function makePluralReviews(count: number) {
-  const lastTwo = count % 100;
-  const last = count % 10;
-  if (lastTwo >= 11 && lastTwo <= 14) return 'отзывов';
-  if (last === 1) return 'отзыв';
-  if (last >= 2 && last <= 4) return 'отзыва';
-  return 'отзывов';
-}
 
 export function CatalogPage() {
   const searchParams = useSearchParams();
@@ -51,15 +23,14 @@ export function CatalogPage() {
   const [categoryOptions, setCategoryOptions] = useState<string[]>(fallbackCategories);
   const [clockThemeOptions, setClockThemeOptions] = useState<string[]>(fallbackClockThemes);
   const [reviewSummaries, setReviewSummaries] = useState<Record<string, ProductReviewSummary>>({});
-  const [sort, setSort] = useState<SortValue>('popular');
-  const [priceFrom, setPriceFrom] = useState('');
-  const [priceTo, setPriceTo] = useState('');
-  const [selectedMaterial, setSelectedMaterial] = useState('');
-  const [page, setPage] = useState(1);
   const activeCategory = searchParams.get('category') || '';
   const activeClockTheme = searchParams.get('clockTheme') || '';
-  const searchQuery = searchParams.get('q')?.trim() || '';
   const { items, ready } = useAdminProducts();
+  // Filter and sort state
+  const [minPrice, setMinPrice] = useState<number>(0);
+  const [maxPrice, setMaxPrice] = useState<number>(2000);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
+  const [sortOption, setSortOption] = useState<string>('popular');
 
   useEffect(() => {
     let mounted = true;
@@ -72,62 +43,69 @@ export function CatalogPage() {
     });
     return () => { mounted = false; };
   }, []);
-
-  const catalogProducts = useMemo(() => {
-    if (!ready) return [];
-    const min = priceFrom ? Number(priceFrom) : null;
-    const max = priceTo ? Number(priceTo) : null;
-    const query = normalizeText(searchQuery);
-
-    const filtered = expandProductVariants(items.filter((product) => {
+  // Compute base catalog products from items and active category/theme filters
+  const baseProducts = useMemo(() => {
+    if (!ready) return [] as ReturnType<typeof expandProductVariants>;
+    const filtered = items.filter((product) => {
       if (product.status === 'draft') return false;
       if (activeCategory && product.category !== activeCategory) return false;
       if (activeClockTheme && product.clockTheme !== activeClockTheme) return false;
-      if (min !== null && Number(product.price || 0) < min) return false;
-      if (max !== null && Number(product.price || 0) > max) return false;
-      if (!matchesMaterial(product.material || '', selectedMaterial)) return false;
-      if (query) {
-        const haystack = normalizeText(`${product.title} ${product.category} ${product.clockTheme ?? ''} ${product.material} ${product.short} ${product.description}`);
-        if (!haystack.includes(query)) return false;
-      }
       return true;
-    }));
-
-    return [...filtered].sort((a, b) => {
-      if (sort === 'price-low') return Number(a.price || 0) - Number(b.price || 0);
-      if (sort === 'price-high') return Number(b.price || 0) - Number(a.price || 0);
-      if (sort === 'new') return Number(Boolean(b.isNew)) - Number(Boolean(a.isNew));
-      return Number(Boolean(b.isPopular)) - Number(Boolean(a.isPopular)) || Number(Boolean(b.inStock)) - Number(Boolean(a.inStock));
     });
-  }, [items, ready, activeCategory, activeClockTheme, searchQuery, priceFrom, priceTo, selectedMaterial, sort]);
+    return expandProductVariants(filtered);
+  }, [items, ready, activeCategory, activeClockTheme]);
 
-  const totalPages = Math.max(1, Math.ceil(catalogProducts.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const shownProducts = useMemo(
-    () => catalogProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
-    [catalogProducts, currentPage]
-  );
-  const shownFrom = catalogProducts.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0;
-  const shownTo = Math.min(currentPage * PAGE_SIZE, catalogProducts.length);
+  // Apply price and material filters
+  const filteredProducts = useMemo(() => {
+    let result = baseProducts;
+    // Filter by material
+    if (selectedMaterials.length) {
+      result = result.filter((product) => selectedMaterials.includes(product.material ?? ''));
+    }
+    // Filter by price range
+    result = result.filter((product) => {
+      const price = Number(product.price ?? 0);
+      return price >= minPrice && price <= maxPrice;
+    });
+    return result;
+  }, [baseProducts, selectedMaterials, minPrice, maxPrice]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [activeCategory, activeClockTheme, searchQuery, priceFrom, priceTo, selectedMaterial, sort]);
+  // Sort products based on sortOption
+  const catalogProducts = useMemo(() => {
+    const products = filteredProducts.slice();
+    switch (sortOption) {
+      case 'price-low':
+        products.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+        break;
+      case 'price-high':
+        products.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+        break;
+      case 'new':
+        products.sort((a, b) => {
+          const aNew = a.isNew ? 1 : 0;
+          const bNew = b.isNew ? 1 : 0;
+          return bNew - aNew;
+        });
+        break;
+      case 'popular':
+      default:
+        products.sort((a, b) => {
+          const aPopular = a.isPopular ? 1 : 0;
+          const bPopular = b.isPopular ? 1 : 0;
+          return bPopular - aPopular;
+        });
+        break;
+    }
+    return products;
+  }, [filteredProducts, sortOption]);
 
   useEffect(() => {
     let mounted = true;
-    loadReviewSummaries(shownProducts.map((product) => product.slug))
+    loadReviewSummaries(catalogProducts.slice(0, 24).map((product) => product.slug))
       .then((summaries) => { if (mounted) setReviewSummaries(summaries); })
       .catch(() => { if (mounted) setReviewSummaries({}); });
     return () => { mounted = false; };
-  }, [shownProducts]);
-
-  function resetFilters() {
-    setPriceFrom('');
-    setPriceTo('');
-    setSelectedMaterial('');
-    setSort('popular');
-  }
+  }, [catalogProducts]);
 
   return (
     <>
@@ -136,7 +114,6 @@ export function CatalogPage() {
         <section className="container catalogHero">
           <div className="breadcrumbs"><Link href="/">Главная</Link><span>/</span><span>Каталог</span></div>
           <h1 className="pageTitle">Каталог товаров</h1>
-          {searchQuery && <p className="catalogSearchNote">Результаты поиска: <b>{searchQuery}</b></p>}
         </section>
 
         <section className="container catalogLayout">
@@ -170,37 +147,72 @@ export function CatalogPage() {
               <label className="filterLabel">Цена, BYN</label>
               <div className="priceLine"><span /><i /></div>
               <div className="priceInputs">
-                <input value={priceFrom} inputMode="numeric" placeholder="0" onChange={(event) => setPriceFrom(event.target.value.replace(/[^0-9]/g, ''))} aria-label="Цена от" />
+                <input
+                  type="number"
+                  min="0"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                />
                 <span>до</span>
-                <input value={priceTo} inputMode="numeric" placeholder="2000" onChange={(event) => setPriceTo(event.target.value.replace(/[^0-9]/g, ''))} aria-label="Цена до" />
+                <input
+                  type="number"
+                  min="0"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value) || 0)}
+                />
               </div>
               <label className="filterLabel filterLabel--space">Материал</label>
               <div className="checks">
                 {materialFilters.map((item) => (
                   <label key={item}>
-                    <input type="radio" name="material" checked={selectedMaterial === item} onChange={() => setSelectedMaterial(item)} /> {item}
+                    <input
+                      type="checkbox"
+                      checked={selectedMaterials.includes(item)}
+                      onChange={() => {
+                        setSelectedMaterials((current) =>
+                          current.includes(item) ? current.filter((m) => m !== item) : [...current, item]
+                        );
+                      }}
+                    />
+                    {item}
                   </label>
                 ))}
               </div>
-              <button className="applyFilter" type="button" onClick={() => setFiltersOpen(false)}>Применить</button>
-              <button className="resetFilter" type="button" onClick={resetFilters}>Сбросить</button>
+              <button type="button" className="applyFilter" onClick={() => setFiltersOpen(false)}>
+                Применить
+              </button>
+              <button
+                type="button"
+                className="resetFilter"
+                onClick={() => {
+                  setMinPrice(0);
+                  setMaxPrice(2000);
+                  setSelectedMaterials([]);
+                }}
+              >
+                Сбросить
+              </button>
             </div>
           </aside>
 
           <div className="catalogContent">
             <div className="catalogToolbar">
-              <select value={sort} onChange={(event) => setSort(event.target.value as SortValue)} aria-label="Сортировка">
+              <select value={sortOption} aria-label="Сортировка" onChange={(event) => setSortOption(event.target.value)}>
                 <option value="popular">По популярности</option>
                 <option value="price-low">Сначала дешевле</option>
                 <option value="price-high">Сначала дороже</option>
                 <option value="new">Новинки</option>
               </select>
-              <p>{ready ? `Показано ${shownFrom}–${shownTo} из ${catalogProducts.length}` : 'Загружаем товары...'}</p>
+              <p>
+                {catalogProducts.length <= 12
+                  ? `Найдено ${catalogProducts.length} ${catalogProducts.length % 10 === 1 && catalogProducts.length % 100 !== 11 ? 'товар' : catalogProducts.length % 10 >= 2 && catalogProducts.length % 10 <= 4 && (catalogProducts.length % 100 < 10 || catalogProducts.length % 100 >= 20) ? 'товара' : 'товаров'}`
+                  : `Показано 1–${Math.min(12, catalogProducts.length)} из ${catalogProducts.length}`}
+              </p>
               <div className="viewButtons"><button aria-label="Плитка"><GridDots /></button><button aria-label="Список"><ListLines /></button></div>
             </div>
 
             <div className="productCatalogGrid">
-              {shownProducts.length ? shownProducts.map((product) => {
+              {catalogProducts.length ? catalogProducts.slice(0, 12).map((product) => {
                 const review = reviewSummaries[product.slug];
                 return (
                 <article className="catalogCard catalogCard--mobileMarket" key={product.slug}>
@@ -213,23 +225,15 @@ export function CatalogPage() {
                     {(product.colorName || product.variantName) && <span className="catalogCard__variantBadge" style={{ borderColor: product.colorHex ?? product.variantColorHex ?? undefined }}>{product.colorName || product.variantName}</span>}
                     <Link href={`/catalog/${product.slug}`} className="catalogCard__title">{product.colorName ? `${product.title} — ${product.colorName}` : product.variantName ? `${product.title} — ${product.variantName}` : product.title}</Link>
                     <p>{product.short}</p>{product.clockTheme && <em className="catalogCard__theme">{product.clockTheme}</em>}
-                    <div className="catalogCard__rating"><span>★</span>{review ? `${review.average.toFixed(1).replace('.', ',')} · ${review.count} ${makePluralReviews(review.count)}` : 'Пока нет отзывов'}</div>
+                    <div className="catalogCard__rating"><span>★</span>{review ? `${review.average.toFixed(1).replace('.', ',')} · ${review.count} ${review.count === 1 ? 'отзыв' : 'отзывов'}` : 'Пока нет отзывов'}</div>
                     <div className="catalogCard__bottom"><b>от {product.price} BYN</b><AddToCartButton product={product} iconOnly /></div><div className="catalogCard__quick"><QuickOrderButton product={product} label="Купить в 1 клик" compact className="catalogQuickOrderBtn" /></div>
                   </div>
                 </article>
               );
-              }) : <div className="catalogEmpty"><b>{ready ? 'Товары не найдены' : 'Загружаем товары'}</b><p>{ready ? 'Попробуйте сбросить фильтры или выбрать другую категорию.' : 'Подключаем каталог Bullmet.'}</p></div>}
+              }) : <div className="catalogEmpty"><b>Товаров пока нет</b><p>Добавьте товары через админку или проверьте подключение Supabase.</p></div>}
             </div>
 
-            {totalPages > 1 && (
-              <div className="pagination" aria-label="Пагинация каталога">
-                <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={currentPage === 1}>←</button>
-                {Array.from({ length: totalPages }, (_, index) => index + 1).slice(0, 6).map((item) => (
-                  <button type="button" className={item === currentPage ? 'active' : ''} onClick={() => setPage(item)} key={item}>{item}</button>
-                ))}
-                <button type="button" onClick={() => setPage((value) => Math.min(totalPages, value + 1))} disabled={currentPage === totalPages}>→</button>
-              </div>
-            )}
+            {catalogProducts.length > 12 && <div className="pagination"><span className="active">1</span><span>2</span><span>3</span><span>4</span><button>→</button></div>}
           </div>
         </section>
 

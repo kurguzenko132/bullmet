@@ -32,22 +32,14 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Главная', icon: HomeIcon, match: (path: string) => path === '/' },
   { href: '/catalog', label: 'Каталог', icon: SearchIcon, match: (path: string) => path.startsWith('/catalog') },
   { href: '/cart', label: 'Корзина', icon: CartIcon, match: (path: string) => path.startsWith('/cart') || path.startsWith('/checkout'), badge: 'cart' as const },
-  { href: '/account#favorites', label: 'Избранное', icon: HeartIcon, match: (path: string) => path === '/account#favorites', badge: 'favorites' as const },
-  { href: '/account', label: 'Профиль', icon: UserIcon, match: (path: string) => path === '/account' || path.startsWith('/login') || path.startsWith('/register') },
+  { href: '/account#favorites', label: 'Избранное', icon: HeartIcon, match: (path: string) => path.startsWith('/account'), badge: 'favorites' as const },
+  { href: '/account', label: 'Профиль', icon: UserIcon, match: (path: string) => path.startsWith('/login') || path.startsWith('/register') },
 ];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const [cart, setCart] = useState(0);
   const [favorites, setFavorites] = useState(0);
-  const [hash, setHash] = useState('');
-
-  useEffect(() => {
-    const updateHash = () => setHash(window.location.hash || '');
-    updateHash();
-    window.addEventListener('hashchange', updateHash);
-    return () => window.removeEventListener('hashchange', updateHash);
-  }, []);
 
   useEffect(() => {
     const updateCart = () => setCart(cartCount(readCart()));
@@ -71,15 +63,13 @@ export function MobileBottomNav() {
 
   if (pathname.startsWith('/admin')) return null;
 
-  const currentPath = `${pathname}${hash}`;
-
   return (
     <>
       <Link className="mobileQuickRequest" href="/request"><RequestIcon />Заказать расчет</Link>
       <nav className="mobileBottomNav" aria-label="Нижнее мобильное меню">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active = item.match(currentPath);
+          const active = item.match(pathname);
           const badgeValue = item.badge === 'cart' ? cart : item.badge === 'favorites' ? favorites : 0;
           return (
             <Link className={active ? 'mobileBottomNav__item active' : 'mobileBottomNav__item'} href={item.href} key={item.href}>
