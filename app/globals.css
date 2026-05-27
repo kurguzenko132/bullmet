@@ -6835,3 +6835,126 @@ textarea:focus { box-shadow: 0 0 0 3px rgba(230, 90, 18, .1); }
     width: 100%;
   }
 }
+
+
+/* Account mobile overflow hotfix */
+.accountPage,
+.accountDashboard,
+.accountDashboard--full,
+.accountMain,
+.accountBox,
+.accountStats,
+.accountStats--client,
+.accountSidebar {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 760px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .accountPage {
+    overflow-x: hidden;
+  }
+
+  .accountHeroV2,
+  .accountDashboard,
+  .accountDashboard--full {
+    width: min(100% - 24px, 560px) !important;
+    max-width: min(100% - 24px, 560px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .accountDashboard--full {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px !important;
+  }
+
+  .accountSidebar,
+  .accountMain,
+  .accountBox,
+  .accountEmptyState {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .accountSidebar {
+    position: static !important;
+    min-height: 0 !important;
+    padding: 18px !important;
+  }
+
+  .accountTabs {
+    display: flex !important;
+    gap: 10px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    margin: 18px -18px 0 !important;
+    padding: 0 18px 4px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .accountTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .accountTabs button {
+    flex: 0 0 auto !important;
+    min-width: 150px !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    padding: 0 18px !important;
+  }
+
+  .accountStats--client {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .accountStats--client div {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 20px 18px !important;
+  }
+
+  .accountStats--client b,
+  .accountStats--client span,
+  .accountOrder,
+  .accountOrder p,
+  .accountEmptyState,
+  .accountEmptyState p {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .accountBox {
+    padding: 22px 18px !important;
+  }
+
+  .accountBox__head {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .accountEmptyState {
+    padding: 28px 18px !important;
+  }
+
+  .accountEmptyState .button {
+    width: 100% !important;
+    text-align: center !important;
+  }
+}
