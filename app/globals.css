@@ -7701,3 +7701,100 @@ textarea:focus { box-shadow: 0 0 0 3px rgba(230, 90, 18, .1); }
     flex-basis: 68px !important;
   }
 }
+
+
+/* Cart upsells redesign + mobile category carousel */
+.cartUpsells {
+  gap: 12px !important;
+}
+
+.cartUpsell {
+  grid-template-columns: 72px minmax(0, 1fr) 48px !important;
+  gap: 12px !important;
+  align-items: center !important;
+  padding: 12px !important;
+  background: #fff !important;
+}
+
+.cartUpsell__image {
+  position: relative !important;
+  display: block !important;
+  width: 72px !important;
+  height: 72px !important;
+  overflow: hidden !important;
+  background: #f4efe9 !important;
+  border: 1px solid #eee7df !important;
+}
+
+.cartUpsell__content {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 6px !important;
+}
+
+.cartUpsell__content b {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.cartUpsell__content small {
+  font-size: 13px !important;
+  color: var(--muted) !important;
+}
+
+@media (max-width: 760px) {
+  .cartUpsell {
+    grid-template-columns: 64px minmax(0, 1fr) 44px !important;
+    min-height: auto !important;
+  }
+
+  .cartUpsell__image {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .cartUpsell__content b {
+    font-size: 14px !important;
+  }
+
+  .categoryGrid {
+    display: flex !important;
+    gap: 14px !important;
+    overflow-x: auto !important;
+    padding: 0 2px 8px !important;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .categoryGrid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category,
+  .category:last-child {
+    flex: 0 0 84vw !important;
+    min-height: 240px !important;
+    padding: 20px 78px 20px 18px !important;
+    scroll-snap-align: start;
+  }
+
+  .category span {
+    max-width: 220px !important;
+    font-size: 20px !important;
+    line-height: 1.05 !important;
+  }
+
+  .category i {
+    right: 16px !important;
+    bottom: 18px !important;
+    width: 52px !important;
+    height: 52px !important;
+  }
+}

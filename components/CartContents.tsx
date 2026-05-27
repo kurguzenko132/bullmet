@@ -89,7 +89,13 @@ export function CartContents() {
             <h3>Можно добавить к заказу</h3>
             {upsells.map((product) => (
               <div className="cartUpsell" key={product.slug}>
-                <span><b>{product.title}</b><small>от {product.price} BYN</small></span>
+                <Link className="cartUpsell__image" href={`/catalog/${product.slug}`}>
+                  <Image src={product.image} alt={product.title} fill sizes="72px" style={{ objectFit: 'cover' }} />
+                </Link>
+                <span className="cartUpsell__content">
+                  <b>{product.colorName ? `${product.title} — ${product.colorName}` : product.title}</b>
+                  <small>от {product.price} BYN</small>
+                </span>
                 <AddToCartButton product={product} className="cartUpsellBtn">+</AddToCartButton>
               </div>
             ))}
