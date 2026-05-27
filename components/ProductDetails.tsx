@@ -179,16 +179,16 @@ export function ProductDetails({ product }: { product: Product }) {
             onTouchEnd={handleZoomTouchEnd}
           >
             <button className="productLightbox__close" type="button" onClick={() => setZoomImage(null)} aria-label="Закрыть">×</button>
+            {productImages.length > 1 && (
+              <button className="productLightbox__nav productLightbox__nav--prev" type="button" onClick={() => showZoomImage(-1)} aria-label="Предыдущее фото">‹</button>
+            )}
+            {productImages.length > 1 && (
+              <button className="productLightbox__nav productLightbox__nav--next" type="button" onClick={() => showZoomImage(1)} aria-label="Следующее фото">›</button>
+            )}
             <div className="productLightbox__stage">
-              {productImages.length > 1 && (
-                <button className="productLightbox__nav productLightbox__nav--prev" type="button" onClick={() => showZoomImage(-1)} aria-label="Предыдущее фото">‹</button>
-              )}
               <div className="productLightbox__image">
                 <Image src={zoomImage} alt={visibleProduct.title} fill sizes="96vw" style={{ objectFit: 'contain' }} />
               </div>
-              {productImages.length > 1 && (
-                <button className="productLightbox__nav productLightbox__nav--next" type="button" onClick={() => showZoomImage(1)} aria-label="Следующее фото">›</button>
-              )}
             </div>
             {productImages.length > 1 && (
               <div className="productLightbox__thumbs" aria-label="Миниатюры фото">
