@@ -7111,3 +7111,172 @@ textarea:focus { box-shadow: 0 0 0 3px rgba(230, 90, 18, .1); }
     flex-basis: 68px;
   }
 }
+
+/* Product zoom modal visual hotfix: clean centered lightbox */
+.productZoomOverlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 6000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 26px !important;
+  background: rgba(15, 15, 15, .78) !important;
+  backdrop-filter: blur(7px) !important;
+}
+
+.productZoomModal {
+  position: relative !important;
+  width: min(1280px, 96vw) !important;
+  height: min(860px, 92vh) !important;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) auto !important;
+  gap: 14px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  touch-action: pan-y !important;
+}
+
+.productZoomImage {
+  position: relative !important;
+  width: min(100%, 1160px) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  background: #f7f4ef !important;
+  border: 1px solid rgba(255, 255, 255, .24) !important;
+  box-shadow: 0 28px 76px rgba(0, 0, 0, .38) !important;
+  overflow: hidden !important;
+}
+
+.productZoomImage img {
+  object-position: center center !important;
+}
+
+.productZoomModal > .productZoomClose {
+  position: absolute !important;
+  z-index: 8 !important;
+  right: 0 !important;
+  top: 0 !important;
+  width: 52px !important;
+  height: 52px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 0 !important;
+  background: #fff !important;
+  color: #111 !important;
+  font-size: 32px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .22) !important;
+}
+
+.productZoomModal > .productZoomArrow {
+  position: absolute !important;
+  z-index: 7 !important;
+  top: 50% !important;
+  right: auto !important;
+  transform: translateY(-50%) !important;
+  width: 56px !important;
+  height: 74px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 0 !important;
+  background: rgba(255, 255, 255, .94) !important;
+  color: #111 !important;
+  font-size: 46px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, .22) !important;
+}
+
+.productZoomModal > .productZoomArrow--prev {
+  left: 0 !important;
+  right: auto !important;
+}
+
+.productZoomModal > .productZoomArrow--next {
+  right: 0 !important;
+  left: auto !important;
+}
+
+.productZoomThumbs {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  overflow-x: auto !important;
+  max-width: min(100%, 1160px) !important;
+  margin: 0 auto !important;
+  padding: 0 6px 2px !important;
+  background: transparent !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+}
+
+.productZoomThumbs button {
+  position: relative !important;
+  width: 76px !important;
+  height: 60px !important;
+  flex: 0 0 76px !important;
+  border: 2px solid rgba(255, 255, 255, .36) !important;
+  background: #f7f4ef !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  opacity: .72 !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .2) !important;
+}
+
+.productZoomThumbs button.active {
+  border-color: var(--orange) !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 760px) {
+  .productZoomOverlay {
+    padding: 0 !important;
+    background: rgba(12, 12, 12, .92) !important;
+  }
+
+  .productZoomModal {
+    width: 100vw !important;
+    height: 100dvh !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    gap: 0 !important;
+  }
+
+  .productZoomImage {
+    width: 100% !important;
+    height: 100% !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: #f7f4ef !important;
+  }
+
+  .productZoomModal > .productZoomClose {
+    right: 12px !important;
+    top: calc(12px + env(safe-area-inset-top)) !important;
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  .productZoomModal > .productZoomArrow {
+    display: none !important;
+  }
+
+  .productZoomThumbs {
+    justify-content: flex-start !important;
+    max-width: 100% !important;
+    padding: 12px 14px calc(16px + env(safe-area-inset-bottom)) !important;
+    background: #111 !important;
+  }
+
+  .productZoomThumbs button {
+    width: 68px !important;
+    height: 56px !important;
+    flex-basis: 68px !important;
+  }
+}
