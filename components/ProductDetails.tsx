@@ -171,27 +171,62 @@ export function ProductDetails({ product }: { product: Product }) {
         </div>
       </div>
       {zoomImage && (
-        <div className="productLightbox" role="dialog" aria-modal="true" aria-label="Просмотр фото" onClick={() => setZoomImage(null)}>
+        <div className="bullmetPhotoViewer" role="dialog" aria-modal="true" aria-label="Просмотр фото" onClick={() => setZoomImage(null)}>
           <div
-            className="productLightbox__dialog"
+            className="bullmetPhotoViewer__dialog"
             onClick={(event) => event.stopPropagation()}
             onTouchStart={handleZoomTouchStart}
             onTouchEnd={handleZoomTouchEnd}
           >
-            <button className="productLightbox__close" type="button" onClick={() => setZoomImage(null)} aria-label="Закрыть">×</button>
-            {productImages.length > 1 && (
-              <button className="productLightbox__nav productLightbox__nav--prev" type="button" onClick={() => showZoomImage(-1)} aria-label="Предыдущее фото">‹</button>
-            )}
-            {productImages.length > 1 && (
-              <button className="productLightbox__nav productLightbox__nav--next" type="button" onClick={() => showZoomImage(1)} aria-label="Следующее фото">›</button>
-            )}
-            <div className="productLightbox__stage">
-              <div className="productLightbox__image">
-                <Image src={zoomImage} alt={visibleProduct.title} fill sizes="96vw" style={{ objectFit: 'contain' }} />
-              </div>
+            <div
+              className="bullmetPhotoViewer__close"
+              role="button"
+              tabIndex={0}
+              onClick={() => setZoomImage(null)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') setZoomImage(null);
+              }}
+              aria-label="Закрыть"
+            >
+              ×
             </div>
+
             {productImages.length > 1 && (
-              <div className="productLightbox__thumbs" aria-label="Миниатюры фото">
+              <div
+                className="bullmetPhotoViewer__arrow bullmetPhotoViewer__arrow--prev"
+                role="button"
+                tabIndex={0}
+                onClick={() => showZoomImage(-1)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') showZoomImage(-1);
+                }}
+                aria-label="Предыдущее фото"
+              >
+                ‹
+              </div>
+            )}
+
+            {productImages.length > 1 && (
+              <div
+                className="bullmetPhotoViewer__arrow bullmetPhotoViewer__arrow--next"
+                role="button"
+                tabIndex={0}
+                onClick={() => showZoomImage(1)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') showZoomImage(1);
+                }}
+                aria-label="Следующее фото"
+              >
+                ›
+              </div>
+            )}
+
+            <div className="bullmetPhotoViewer__imageWrap">
+              <Image src={zoomImage} alt={visibleProduct.title} fill sizes="92vw" style={{ objectFit: 'contain' }} />
+            </div>
+
+            {productImages.length > 1 && (
+              <div className="bullmetPhotoViewer__thumbs" aria-label="Миниатюры фото">
                 {productImages.map((image, index) => (
                   <button
                     type="button"

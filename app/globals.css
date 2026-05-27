@@ -7523,3 +7523,181 @@ textarea:focus { box-shadow: 0 0 0 3px rgba(230, 90, 18, .1); }
     right: 12px !important;
   }
 }
+
+
+/* Bullmet photo viewer — independent modal, no button-based arrows */
+.bullmetPhotoViewer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 12000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 28px !important;
+  background: rgba(18, 18, 18, .86) !important;
+  backdrop-filter: blur(6px);
+}
+
+.bullmetPhotoViewer__dialog {
+  position: relative !important;
+  width: min(1280px, 94vw) !important;
+  height: min(860px, 90vh) !important;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) auto !important;
+  gap: 14px !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+
+.bullmetPhotoViewer__imageWrap {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  background: #f7f3ee !important;
+  border: 1px solid rgba(255, 255, 255, .24) !important;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .42) !important;
+  overflow: hidden !important;
+}
+
+.bullmetPhotoViewer__close,
+.bullmetPhotoViewer__arrow {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.bullmetPhotoViewer__close {
+  position: absolute !important;
+  z-index: 5 !important;
+  top: -18px !important;
+  right: -18px !important;
+  width: 56px !important;
+  height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #fff !important;
+  color: #111 !important;
+  font-size: 34px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  box-shadow: 0 16px 42px rgba(0,0,0,.28) !important;
+}
+
+.bullmetPhotoViewer__arrow {
+  position: absolute !important;
+  z-index: 4 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 58px !important;
+  height: 78px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #fff !important;
+  color: #111 !important;
+  font-size: 52px !important;
+  font-weight: 300 !important;
+  line-height: .8 !important;
+  cursor: pointer !important;
+  box-shadow: 0 16px 42px rgba(0,0,0,.28) !important;
+}
+
+.bullmetPhotoViewer__arrow--prev {
+  left: -72px !important;
+}
+
+.bullmetPhotoViewer__arrow--next {
+  right: -72px !important;
+}
+
+.bullmetPhotoViewer__thumbs {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  padding: 0 0 2px !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.bullmetPhotoViewer__thumbs::-webkit-scrollbar {
+  display: none !important;
+}
+
+.bullmetPhotoViewer__thumbs button {
+  position: relative !important;
+  width: 76px !important;
+  height: 60px !important;
+  flex: 0 0 76px !important;
+  padding: 0 !important;
+  border: 2px solid rgba(255,255,255,.35) !important;
+  background: #f7f3ee !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  opacity: .72 !important;
+}
+
+.bullmetPhotoViewer__thumbs button.active {
+  border-color: var(--orange) !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 1420px) {
+  .bullmetPhotoViewer__dialog {
+    width: min(1120px, 86vw) !important;
+  }
+
+  .bullmetPhotoViewer__arrow--prev {
+    left: -66px !important;
+  }
+
+  .bullmetPhotoViewer__arrow--next {
+    right: -66px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .bullmetPhotoViewer {
+    padding: 0 !important;
+    background: rgba(18, 18, 18, .94) !important;
+  }
+
+  .bullmetPhotoViewer__dialog {
+    width: 100vw !important;
+    height: 100dvh !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    gap: 0 !important;
+  }
+
+  .bullmetPhotoViewer__imageWrap {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .bullmetPhotoViewer__close {
+    top: calc(12px + env(safe-area-inset-top)) !important;
+    right: 12px !important;
+    width: 46px !important;
+    height: 46px !important;
+    font-size: 30px !important;
+  }
+
+  .bullmetPhotoViewer__arrow {
+    display: none !important;
+  }
+
+  .bullmetPhotoViewer__thumbs {
+    justify-content: flex-start !important;
+    padding: 12px 14px calc(16px + env(safe-area-inset-bottom)) !important;
+    background: #111 !important;
+  }
+
+  .bullmetPhotoViewer__thumbs button {
+    width: 68px !important;
+    height: 56px !important;
+    flex-basis: 68px !important;
+  }
+}
