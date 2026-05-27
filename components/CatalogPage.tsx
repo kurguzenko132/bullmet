@@ -25,7 +25,13 @@ export function CatalogPage() {
   const [reviewSummaries, setReviewSummaries] = useState<Record<string, ProductReviewSummary>>({});
   const activeCategory = searchParams.get('category') || '';
   const activeClockTheme = searchParams.get('clockTheme') || '';
-  const searchQuery = (searchParams.get('search') || searchParams.get('q') || '').trim().toLowerCase();
+  const searchQueryRaw = (searchParams.get('search') || searchParams.get('q') || '').trim();
+  const searchQuery = searchQueryRaw.toLowerCase();
+  const catalogTitle = searchQueryRaw
+    ? `Поиск: ${searchQueryRaw}`
+    : activeClockTheme
+      ? `Часы: ${activeClockTheme}`
+      : activeCategory || 'Каталог товаров';
   const { items, ready } = useAdminProducts();
   // Filter and sort state
   const [minPrice, setMinPrice] = useState<number>(0);
@@ -118,7 +124,7 @@ export function CatalogPage() {
       <main className="catalogPage">
         <section className="container catalogHero">
           <div className="breadcrumbs"><Link href="/">Главная</Link><span>/</span><span>Каталог</span></div>
-          <h1 className="pageTitle">{searchQuery ? `Поиск: ${searchParams.get('search') || searchParams.get('q')}` : 'Каталог товаров'}</h1>
+          <h1 className="pageTitle">{catalogTitle}</h1>
         </section>
 
         <section className="container catalogLayout">

@@ -58,8 +58,8 @@ export const LOCAL_CONTENT_SETTINGS_KEY = 'bullmet-content-settings';
 export const defaultHomeSettings: HomeSettings = {
   heroImage: '/assets/hero-machine.jpg',
   categories: [
-    { key: 'clock', title: 'Часы собственного производства', image: '/assets/cat-clock.jpg', href: '/catalog' },
-    { key: 'swing', title: 'Садовые качели', image: '/assets/cat-swing.jpg', href: '/catalog' },
+    { key: 'clock', title: 'Часы собственного производства', image: '/assets/cat-clock.jpg', href: '/catalog?category=Часы собственного производства' },
+    { key: 'swing', title: 'Садовые качели', image: '/assets/cat-swing.jpg', href: '/catalog?category=Садовые качели' },
     { key: 'metal', title: 'Резка металла', image: '/assets/cat-metal.jpg', href: '/request?type=metal-cutting' },
     { key: 'wood', title: 'Резка дерева', image: '/assets/cat-wood.jpg', href: '/request?type=wood-cutting' },
     { key: 'custom', title: 'Изделия на заказ', image: '/assets/cat-custom.jpg', href: '/request?type=custom' },
@@ -100,6 +100,14 @@ export const defaultSiteContent: SiteContentSettings = {
   ],
 };
 
+function normalizeHomeCategoryHref(key: string, href: string): string {
+  const value = href.trim();
+  if ((key === 'clock' || key === 'swing') && (!value || value === '/catalog')) {
+    return key === 'clock' ? '/catalog?category=Часы собственного производства' : '/catalog?category=Садовые качели';
+  }
+  return value;
+}
+
 function cleanText(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
@@ -111,7 +119,7 @@ function normalizeSettings(value: Partial<HomeSettings> | null | undefined): Hom
     return {
       ...fallback,
       title: found?.title?.trim() || fallback.title,
-      href: found?.href?.trim() || fallback.href,
+      href: normalizeHomeCategoryHref(fallback.key, found?.href?.trim() || fallback.href),
       image: found?.image?.trim() || fallback.image,
     };
   });
