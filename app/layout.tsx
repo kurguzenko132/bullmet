@@ -6,6 +6,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bullmet.by';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  manifest: '/manifest.webmanifest',
   title: {
     default: 'Bullmet — изделия из металла и дерева на заказ',
     template: '%s | Bullmet',

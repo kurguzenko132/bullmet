@@ -24,42 +24,26 @@ function shortDate(value: string) {
   return new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 }
 
-function lastDays(days = 7) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Array.from({ length: days }, (_, index) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() - (days - 1 - index));
+function lastSevenDays() {
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
     return date;
   });
 }
 
-function sameDay(dateValue: string, day: Date) {
-  const date = new Date(dateValue);
-  return date.getFullYear() === day.getFullYear() && date.getMonth() === day.getMonth() && date.getDate() === day.getDate();
+function seriesByDay<T extends { createdAt: string }>(items: T[], getValue: (item: T) => number = () => 1) {
+  return lastSevenDays().map((date) => {
+    const key = date.toISOString().slice(0, 10);
+    return items
+      .filter((item) => new Date(item.createdAt).toISOString().slice(0, 10) === key)
+      .reduce((sum, item) => sum + getValue(item), 0);
+  });
 }
 
-function countByDay<T>(items: T[], getDate: (item: T) => string, getValue?: (item: T) => number) {
-  return lastDays().map((day) => items
-    .filter((item) => sameDay(getDate(item), day))
-    .reduce((sum, item) => sum + (getValue ? getValue(item) : 1), 0));
-}
-
-function flatTrend(value: number) {
-  return Array.from({ length: 7 }, () => Number(value || 0));
-}
-
-function sparklinePoints(values: number[]) {
-  const clean = values.length ? values.map((value) => Number(value || 0)) : [0, 0, 0, 0, 0, 0, 0];
-  const max = Math.max(...clean, 1);
-  const min = Math.min(...clean, 0);
-  const range = Math.max(max - min, 1);
-  const step = 136 / Math.max(clean.length - 1, 1);
-  return clean.map((value, index) => {
-    const x = Math.round(index * step);
-    const y = Math.round(42 - ((value - min) / range) * 34);
-    return `${x},${y}`;
-  }).join(' ');
+function flatSeries(value: number) {
+  return Array.from({ length: 7 }, () => value);
 }
 
 export function AdminDashboard() {
@@ -115,12 +99,12 @@ export function AdminDashboard() {
   const pendingReviews = useMemo(() => reviews.filter((review) => (review.status || 'pending') === 'pending').length, [reviews]);
   const productsWithoutPhoto = useMemo(() => products.filter((product) => !product.image || product.image.includes('cat-')).length, [products]);
   const productsWithoutPrice = useMemo(() => products.filter((product) => Number(product.price || 0) <= 0).length, [products]);
-  const orderTrend = useMemo(() => countByDay(orders, (order) => order.createdAt), [orders]);
-  const revenueTrend = useMemo(() => countByDay(orders, (order) => order.createdAt, (order) => Number(order.total || 0)), [orders]);
-  const requestTrend = useMemo(() => countByDay(requests, (request) => request.createdAt), [requests]);
-  const reviewTrend = useMemo(() => countByDay(reviews, (review) => review.created_at), [reviews]);
-  const productTrend = useMemo(() => flatTrend(products.length), [products.length]);
-  const issueTrend = useMemo(() => flatTrend(productsWithoutPhoto + productsWithoutPrice), [productsWithoutPhoto, productsWithoutPrice]);
+  const orderSeries = useMemo(() => seriesByDay(orders), [orders]);
+  const revenueSeries = useMemo(() => seriesByDay(orders, (order) => Number(order.total || 0)), [orders]);
+  const requestSeries = useMemo(() => seriesByDay(requests), [requests]);
+  const reviewSeries = useMemo(() => seriesByDay(reviews.map((review) => ({ createdAt: review.created_at ?? new Date().toISOString() }))), [reviews]);
+  const productSeries = useMemo(() => flatSeries(products.length), [products.length]);
+  const auditSeries = useMemo(() => flatSeries(productsWithoutPhoto + productsWithoutPrice), [productsWithoutPhoto, productsWithoutPrice]);
   const latestOrders = orders.slice(0, 6);
   const latestActivity = useMemo(() => {
     const orderItems = orders.slice(0, 4).map((order) => ({
@@ -167,12 +151,12 @@ export function AdminDashboard() {
             </div>
           </div>
           <div className="adminMetrics">
-            <MetricCard label="Заказы" value={String(orders.length)} note={`${activeOrders} активных`} color="orange" values={orderTrend} />
-            <MetricCard label="Выручка" value={money(revenue)} note="по оформленным заказам" color="green" values={revenueTrend} />
-            <MetricCard label="Заявки" value={String(requests.length)} note={`${activeRequests} в работе`} color="blue" values={requestTrend} />
-            <MetricCard label="Отзывы" value={String(reviews.length)} note={`${pendingReviews} на модерации`} color="orange" values={reviewTrend} />
-            <MetricCard label="Товары" value={String(products.length)} note="в каталоге" color="purple" values={productTrend} />
-            <MetricCard label="Проверить" value={String(productsWithoutPhoto + productsWithoutPrice)} note="товары без фото/цены" color="blue" values={issueTrend} />
+            <MetricCard label="Заказы" value={String(orders.length)} note={`${activeOrders} активных`} color="orange" series={orderSeries} />
+            <MetricCard label="Выручка" value={money(revenue)} note="по оформленным заказам" color="green" series={revenueSeries} />
+            <MetricCard label="Заявки" value={String(requests.length)} note={`${activeRequests} в работе`} color="blue" series={requestSeries} />
+            <MetricCard label="Отзывы" value={String(reviews.length)} note={`${pendingReviews} на модерации`} color="orange" series={reviewSeries} />
+            <MetricCard label="Товары" value={String(products.length)} note="в каталоге" color="purple" series={productSeries} />
+            <MetricCard label="Проверить" value={String(productsWithoutPhoto + productsWithoutPrice)} note="товары без фото/цены" color="blue" series={auditSeries} />
           </div>
         </section>
 
@@ -271,18 +255,16 @@ export function AdminDashboard() {
   );
 }
 
-function MetricCard({ label, value, note, color, values }: { label: string; value: string; note: string; color: string; values: number[] }) {
-  const points = sparklinePoints(values);
-  return (
-    <div className="adminMetric">
-      <span>{label}</span>
-      <b>{value}</b>
-      <small>{note}</small>
-      <svg viewBox="0 0 136 48" aria-hidden="true">
-        <polyline className={`stroke-${color}`} points={points} />
-      </svg>
-    </div>
-  );
+function MetricCard({ label, value, note, color, series }: { label: string; value: string; note: string; color: string; series: number[] }) {
+  const max = Math.max(...series, 1);
+  const min = Math.min(...series, 0);
+  const range = Math.max(max - min, 1);
+  const points = series.map((item, index) => {
+    const x = series.length === 1 ? 0 : (136 / (series.length - 1)) * index;
+    const y = 42 - ((item - min) / range) * 34;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return <div className="adminMetric"><span>{label}</span><b>{value}</b><small>{note}</small><svg viewBox="0 0 136 48"><polyline className={`stroke-${color}`} points={points} /></svg></div>;
 }
 
 function EmptyAdmin({ text }: { text: string }) {

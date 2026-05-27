@@ -7,6 +7,12 @@ import { AdminOrder, AdminOrderStatus, ORDER_STATUSES, formatDateTime, readAdmin
 
 const statuses: AdminOrderStatus[] = ORDER_STATUSES;
 
+// Returns the next status in the defined workflow to speed up processing
+function getNextStatus(current: AdminOrderStatus): AdminOrderStatus {
+  const idx = statuses.indexOf(current);
+  return statuses[(idx + 1) % statuses.length];
+}
+
 export function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [query, setQuery] = useState('');
@@ -82,6 +88,7 @@ export function AdminOrdersPage() {
                 <select value={order.status} onChange={(event) => changeStatus(order.id, event.target.value as AdminOrderStatus)}>
                   {statuses.map((item) => <option key={item}>{item}</option>)}
                 </select>
+                <button type="button" className="adminSecondaryBtn" onClick={() => changeStatus(order.id, getNextStatus(order.status))}>Следующий статус</button>
                 <button type="button" onClick={() => setOpened(opened === order.id ? null : order.id)}>{opened === order.id ? 'Скрыть' : 'Детали'}</button>
               </div>
               {opened === order.id && (

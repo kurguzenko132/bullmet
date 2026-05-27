@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { AdminContentPage } from '@/components/AdminContentPage';
+import { AdminSystemSettingsPage } from '@/components/AdminSystemSettingsPage';
 
 export const metadata: Metadata = {
-  title: 'Настройки сайта — Bullmet Admin',
+  title: 'Системные настройки — Bullmet Admin',
   robots: { index: false, follow: false },
-  description: 'Настройки контактов, соцсетей и контента Bullmet.',
+  description: 'Системные настройки Bullmet: режим сайта, валюта, заказы и интеграции.',
 };
 
 export default function Page() {
-  return <AdminContentPage />;
+  return <AdminSystemSettingsPage />;
 }

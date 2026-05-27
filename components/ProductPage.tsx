@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Header, Footer } from './HomePage';
 
 import { useAdminProducts } from './useAdminProducts';
-import { ProductDetails, ProductReviewsBlock, ProductServiceStrip, RelatedProducts } from './ProductDetails';
+import { ProductDetails, ProductFaqBlock, ProductReviewsBlock, ProductServiceStrip, RelatedProducts } from './ProductDetails';
 import { expandProductVariants, findProductByVariantSlug, getProductGroup, productToColorVariant } from './shopData';
 
 export function ProductPage({ slug }: { slug: string }) {
@@ -43,12 +43,35 @@ export function ProductPage({ slug }: { slug: string }) {
         <section className="container productBreadcrumbs">
           <Link href="/">Главная</Link><span>/</span><Link href="/catalog">Каталог</Link><span>/</span><span>{product.category}</span><span>/</span><span>{product.title}</span>
         </section>
+        <ProductJsonLd product={product} />
         <ProductDetails product={product} />
         <ProductServiceStrip />
         <ProductReviewsBlock productSlug={product.slug} />
+        <ProductFaqBlock />
         <RelatedProducts products={related} />
       </main>
       <Footer />
     </>
   );
+}
+
+
+function ProductJsonLd({ product }: { product: any }) {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    image: product.images?.length ? product.images : [product.image],
+    description: product.description || product.short,
+    brand: { '@type': 'Brand', name: 'Bullmet' },
+    material: product.material,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'BYN',
+      price: product.price,
+      availability: product.inStock === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      url: typeof window !== 'undefined' ? window.location.href : `/catalog/${product.slug}`,
+    },
+  };
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
 }

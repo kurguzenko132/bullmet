@@ -4,16 +4,33 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { CartItem, cartCount, cartTotal, readCart, writeCart } from './cart';
+import { useAdminProducts } from './useAdminProducts';
+import { expandProductVariants } from './shopData';
+import { AddToCartButton } from './AddToCartButton';
 
 export function CartContents() {
   const [items, setItems] = useState<CartItem[]>([]);
+  const { items: adminProducts } = useAdminProducts();
 
   useEffect(() => {
-    setItems(readCart());
+    const syncCart = () => setItems(readCart());
+    syncCart();
+    window.addEventListener('bullmet-cart-updated', syncCart);
+    window.addEventListener('storage', syncCart);
+    return () => {
+      window.removeEventListener('bullmet-cart-updated', syncCart);
+      window.removeEventListener('storage', syncCart);
+    };
   }, []);
 
   const total = useMemo(() => cartTotal(items), [items]);
   const count = useMemo(() => cartCount(items), [items]);
+  const upsells = useMemo(() => {
+    const cartSlugs = new Set(items.map((item) => item.slug));
+    return expandProductVariants(adminProducts.filter((product) => product.status !== 'draft'))
+      .filter((product) => !cartSlugs.has(product.slug))
+      .slice(0, 3);
+  }, [adminProducts, items]);
 
   function updateItems(nextItems: CartItem[]) {
     setItems(nextItems);
@@ -67,6 +84,17 @@ export function CartContents() {
         <Link className="button button--orange" href={items.length === 0 ? '/catalog' : '/checkout'}>
           {items.length === 0 ? 'В каталог' : 'Оформить заказ'}
         </Link>
+        {upsells.length > 0 && (
+          <div className="cartUpsells">
+            <h3>Можно добавить к заказу</h3>
+            {upsells.map((product) => (
+              <div className="cartUpsell" key={product.slug}>
+                <span><b>{product.title}</b><small>от {product.price} BYN</small></span>
+                <AddToCartButton product={product} className="cartUpsellBtn">+</AddToCartButton>
+              </div>
+            ))}
+          </div>
+        )}
       </aside>
     </section>
   );

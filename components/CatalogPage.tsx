@@ -25,6 +25,7 @@ export function CatalogPage() {
   const [reviewSummaries, setReviewSummaries] = useState<Record<string, ProductReviewSummary>>({});
   const activeCategory = searchParams.get('category') || '';
   const activeClockTheme = searchParams.get('clockTheme') || '';
+  const searchQuery = (searchParams.get('search') || searchParams.get('q') || '').trim().toLowerCase();
   const { items, ready } = useAdminProducts();
   // Filter and sort state
   const [minPrice, setMinPrice] = useState<number>(0);
@@ -50,10 +51,14 @@ export function CatalogPage() {
       if (product.status === 'draft') return false;
       if (activeCategory && product.category !== activeCategory) return false;
       if (activeClockTheme && product.clockTheme !== activeClockTheme) return false;
+      if (searchQuery) {
+        const haystack = `${product.title} ${product.short} ${product.description} ${product.category} ${product.material} ${product.colorName ?? ''} ${product.clockTheme ?? ''}`.toLowerCase();
+        if (!haystack.includes(searchQuery)) return false;
+      }
       return true;
     });
     return expandProductVariants(filtered);
-  }, [items, ready, activeCategory, activeClockTheme]);
+  }, [items, ready, activeCategory, activeClockTheme, searchQuery]);
 
   // Apply price and material filters
   const filteredProducts = useMemo(() => {
@@ -113,7 +118,7 @@ export function CatalogPage() {
       <main className="catalogPage">
         <section className="container catalogHero">
           <div className="breadcrumbs"><Link href="/">Главная</Link><span>/</span><span>Каталог</span></div>
-          <h1 className="pageTitle">Каталог товаров</h1>
+          <h1 className="pageTitle">{searchQuery ? `Поиск: ${searchParams.get('search') || searchParams.get('q')}` : 'Каталог товаров'}</h1>
         </section>
 
         <section className="container catalogLayout">

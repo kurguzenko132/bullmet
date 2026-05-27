@@ -38,7 +38,7 @@ const menuGroups = [
     { label: 'Отчеты', href: '/admin/reports', icon: ReportIcon, enabled: false },
   ] },
   { title: 'Настройки', items: [
-    { label: 'Настройки сайта', href: '/admin/settings', icon: SettingsIcon, enabled: true },
+    { label: 'Системные настройки', href: '/admin/settings', icon: SettingsIcon, enabled: true },
     { label: 'Уведомления', href: '/admin/notifications', icon: BellIcon, enabled: true },
     { label: 'Пользователи', href: '/admin/users', icon: UserIcon, enabled: false },
     { label: 'Роли и права', href: '/admin/roles', icon: ShieldIcon, enabled: false },

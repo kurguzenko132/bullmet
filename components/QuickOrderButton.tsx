@@ -2,8 +2,10 @@
 
 import Image from 'next/image';
 import { FormEvent, MouseEvent, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Product } from './shopData';
 import { addAdminRequestAsync, makeRequestId } from './adminBusinessStore';
+import { trackBullmetEvent } from '../lib/analytics';
 
 type QuickOrderButtonProps = {
   product: Product;
@@ -23,6 +25,11 @@ export function QuickOrderButton({ product, quantity = 1, size, className, label
   const [sending, setSending] = useState(false);
   const [sentId, setSentId] = useState('');
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setQty(quantity);
@@ -30,11 +37,16 @@ export function QuickOrderButton({ product, quantity = 1, size, className, label
 
   useEffect(() => {
     if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
     };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   function openModal(event: MouseEvent<HTMLButtonElement>) {
@@ -76,6 +88,7 @@ export function QuickOrderButton({ product, quantity = 1, size, className, label
         quantity: qty,
         status: 'Новая',
       });
+      trackBullmetEvent('quick_order_submit', { slug: product.slug, title: product.title, quantity: qty });
       setSentId(id);
       form.reset();
     } catch (err) {
@@ -91,7 +104,7 @@ export function QuickOrderButton({ product, quantity = 1, size, className, label
         {label}
       </button>
 
-      {open && (
+      {mounted && open && createPortal((
         <div className="quickOrderOverlay" role="dialog" aria-modal="true" aria-label="Купить в один клик" onClick={() => setOpen(false)}>
           <div className="quickOrderModal" onClick={(event) => event.stopPropagation()}>
             <button className="quickOrderClose" type="button" onClick={() => setOpen(false)} aria-label="Закрыть">×</button>
@@ -175,7 +188,7 @@ export function QuickOrderButton({ product, quantity = 1, size, className, label
             )}
           </div>
         </div>
-      )}
+      ), document.body)}
     </>
   );
 }

@@ -39,6 +39,7 @@ export function ProductDetails({ product }: { product: Product }) {
   const [activeImage, setActiveImage] = useState(productImages[0]);
   const [activeSize, setActiveSize] = useState(product.sizes?.[1] ?? product.sizes?.[0] ?? '60 см');
   const [qty, setQty] = useState(1);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
 
   useEffect(() => {
     setActiveVariantId(product.activeVariantId ?? product.variants?.[0]?.id ?? '');
@@ -63,9 +64,10 @@ export function ProductDetails({ product }: { product: Product }) {
             </button>
           ))}
         </div>
-        <div className="mainProductImage">
+        <button className="mainProductImage mainProductImage--zoomable" type="button" onClick={() => setZoomImage(activeImage)} aria-label="Увеличить фото товара">
           <Image src={activeImage} alt={visibleProduct.title} fill priority sizes="55vw" style={{ objectFit: getImageSettings(visibleProduct, activeImage).productFit, objectPosition: getImageSettings(visibleProduct, activeImage).productPosition }} />
-        </div>
+          <span>Увеличить фото</span>
+        </button>
       </div>
 
       <div className="productPanel">
@@ -108,6 +110,14 @@ export function ProductDetails({ product }: { product: Product }) {
           <div className="qtyControl"><button onClick={() => setQty(Math.max(1, qty - 1))}>−</button><span>{qty}</span><button onClick={() => setQty(qty + 1)}>+</button></div>
         </div>
 
+        <div className="productTrustGrid">
+          <div><b>3–7 дней</b><span>средний срок изготовления</span></div>
+          <div><b>Гарантия</b><span>проверяем изделие перед передачей</span></div>
+          <div><b>Доставка</b><span>самовывоз или отправка по Беларуси</span></div>
+        </div>
+
+        <ProductShareBlock title={visibleProduct.title} slug={visibleProduct.slug} />
+
         <div className="productActions"><AddToCartButton product={visibleProduct} quantity={qty} size={activeSize} className="button button--orange">В корзину</AddToCartButton><QuickOrderButton product={visibleProduct} quantity={qty} size={activeSize} className="button button--ghost" /><FavoriteButton product={product} variant="text" /><Link href={`/request?product=${visibleProduct.slug}`} className="button button--outline">Заказать похожее</Link></div>
 
         {/* Sticky mobile bar: on small screens shows price and add-to-cart button fixed at bottom */}
@@ -123,7 +133,34 @@ export function ProductDetails({ product }: { product: Product }) {
           </AddToCartButton>
         </div>
       </div>
+      {zoomImage && (
+        <div className="productZoomOverlay" role="dialog" aria-modal="true" aria-label="Просмотр фото" onClick={() => setZoomImage(null)}>
+          <div className="productZoomModal" onClick={(event) => event.stopPropagation()}>
+            <button type="button" onClick={() => setZoomImage(null)} aria-label="Закрыть">×</button>
+            <Image src={zoomImage} alt={visibleProduct.title} fill sizes="90vw" style={{ objectFit: 'contain' }} />
+          </div>
+        </div>
+      )}
     </section>
+  );
+}
+
+function ProductShareBlock({ title, slug }: { title: string; slug: string }) {
+  function copyLink() {
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/catalog/${slug}` : `/catalog/${slug}`;
+    navigator.clipboard?.writeText(url);
+  }
+
+  const encodedTitle = encodeURIComponent(title);
+  const encodedPath = encodeURIComponent(`/catalog/${slug}`);
+
+  return (
+    <div className="productShareBlock">
+      <span>Поделиться товаром</span>
+      <button type="button" onClick={copyLink}>Скопировать ссылку</button>
+      <a href={`https://t.me/share/url?url=${encodedPath}&text=${encodedTitle}`} target="_blank" rel="noreferrer">Telegram</a>
+      <a href={`https://wa.me/?text=${encodedTitle}%20${encodedPath}`} target="_blank" rel="noreferrer">WhatsApp</a>
+    </div>
   );
 }
 
@@ -163,4 +200,26 @@ export function RelatedProducts({ products }: { products: Product[] }) {
 function SpecIcon({ index }: { index: number }) {
   const icons = ['◇', '⌁', '✕', '◌', '✧'];
   return <i>{icons[index % icons.length]}</i>;
+}
+
+export function ProductFaqBlock() {
+  const items = [
+    { q: 'Можно изменить размер или цвет?', a: 'Да. Для большинства изделий мы можем подобрать другой размер, цвет покрытия или доработать дизайн под интерьер.' },
+    { q: 'Сколько занимает изготовление?', a: 'Обычно 3–7 рабочих дней. Сложные индивидуальные изделия рассчитываем отдельно после уточнения размеров и материала.' },
+    { q: 'Как происходит доставка?', a: 'Возможен самовывоз или доставка по Беларуси. Финальные условия менеджер уточняет после оформления заказа.' },
+    { q: 'Можно заказать изделие по фото или эскизу?', a: 'Да. Загрузите фото, размеры и пожелания в заявке — мы оценим возможность изготовления и подготовим расчет.' },
+  ];
+  return (
+    <section className="container productFaqBlock">
+      <div className="sectionHead"><h3 className="blockTitle">Вопросы перед покупкой</h3><Link href="/request">Задать вопрос</Link></div>
+      <div className="productFaqGrid">
+        {items.map((item) => (
+          <details key={item.q}>
+            <summary>{item.q}</summary>
+            <p>{item.a}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
 }

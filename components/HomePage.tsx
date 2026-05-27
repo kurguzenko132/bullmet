@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowIcon, CartIcon, ClockIcon, DraftIcon, FactoryIcon, MailIcon, PhoneIcon, PinIcon, SearchIcon, ShieldIcon, ToolsIcon, TruckIcon, UserIcon } from './Icons';
 import { CartHeaderButton } from './CartHeaderButton';
 import { defaultSiteContent, HomeSettings, readHomeSettingsAsync, readSiteContentAsync, SiteContentSettings } from './siteSettings';
@@ -57,6 +57,9 @@ function Logo({ subtitle = defaultSiteContent.brandSubtitle }: { subtitle?: stri
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [content, setContent] = useState<SiteContentSettings>(defaultSiteContent);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const { items: searchProducts } = useAdminProducts();
 
   useEffect(() => {
     readSiteContentAsync().then(setContent);
@@ -73,6 +76,17 @@ export function Header() {
     setMenuOpen(false);
   }
 
+  const searchSuggestions = expandProductVariants(searchProducts.filter((product) => product.status !== 'draft'))
+    .filter((product) => `${product.title} ${product.short} ${product.category} ${product.material}`.toLowerCase().includes(searchValue.trim().toLowerCase()))
+    .slice(0, 5);
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const query = searchValue.trim();
+    if (!query) return;
+    window.location.href = `/catalog?search=${encodeURIComponent(query)}`;
+  }
+
   return (
     <header className={menuOpen ? 'header header--menuOpen' : 'header'} id="top">
       <div className="container header__inner">
@@ -81,7 +95,7 @@ export function Header() {
           {nav.map((item) => <Link href={item.href} key={item.title}>{item.title}</Link>)}
         </nav>
         <div className="header__actions">
-          <button className="iconButton" aria-label="Поиск"><SearchIcon /></button>
+          <button className="iconButton" aria-label="Поиск" onClick={() => setSearchOpen((value) => !value)}><SearchIcon /></button>
           <Link className="accountButton" href="/account" aria-label="Войти в аккаунт"><UserIcon /></Link>
           <CartHeaderButton />
           <Link className="topCta" href="/request">{content.homeSecondaryButton}</Link>
@@ -97,6 +111,28 @@ export function Header() {
           </button>
         </div>
       </div>
+      {searchOpen && (
+        <div className="headerSearchPanel">
+          <div className="container headerSearchPanel__inner">
+            <form onSubmit={submitSearch}>
+              <SearchIcon />
+              <input autoFocus value={searchValue} onChange={(event) => setSearchValue(event.target.value)} placeholder="Найти часы, резку, материал или цвет" />
+              <button type="submit">Искать</button>
+              <button type="button" onClick={() => setSearchOpen(false)}>Закрыть</button>
+            </form>
+            {searchValue.trim() && (
+              <div className="headerSearchSuggestions">
+                {searchSuggestions.length ? searchSuggestions.map((product) => (
+                  <Link href={`/catalog/${product.slug}`} key={product.slug} onClick={() => setSearchOpen(false)}>
+                    <span>{product.title}</span>
+                    <small>{product.category} · от {product.price} BYN</small>
+                  </Link>
+                )) : <p>Ничего не найдено. Попробуйте другое название или материал.</p>}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="mobileMenu" id="mobile-menu" aria-hidden={!menuOpen}>
         <div className="container mobileMenu__inner">
           {nav.map((item) => <Link href={item.href} key={item.title} onClick={closeMenu}>{item.title}</Link>)}
@@ -264,7 +300,7 @@ export function Footer() {
         <div className="footer__brand"><Logo subtitle={content.brandSubtitle} /><p>{content.footerText}</p><div className="socials"><Link href={content.contacts.instagramUrl}>IG</Link><Link href={content.contacts.telegramUrl}>TG</Link><Link href={content.contacts.whatsappUrl}>WA</Link></div></div>
         <FooterCol title="Каталог" items={[{ label: 'Часы на заказ', href: '/chasy-na-zakaz' }, { label: 'Часы для бани', href: '/chasy-dlya-bani' }, { label: 'Садовые качели', href: '/catalog?category=Садовые качели' }, { label: 'Изделия на заказ', href: '/izdeliya-na-zakaz' }]} />
         <FooterCol title="Услуги" items={[{ label: 'Резка металла', href: '/lazernaya-rezka-metalla' }, { label: 'Резка дерева', href: '/lazernaya-rezka-dereva' }, { label: 'Декор из металла', href: '/dekor-iz-metalla' }, { label: 'Индивидуальные заказы', href: '/izdeliya-na-zakaz' }]} />
-        <FooterCol title="Компания" items={[{ label: 'О нас', href: '/about' }, { label: 'Производство', href: '/production' }, { label: 'Доставка и оплата', href: '/delivery' }, { label: 'Контакты', href: '/contacts' }]} />
+        <FooterCol title="Компания" items={[{ label: 'О нас', href: '/about' }, { label: 'Производство', href: '/production' }, { label: 'Доставка и оплата', href: '/delivery' }, { label: 'Статус заказа', href: '/order-status' }, { label: 'Контакты', href: '/contacts' }]} />
         <div className="footerCol"><h4>Контакты</h4><p><PhoneIcon /> {content.contacts.phone}</p><p><MailIcon /> {content.contacts.email}</p><p><PinIcon /> {content.contacts.address}</p><p><ClockIcon /> {content.contacts.worktime}</p></div>
       </div>
     </footer>
