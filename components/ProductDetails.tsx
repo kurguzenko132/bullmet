@@ -171,25 +171,27 @@ export function ProductDetails({ product }: { product: Product }) {
         </div>
       </div>
       {zoomImage && (
-        <div className="productZoomOverlay" role="dialog" aria-modal="true" aria-label="Просмотр фото" onClick={() => setZoomImage(null)}>
+        <div className="productLightbox" role="dialog" aria-modal="true" aria-label="Просмотр фото" onClick={() => setZoomImage(null)}>
           <div
-            className="productZoomModal"
+            className="productLightbox__dialog"
             onClick={(event) => event.stopPropagation()}
             onTouchStart={handleZoomTouchStart}
             onTouchEnd={handleZoomTouchEnd}
           >
-            <button className="productZoomClose" type="button" onClick={() => setZoomImage(null)} aria-label="Закрыть">×</button>
-            {productImages.length > 1 && (
-              <>
-                <button className="productZoomArrow productZoomArrow--prev" type="button" onClick={() => showZoomImage(-1)} aria-label="Предыдущее фото">‹</button>
-                <button className="productZoomArrow productZoomArrow--next" type="button" onClick={() => showZoomImage(1)} aria-label="Следующее фото">›</button>
-              </>
-            )}
-            <div className="productZoomImage">
-              <Image src={zoomImage} alt={visibleProduct.title} fill sizes="96vw" style={{ objectFit: 'contain' }} />
+            <button className="productLightbox__close" type="button" onClick={() => setZoomImage(null)} aria-label="Закрыть">×</button>
+            <div className="productLightbox__stage">
+              {productImages.length > 1 && (
+                <button className="productLightbox__nav productLightbox__nav--prev" type="button" onClick={() => showZoomImage(-1)} aria-label="Предыдущее фото">‹</button>
+              )}
+              <div className="productLightbox__image">
+                <Image src={zoomImage} alt={visibleProduct.title} fill sizes="96vw" style={{ objectFit: 'contain' }} />
+              </div>
+              {productImages.length > 1 && (
+                <button className="productLightbox__nav productLightbox__nav--next" type="button" onClick={() => showZoomImage(1)} aria-label="Следующее фото">›</button>
+              )}
             </div>
             {productImages.length > 1 && (
-              <div className="productZoomThumbs" aria-label="Миниатюры фото">
+              <div className="productLightbox__thumbs" aria-label="Миниатюры фото">
                 {productImages.map((image, index) => (
                   <button
                     type="button"
