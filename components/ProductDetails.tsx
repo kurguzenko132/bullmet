@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type TouchEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { CartIcon, DraftIcon, FactoryIcon, ShieldIcon, ToolsIcon, TruckIcon } from './Icons';
@@ -40,6 +40,34 @@ export function ProductDetails({ product }: { product: Product }) {
   const [activeSize, setActiveSize] = useState(product.sizes?.[1] ?? product.sizes?.[0] ?? '60 см');
   const [qty, setQty] = useState(1);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  const zoomIndex = zoomImage ? Math.max(productImages.indexOf(zoomImage), 0) : 0;
+
+  function openZoom(image: string) {
+    setZoomImage(image);
+  }
+
+  function showZoomImage(direction: -1 | 1) {
+    if (!productImages.length) return;
+    const currentIndex = zoomImage ? Math.max(productImages.indexOf(zoomImage), 0) : Math.max(productImages.indexOf(activeImage), 0);
+    const nextIndex = (currentIndex + direction + productImages.length) % productImages.length;
+    setZoomImage(productImages[nextIndex]);
+    setActiveImage(productImages[nextIndex]);
+  }
+
+  function handleZoomTouchStart(event: TouchEvent<HTMLDivElement>) {
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+  }
+
+  function handleZoomTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    if (touchStartX.current == null) return;
+    const endX = event.changedTouches[0]?.clientX ?? touchStartX.current;
+    const delta = endX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < 42) return;
+    showZoomImage(delta > 0 ? -1 : 1);
+  }
 
   useEffect(() => {
     setActiveVariantId(product.activeVariantId ?? product.variants?.[0]?.id ?? '');
@@ -54,6 +82,16 @@ export function ProductDetails({ product }: { product: Product }) {
     setActiveImage(productImages[0]);
   }, [activeVariantId]);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!zoomImage) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [zoomImage]);
+
   return (
     <section className="container productDetails">
       <div className="productGallery">
@@ -64,9 +102,8 @@ export function ProductDetails({ product }: { product: Product }) {
             </button>
           ))}
         </div>
-        <button className="mainProductImage mainProductImage--zoomable" type="button" onClick={() => setZoomImage(activeImage)} aria-label="Увеличить фото товара">
+        <button className="mainProductImage mainProductImage--zoomable" type="button" onClick={() => openZoom(activeImage)} aria-label="Открыть фото товара">
           <Image src={activeImage} alt={visibleProduct.title} fill priority sizes="55vw" style={{ objectFit: getImageSettings(visibleProduct, activeImage).productFit, objectPosition: getImageSettings(visibleProduct, activeImage).productPosition }} />
-          <span>Увеличить фото</span>
         </button>
       </div>
 
@@ -135,9 +172,40 @@ export function ProductDetails({ product }: { product: Product }) {
       </div>
       {zoomImage && (
         <div className="productZoomOverlay" role="dialog" aria-modal="true" aria-label="Просмотр фото" onClick={() => setZoomImage(null)}>
-          <div className="productZoomModal" onClick={(event) => event.stopPropagation()}>
-            <button type="button" onClick={() => setZoomImage(null)} aria-label="Закрыть">×</button>
-            <Image src={zoomImage} alt={visibleProduct.title} fill sizes="90vw" style={{ objectFit: 'contain' }} />
+          <div
+            className="productZoomModal"
+            onClick={(event) => event.stopPropagation()}
+            onTouchStart={handleZoomTouchStart}
+            onTouchEnd={handleZoomTouchEnd}
+          >
+            <button className="productZoomClose" type="button" onClick={() => setZoomImage(null)} aria-label="Закрыть">×</button>
+            {productImages.length > 1 && (
+              <>
+                <button className="productZoomArrow productZoomArrow--prev" type="button" onClick={() => showZoomImage(-1)} aria-label="Предыдущее фото">‹</button>
+                <button className="productZoomArrow productZoomArrow--next" type="button" onClick={() => showZoomImage(1)} aria-label="Следующее фото">›</button>
+              </>
+            )}
+            <div className="productZoomImage">
+              <Image src={zoomImage} alt={visibleProduct.title} fill sizes="96vw" style={{ objectFit: 'contain' }} />
+            </div>
+            {productImages.length > 1 && (
+              <div className="productZoomThumbs" aria-label="Миниатюры фото">
+                {productImages.map((image, index) => (
+                  <button
+                    type="button"
+                    className={zoomIndex === index ? 'active' : ''}
+                    onClick={() => {
+                      setZoomImage(image);
+                      setActiveImage(image);
+                    }}
+                    key={`${image}-zoom-${index}`}
+                    aria-label={`Открыть фото ${index + 1}`}
+                  >
+                    <Image src={image} alt="" fill sizes="74px" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
