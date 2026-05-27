@@ -32,8 +32,8 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Главная', icon: HomeIcon, match: (path: string) => path === '/' },
   { href: '/catalog', label: 'Каталог', icon: SearchIcon, match: (path: string) => path.startsWith('/catalog') },
   { href: '/cart', label: 'Корзина', icon: CartIcon, match: (path: string) => path.startsWith('/cart') || path.startsWith('/checkout'), badge: 'cart' as const },
-  { href: '/account#favorites', label: 'Избранное', icon: HeartIcon, match: (path: string) => path.startsWith('/account'), badge: 'favorites' as const },
-  { href: '/account', label: 'Профиль', icon: UserIcon, match: (path: string) => path.startsWith('/login') || path.startsWith('/register') },
+  { href: '/favorites', label: 'Избранное', icon: HeartIcon, match: (path: string) => path.startsWith('/favorites'), badge: 'favorites' as const },
+  { href: '/account', label: 'Профиль', icon: UserIcon, match: (path: string) => path.startsWith('/account') || path.startsWith('/login') || path.startsWith('/register') },
 ];
 
 export function MobileBottomNav() {
@@ -63,9 +63,18 @@ export function MobileBottomNav() {
 
   if (pathname.startsWith('/admin')) return null;
 
+  const hideQuickRequest =
+    pathname.startsWith('/cart') ||
+    pathname.startsWith('/checkout') ||
+    pathname.startsWith('/account') ||
+    pathname.startsWith('/favorites') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/catalog/');
+
   return (
     <>
-      <Link className="mobileQuickRequest" href="/request"><RequestIcon />Заказать расчет</Link>
+      {!hideQuickRequest && <Link className="mobileQuickRequest" href="/request"><RequestIcon />Заказать расчет</Link>}
       <nav className="mobileBottomNav" aria-label="Нижнее мобильное меню">
         {navItems.map((item) => {
           const Icon = item.icon;

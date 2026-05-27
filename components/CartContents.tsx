@@ -84,7 +84,7 @@ export function CartContents() {
         <Link className="button button--orange" href={items.length === 0 ? '/catalog' : '/checkout'}>
           {items.length === 0 ? 'В каталог' : 'Оформить заказ'}
         </Link>
-        {upsells.length > 0 && (
+        {items.length > 0 && upsells.length > 0 && (
           <div className="cartUpsells">
             <h3>Можно добавить к заказу</h3>
             {upsells.map((product) => (

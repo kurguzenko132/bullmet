@@ -6644,3 +6644,194 @@ textarea:focus { box-shadow: 0 0 0 3px rgba(230, 90, 18, .1); }
 .adminSystemChecklist h3 { margin: 0; }
 .adminSystemChecklist p { margin: 0; color: var(--muted); line-height: 1.55; }
 @media (max-width: 760px) { .adminSystemGrid { grid-template-columns: 1fr; } }
+
+/* Critical mobile/desktop visual fixes */
+.productMobileBar {
+  display: none !important;
+}
+
+.cartUpsells {
+  min-width: 0;
+}
+.cartUpsell {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+.cartUpsell > span {
+  min-width: 0;
+  width: auto !important;
+  display: grid !important;
+  gap: 4px;
+}
+.cartUpsell b {
+  display: block;
+  max-width: 100%;
+  line-height: 1.25;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+.cartUpsellBtn {
+  width: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.favoritesStandalone {
+  padding-bottom: 64px;
+}
+.favoriteGrid--standalone {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+.favoriteCard__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.favoriteCard__actions a,
+.favoriteCard__actions button {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.favoriteCard__actions a {
+  color: var(--orange);
+}
+
+.contactsHero__content,
+.contactsHero__content h1 {
+  min-width: 0;
+  max-width: 100%;
+}
+.contactsHero__content h1 {
+  font-size: clamp(36px, 4.2vw, 64px) !important;
+  line-height: 1.02 !important;
+  overflow-wrap: anywhere;
+}
+.contactsHero {
+  overflow: hidden;
+}
+
+@media (max-width: 1180px) {
+  .contactsHero__grid {
+    grid-template-columns: 1fr !important;
+  }
+  .contactsHero__content {
+    min-height: auto !important;
+    padding: 34px 0 10px;
+  }
+  .contactsHero__image {
+    min-height: 360px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .cartPage,
+  .checkoutPage,
+  .accountPage,
+  .favoritesPage,
+  .productPage {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+
+  .mobileQuickRequest {
+    display: none !important;
+  }
+
+  .cartLayout {
+    gap: 18px;
+  }
+  .cartSummary {
+    margin-top: 0;
+  }
+  .cartUpsells {
+    display: grid !important;
+    grid-template-columns: 1fr;
+  }
+  .cartUpsell {
+    min-height: 70px;
+    padding: 14px !important;
+  }
+
+  .accountHeroV2 .pageTitle,
+  .favoritesHero .pageTitle {
+    font-size: clamp(36px, 12vw, 54px) !important;
+    line-height: 1.02 !important;
+  }
+  .accountDashboard--full {
+    gap: 18px;
+  }
+  .accountSidebar {
+    min-height: auto !important;
+  }
+  .accountLogged__actions--vertical {
+    display: none !important;
+  }
+  .accountTabs {
+    display: flex !important;
+    overflow-x: auto;
+    gap: 8px;
+    margin: 18px 0 0;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .accountTabs button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    white-space: nowrap;
+    padding: 0 14px;
+  }
+  .accountMiniProfile {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    column-gap: 14px;
+    align-items: center;
+  }
+  .accountMiniProfile .accountAvatar {
+    grid-row: span 3;
+  }
+  .accountMiniProfile h2 {
+    margin: 0 0 4px !important;
+    font-size: 19px !important;
+  }
+  .accountMiniProfile em {
+    margin-top: 8px !important;
+    width: max-content;
+  }
+  .favoriteGrid,
+  .favoriteGrid--standalone {
+    grid-template-columns: 1fr !important;
+  }
+
+  .productActions {
+    position: static !important;
+    margin: 18px 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .contactsHero__content h1 {
+    font-size: clamp(34px, 11vw, 46px) !important;
+  }
+  .contactsHero__actions .button {
+    width: 100%;
+  }
+}
