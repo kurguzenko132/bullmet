@@ -1,5 +1,30 @@
 import Image from 'next/image';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+
 export const metadata = { title: 'О компании', description: 'Bullmet — собственное производство изделий из металла с элементами дерева.' };
-export default function AboutPage(){return <><Header/><main className="container-page py-10"><p className="text-sm text-bull-muted">Главная › О компании</p><section className="mt-5 grid gap-8 lg:grid-cols-[1fr_1.2fr]"><div><h1 className="text-5xl font-black">О компании Bullmet</h1><p className="mt-5 text-lg text-bull-muted">Мы — собственное производство изделий из металла с элементами дерева. Создаем качественные товары для дома, дачи и интерьера, а также работаем по индивидуальным эскизам.</p><div className="mt-8 grid grid-cols-3 gap-4"><b className="text-3xl text-bull-orange">7+<br/><span className="text-sm text-bull-muted">лет опыта</span></b><b className="text-3xl text-bull-orange">1000+<br/><span className="text-sm text-bull-muted">заказов</span></b><b className="text-3xl text-bull-orange">100%<br/><span className="text-sm text-bull-muted">контроль</span></b></div></div><Image src="/hero-cutting.svg" alt="Производство Bullmet" width={900} height={520} className="h-96 w-full object-cover shadow-soft"/></section><section className="mt-10 grid gap-4 md:grid-cols-4">{['Собственное производство','Качество на первом месте','Индивидуальный подход','Гарантия надежности'].map(t=><div key={t} className="bg-white p-6 shadow-soft"><b>{t}</b><p className="mt-2 text-sm text-bull-muted">Контроль на всех этапах работы.</p></div>)}</section></main><Footer/></>}
+
+export default function AboutPage() {
+  return (
+    <>
+      <Header />
+      <main className="container-page py-10">
+        <p className="text-sm text-bull-muted">Главная › О компании</p>
+        <section className="mt-5 grid gap-8 lg:grid-cols-[1fr_1.2fr]">
+          <div>
+            <h1 className="text-5xl font-black">О компании Bullmet</h1>
+            <p className="mt-5 text-lg text-bull-muted">Мы — собственное производство изделий из металла с элементами дерева. Изготавливаем садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы и выполняем художественную лазерную резку.</p>
+            <div className="mt-8 grid grid-cols-3 gap-4">
+              <b className="text-3xl text-bull-orange">7+<br/><span className="text-sm text-bull-muted">лет опыта</span></b>
+              <b className="text-3xl text-bull-orange">1000+<br/><span className="text-sm text-bull-muted">заказов</span></b>
+              <b className="text-3xl text-bull-orange">100%<br/><span className="text-sm text-bull-muted">контроль</span></b>
+            </div>
+          </div>
+          <Image src="/mockup/prod-workshop.jpg" alt="Производство Bullmet" width={900} height={520} className="h-96 w-full object-cover shadow-soft" />
+        </section>
+        <section className="mt-10 grid gap-4 md:grid-cols-4">{['Собственное производство','Качество на первом месте','Индивидуальный подход','Гарантия надежности'].map(t=><div key={t} className="bg-white p-6 shadow-soft"><b>{t}</b><p className="mt-2 text-sm text-bull-muted">Контроль на всех этапах работы.</p></div>)}</section>
+      </main>
+      <Footer />
+    </>
+  );
+}

@@ -2,7 +2,41 @@ import Image from 'next/image';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 
-export const metadata = { title: 'Услуги резки металла и дерева', description: 'Резка металла и дерева под заказ, расчет по чертежу или эскизу.' };
+export const metadata = { title: 'Услуги Bullmet', description: 'Лазерная резка, гибка металла, изготовление изделий по чертежу или эскизу.' };
 
-export default function ServicesPage(){return <><Header/><main className="container-page py-10"><p className="text-sm text-bull-muted">Главная › Услуги</p><h1 className="mt-4 text-5xl font-black">Услуги</h1><p className="mt-4 max-w-2xl text-bull-muted">Современное оборудование и опыт специалистов для реализации ваших задач.</p><div className="mt-8 grid gap-6 md:grid-cols-2"><Card title="Лазерная резка" img="/service-metal.svg"/><Card title="Гибка металла" img="/service-wood.svg"/></div><section className="mt-10 grid gap-8 bg-white p-8 shadow-soft lg:grid-cols-2"><form><h2 className="text-2xl font-black">Отправьте чертеж или эскиз</h2><div className="mt-5 grid gap-3 md:grid-cols-2"><input className="border p-3" placeholder="Ваше имя"/><input className="border p-3" placeholder="Телефон"/></div><input className="mt-3 w-full border p-3" placeholder="Ссылка на пример товара"/><textarea className="mt-3 w-full border p-3" rows={5} placeholder="Что нужно изготовить?"/><button className="mt-3 w-full bg-bull-orange py-4 font-bold text-white">Отправить заявку</button></form><Image src="/hero-cutting.svg" alt="Детали производства" width={800} height={500} className="h-full min-h-80 w-full object-cover"/></section></main><Footer/></>}
-function Card({title,img}:{title:string;img:string}){return <article className="overflow-hidden bg-white shadow-soft"><Image src={img} alt={title} width={800} height={420} className="h-80 w-full object-cover"/><div className="p-8"><h2 className="text-3xl font-black">{title}</h2><p className="mt-4 text-bull-muted">Детали, таблички, декор, панно, элементы конструкций и индивидуальные проекты.</p><button className="mt-6 border border-bull-orange px-6 py-3 font-bold text-bull-orange">Заказать расчет</button></div></article>}
+export default function ServicesPage() {
+  return (
+    <>
+      <Header />
+      <main className="container-page py-10">
+        <p className="text-sm text-bull-muted">Главная › Услуги</p>
+        <h1 className="mt-4 text-5xl font-black">Услуги</h1>
+        <p className="mt-4 max-w-2xl text-bull-muted">Современное оборудование и опыт специалистов для реализации ваших задач.</p>
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
+          <Card title="Лазерная резка" img="/mockup/service-metal.jpg" />
+          <Card title="Гибка металла" img="/mockup/service-wood.jpg" />
+        </div>
+        <section className="mt-10 grid gap-8 bg-white p-8 shadow-soft lg:grid-cols-2">
+          <form>
+            <h2 className="text-2xl font-black">Отправьте чертеж или эскиз</h2>
+            <div className="mt-5 grid gap-3 md:grid-cols-2"><input className="border p-3" placeholder="Ваше имя"/><input className="border p-3" placeholder="Телефон"/></div>
+            <input className="mt-3 w-full border p-3" placeholder="Ссылка на пример товара"/>
+            <textarea className="mt-3 w-full border p-3" rows={5} placeholder="Что нужно изготовить?"/>
+            <button className="mt-3 w-full bg-bull-orange py-4 font-bold text-white">Отправить заявку</button>
+          </form>
+          <Image src="/mockup/hero.jpg" alt="Детали производства" width={800} height={500} className="h-full min-h-80 w-full object-cover" />
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
+function Card({ title, img }: { title: string; img: string }) {
+  return (
+    <article className="overflow-hidden bg-white shadow-soft">
+      <Image src={img} alt={title} width={800} height={420} className="h-80 w-full object-cover" />
+      <div className="p-8"><h2 className="text-3xl font-black">{title}</h2><p className="mt-4 text-bull-muted">Детали, таблички, декор, панно, элементы конструкций и индивидуальные проекты.</p><button className="mt-6 border border-bull-orange px-6 py-3 font-bold text-bull-orange">Заказать расчет</button></div>
+    </article>
+  );
+}

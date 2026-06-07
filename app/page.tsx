@@ -4,8 +4,6 @@ import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
 import { getCatalogProducts } from '@/lib/products';
 
-export const dynamic = 'force-dynamic';
-
 const img = {
   hero: '/mockup/hero-right.jpg',
   clock: '/mockup/cat-clock.jpg',
