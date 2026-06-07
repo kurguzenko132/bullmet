@@ -1,10 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from './Icon';
 import type { CatalogProduct } from '@/lib/products';
 import { getImageSettings } from '@/lib/imageDisplay';
+import { supabase } from '@/lib/supabase';
+
+type ProductReview = {
+  id: string;
+  user_name?: string | null;
+  user_email?: string | null;
+  rating: number;
+  comment: string;
+  photo_urls?: string[] | null;
+  created_at?: string | null;
+  status?: string | null;
+};
 
 function money(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
@@ -15,8 +27,20 @@ function discountPercent(price: number, oldPrice?: number) {
   return Math.round(((oldPrice - price) / oldPrice) * 100);
 }
 
+function normalizeImages(product: CatalogProduct) {
+  const seen = new Set<string>();
+  return [product.image, ...(product.images || [])]
+    .map((item) => String(item || '').trim())
+    .filter(Boolean)
+    .filter((item) => {
+      if (seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
+}
+
 export function ProductDetailsClient({ product, related, colorVariants }: { product: CatalogProduct; related: CatalogProduct[]; colorVariants: CatalogProduct[] }) {
-  const images = useMemo(() => product.images?.length ? product.images : [product.image], [product.images, product.image]);
+  const images = useMemo(() => normalizeImages(product), [product]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeSize, setActiveSize] = useState(product.sizes?.[0] || 'Под заказ');
   const [qty, setQty] = useState(1);
@@ -25,9 +49,15 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [cartMessage, setCartMessage] = useState('');
   const [favorite, setFavorite] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'delivery' | 'reviews'>('description');
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
   const activeImage = images[activeIndex] || product.image;
   const settings = getImageSettings(product, activeImage);
   const discount = discountPercent(product.price, product.oldPrice);
+  const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length : 0;
 
   useEffect(() => {
     setActiveIndex(0);
@@ -47,11 +77,27 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   }, [product.slug]);
 
   useEffect(() => {
+    let mounted = true;
+    async function loadReviews() {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from('product_reviews')
+        .select('id, user_name, user_email, rating, comment, photo_urls, created_at, status')
+        .eq('product_slug', product.slug)
+        .in('status', ['published'])
+        .order('created_at', { ascending: false });
+      if (!error && mounted) setReviews((data || []) as ProductReview[]);
+    }
+    loadReviews();
+    return () => { mounted = false; };
+  }, [product.slug]);
+
+  useEffect(() => {
     if (!lightboxOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setLightboxOpen(false);
-      if (event.key === 'ArrowLeft') setActiveIndex((value) => (value - 1 + images.length) % images.length);
-      if (event.key === 'ArrowRight') setActiveIndex((value) => (value + 1) % images.length);
+      if (event.key === 'ArrowLeft') prevImage();
+      if (event.key === 'ArrowRight') nextImage();
     };
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKeyDown);
@@ -72,10 +118,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   function onTouchEnd(clientX: number) {
     if (touchStartX === null) return;
     const diff = touchStartX - clientX;
-    if (Math.abs(diff) > 40) {
-      if (diff > 0) nextImage();
-      else prevImage();
-    }
+    if (Math.abs(diff) > 40) diff > 0 ? nextImage() : prevImage();
     setTouchStartX(null);
   }
 
@@ -84,7 +127,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       slug: product.slug,
       title: product.title,
       price: product.price,
-      image: product.image,
+      image: activeImage || product.image,
       material: product.material,
       size: activeSize,
       quantity: qty
@@ -95,11 +138,8 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       const current = raw ? JSON.parse(raw) : [];
       const list = Array.isArray(current) ? current : [];
       const existingIndex = list.findIndex((item) => item?.slug === product.slug && item?.size === activeSize);
-      if (existingIndex >= 0) {
-        list[existingIndex].quantity = Number(list[existingIndex].quantity || 0) + qty;
-      } else {
-        list.push(cartItem);
-      }
+      if (existingIndex >= 0) list[existingIndex].quantity = Number(list[existingIndex].quantity || 0) + qty;
+      else list.push(cartItem);
       window.localStorage.setItem('bullmet_cart', JSON.stringify(list));
       setCartMessage('Товар добавлен в корзину');
       window.dispatchEvent(new Event('bullmet-cart-updated'));
@@ -122,29 +162,51 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     } catch {}
   }
 
+  async function submitReview(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setReviewMessage('');
+    if (!supabase) {
+      setReviewMessage('Supabase не подключен. Отзыв пока нельзя отправить.');
+      return;
+    }
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData.session;
+    if (!session) {
+      setReviewMessage('Чтобы оставить отзыв, войдите в аккаунт.');
+      return;
+    }
+    const { error } = await supabase.from('product_reviews').upsert({
+      product_slug: product.slug,
+      user_id: session.user.id,
+      user_email: session.user.email,
+      user_name: session.user.email?.split('@')[0] || 'Покупатель',
+      rating: reviewRating,
+      comment: reviewComment.trim(),
+      photo_urls: [],
+      status: 'pending'
+    }, { onConflict: 'product_slug,user_id' });
+    if (error) setReviewMessage(error.message);
+    else {
+      setReviewMessage('Отзыв отправлен на модерацию. После проверки он появится на сайте.');
+      setReviewComment('');
+      setReviewRating(5);
+    }
+  }
+
   return (
     <>
       <section className="product-page-shell">
         <div className="product-breadcrumbs">
-          <Link href="/">Главная</Link>
-          <span>›</span>
-          <Link href="/catalog">Каталог</Link>
+          <Link href="/">Главная</Link><span>›</span><Link href="/catalog">Каталог</Link>
           {product.category && <><span>›</span><span>{product.category}</span></>}
-          <span>›</span>
-          <span>{product.title}</span>
+          <span>›</span><span>{product.title}</span>
         </div>
 
         <div className="product-detail-layout">
           <div className="product-gallery-panel">
             <div className="product-thumbs" aria-label="Фотографии товара">
               {images.map((image, index) => (
-                <button
-                  key={`${image}-${index}`}
-                  className={activeIndex === index ? 'is-active' : ''}
-                  type="button"
-                  onClick={() => setActiveIndex(index)}
-                  aria-label={`Показать фото ${index + 1}`}
-                >
+                <button key={`${image}-${index}`} className={activeIndex === index ? 'is-active' : ''} type="button" onClick={() => setActiveIndex(index)} aria-label={`Показать фото ${index + 1}`}>
                   <img src={image} alt="" />
                 </button>
               ))}
@@ -159,11 +221,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               tabIndex={0}
               aria-label="Открыть фото товара"
             >
-              <img
-                src={activeImage}
-                alt={product.title}
-                style={{ objectFit: settings.productFit, objectPosition: settings.productPosition }}
-              />
+              <img src={activeImage} alt={product.title} style={{ objectFit: settings.productFit, objectPosition: settings.productPosition }} />
               {images.length > 1 && (
                 <>
                   <button className="gallery-nav gallery-nav--prev" type="button" onClick={(event) => { event.stopPropagation(); prevImage(); }} aria-label="Предыдущее фото">‹</button>
@@ -190,6 +248,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               <b>{product.inStock ? 'В наличии / под заказ' : 'Под заказ'}</b>
               {product.isNew && <em>Новинка</em>}
               {product.isPopular && <em>Популярное</em>}
+              {reviews.length > 0 && <em>★ {averageRating.toFixed(1)} / {reviews.length} отзыв.</em>}
             </div>
 
             <div className="product-price-row">
@@ -247,9 +306,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             {cartMessage && <div className="product-cart-message">{cartMessage}</div>}
 
             <ul className="product-specs-list">
-              {product.specs.map((spec, index) => (
-                <li key={`${spec}-${index}`}><span>✓</span>{spec}</li>
-              ))}
+              {product.specs.slice(0, 5).map((spec, index) => <li key={`${spec}-${index}`}><span>✓</span>{spec}</li>)}
             </ul>
           </aside>
         </div>
@@ -262,23 +319,67 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
         <ServiceItem icon="truck" title="Доставка по Беларуси" text="Самовывоз или доставка в удобное для вас время" />
       </section>
 
+      <section className="product-tabs-section">
+        <div className="product-tabs-nav">
+          <button className={activeTab === 'description' ? 'is-active' : ''} onClick={() => setActiveTab('description')} type="button">Описание</button>
+          <button className={activeTab === 'specs' ? 'is-active' : ''} onClick={() => setActiveTab('specs')} type="button">Характеристики</button>
+          <button className={activeTab === 'delivery' ? 'is-active' : ''} onClick={() => setActiveTab('delivery')} type="button">Доставка и оплата</button>
+          <button className={activeTab === 'reviews' ? 'is-active' : ''} onClick={() => setActiveTab('reviews')} type="button">Отзывы</button>
+        </div>
+        <div className="product-tabs-card">
+          {activeTab === 'description' && (
+            <div className="product-rich-text">
+              <h2>{product.title}</h2>
+              <p>{product.description}</p>
+              <p>Изготовление выполняется на собственном производстве Bullmet. Размер, цвет, материал и оформление можно адаптировать под ваш проект.</p>
+            </div>
+          )}
+          {activeTab === 'specs' && (
+            <div className="product-spec-table">
+              {product.specs.map((spec, index) => <div key={`${spec}-${index}`}><b>Параметр {index + 1}</b><span>{spec}</span></div>)}
+              <div><b>Категория</b><span>{product.category || 'Каталог'}</span></div>
+              <div><b>Материал</b><span>{product.material}</span></div>
+              <div><b>Размеры</b><span>{product.sizes.join(', ') || 'Под заказ'}</span></div>
+            </div>
+          )}
+          {activeTab === 'delivery' && (
+            <div className="product-rich-text">
+              <h2>Доставка и оплата</h2>
+              <p>Доставляем по Беларуси или передаем заказ самовывозом. Срок и стоимость согласовываются после уточнения размера, материала и комплектации.</p>
+              <p>Оплата возможна после согласования заказа. Для индивидуальных изделий может потребоваться предоплата.</p>
+            </div>
+          )}
+          {activeTab === 'reviews' && (
+            <div className="product-reviews-grid">
+              <div className="reviews-list">
+                {reviews.length ? reviews.map((review) => (
+                  <article key={review.id} className="review-card">
+                    <div><b>{review.user_name || review.user_email || 'Покупатель'}</b><span>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span></div>
+                    <p>{review.comment}</p>
+                    {!!review.photo_urls?.length && <div className="review-photos">{review.photo_urls.map((url) => <img key={url} src={url} alt="Фото отзыва" />)}</div>}
+                  </article>
+                )) : <p className="empty-reviews">Пока отзывов нет. Первый отзыв можно оставить после входа в аккаунт.</p>}
+              </div>
+              <form className="review-form" onSubmit={submitReview}>
+                <h3>Оставить отзыв</h3>
+                <label>Оценка<select value={reviewRating} onChange={(event) => setReviewRating(Number(event.target.value))}>{[5,4,3,2,1].map((rating) => <option key={rating} value={rating}>{rating}</option>)}</select></label>
+                <label>Комментарий<textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} rows={4} placeholder="Расскажите о товаре" required /></label>
+                {reviewMessage && <p>{reviewMessage}</p>}
+                <button type="submit">Отправить на модерацию</button>
+              </form>
+            </div>
+          )}
+        </div>
+      </section>
+
       {related.length > 0 && (
         <section className="related-products-section">
-          <div className="related-head">
-            <h2>Похожие товары</h2>
-            <Link href="/catalog">В каталог</Link>
-          </div>
+          <div className="related-head"><h2>Похожие товары</h2><Link href="/catalog">В каталог</Link></div>
           <div className="related-grid">
             {related.map((item) => (
               <article className="related-card" key={item.slug}>
-                <Link href={`/product/${item.slug}`} className="related-image">
-                  <img src={item.image} alt={item.title} />
-                </Link>
-                <div>
-                  <Link href={`/product/${item.slug}`}>{item.title}</Link>
-                  <p>{item.short || item.material}</p>
-                  <b>от {money(item.price)} BYN</b>
-                </div>
+                <Link href={`/product/${item.slug}`} className="related-image"><img src={item.image} alt={item.title} /></Link>
+                <div><Link href={`/product/${item.slug}`}>{item.title}</Link><p>{item.short || item.material}</p><b>от {money(item.price)} BYN</b></div>
               </article>
             ))}
           </div>
@@ -306,7 +407,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <button className="lightbox-close" type="button" onClick={() => setLightboxOpen(false)} aria-label="Закрыть">×</button>
           {images.length > 1 && <button className="lightbox-arrow lightbox-arrow--prev" type="button" onClick={prevImage} aria-label="Предыдущее фото">‹</button>}
           <div className="lightbox-stage" onTouchStart={(event) => setTouchStartX(event.changedTouches[0]?.clientX ?? null)} onTouchEnd={(event) => onTouchEnd(event.changedTouches[0]?.clientX ?? 0)}>
-            <img src={activeImage} alt={product.title} />
+            <img src={activeImage} alt={product.title} style={{ objectPosition: settings.productPosition }} />
           </div>
           {images.length > 1 && <button className="lightbox-arrow lightbox-arrow--next" type="button" onClick={nextImage} aria-label="Следующее фото">›</button>}
           {images.length > 1 && (
@@ -325,11 +426,5 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
 }
 
 function ServiceItem({ icon, title, text }: { icon: 'factory' | 'tools' | 'shield' | 'truck'; title: string; text: string }) {
-  return (
-    <div>
-      <Icon name={icon} />
-      <b>{title}</b>
-      <span>{text}</span>
-    </div>
-  );
+  return <div><Icon name={icon} /><b>{title}</b><span>{text}</span></div>;
 }

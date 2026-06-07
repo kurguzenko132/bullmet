@@ -1,0 +1,3 @@
+import { getCatalogProducts } from '@/lib/products';
+export const dynamic = 'force-dynamic';
+export default async function AdminMedia(){const products=await getCatalogProducts();const images=[...new Set(products.flatMap(p=>p.images.length?p.images:[p.image]))];return <div className="admin-dashboard-pro"><div className="admin-page-head"><div><p>Медиа</p><h1>Медиафайлы</h1><span>Фото товаров, которые сейчас используются в каталоге и карточках.</span></div></div><section className="admin-media-grid">{images.map((url)=><article key={url}><img src={url} alt=""/><span>{url}</span></article>)}</section></div>}

@@ -303,7 +303,7 @@ function normalizeRichProduct(row: RichProductRow): CatalogProduct | null {
     isNew: Boolean(row.is_new),
     catalogImageFit: normalizeFit(row.catalog_image_fit, 'cover'),
     catalogImagePosition: row.catalog_image_position || 'center center',
-    productImageFit: normalizeFit(row.product_image_fit, 'contain'),
+    productImageFit: row.product_image_fit === 'cover' ? 'contain' : normalizeFit(row.product_image_fit, 'contain'),
     productImagePosition: row.product_image_position || 'center center',
     imageSettings: parseImageSettings(row.image_settings),
     colorGroupId: row.color_group_id || undefined,

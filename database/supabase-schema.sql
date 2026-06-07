@@ -24,7 +24,7 @@ create table if not exists public.products (
   in_stock boolean not null default true,
   catalog_image_fit text not null default 'cover' check (catalog_image_fit in ('cover', 'contain')),
   catalog_image_position text not null default 'center center',
-  product_image_fit text not null default 'cover' check (product_image_fit in ('cover', 'contain')),
+  product_image_fit text not null default 'contain' check (product_image_fit in ('cover', 'contain')),
   product_image_position text not null default 'center center',
   image_settings jsonb not null default '{}'::jsonb,
   variants jsonb not null default '[]'::jsonb,
@@ -42,7 +42,7 @@ create index if not exists products_clock_theme_idx on public.products(clock_the
 
 alter table public.products add column if not exists catalog_image_fit text not null default 'cover';
 alter table public.products add column if not exists catalog_image_position text not null default 'center center';
-alter table public.products add column if not exists product_image_fit text not null default 'cover';
+alter table public.products add column if not exists product_image_fit text not null default 'contain';
 alter table public.products add column if not exists product_image_position text not null default 'center center';
 alter table public.products add column if not exists image_settings jsonb not null default '{}'::jsonb;
 alter table public.products add column if not exists variants jsonb not null default '[]'::jsonb;

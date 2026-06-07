@@ -4,9 +4,9 @@ import { AdminGuard } from '@/components/AdminGuard';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <AdminGuard>
-      <div className="admin-grid">
+      <div className="admin-grid admin-grid-pro">
         <AdminSidebar />
-        <main className="bg-[#f7f7f7] p-6 lg:p-8">{children}</main>
+        <main className="admin-main-pro">{children}</main>
       </div>
     </AdminGuard>
   );
