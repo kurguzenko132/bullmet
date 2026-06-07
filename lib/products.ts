@@ -229,29 +229,11 @@ function parseImageSettings(value: unknown): Record<string, ImageDisplaySettings
   return undefined;
 }
 
-
-function resolveImageSource(value: string) {
-  const image = value.trim();
-  if (!image) return image;
-  if (image.startsWith('http://') || image.startsWith('https://') || image.startsWith('/') || image.startsWith('data:')) return image;
-
-  const bucket = process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_IMAGES_BUCKET || 'product-images';
-  const cleanPath = image.startsWith(`${bucket}/`) ? image.slice(bucket.length + 1) : image;
-
-  if (supabase) {
-    const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
-    return data.publicUrl || image;
-  }
-
-  return image;
-}
-
 function uniqueImages(images: Array<string | null | undefined>) {
   const seen = new Set<string>();
   return images
     .map((image) => String(image || '').trim())
     .filter(Boolean)
-    .map(resolveImageSource)
     .filter((image) => {
       if (seen.has(image)) return false;
       seen.add(image);

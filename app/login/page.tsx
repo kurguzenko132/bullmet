@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
+import { AuthForm } from '@/components/AuthForm';
 
 export const metadata = {
   title: 'Вход в аккаунт | Bullmet',
@@ -26,35 +28,14 @@ export default function LoginPage() {
               <div><Icon name="request" /><span>Заявки на расчет</span></div>
               <div><Icon name="package" /><span>Статусы доставки</span></div>
             </div>
+            <p className="auth-admin-link">
+              Администратор? <Link href="/login?next=/admin">Войти в панель управления</Link>
+            </p>
           </div>
 
-          <section className="auth-card" aria-label="Форма входа и регистрации">
-            <div className="auth-tabs">
-              <button className="active" type="button">Вход</button>
-              <button type="button">Регистрация</button>
-            </div>
-
-            <form className="auth-form">
-              <label>
-                Email или телефон
-                <input type="text" placeholder="Введите email или телефон" />
-              </label>
-              <label>
-                Пароль
-                <input type="password" placeholder="Введите пароль" />
-              </label>
-              <button type="button" className="auth-submit">ВОЙТИ В АККАУНТ</button>
-              <div className="auth-links">
-                <Link href="/contacts">Забыли пароль?</Link>
-                <Link href="/catalog">Вернуться в каталог</Link>
-              </div>
-            </form>
-
-            <p className="auth-note">
-              Пока это визуальный макет. После подключения Supabase здесь будет полноценный вход,
-              регистрация и роли пользователя/администратора.
-            </p>
-          </section>
+          <Suspense fallback={<div className="auth-card">Загрузка формы...</div>}>
+            <AuthForm />
+          </Suspense>
         </div>
       </main>
       <Footer />
