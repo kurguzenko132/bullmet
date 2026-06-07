@@ -1,12 +1,6 @@
-import type { Metadata } from 'next';
-import { CartPage } from '@/components/CartPage';
-
-export const metadata: Metadata = {
-  title: 'Корзина',
-  description: 'Корзина интернет-магазина Bullmet.',
-  robots: { index: false, follow: false },
-};
-
-export default function Page() {
-  return <CartPage />;
-}
+import Image from 'next/image';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { products } from '@/lib/data';
+export const metadata = { title: 'Корзина', description: 'Оформление заказа Bullmet.' };
+export default function CartPage(){const items=products.slice(0,3); const total=items.reduce((s,p)=>s+p.price,0);return <><Header/><main className="container-page py-10"><p className="text-sm text-bull-muted">Главная › Корзина</p><h1 className="mt-4 text-5xl font-black">Корзина</h1><div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]"><section className="bg-white p-6 shadow-soft"><div className="grid grid-cols-[1fr_120px_120px_40px] border-b pb-3 text-sm font-bold text-bull-muted"><span>Товар</span><span>Цена</span><span>Количество</span><span></span></div>{items.map(p=><div key={p.slug} className="grid grid-cols-[1fr_120px_120px_40px] items-center border-b py-4"><div className="flex items-center gap-4"><Image src={p.image} alt={p.title} width={70} height={50}/><b>{p.title}</b></div><span>{p.price} BYN</span><div><button className="border px-3">−</button><span className="border-y px-4 py-1">1</span><button className="border px-3">+</button></div><button>×</button></div>)}</section><aside className="h-fit bg-white p-6 shadow-soft"><h2 className="text-2xl font-black">Итого</h2><div className="mt-5 flex justify-between text-xl"><span>Сумма</span><b>{total} BYN</b></div><input className="mt-5 w-full border p-3" placeholder="Имя"/><input className="mt-3 w-full border p-3" placeholder="Телефон"/><textarea className="mt-3 w-full border p-3" rows={3} placeholder="Комментарий"/><button className="mt-4 w-full bg-bull-orange py-4 font-bold text-white">Оформить заказ</button></aside></div></main><Footer/></>}

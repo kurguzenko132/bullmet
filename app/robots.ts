@@ -1,16 +1,11 @@
 import type { MetadataRoute } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bullmet.by';
-
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bullmet.by';
   return {
     rules: [
-      {
-        userAgent: '*',
-        allow: ['/', '/catalog', '/catalog/', '/request', '/production', '/services', '/about', '/contacts', '/delivery', '/payment', '/returns', '/privacy'],
-        disallow: ['/admin', '/account', '/cart', '/checkout', '/login', '/register'],
-      },
+      { userAgent: '*', allow: '/', disallow: ['/admin/'] }
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`
   };
 }

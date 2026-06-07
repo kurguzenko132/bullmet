@@ -1,12 +1,5 @@
-import type { Metadata } from 'next';
-import { AdminDashboard } from '@/components/AdminDashboard';
-
-export const metadata: Metadata = {
-  title: 'Админ-панель — Bullmet',
-  robots: { index: false, follow: false },
-  description: 'Панель управления интернет-магазином Bullmet.',
-};
-
-export default function AdminPage() {
-  return <AdminDashboard />;
-}
+import Image from 'next/image';
+import Link from 'next/link';
+import { orders, products } from '@/lib/data';
+export const metadata = { title: 'Админка Bullmet' };
+export default function AdminPage(){return <><div className="mb-6 flex items-center justify-between"><h1 className="text-3xl font-black">Главная</h1><Link href="/" className="rounded border bg-white px-4 py-2">Перейти на сайт ↗</Link></div><section className="grid gap-5 xl:grid-cols-[1.3fr_1fr]"><div className="bg-white p-6 shadow-soft"><h2 className="font-bold">Главный слайд</h2><div className="relative mt-4 overflow-hidden"><Image src="/hero-cutting.svg" alt="Hero" width={1000} height={420} className="h-80 w-full object-cover"/><div className="absolute left-8 top-16 max-w-md text-white"><h3 className="text-3xl font-black">Bullmet — собственное производство</h3><p className="mt-3">Часы, качели, художественная лазерная резка из листового металла под заказ.</p><button className="mt-5 bg-bull-orange px-5 py-3 font-bold">Редактировать текст</button></div></div></div><div className="grid grid-cols-2 gap-4">{[['Заказы','128'],['Выручка','24 950 BYN'],['Покупатели','356'],['Просмотры','12 594']].map(([a,b])=><div key={a} className="bg-white p-6 shadow-soft"><p className="text-bull-muted">{a}</p><b className="mt-2 block text-3xl">{b}</b><p className="mt-2 text-sm text-green-600">+12% за месяц</p></div>)}</div></section><section className="mt-6 grid gap-5 xl:grid-cols-2"><div className="bg-white p-6 shadow-soft"><h2 className="font-bold">Популярные товары</h2>{products.map(p=><div key={p.slug} className="mt-4 flex items-center justify-between border-b pb-3"><span>{p.title}</span><b>{p.price} BYN</b></div>)}</div><div className="bg-white p-6 shadow-soft"><h2 className="font-bold">Последние заказы</h2>{orders.map(o=><div key={o.id} className="mt-4 grid grid-cols-4 border-b pb-3"><b>{o.id}</b><span>{o.name}</span><span>{o.status}</span><b>{o.total} BYN</b></div>)}</div></section></>}

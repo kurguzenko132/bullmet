@@ -1,12 +1,2 @@
-import type { Metadata } from 'next';
-import { AdminOrdersPage } from '@/components/AdminOrdersPage';
-
-export const metadata: Metadata = {
-  title: 'Заказы — Админ-панель Bullmet',
-  robots: { index: false, follow: false },
-  description: 'Управление заказами интернет-магазина Bullmet.',
-};
-
-export default function Page() {
-  return <AdminOrdersPage />;
-}
+import { orders } from '@/lib/data';
+export default function AdminOrders(){return <><h1 className="text-3xl font-black">Заказы</h1><div className="mt-6 bg-white p-6 shadow-soft"><div className="grid grid-cols-5 border-b pb-3 font-bold text-bull-muted"><span>№</span><span>Клиент</span><span>Статус</span><span>Сумма</span><span>Действия</span></div>{orders.concat(orders).map((o,i)=><div key={o.id+i} className="grid grid-cols-5 border-b py-4"><b>{o.id}</b><span>{o.name}</span><select className="w-fit border px-2 py-1"><option>{o.status}</option><option>В обработке</option><option>Оплачен</option><option>Выполнен</option></select><b>{o.total} BYN</b><button className="w-fit text-bull-orange">Открыть</button></div>)}</div></>}

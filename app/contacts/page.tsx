@@ -1,12 +1,4 @@
-import type { Metadata } from 'next';
-import { ContactsPageContent } from '@/components/ContactsPageContent';
-
-export const metadata: Metadata = {
-  title: 'Контакты Bullmet — связаться с производством',
-  description: 'Контакты Bullmet: телефон, email, заявка на расчет, адрес производства, время работы, доставка и быстрые способы связи.',
-  alternates: { canonical: '/contacts' },
-};
-
-export default function ContactsPage() {
-  return <ContactsPageContent />;
-}
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+export const metadata = { title: 'Контакты', description: 'Свяжитесь с Bullmet для заказа изделий или расчета резки.' };
+export default function ContactsPage(){return <><Header/><main className="container-page py-10"><p className="text-sm text-bull-muted">Главная › Контакты</p><h1 className="mt-4 text-5xl font-black">Контакты</h1><div className="mt-8 grid gap-8 lg:grid-cols-[.8fr_1.2fr]"><div className="bg-white p-8 shadow-soft"><p><b>Адрес:</b><br/>г. Минск, ул. Промышленная, 11</p><p className="mt-5"><b>Телефон:</b><br/>+375 29 123-45-67</p><p className="mt-5"><b>Email:</b><br/>info@bullmet.by</p><p className="mt-5"><b>Режим работы:</b><br/>Пн–Пт 9:00–18:00</p></div><div className="min-h-96 bg-[#e6e2d9] shadow-soft grid place-items-center"><span className="rounded bg-white px-5 py-3 font-bold text-bull-orange">Bullmet на карте</span></div></div><form className="mt-8 grid gap-3 bg-white p-8 shadow-soft md:grid-cols-2"><input className="border p-3" placeholder="Ваше имя"/><input className="border p-3" placeholder="Телефон"/><input className="border p-3 md:col-span-2" placeholder="Email"/><textarea className="border p-3 md:col-span-2" rows={5} placeholder="Сообщение"/><button className="bg-bull-orange py-4 font-bold text-white md:col-span-2">Отправить</button></form></main><Footer/></>}

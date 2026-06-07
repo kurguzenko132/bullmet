@@ -1,12 +1,2 @@
-import type { Metadata } from 'next';
-import { AdminProductsPage } from '@/components/AdminProductsPage';
-
-export const metadata: Metadata = {
-  title: 'Товары — Админ-панель Bullmet',
-  robots: { index: false, follow: false },
-  description: 'Управление товарами интернет-магазина Bullmet.',
-};
-
-export default function Page() {
-  return <AdminProductsPage />;
-}
+import { products } from '@/lib/data';
+export default function AdminProducts(){return <><div className="flex items-center justify-between"><h1 className="text-3xl font-black">Товары</h1><button className="bg-bull-orange px-5 py-3 font-bold text-white">Добавить товар</button></div><div className="mt-6 bg-white p-6 shadow-soft"><div className="grid grid-cols-[1fr_150px_120px_150px] border-b pb-3 font-bold text-bull-muted"><span>Название</span><span>Категория</span><span>Цена</span><span>Действия</span></div>{products.map(p=><div key={p.slug} className="grid grid-cols-[1fr_150px_120px_150px] items-center border-b py-4"><b>{p.title}</b><span>{p.category}</span><span>{p.price} BYN</span><div className="flex gap-2"><button className="border px-3 py-2">✎</button><button className="border px-3 py-2">👁</button><button className="border px-3 py-2">×</button></div></div>)}</div><form className="mt-6 grid gap-4 bg-white p-6 shadow-soft md:grid-cols-2"><h2 className="text-xl font-bold md:col-span-2">Быстрое добавление товара</h2><input className="border p-3" placeholder="Название товара"/><input className="border p-3" placeholder="Slug"/><input className="border p-3" placeholder="Цена"/><select className="border p-3"><option>Часы</option><option>Садовые качели</option><option>Услуги</option></select><textarea className="border p-3 md:col-span-2" rows={4} placeholder="Описание"/><input className="border p-3 md:col-span-2" type="file"/><button className="bg-bull-orange py-3 font-bold text-white md:col-span-2">Добавить товар</button></form></>}
