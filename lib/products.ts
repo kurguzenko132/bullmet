@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getPublicStorageUrl, isSupabaseConfigured, supabase } from './supabase';
 
 export type CatalogProduct = {
   id?: string;
@@ -7,8 +7,11 @@ export type CatalogProduct = {
   material: string;
   price: number;
   image: string;
+  images?: string[];
   description?: string;
   category?: string;
+  status?: string;
+  isPopular?: boolean;
 };
 
 export const clockCatalogCategories = [
@@ -38,72 +41,165 @@ export const localFallbackProducts: CatalogProduct[] = [
   { slug: 'nomer-doma-metallicheskiy', title: 'Номер дома металлический', material: 'Металл', price: 60, image: '/mockup/gallery-6.jpg', description: 'Металлический номер дома под заказ.', category: 'Лазерная резка' }
 ];
 
-type ProductRow = {
-  id?: string;
-  slug?: string | null;
-  title?: string | null;
-  material?: string | null;
-  price?: number | string | null;
-  image_url?: string | null;
-  description?: string | null;
-  status?: string | null;
-  categories?: { title?: string | null } | null;
-  product_images?: { image_url?: string | null; sort_order?: number | null }[] | null;
-};
+type ProductRow = Record<string, any>;
+
+function isHiddenStatus(status?: string | null) {
+  if (!status) return false;
+  return ['draft', 'hidden', 'archived', 'deleted', 'inactive'].includes(String(status).toLowerCase());
+}
+
+function arrayFromUnknown(value: unknown): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean).map(String);
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean).map(String);
+    } catch {
+      return value ? [value] : [];
+    }
+  }
+  return [];
+}
 
 function normalizeProduct(row: ProductRow): CatalogProduct | null {
-  if (!row.slug || !row.title) return null;
+  if (!row?.slug || !row?.title) return null;
 
-  const sortedImages = Array.isArray(row.product_images)
-    ? [...row.product_images].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+  const galleryFromArray = arrayFromUnknown(row.images);
+  const galleryFromRelation = Array.isArray(row.product_images)
+    ? [...row.product_images]
+        .sort((a, b) => (a?.sort_order ?? 0) - (b?.sort_order ?? 0))
+        .map((img) => img?.image_url)
+        .filter(Boolean)
+        .map(String)
     : [];
 
-  const image = row.image_url || sortedImages.find((img) => Boolean(img.image_url))?.image_url || '/mockup/prod-clock-1.jpg';
+  const rawImages = [
+    row.image,
+    row.image_url,
+    row.cover,
+    ...galleryFromArray,
+    ...galleryFromRelation
+  ].filter(Boolean).map(String);
+
+  const images = rawImages.map((src) => getPublicStorageUrl(src)).filter(Boolean);
   const parsedPrice = Number(row.price ?? 0);
+  const category =
+    row.category ||
+    row.clock_theme ||
+    row.categories?.title ||
+    row.category_title ||
+    'Каталог';
 
   return {
     id: row.id,
-    slug: row.slug,
-    title: row.title,
-    material: row.material || 'Металл с элементами дерева',
+    slug: String(row.slug),
+    title: String(row.title),
+    material: String(row.material || row.short || 'Металл с элементами дерева'),
     price: Number.isFinite(parsedPrice) ? parsedPrice : 0,
-    image,
-    description: row.description || '',
-    category: row.categories?.title || 'Каталог'
+    image: images[0] || '/mockup/prod-clock-1.jpg',
+    images,
+    description: String(row.description || row.short || ''),
+    category: String(category),
+    status: row.status ? String(row.status) : undefined,
+    isPopular: Boolean(row.is_popular || row.isPopular)
   };
 }
 
-export async function getCatalogProducts(): Promise<CatalogProduct[]> {
-  if (!supabase) return localFallbackProducts;
+async function loadProductsOldSchema() {
+  if (!supabase) return { products: [] as CatalogProduct[], error: 'Supabase is not configured' };
 
   const { data, error } = await supabase
     .from('products')
-    .select('id, slug, title, material, price, image_url, description, status, categories(title), product_images(image_url, sort_order)')
-    .or('status.is.null,status.eq.active,status.eq.in_stock,status.eq.available')
+    .select('id, slug, title, category, clock_theme, material, short, description, price, image, images, status, is_popular, created_at')
     .order('created_at', { ascending: false });
 
-  if (error || !data) {
-    console.error('Supabase products load failed:', error?.message);
+  if (error) return { products: [] as CatalogProduct[], error: error.message };
+
+  const products = (data || [])
+    .map(normalizeProduct)
+    .filter(Boolean)
+    .filter((product) => !isHiddenStatus(product?.status)) as CatalogProduct[];
+
+  return { products, error: null };
+}
+
+async function loadProductsStarterSchema() {
+  if (!supabase) return { products: [] as CatalogProduct[], error: 'Supabase is not configured' };
+
+  const { data, error } = await supabase
+    .from('products')
+    .select('id, slug, title, material, price, image_url, cover, description, status, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) return { products: [] as CatalogProduct[], error: error.message };
+
+  const rows = data || [];
+  const ids = rows.map((row) => row.id).filter(Boolean);
+  let imageMap = new Map<string, { image_url?: string | null; sort_order?: number | null }[]>();
+
+  if (ids.length) {
+    const { data: imageRows } = await supabase
+      .from('product_images')
+      .select('product_id, image_url, sort_order')
+      .in('product_id', ids);
+
+    (imageRows || []).forEach((img) => {
+      const list = imageMap.get(img.product_id) || [];
+      list.push({ image_url: img.image_url, sort_order: img.sort_order });
+      imageMap.set(img.product_id, list);
+    });
+  }
+
+  const products = rows
+    .map((row) => normalizeProduct({ ...row, product_images: imageMap.get(row.id) || [] }))
+    .filter(Boolean)
+    .filter((product) => !isHiddenStatus(product?.status)) as CatalogProduct[];
+
+  return { products, error: null };
+}
+
+export async function getCatalogProducts(): Promise<CatalogProduct[]> {
+  if (!isSupabaseConfigured || !supabase) {
+    console.warn('Supabase environment variables are missing. Local fallback products are shown.');
     return localFallbackProducts;
   }
 
-  const normalized = (data as ProductRow[]).map(normalizeProduct).filter(Boolean) as CatalogProduct[];
-  return normalized.length ? normalized : localFallbackProducts;
+  const oldSchema = await loadProductsOldSchema();
+  if (oldSchema.products.length || !oldSchema.error) {
+    return oldSchema.products.length ? oldSchema.products : localFallbackProducts;
+  }
+
+  const starterSchema = await loadProductsStarterSchema();
+  if (starterSchema.products.length || !starterSchema.error) {
+    return starterSchema.products.length ? starterSchema.products : localFallbackProducts;
+  }
+
+  console.error('Supabase products load failed:', oldSchema.error, starterSchema.error);
+  return localFallbackProducts;
 }
 
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | null> {
-  if (!supabase) return localFallbackProducts.find((product) => product.slug === slug) || null;
-
-  const { data, error } = await supabase
-    .from('products')
-    .select('id, slug, title, material, price, image_url, description, status, categories(title), product_images(image_url, sort_order)')
-    .eq('slug', slug)
-    .maybeSingle();
-
-  if (error || !data) {
-    console.error('Supabase product load failed:', error?.message);
+  if (!isSupabaseConfigured || !supabase) {
     return localFallbackProducts.find((product) => product.slug === slug) || null;
   }
 
-  return normalizeProduct(data as ProductRow);
+  const { data: oldData, error: oldError } = await supabase
+    .from('products')
+    .select('id, slug, title, category, clock_theme, material, short, description, price, image, images, status, is_popular, created_at')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (!oldError && oldData) return normalizeProduct(oldData);
+
+  const { data: starterData, error: starterError } = await supabase
+    .from('products')
+    .select('id, slug, title, material, price, image_url, cover, description, status, created_at')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (!starterError && starterData) return normalizeProduct(starterData);
+
+  console.error('Supabase product load failed:', oldError?.message, starterError?.message);
+  return localFallbackProducts.find((product) => product.slug === slug) || null;
 }
