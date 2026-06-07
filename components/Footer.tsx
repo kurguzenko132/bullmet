@@ -7,8 +7,8 @@ export function Footer() {
       <div className="home-container footer-grid-exact">
         <div>
           <Link href="/" className="brand-exact footer-brand">
-            <span className="brand-mark" />
-            <span className="brand-text"><b>BULLMET</b><small>производство металла и дерева</small></span>
+            <img src="/logo-shield-check.svg" alt="" className="brand-mark" />
+            <span className="brand-text"><b>BULLMET</b><small>металл с элементами дерева</small></span>
           </Link>
           <p>Собственное производство изделий<br/>из металла с элементами дерева с 2017 года</p>
           <div className="socials"><span><Icon name="instagram" /></span><span><Icon name="telegram" /></span><span><Icon name="mail" /></span></div>

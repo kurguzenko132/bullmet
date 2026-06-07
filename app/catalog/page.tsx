@@ -1,43 +1,21 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
+import { clockCatalogCategories, getCatalogProducts } from '@/lib/products';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Каталог товаров Bullmet',
   description: 'Каталог Bullmet: настенные часы, садовая мебель, мебель для дома в стиле лофт, лазерная резка, гибка металла и мелкий опт металлопроката.'
 };
 
-const categories = [
-  'Авто-мир',
-  'Барбершоп, парикмахерская',
-  'Графика',
-  'Детские',
-  'Животные',
-  'Классика',
-  'Кофе и кухня',
-  'Музыка',
-  'Профессии',
-  'Романтика',
-  'Рыбалка, охота',
-  'Спорт',
-  'Христианские'
-];
+export default async function CatalogPage() {
+  const products = await getCatalogProducts();
+  const shownCount = products.length;
 
-const products = [
-  { slug: 'nastennye-chasy-loft', title: 'Настенные часы Loft', material: 'Металл с элементами дерева', price: 120, image: '/mockup/prod-clock-1.jpg' },
-  { slug: 'sadovye-kacheli-bullmet', title: 'Садовые качели Bullmet', material: 'Прочная металлическая рама', price: 650, image: '/mockup/prod-swing-1.jpg' },
-  { slug: 'nastennye-chasy-classic', title: 'Настенные часы Classic', material: 'Металл', price: 140, image: '/mockup/prod-clock-2.jpg' },
-  { slug: 'chasy-industrial', title: 'Часы Industrial', material: 'Металл с элементами дерева', price: 100, image: '/mockup/cat-clock.jpg' },
-  { slug: 'kacheli-garden-comfort', title: 'Качели Garden Comfort', material: 'Для дачи и сада', price: 700, image: '/mockup/prod-swing-2.jpg' },
-  { slug: 'panno-derevo-zhizni', title: 'Панно “Дерево жизни”', material: 'Металл', price: 180, image: '/mockup/cat-wood.jpg' },
-  { slug: 'reshetka-dekorativnaya', title: 'Решетка декоративная', material: 'Металл', price: 90, image: '/mockup/cat-custom.jpg' },
-  { slug: 'nomer-doma-metallicheskiy', title: 'Номер дома металлический', material: 'Металл', price: 60, image: '/mockup/gallery-6.jpg' }
-];
-
-export default function CatalogPage() {
   return (
     <>
       <Header />
@@ -56,7 +34,7 @@ export default function CatalogPage() {
               <section className="catalog-filter-card catalog-category-card">
                 <h2>Каталог часов</h2>
                 <ul>
-                  {categories.map((category) => (
+                  {clockCatalogCategories.map((category) => (
                     <li key={category}>
                       <Link href="/catalog">{category}</Link>
                     </li>
@@ -69,9 +47,7 @@ export default function CatalogPage() {
 
                 <div className="filter-group">
                   <label>Цена, BYN</label>
-                  <div className="range-line" aria-hidden="true">
-                    <span />
-                  </div>
+                  <div className="range-line" aria-hidden="true"><span /></div>
                   <div className="price-inputs">
                     <input type="text" defaultValue="0" aria-label="Цена от" />
                     <span>до</span>
@@ -99,7 +75,7 @@ export default function CatalogPage() {
                   <option>Сначала дороже</option>
                   <option>Новинки</option>
                 </select>
-                <p>Показано 1–12 из 48</p>
+                <p>Показано 1–{shownCount} из {shownCount}</p>
                 <div className="view-switcher" aria-label="Вид каталога">
                   <button aria-label="Плитка" className="is-active"><span className="grid-icon" /></button>
                   <button aria-label="Список"><span className="list-icon" /></button>
@@ -110,16 +86,14 @@ export default function CatalogPage() {
                 {products.map((product) => (
                   <article className="catalog-product-card" key={product.slug}>
                     <Link href={`/product/${product.slug}`} className="catalog-product-image">
-                      <Image src={product.image} alt={product.title} fill sizes="(max-width: 900px) 50vw, 25vw" />
+                      <img src={product.image} alt={product.title} />
                     </Link>
                     <div className="catalog-product-body">
                       <Link href={`/product/${product.slug}`} className="catalog-product-title">{product.title}</Link>
                       <p>{product.material}</p>
                       <div className="catalog-product-bottom">
                         <b>от {product.price} BYN</b>
-                        <button aria-label={`Добавить в корзину: ${product.title}`}>
-                          <Icon name="cart" />
-                        </button>
+                        <button aria-label={`Добавить в корзину: ${product.title}`}><Icon name="cart" /></button>
                       </div>
                     </div>
                   </article>

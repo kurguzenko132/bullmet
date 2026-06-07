@@ -55,23 +55,10 @@ img { display: block; max-width: 100%; }
   line-height: 1;
 }
 .brand-mark {
-  width: 34px;
-  height: 34px;
-  border: 2px solid var(--orange);
-  border-radius: 6px;
-  transform: rotate(-8deg);
-  position: relative;
+  width: 38px;
+  height: 38px;
   flex: 0 0 auto;
-}
-.brand-mark::after {
-  content: '';
-  position: absolute;
-  width: 12px;
-  height: 3px;
-  left: 9px;
-  top: 14px;
-  border-radius: 99px;
-  background: var(--orange);
+  object-fit: contain;
 }
 .brand-text b {
   display: block;

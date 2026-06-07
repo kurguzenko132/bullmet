@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
+import { getCatalogProducts } from '@/lib/products';
 
 const img = {
   hero: '/mockup/hero-right.jpg',
@@ -38,13 +39,6 @@ const categories = [
   { title: 'Гибка\nметалла', img: img.serviceMetal }
 ];
 
-const products = [
-  { title: 'Настенные часы Loft', desc: 'Металл с элементами дерева', price: 'от 120 BYN', img: '/mockup/prod-clock-1.jpg' },
-  { title: 'Садовые качели Bullmet', desc: 'Прочная металлическая рама', price: 'от 650 BYN', img: '/mockup/prod-swing-1.jpg' },
-  { title: 'Настенные часы Classic', desc: 'Металл', price: 'от 140 BYN', img: '/mockup/prod-clock-2.jpg' },
-  { title: 'Качели Garden Comfort', desc: 'Для дачи и сада', price: 'от 700 BYN', img: '/mockup/prod-swing-2.jpg' }
-];
-
 const productionBenefits = [
   { icon: 'spark' as const, title: 'Лазерная и станочная\nрезка' },
   { icon: 'materials' as const, title: 'Работа с металлом\nи элементами дерева' },
@@ -66,7 +60,8 @@ function Lines({ value }: { value: string }) {
   return <>{value.split('\n').map((line) => <span key={line}>{line}</span>)}</>;
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const products = (await getCatalogProducts()).slice(0, 4);
   return (
     <>
       <Header />
@@ -126,10 +121,10 @@ export default function HomePage() {
             <div className="product-row-exact">
               {products.map((product) => (
                 <article className="product-card-exact" key={product.title}>
-                  <div className="product-img-wrap"><img src={product.img} alt={product.title} /></div>
+                  <div className="product-img-wrap"><img src={product.image} alt={product.title} /></div>
                   <h4>{product.title}</h4>
-                  <p>{product.desc}</p>
-                  <div className="product-bottom"><b>{product.price}</b><button aria-label="В корзину"><Icon name="cart" /></button></div>
+                  <p>{product.material}</p>
+                  <div className="product-bottom"><b>от {product.price} BYN</b><button aria-label="В корзину"><Icon name="cart" /></button></div>
                 </article>
               ))}
             </div>

@@ -6,8 +6,8 @@ export function Header() {
     <header className="site-header-exact">
       <div className="home-container header-inner-exact">
         <Link href="/" className="brand-exact" aria-label="Bullmet">
-          <span className="brand-mark" />
-          <span className="brand-text"><b>BULLMET</b><small>производство металла и дерева</small></span>
+          <img src="/logo-shield-check.svg" alt="" className="brand-mark" />
+          <span className="brand-text"><b>BULLMET</b><small>металл с элементами дерева</small></span>
         </Link>
         <nav className="nav-exact">
           <Link href="/catalog">КАТАЛОГ</Link>
