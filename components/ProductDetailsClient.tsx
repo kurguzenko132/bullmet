@@ -73,6 +73,10 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [qty, setQty] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [quickOrderOpen, setQuickOrderOpen] = useState(false);
+  const [quickOrderName, setQuickOrderName] = useState('');
+  const [quickOrderPhone, setQuickOrderPhone] = useState('');
+  const [quickOrderComment, setQuickOrderComment] = useState('');
+  const [quickOrderLoading, setQuickOrderLoading] = useState(false);
   const [cartMessage, setCartMessage] = useState('');
   const [favorite, setFavorite] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -181,6 +185,48 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       window.dispatchEvent(new Event('bullmet-cart-updated'));
     } catch {
       setCartMessage('Не удалось добавить товар. Попробуйте еще раз.');
+    }
+  }
+
+  async function submitQuickOrder(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setCartMessage('');
+    if (!quickOrderName.trim() || !quickOrderPhone.trim()) {
+      setCartMessage('Укажите имя и телефон для заявки.');
+      return;
+    }
+
+    setQuickOrderLoading(true);
+    try {
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'quick_order',
+          name: quickOrderName,
+          phone: quickOrderPhone,
+          comment: quickOrderComment,
+          productSlug: product.slug,
+          productTitle: product.title,
+          productImage: activeImage || product.image,
+          productPrice: product.price,
+          productMaterial: product.material,
+          size: activeSize,
+          quantity: qty,
+          type: 'Купить в 1 клик'
+        })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось отправить заявку.');
+      setCartMessage(`Заявка отправлена${data.id ? `: ${data.id}` : ''}. Мы свяжемся с вами.`);
+      setQuickOrderOpen(false);
+      setQuickOrderName('');
+      setQuickOrderPhone('');
+      setQuickOrderComment('');
+    } catch (error) {
+      setCartMessage(error instanceof Error ? error.message : 'Не удалось отправить заявку.');
+    } finally {
+      setQuickOrderLoading(false);
     }
   }
 
@@ -490,11 +536,11 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             <button className="quick-order-close" type="button" onClick={() => setQuickOrderOpen(false)} aria-label="Закрыть">×</button>
             <h2>Купить в 1 клик</h2>
             <p>{product.title}, {activeSize}, количество: {qty}</p>
-            <form onSubmit={(event) => { event.preventDefault(); setCartMessage('Заявка отправлена. Мы свяжемся с вами.'); setQuickOrderOpen(false); }}>
-              <input name="name" placeholder="Ваше имя" />
-              <input name="phone" placeholder="Телефон" required />
-              <textarea name="comment" placeholder="Комментарий к заказу" rows={4} />
-              <button type="submit">Отправить заявку</button>
+            <form onSubmit={submitQuickOrder}>
+              <input name="name" value={quickOrderName} onChange={(event) => setQuickOrderName(event.target.value)} placeholder="Ваше имя" required />
+              <input name="phone" value={quickOrderPhone} onChange={(event) => setQuickOrderPhone(event.target.value)} placeholder="Телефон" required />
+              <textarea name="comment" value={quickOrderComment} onChange={(event) => setQuickOrderComment(event.target.value)} placeholder="Комментарий к заказу" rows={4} />
+              <button type="submit" disabled={quickOrderLoading}>{quickOrderLoading ? 'Отправляем...' : 'Отправить заявку'}</button>
             </form>
           </div>
         </div>

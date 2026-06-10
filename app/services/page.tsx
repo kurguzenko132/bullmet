@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 
 export const metadata = { title: 'Услуги Bullmet', description: 'Лазерная резка, гибка металла, изготовление изделий по чертежу или эскизу.' };
 
@@ -17,13 +18,7 @@ export default function ServicesPage() {
           <Card title="Гибка металла" img="/mockup/service-wood.jpg" />
         </div>
         <section className="mt-10 grid gap-8 bg-white p-8 shadow-soft lg:grid-cols-2">
-          <form>
-            <h2 className="text-2xl font-black">Отправьте чертеж или эскиз</h2>
-            <div className="mt-5 grid gap-3 md:grid-cols-2"><input className="border p-3" placeholder="Ваше имя"/><input className="border p-3" placeholder="Телефон"/></div>
-            <input className="mt-3 w-full border p-3" placeholder="Ссылка на пример товара"/>
-            <textarea className="mt-3 w-full border p-3" rows={5} placeholder="Что нужно изготовить?"/>
-            <button className="mt-3 w-full bg-bull-orange py-4 font-bold text-white">Отправить заявку</button>
-          </form>
+          <ServiceRequestForm />
           <Image src="/mockup/hero.jpg" alt="Детали производства" width={800} height={500} className="h-full min-h-80 w-full object-cover" />
         </section>
       </main>
