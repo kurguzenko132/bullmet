@@ -6462,3 +6462,25 @@ img { display: block; max-width: 100%; }
     min-height: 300px !important;
   }
 }
+
+/* ===== HOTFIX: bottom spacing in compact home product cards ===== */
+@media (min-width: 1021px) {
+  .home-product-card-shop {
+    height: 416px !important;
+  }
+
+  .home-product-body-shop {
+    padding: 14px 14px 18px !important;
+  }
+
+  .home-product-bottom-shop {
+    min-height: 52px !important;
+    margin-top: 14px !important;
+    padding-top: 14px !important;
+    padding-bottom: 0 !important;
+  }
+
+  .home-product-bottom-shop button {
+    margin-bottom: 0 !important;
+  }
+}
