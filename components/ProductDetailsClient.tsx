@@ -27,6 +27,33 @@ function discountPercent(price: number, oldPrice?: number) {
   return Math.round(((oldPrice - price) / oldPrice) * 100);
 }
 
+function reviewWord(count: number) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'отзыв';
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'отзыва';
+  return 'отзывов';
+}
+
+function RatingStars({ value, onChange, readOnly = false, size = 'normal' }: { value: number; onChange?: (value: number) => void; readOnly?: boolean; size?: 'normal' | 'small' }) {
+  return (
+    <div className={`rating-stars rating-stars--${size} ${readOnly ? 'is-readonly' : ''}`} aria-label={`Оценка ${value} из 5`}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          className={star <= value ? 'is-active' : ''}
+          disabled={readOnly}
+          onClick={() => onChange?.(star)}
+          aria-label={`Поставить ${star}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function normalizeImages(product: CatalogProduct) {
   const seen = new Set<string>();
   return [product.image, ...(product.images || [])]
@@ -58,6 +85,8 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const activeModalSettings = getImagePreset(product, activeImage, 'modal');
   const discount = discountPercent(product.price, product.oldPrice);
   const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length : 0;
+  const roundedRating = reviews.length ? Math.round(averageRating) : 0;
+  const reviewsLabel = reviews.length ? `${reviews.length} ${reviewWord(reviews.length)}` : 'нет отзывов';
   const sortedColorVariants = useMemo(() => {
     return [...colorVariants].sort((a, b) => {
       if (a.slug === product.slug) return -1;
@@ -255,12 +284,15 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               <b>{product.inStock ? 'В наличии / под заказ' : 'Под заказ'}</b>
               {product.isNew && <em>Новинка</em>}
               {product.isPopular && <em>Популярное</em>}
-              {reviews.length > 0 && <em>★ {averageRating.toFixed(1)} / {reviews.length} отзыв.</em>}
+              {reviews.length > 0 && <em>★ {averageRating.toFixed(1)} · {reviewsLabel}</em>}
             </div>
 
-            <div className="product-price-row">
-              <strong>от {money(product.price)} BYN</strong>
-              {product.oldPrice && <del>{money(product.oldPrice)} BYN</del>}
+            <div className="product-price-row product-price-row--fixed">
+              <div className="product-price-main">
+                <small>Цена</small>
+                <strong>от {money(product.price)} BYN</strong>
+              </div>
+              {product.oldPrice && product.oldPrice > product.price && <del>{money(product.oldPrice)} BYN</del>}
               {discount && <span>-{discount}%</span>}
             </div>
 
@@ -375,29 +407,54 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           </div>
         </article>
 
-        <article className="product-content-card product-content-card--wide">
-          <div className="product-reviews-head">
+        <article className="product-content-card product-content-card--wide product-reviews-redesign">
+          <div className="product-reviews-head product-reviews-head--redesign">
             <div>
               <p className="product-section-eyebrow">Отзывы</p>
               <h2>Отзывы покупателей</h2>
+              <span>{reviews.length ? `Средняя оценка ${averageRating.toFixed(1)} из 5 · ${reviewsLabel}` : 'Пока оценок нет'}</span>
             </div>
-            {reviews.length > 0 && <span>★ {averageRating.toFixed(1)} / {reviews.length}</span>}
+            <div className="reviews-summary-card">
+              <strong>{reviews.length ? averageRating.toFixed(1) : '0.0'}</strong>
+              <RatingStars value={roundedRating} readOnly />
+              <small>{reviewsLabel}</small>
+            </div>
           </div>
-          <div className="product-reviews-grid product-reviews-grid--simple">
-            <div className="reviews-list">
+
+          <div className="product-reviews-grid product-reviews-grid--redesign">
+            <div className="reviews-list reviews-list--redesign">
               {reviews.length ? reviews.map((review) => (
-                <article key={review.id} className="review-card">
-                  <div><b>{review.user_name || review.user_email || 'Покупатель'}</b><span>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span></div>
+                <article key={review.id} className="review-card review-card--redesign">
+                  <div className="review-card-top">
+                    <div>
+                      <b>{review.user_name || review.user_email || 'Покупатель'}</b>
+                      <small>{review.created_at ? new Date(review.created_at).toLocaleDateString('ru-RU') : 'Отзыв покупателя'}</small>
+                    </div>
+                    <RatingStars value={review.rating} readOnly size="small" />
+                  </div>
                   <p>{review.comment}</p>
                   {!!review.photo_urls?.length && <div className="review-photos">{review.photo_urls.map((url) => <img key={url} src={url} alt="Фото отзыва" />)}</div>}
                 </article>
-              )) : <p className="empty-reviews">Пока отзывов нет. Первый отзыв можно оставить после входа в аккаунт.</p>}
+              )) : (
+                <div className="empty-reviews empty-reviews--redesign">
+                  <b>Отзывов пока нет</b>
+                  <span>Когда покупатели оставят отзывы, здесь появится средняя оценка и реальные комментарии. Сейчас рейтинг товара — 0.0.</span>
+                </div>
+              )}
             </div>
-            <form className="review-form review-form--simple" onSubmit={submitReview}>
+
+            <form className="review-form review-form--redesign" onSubmit={submitReview}>
               <h3>Оставить отзыв</h3>
-              <label>Оценка<select value={reviewRating} onChange={(event) => setReviewRating(Number(event.target.value))}>{[5,4,3,2,1].map((rating) => <option key={rating} value={rating}>{rating}</option>)}</select></label>
-              <label>Комментарий<textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} rows={4} placeholder="Расскажите о товаре" required /></label>
-              {reviewMessage && <p>{reviewMessage}</p>}
+              <p>Оцените товар звёздами и напишите короткий комментарий. Отзыв появится после модерации.</p>
+              <label className="review-stars-field">
+                <span>Ваша оценка</span>
+                <RatingStars value={reviewRating} onChange={setReviewRating} />
+              </label>
+              <label>
+                <span>Комментарий</span>
+                <textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} rows={5} placeholder="Расскажите о товаре" required />
+              </label>
+              {reviewMessage && <p className="review-message">{reviewMessage}</p>}
               <button type="submit">Отправить на модерацию</button>
             </form>
           </div>

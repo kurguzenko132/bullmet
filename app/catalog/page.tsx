@@ -106,7 +106,7 @@ export default async function CatalogPage() {
                   const imageSettings = getImagePreset(product, product.image, 'catalog');
                   const discount = discountPercent(product.price, product.oldPrice);
                   const stats = reviewStats[product.slug] || { average: 0, count: 0 };
-                  const ratingLabel = stats.count ? stats.average.toFixed(1) : '5.0';
+                  const ratingLabel = stats.count ? stats.average.toFixed(1) : '0.0';
                   const reviewsLabel = stats.count ? `${stats.count} ${reviewWord(stats.count)}` : 'нет отзывов';
 
                   return (
@@ -124,7 +124,7 @@ export default async function CatalogPage() {
                         </span>
                       </Link>
                       <div className="catalog-product-body catalog-product-body--premium">
-                        <div className="catalog-rating-row">
+                        <div className={stats.count ? 'catalog-rating-row' : 'catalog-rating-row catalog-rating-row--empty'}>
                           <span>★ {ratingLabel}</span>
                           <small>{reviewsLabel}</small>
                         </div>
