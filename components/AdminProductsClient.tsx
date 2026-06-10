@@ -1,9 +1,9 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import type { CatalogProduct } from '@/lib/products';
+import type { CatalogProduct, ImageDisplaySettings } from '@/lib/products';
 
 type ProductForm = {
   id?: string;
@@ -30,6 +30,18 @@ type ProductForm = {
   product_image_fit: 'cover' | 'contain';
   catalog_image_position: string;
   product_image_position: string;
+  image_settings: Record<string, ImageDisplaySettings>;
+};
+
+const defaultImageSetting: Required<ImageDisplaySettings> = {
+  catalogFit: 'cover',
+  catalogX: 50,
+  catalogY: 50,
+  catalogZoom: 1,
+  productFit: 'contain',
+  productX: 50,
+  productY: 50,
+  productZoom: 1
 };
 
 const emptyForm: ProductForm = {
@@ -55,7 +67,8 @@ const emptyForm: ProductForm = {
   catalog_image_fit: 'cover',
   product_image_fit: 'contain',
   catalog_image_position: 'center center',
-  product_image_position: 'center center'
+  product_image_position: 'center center',
+  image_settings: {}
 };
 
 function slugify(value: string) {
@@ -65,6 +78,45 @@ function slugify(value: string) {
 
 function csv(value: string) {
   return value.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function parseImageSettings(value: unknown): Record<string, ImageDisplaySettings> {
+  if (!value) return {};
+  if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, ImageDisplaySettings>;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed as Record<string, ImageDisplaySettings>;
+    } catch {}
+  }
+  return {};
+}
+
+function normalizeSetting(value?: ImageDisplaySettings): Required<ImageDisplaySettings> {
+  return {
+    ...defaultImageSetting,
+    ...(value || {}),
+    catalogFit: value?.catalogFit === 'contain' ? 'contain' : 'cover',
+    productFit: value?.productFit === 'cover' ? 'cover' : 'contain',
+    catalogX: Number.isFinite(Number(value?.catalogX)) ? Number(value?.catalogX) : 50,
+    catalogY: Number.isFinite(Number(value?.catalogY)) ? Number(value?.catalogY) : 50,
+    productX: Number.isFinite(Number(value?.productX)) ? Number(value?.productX) : 50,
+    productY: Number.isFinite(Number(value?.productY)) ? Number(value?.productY) : 50,
+    catalogZoom: Number.isFinite(Number(value?.catalogZoom)) ? Number(value?.catalogZoom) : 1,
+    productZoom: Number.isFinite(Number(value?.productZoom)) ? Number(value?.productZoom) : 1
+  };
+}
+
+function styleFromSettings(settings: Required<ImageDisplaySettings>, scope: 'catalog' | 'product') {
+  const fit = scope === 'catalog' ? settings.catalogFit : settings.productFit;
+  const x = scope === 'catalog' ? settings.catalogX : settings.productX;
+  const y = scope === 'catalog' ? settings.catalogY : settings.productY;
+  const zoom = scope === 'catalog' ? settings.catalogZoom : settings.productZoom;
+  return {
+    objectFit: fit,
+    objectPosition: `${x}% ${y}%`,
+    transform: `scale(${zoom})`
+  } as const;
 }
 
 function productToForm(product: CatalogProduct): ProductForm {
@@ -92,7 +144,8 @@ function productToForm(product: CatalogProduct): ProductForm {
     catalog_image_fit: product.catalogImageFit || 'cover',
     product_image_fit: product.productImageFit || 'contain',
     catalog_image_position: product.catalogImagePosition || 'center center',
-    product_image_position: product.productImagePosition || 'center center'
+    product_image_position: product.productImagePosition || 'center center',
+    image_settings: product.imageSettings || {}
   };
 }
 
@@ -103,6 +156,11 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  const activeImage = selectedImage || form.images[0] || '';
+  const activeSettings = normalizeSetting(activeImage ? form.image_settings[activeImage] : form.image_settings.__global);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -119,13 +177,49 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function patchImages(nextImages: string[]) {
+    patch('images', nextImages);
+    if (!nextImages.includes(selectedImage)) setSelectedImage(nextImages[0] || '');
+  }
+
+  function patchActiveImageSetting(partial: Partial<ImageDisplaySettings>) {
+    const key = activeImage || '__global';
+    setForm((current) => ({
+      ...current,
+      image_settings: {
+        ...current.image_settings,
+        [key]: { ...normalizeSetting(current.image_settings[key]), ...partial }
+      }
+    }));
+  }
+
+  function applySettingsToAllImages() {
+    const current = normalizeSetting(activeImage ? form.image_settings[activeImage] : form.image_settings.__global);
+    const next = { ...form.image_settings };
+    form.images.forEach((image) => { next[image] = current; });
+    patch('image_settings', next);
+    setMessage('Настройки кадрирования применены ко всем фото товара.');
+  }
+
+  function resetActiveImageSettings() {
+    const key = activeImage || '__global';
+    setForm((current) => {
+      const next = { ...current.image_settings };
+      delete next[key];
+      return { ...current, image_settings: next };
+    });
+  }
+
   function startNew() {
     setForm({ ...emptyForm, color_group_id: `group-${Date.now()}` });
+    setSelectedImage('');
     setMessage('Создана пустая карточка. Заполните данные и нажмите “Сохранить товар”.');
   }
 
   function edit(product: CatalogProduct) {
-    setForm(productToForm(product));
+    const next = productToForm(product);
+    setForm(next);
+    setSelectedImage(next.images[0] || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -133,6 +227,7 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
     const next = productToForm(product);
     const title = `${next.title} копия`;
     setForm({ ...next, id: undefined, title, slug: slugify(title), color_name: next.color_name ? `${next.color_name} копия` : '' });
+    setSelectedImage(next.images[0] || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -163,6 +258,7 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
         productImageFit: row.product_image_fit || 'contain',
         catalogImagePosition: row.catalog_image_position || 'center center',
         productImagePosition: row.product_image_position || 'center center',
+        imageSettings: parseImageSettings(row.image_settings),
         colorGroupId: row.color_group_id,
         colorName: row.color_name,
         colorHex: row.color_hex
@@ -191,17 +287,21 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
       const { data } = supabase.storage.from(process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_IMAGES_BUCKET || 'product-images').getPublicUrl(path);
       if (data.publicUrl) uploaded.push(data.publicUrl);
     }
-    setForm((current) => ({ ...current, images: [...current.images, ...uploaded] }));
+    const nextImages = [...form.images, ...uploaded];
+    patchImages(nextImages);
+    if (!selectedImage && nextImages[0]) setSelectedImage(nextImages[0]);
     setUploading(false);
     setMessage(uploaded.length ? `Загружено фото: ${uploaded.length}` : 'Фото не загрузились. Проверь политики Storage.');
   }
 
-  function moveImage(index: number, direction: -1 | 1) {
+  function onImageDrop(event: DragEvent<HTMLElement>, dropIndex: number) {
+    event.preventDefault();
+    if (dragIndex === null || dragIndex === dropIndex) return;
     const next = [...form.images];
-    const target = index + direction;
-    if (target < 0 || target >= next.length) return;
-    [next[index], next[target]] = [next[target], next[index]];
-    patch('images', next);
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(dropIndex, 0, moved);
+    patchImages(next);
+    setDragIndex(null);
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -214,6 +314,7 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
     setLoading(true);
     const normalizedSlug = form.slug || slugify(form.title);
     const images = form.images.map((item) => item.trim()).filter(Boolean);
+    const mainSettings = images[0] ? normalizeSetting(form.image_settings[images[0]]) : defaultImageSetting;
     const payload = {
       slug: normalizedSlug,
       title: form.title.trim(),
@@ -232,10 +333,11 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
       in_stock: form.in_stock,
       is_popular: form.is_popular,
       is_new: form.is_new,
-      catalog_image_fit: form.catalog_image_fit,
-      product_image_fit: form.product_image_fit,
-      catalog_image_position: form.catalog_image_position,
-      product_image_position: form.product_image_position,
+      catalog_image_fit: mainSettings.catalogFit || form.catalog_image_fit,
+      product_image_fit: mainSettings.productFit || form.product_image_fit,
+      catalog_image_position: `${mainSettings.catalogX}% ${mainSettings.catalogY}%`,
+      product_image_position: `${mainSettings.productX}% ${mainSettings.productY}%`,
+      image_settings: form.image_settings,
       color_group_id: form.color_group_id.trim() || null,
       color_name: form.color_name.trim() || null,
       color_hex: form.color_hex || null
@@ -246,11 +348,11 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
     const { error, data } = await request as any;
     setLoading(false);
     if (error) {
-      setMessage(error.message);
+      setMessage(error.message.includes('image_settings') ? `${error.message}. Выполни SQL-миграцию из database/product-image-settings-migration.sql.` : error.message);
       return;
     }
     if (data?.id) setForm((current) => ({ ...current, id: data.id, slug: normalizedSlug }));
-    setMessage('Товар сохранен. На карточке товара обновятся фото, цветовые варианты и характеристики.');
+    setMessage('Товар сохранен. Фото, кадрирование, цветовые варианты и характеристики обновлены.');
     await reload();
   }
 
@@ -269,17 +371,28 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
     if (!form.slug && form.title) patch('slug', slugify(form.title));
   }, [form.title]);
 
+  useEffect(() => {
+    if (!selectedImage && form.images[0]) setSelectedImage(form.images[0]);
+  }, [form.images, selectedImage]);
+
   return (
-    <div className="admin-products-pro">
-      <div className="admin-page-head">
-        <div><p>Интернет-магазин</p><h1>Товары и фото-группы</h1><span>Здесь редактируются товары, изображения, варианты цвета и параметры карточки товара.</span></div>
-        <div className="admin-head-actions"><button type="button" onClick={startNew}>Добавить товар</button><button type="button" onClick={reload}>Обновить из базы</button></div>
+    <div className="admin-products-pro admin-products-pro--premium">
+      <div className="admin-page-head admin-page-head--premium">
+        <div>
+          <p>Интернет-магазин</p>
+          <h1>Товары, фото и варианты</h1>
+          <span>Управляйте товарами, группами цвета, кадрированием, порядком фото и отображением в каталоге/карточке.</span>
+        </div>
+        <div className="admin-head-actions">
+          <button type="button" onClick={startNew}>Добавить товар</button>
+          <button type="button" onClick={reload}>Обновить из базы</button>
+        </div>
       </div>
 
       {message && <div className="admin-message">{message}</div>}
 
-      <section className="admin-product-editor">
-        <form onSubmit={save} className="admin-product-form">
+      <section className="admin-product-editor admin-product-editor--premium">
+        <form onSubmit={save} className="admin-product-form admin-product-form--premium">
           <div className="admin-card-title"><h2>{form.id ? 'Редактирование товара' : 'Новый товар'}</h2><span>{form.id ? `ID: ${form.id}` : 'Сохранится в Supabase products'}</span></div>
           <div className="admin-form-grid">
             <label>Название<input value={form.title} onChange={(e) => patch('title', e.target.value)} required /></label>
@@ -295,7 +408,11 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
             <label>Размеры / варианты<input value={form.sizes} onChange={(e) => patch('sizes', e.target.value)} /></label>
             <label>Характеристики<textarea value={form.specs} onChange={(e) => patch('specs', e.target.value)} rows={4} /></label>
           </div>
-          <div className="admin-checks"><label><input type="checkbox" checked={form.in_stock} onChange={(e) => patch('in_stock', e.target.checked)} /> В наличии / под заказ</label><label><input type="checkbox" checked={form.is_popular} onChange={(e) => patch('is_popular', e.target.checked)} /> Популярное</label><label><input type="checkbox" checked={form.is_new} onChange={(e) => patch('is_new', e.target.checked)} /> Новинка</label></div>
+          <div className="admin-checks">
+            <label><input type="checkbox" checked={form.in_stock} onChange={(e) => patch('in_stock', e.target.checked)} /> В наличии / под заказ</label>
+            <label><input type="checkbox" checked={form.is_popular} onChange={(e) => patch('is_popular', e.target.checked)} /> Популярное</label>
+            <label><input type="checkbox" checked={form.is_new} onChange={(e) => patch('is_new', e.target.checked)} /> Новинка</label>
+          </div>
 
           <div className="admin-color-box">
             <h3>Группа цвета / варианты одной модели</h3>
@@ -310,7 +427,6 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
                 {sameGroup.map((item) => (
                   <Link href={`/product/${item.slug}`} key={item.slug} target="_blank">
                     <img src={item.image} alt={item.colorName || item.title} />
-                    <i style={{ background: item.colorHex || '#111' }} />
                     <span>{item.colorName || item.title}</span>
                   </Link>
                 ))}
@@ -318,41 +434,82 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
             )}
           </div>
 
-          <div className="admin-image-manager">
-            <div className="admin-card-title"><h2>Фотографии товара</h2><span>Первое фото становится главным. Можно менять порядок.</span></div>
+          <div className="admin-image-manager admin-image-manager--premium">
+            <div className="admin-card-title"><h2>Фотографии товара</h2><span>Перетаскивайте фото мышкой. Первое фото — главное.</span></div>
             <input type="file" multiple accept="image/*" onChange={uploadImages} />
             {uploading && <p>Загружаю фото...</p>}
-            <textarea value={form.images.join('\n')} onChange={(e) => patch('images', e.target.value.split('\n').map((x) => x.trim()).filter(Boolean))} rows={4} placeholder="Можно вставить ссылки вручную, каждая с новой строки" />
-            <div className="admin-image-grid">
-              {form.images.map((image, index) => (
-                <article key={`${image}-${index}`}>
-                  <img src={image} alt="" />
-                  <div><b>{index === 0 ? 'Главное фото' : `Фото ${index + 1}`}</b><span>{image}</span></div>
-                  <div className="admin-image-actions"><button type="button" onClick={() => moveImage(index, -1)}>↑</button><button type="button" onClick={() => moveImage(index, 1)}>↓</button><button type="button" onClick={() => patch('images', form.images.filter((_, i) => i !== index))}>×</button></div>
-                </article>
-              ))}
+            <textarea value={form.images.join('\n')} onChange={(e) => patchImages(e.target.value.split('\n').map((x) => x.trim()).filter(Boolean))} rows={4} placeholder="Можно вставить ссылки вручную, каждая с новой строки" />
+            <div className="admin-image-grid admin-image-grid--sortable">
+              {form.images.map((image, index) => {
+                const settings = normalizeSetting(form.image_settings[image]);
+                return (
+                  <article
+                    key={`${image}-${index}`}
+                    draggable
+                    onDragStart={() => setDragIndex(index)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => onImageDrop(event, index)}
+                    onClick={() => setSelectedImage(image)}
+                    className={`${selectedImage === image ? 'is-selected' : ''} ${dragIndex === index ? 'is-dragging' : ''}`}
+                  >
+                    <div className="sortable-image-preview"><img src={image} alt="" style={styleFromSettings(settings, 'catalog')} /></div>
+                    <div><b>{index === 0 ? 'Главное фото' : `Фото ${index + 1}`}</b><span>{image}</span></div>
+                    <div className="admin-image-actions"><button type="button" onClick={(event) => { event.stopPropagation(); patchImages(form.images.filter((_, i) => i !== index)); }}>×</button></div>
+                  </article>
+                );
+              })}
             </div>
           </div>
 
-          <div className="admin-display-settings">
-            <h3>Отображение фото</h3>
-            <div className="admin-form-grid four">
-              <label>Фото в каталоге<select value={form.catalog_image_fit} onChange={(e) => patch('catalog_image_fit', e.target.value as 'cover' | 'contain')}><option value="cover">Заполнить</option><option value="contain">Показать целиком</option></select></label>
-              <label>Позиция каталога<input value={form.catalog_image_position} onChange={(e) => patch('catalog_image_position', e.target.value)} /></label>
-              <label>Фото в карточке<select value={form.product_image_fit} onChange={(e) => patch('product_image_fit', e.target.value as 'cover' | 'contain')}><option value="contain">Показать целиком</option><option value="cover">Заполнить</option></select></label>
-              <label>Позиция карточки<input value={form.product_image_position} onChange={(e) => patch('product_image_position', e.target.value)} /></label>
+          <div className="admin-crop-studio">
+            <div className="admin-card-title">
+              <h2>Кадрирование фото</h2>
+              <span>Выберите фото выше и настройте отображение отдельно для каталога и карточки товара.</span>
             </div>
+            {activeImage ? (
+              <div className="crop-studio-grid">
+                <div className="crop-previews">
+                  <div>
+                    <b>Каталог</b>
+                    <div className="crop-preview crop-preview--catalog"><img src={activeImage} alt="Превью каталога" style={styleFromSettings(activeSettings, 'catalog')} /></div>
+                  </div>
+                  <div>
+                    <b>Карточка товара</b>
+                    <div className="crop-preview crop-preview--product"><img src={activeImage} alt="Превью карточки" style={styleFromSettings(activeSettings, 'product')} /></div>
+                  </div>
+                </div>
+
+                <div className="crop-controls">
+                  <h3>Каталог</h3>
+                  <label>Режим<select value={activeSettings.catalogFit} onChange={(e) => patchActiveImageSetting({ catalogFit: e.target.value as 'cover' | 'contain' })}><option value="cover">Заполнить карточку</option><option value="contain">Показать целиком</option></select></label>
+                  <label>Увеличение: {activeSettings.catalogZoom.toFixed(2)}×<input type="range" min="1" max="2.5" step="0.01" value={activeSettings.catalogZoom} onChange={(e) => patchActiveImageSetting({ catalogZoom: Number(e.target.value) })} /></label>
+                  <label>Позиция X: {activeSettings.catalogX}%<input type="range" min="0" max="100" value={activeSettings.catalogX} onChange={(e) => patchActiveImageSetting({ catalogX: Number(e.target.value) })} /></label>
+                  <label>Позиция Y: {activeSettings.catalogY}%<input type="range" min="0" max="100" value={activeSettings.catalogY} onChange={(e) => patchActiveImageSetting({ catalogY: Number(e.target.value) })} /></label>
+
+                  <h3>Карточка товара</h3>
+                  <label>Режим<select value={activeSettings.productFit} onChange={(e) => patchActiveImageSetting({ productFit: e.target.value as 'cover' | 'contain' })}><option value="contain">Показать целиком</option><option value="cover">Заполнить блок</option></select></label>
+                  <label>Увеличение: {activeSettings.productZoom.toFixed(2)}×<input type="range" min="1" max="2.5" step="0.01" value={activeSettings.productZoom} onChange={(e) => patchActiveImageSetting({ productZoom: Number(e.target.value) })} /></label>
+                  <label>Позиция X: {activeSettings.productX}%<input type="range" min="0" max="100" value={activeSettings.productX} onChange={(e) => patchActiveImageSetting({ productX: Number(e.target.value) })} /></label>
+                  <label>Позиция Y: {activeSettings.productY}%<input type="range" min="0" max="100" value={activeSettings.productY} onChange={(e) => patchActiveImageSetting({ productY: Number(e.target.value) })} /></label>
+
+                  <div className="crop-actions">
+                    <button type="button" onClick={applySettingsToAllImages}>Применить ко всем фото</button>
+                    <button type="button" onClick={resetActiveImageSettings}>Сбросить выбранное фото</button>
+                  </div>
+                </div>
+              </div>
+            ) : <p className="empty-crop">Добавьте или выберите фото, чтобы открыть кадрирование.</p>}
           </div>
 
           <div className="admin-form-actions"><button type="submit" disabled={loading}>{loading ? 'Сохраняю...' : 'Сохранить товар'}</button><button type="button" onClick={startNew}>Очистить форму</button></div>
         </form>
 
-        <aside className="admin-product-preview">
+        <aside className="admin-product-preview admin-product-preview--premium">
           <h2>Превью карточки</h2>
-          <div className="preview-card"><img src={form.images[0] || '/assets/prod-clock-loft.jpg'} alt="" /><div><p>{form.category}</p><h3>{form.title || 'Название товара'}</h3><span>{form.short || form.material}</span><b>от {form.price || 0} BYN</b></div></div>
+          <div className="preview-card"><img src={form.images[0] || '/assets/prod-clock-loft.jpg'} alt="" style={form.images[0] ? styleFromSettings(normalizeSetting(form.image_settings[form.images[0]]), 'catalog') : undefined} /><div><p>{form.category}</p><h3>{form.title || 'Название товара'}</h3><span>{form.short || form.material}</span><b>от {form.price || 0} BYN</b></div></div>
           <h2>Товары в базе</h2>
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск по товарам" />
-          <div className="admin-products-list">
+          <div className="admin-products-list admin-products-list--premium">
             {filtered.map((product) => (
               <article key={product.slug} className={form.id === product.id ? 'is-active' : ''}>
                 <img src={product.image} alt="" />

@@ -6,9 +6,11 @@ export type ImageDisplaySettings = {
   catalogFit?: ImageFit;
   catalogX?: number;
   catalogY?: number;
+  catalogZoom?: number;
   productFit?: ImageFit;
   productX?: number;
   productY?: number;
+  productZoom?: number;
 };
 
 export type CatalogProduct = {
@@ -38,6 +40,8 @@ export type CatalogProduct = {
   colorGroupId?: string;
   colorName?: string;
   colorHex?: string;
+  rating?: number;
+  reviewsCount?: number;
 };
 
 export const clockCatalogCategories = [
@@ -364,6 +368,37 @@ async function fetchLegacyProducts() {
     .select('id, slug, title, material, price, old_price, image_url, image, description, short, status, category, categories(title), product_images(image_url, sort_order)')
     .or('status.is.null,status.eq.active,status.eq.in_stock,status.eq.available')
     .order('created_at', { ascending: false });
+}
+
+
+export type ProductReviewStats = Record<string, { average: number; count: number }>;
+
+export async function getProductReviewStats(slugs: string[]): Promise<ProductReviewStats> {
+  const uniqueSlugs = Array.from(new Set(slugs.filter(Boolean)));
+  if (!supabase || !uniqueSlugs.length) return {};
+
+  try {
+    const { data, error } = await supabase
+      .from('product_reviews')
+      .select('product_slug, rating, status')
+      .in('product_slug', uniqueSlugs)
+      .eq('status', 'published');
+
+    if (error || !data) return {};
+
+    return data.reduce<ProductReviewStats>((acc, row: any) => {
+      const slug = String(row.product_slug || '').trim();
+      const rating = Number(row.rating || 0);
+      if (!slug || !Number.isFinite(rating) || rating <= 0) return acc;
+      const current = acc[slug] || { average: 0, count: 0 };
+      const total = current.average * current.count + rating;
+      const count = current.count + 1;
+      acc[slug] = { average: total / count, count };
+      return acc;
+    }, {});
+  } catch {
+    return {};
+  }
 }
 
 export async function getCatalogProducts(): Promise<CatalogProduct[]> {

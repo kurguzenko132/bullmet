@@ -54,6 +54,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const activeImage = images[activeIndex] || product.image;
+  const activeImageSettings = getImageSettings(product, activeImage);
   const discount = discountPercent(product.price, product.oldPrice);
   const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length : 0;
   const sortedColorVariants = useMemo(() => {
@@ -226,7 +227,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               tabIndex={0}
               aria-label="Открыть фото товара"
             >
-              <img src={activeImage} alt={product.title} />
+              <img src={activeImage} alt={product.title} style={{ objectFit: activeImageSettings.productFit, objectPosition: activeImageSettings.productPosition, transform: `scale(${activeImageSettings.productZoom || 1})` }} />
               {images.length > 1 && (
                 <>
                   <button className="gallery-nav gallery-nav--prev" type="button" onClick={(event) => { event.stopPropagation(); prevImage(); }} aria-label="Предыдущее фото">‹</button>
@@ -411,13 +412,22 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <div className="related-grid">
             {related.map((item) => (
               <article className="related-card" key={item.slug}>
-                <Link href={`/product/${item.slug}`} className="related-image"><img src={item.image} alt={item.title} /></Link>
+                <Link href={`/product/${item.slug}`} className="related-image"><img src={item.image} alt={item.title} style={{ objectFit: getImageSettings(item, item.image).catalogFit, objectPosition: getImageSettings(item, item.image).catalogPosition, transform: `scale(${getImageSettings(item, item.image).catalogZoom || 1})` }} /></Link>
                 <div><Link href={`/product/${item.slug}`}>{item.title}</Link><p>{item.short || item.material}</p><b>от {money(item.price)} BYN</b></div>
               </article>
             ))}
           </div>
         </section>
       )}
+
+      <div className="mobile-buy-bar" aria-label="Быстрая покупка">
+        <div>
+          <span>Цена</span>
+          <b>от {money(product.price)} BYN</b>
+        </div>
+        <button type="button" onClick={handleAddToCart}>В корзину</button>
+        <button type="button" onClick={() => setQuickOrderOpen(true)}>1 клик</button>
+      </div>
 
       {quickOrderOpen && (
         <div className="quick-order-modal" role="dialog" aria-modal="true">
