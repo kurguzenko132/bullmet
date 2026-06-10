@@ -49,13 +49,11 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [cartMessage, setCartMessage] = useState('');
   const [favorite, setFavorite] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'delivery' | 'reviews'>('description');
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewMessage, setReviewMessage] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const activeImage = images[activeIndex] || product.image;
-  const settings = getImageSettings(product, activeImage);
   const discount = discountPercent(product.price, product.oldPrice);
   const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length : 0;
   const sortedColorVariants = useMemo(() => {
@@ -228,7 +226,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               tabIndex={0}
               aria-label="Открыть фото товара"
             >
-              <img src={activeImage} alt={product.title} style={{ objectFit: settings.productFit, objectPosition: settings.productPosition }} />
+              <img src={activeImage} alt={product.title} />
               {images.length > 1 && (
                 <>
                   <button className="gallery-nav gallery-nav--prev" type="button" onClick={(event) => { event.stopPropagation(); prevImage(); }} aria-label="Предыдущее фото">‹</button>
@@ -349,57 +347,62 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
         <ServiceItem icon="truck" title="Доставка по Беларуси" text="Самовывоз или доставка в удобное для вас время" />
       </section>
 
-      <section className="product-tabs-section">
-        <div className="product-tabs-nav">
-          <button className={activeTab === 'description' ? 'is-active' : ''} onClick={() => setActiveTab('description')} type="button">Описание</button>
-          <button className={activeTab === 'specs' ? 'is-active' : ''} onClick={() => setActiveTab('specs')} type="button">Характеристики</button>
-          <button className={activeTab === 'delivery' ? 'is-active' : ''} onClick={() => setActiveTab('delivery')} type="button">Доставка и оплата</button>
-          <button className={activeTab === 'reviews' ? 'is-active' : ''} onClick={() => setActiveTab('reviews')} type="button">Отзывы</button>
-        </div>
-        <div className="product-tabs-card">
-          {activeTab === 'description' && (
-            <div className="product-rich-text">
-              <h2>{product.title}</h2>
-              <p>{product.description}</p>
-              <p>Изготовление выполняется на собственном производстве Bullmet. Размер, цвет, материал и оформление можно адаптировать под ваш проект.</p>
+      <section className="product-content-section">
+        <article className="product-content-card product-content-card--wide">
+          <p className="product-section-eyebrow">О товаре</p>
+          <h2>{product.title}</h2>
+          <p>{product.description}</p>
+          <p>Изготовление выполняется на собственном производстве Bullmet. Размер, цвет, материал и оформление можно адаптировать под ваш проект.</p>
+        </article>
+
+        <article className="product-content-card">
+          <p className="product-section-eyebrow">Характеристики</p>
+          <h2>Основные параметры</h2>
+          <div className="product-spec-table product-spec-table--simple">
+            {product.specs.map((spec, index) => <div key={`${spec}-${index}`}><b>Параметр {index + 1}</b><span>{spec}</span></div>)}
+            <div><b>Категория</b><span>{product.category || 'Каталог'}</span></div>
+            <div><b>Материал</b><span>{product.material}</span></div>
+            <div><b>Размеры</b><span>{product.sizes.join(', ') || 'Под заказ'}</span></div>
+          </div>
+        </article>
+
+        <article className="product-content-card">
+          <p className="product-section-eyebrow">Доставка и оплата</p>
+          <h2>Как получить заказ</h2>
+          <div className="delivery-list-simple">
+            <div><b>1. Уточняем детали</b><span>Согласовываем размер, материал, цвет, комплектацию и сроки.</span></div>
+            <div><b>2. Изготавливаем</b><span>Запускаем изделие в работу на собственном производстве.</span></div>
+            <div><b>3. Передаем заказ</b><span>Самовывоз или доставка по Беларуси в удобное время.</span></div>
+          </div>
+        </article>
+
+        <article className="product-content-card product-content-card--wide">
+          <div className="product-reviews-head">
+            <div>
+              <p className="product-section-eyebrow">Отзывы</p>
+              <h2>Отзывы покупателей</h2>
             </div>
-          )}
-          {activeTab === 'specs' && (
-            <div className="product-spec-table">
-              {product.specs.map((spec, index) => <div key={`${spec}-${index}`}><b>Параметр {index + 1}</b><span>{spec}</span></div>)}
-              <div><b>Категория</b><span>{product.category || 'Каталог'}</span></div>
-              <div><b>Материал</b><span>{product.material}</span></div>
-              <div><b>Размеры</b><span>{product.sizes.join(', ') || 'Под заказ'}</span></div>
+            {reviews.length > 0 && <span>★ {averageRating.toFixed(1)} / {reviews.length}</span>}
+          </div>
+          <div className="product-reviews-grid product-reviews-grid--simple">
+            <div className="reviews-list">
+              {reviews.length ? reviews.map((review) => (
+                <article key={review.id} className="review-card">
+                  <div><b>{review.user_name || review.user_email || 'Покупатель'}</b><span>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span></div>
+                  <p>{review.comment}</p>
+                  {!!review.photo_urls?.length && <div className="review-photos">{review.photo_urls.map((url) => <img key={url} src={url} alt="Фото отзыва" />)}</div>}
+                </article>
+              )) : <p className="empty-reviews">Пока отзывов нет. Первый отзыв можно оставить после входа в аккаунт.</p>}
             </div>
-          )}
-          {activeTab === 'delivery' && (
-            <div className="product-rich-text">
-              <h2>Доставка и оплата</h2>
-              <p>Доставляем по Беларуси или передаем заказ самовывозом. Срок и стоимость согласовываются после уточнения размера, материала и комплектации.</p>
-              <p>Оплата возможна после согласования заказа. Для индивидуальных изделий может потребоваться предоплата.</p>
-            </div>
-          )}
-          {activeTab === 'reviews' && (
-            <div className="product-reviews-grid">
-              <div className="reviews-list">
-                {reviews.length ? reviews.map((review) => (
-                  <article key={review.id} className="review-card">
-                    <div><b>{review.user_name || review.user_email || 'Покупатель'}</b><span>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span></div>
-                    <p>{review.comment}</p>
-                    {!!review.photo_urls?.length && <div className="review-photos">{review.photo_urls.map((url) => <img key={url} src={url} alt="Фото отзыва" />)}</div>}
-                  </article>
-                )) : <p className="empty-reviews">Пока отзывов нет. Первый отзыв можно оставить после входа в аккаунт.</p>}
-              </div>
-              <form className="review-form" onSubmit={submitReview}>
-                <h3>Оставить отзыв</h3>
-                <label>Оценка<select value={reviewRating} onChange={(event) => setReviewRating(Number(event.target.value))}>{[5,4,3,2,1].map((rating) => <option key={rating} value={rating}>{rating}</option>)}</select></label>
-                <label>Комментарий<textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} rows={4} placeholder="Расскажите о товаре" required /></label>
-                {reviewMessage && <p>{reviewMessage}</p>}
-                <button type="submit">Отправить на модерацию</button>
-              </form>
-            </div>
-          )}
-        </div>
+            <form className="review-form review-form--simple" onSubmit={submitReview}>
+              <h3>Оставить отзыв</h3>
+              <label>Оценка<select value={reviewRating} onChange={(event) => setReviewRating(Number(event.target.value))}>{[5,4,3,2,1].map((rating) => <option key={rating} value={rating}>{rating}</option>)}</select></label>
+              <label>Комментарий<textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} rows={4} placeholder="Расскажите о товаре" required /></label>
+              {reviewMessage && <p>{reviewMessage}</p>}
+              <button type="submit">Отправить на модерацию</button>
+            </form>
+          </div>
+        </article>
       </section>
 
       {related.length > 0 && (
@@ -437,7 +440,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <button className="lightbox-close" type="button" onClick={() => setLightboxOpen(false)} aria-label="Закрыть">×</button>
           {images.length > 1 && <button className="lightbox-arrow lightbox-arrow--prev" type="button" onClick={prevImage} aria-label="Предыдущее фото">‹</button>}
           <div className="lightbox-stage" onTouchStart={(event) => setTouchStartX(event.changedTouches[0]?.clientX ?? null)} onTouchEnd={(event) => onTouchEnd(event.changedTouches[0]?.clientX ?? 0)}>
-            <img src={activeImage} alt={product.title} style={{ objectPosition: settings.productPosition }} />
+            <img src={activeImage} alt={product.title} />
           </div>
           {images.length > 1 && <button className="lightbox-arrow lightbox-arrow--next" type="button" onClick={nextImage} aria-label="Следующее фото">›</button>}
           {images.length > 1 && (
