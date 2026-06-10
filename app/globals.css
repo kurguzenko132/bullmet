@@ -7410,3 +7410,228 @@ img { display: block; max-width: 100%; }
     position: static !important;
   }
 }
+
+/* ===== Related products cards refresh ===== */
+.related-products-section {
+  margin-top: 48px;
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.related-card--shop {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #fff;
+  border: 1px solid #ebe3d8;
+  box-shadow: 0 10px 28px rgba(37, 31, 24, 0.04);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.related-card--shop:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(37, 31, 24, 0.08);
+  border-color: #e4d7c5;
+}
+
+.related-image--shop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+  padding: 14px;
+  background: #fff;
+  border-bottom: 1px solid #f0e8dc;
+}
+
+.related-image--shop img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100%;
+  max-height: 100%;
+  transition: transform .22s ease;
+}
+
+.related-card--shop:hover .related-image--shop img {
+  transform: scale(1.025);
+}
+
+.related-sale-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.related-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 16px 18px;
+}
+
+.related-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.related-card-meta span,
+.related-card-meta small {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 5px 10px;
+  border: 1px solid #ece2d4;
+  color: #6e665d;
+  background: #fbf8f3;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.related-card-meta span.is-available {
+  color: #25764b;
+  background: #f4faf6;
+  border-color: #d5eadb;
+}
+
+.related-card-meta span.is-order {
+  color: #9a5c20;
+  background: #fff7ef;
+  border-color: #f1ddc6;
+}
+
+.related-card-meta small {
+  font-size: 11px;
+}
+
+.related-card-title {
+  display: block;
+  color: #1f1b18;
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.related-card-title:hover {
+  color: var(--orange);
+}
+
+.related-card-subtitle {
+  margin: 0;
+  color: #756d65;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.related-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.related-card-tags span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 1px solid #ede3d4;
+  color: #6f675e;
+  background: #fdfaf6;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.related-card-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #efe7db;
+}
+
+.related-card-price {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.related-card-price b {
+  font-size: 17px;
+  font-weight: 900;
+  color: #191613;
+}
+
+.related-card-price del {
+  color: #a19a92;
+  font-size: 13px;
+}
+
+.related-card-bottom button {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--orange);
+  background: #fff;
+  color: var(--orange);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.related-card-bottom button:hover {
+  background: var(--orange);
+  color: #fff;
+}
+
+.related-card-bottom button svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 1100px) {
+  .related-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .related-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .related-image--shop {
+    height: 220px;
+  }
+
+  .related-card-body {
+    padding: 14px 14px 16px;
+  }
+
+  .related-card-meta {
+    flex-wrap: wrap;
+  }
+}

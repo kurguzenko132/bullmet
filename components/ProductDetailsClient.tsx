@@ -162,23 +162,13 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     setTouchStartX(null);
   }
 
-  function handleAddToCart() {
-    const cartItem = {
-      slug: product.slug,
-      title: product.title,
-      price: product.price,
-      image: activeImage || product.image,
-      material: product.material,
-      size: activeSize,
-      quantity: qty
-    };
-
+  function pushToCart(cartItem: { slug: string; title: string; price: number; image: string; material?: string; size?: string; quantity: number }) {
     try {
       const raw = window.localStorage.getItem('bullmet_cart');
       const current = raw ? JSON.parse(raw) : [];
       const list = Array.isArray(current) ? current : [];
-      const existingIndex = list.findIndex((item) => item?.slug === product.slug && item?.size === activeSize);
-      if (existingIndex >= 0) list[existingIndex].quantity = Number(list[existingIndex].quantity || 0) + qty;
+      const existingIndex = list.findIndex((item) => item?.slug === cartItem.slug && item?.size === cartItem.size);
+      if (existingIndex >= 0) list[existingIndex].quantity = Number(list[existingIndex].quantity || 0) + cartItem.quantity;
       else list.push(cartItem);
       window.localStorage.setItem('bullmet_cart', JSON.stringify(list));
       setCartMessage('Товар добавлен в корзину');
@@ -186,6 +176,31 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     } catch {
       setCartMessage('Не удалось добавить товар. Попробуйте еще раз.');
     }
+  }
+
+  function handleAddToCart() {
+    pushToCart({
+      slug: product.slug,
+      title: product.title,
+      price: product.price,
+      image: activeImage || product.image,
+      material: product.material,
+      size: activeSize,
+      quantity: qty
+    });
+  }
+
+  function handleAddRelatedToCart(item: CatalogProduct) {
+    const relatedImages = normalizeImages(item);
+    pushToCart({
+      slug: item.slug,
+      title: item.title,
+      price: item.price,
+      image: relatedImages[0] || item.image,
+      material: item.material,
+      size: item.sizes?.[0] || 'Под заказ',
+      quantity: 1
+    });
   }
 
   async function submitQuickOrder(event: FormEvent<HTMLFormElement>) {
@@ -511,12 +526,40 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
         <section className="related-products-section">
           <div className="related-head"><h2>Похожие товары</h2><Link href="/catalog">В каталог</Link></div>
           <div className="related-grid">
-            {related.map((item) => (
-              <article className="related-card" key={item.slug}>
-                <Link href={`/product/${item.slug}`} className="related-image"><img src={item.image} alt={item.title} style={getImagePreset(item, item.image, 'related').style} /></Link>
-                <div><Link href={`/product/${item.slug}`}>{item.title}</Link><p>{item.short || item.material}</p><b>от {money(item.price)} BYN</b></div>
-              </article>
-            ))}
+            {related.map((item) => {
+              const itemImageSettings = getImagePreset(item, item.image, 'related');
+              const itemDiscount = discountPercent(item.price, item.oldPrice);
+
+              return (
+                <article className="related-card related-card--shop" key={item.slug}>
+                  <Link href={`/product/${item.slug}`} className="related-image related-image--shop">
+                    <img src={item.image} alt={item.title} style={itemImageSettings.style} />
+                    {itemDiscount && <span className="related-sale-badge">-{itemDiscount}%</span>}
+                  </Link>
+                  <div className="related-card-body">
+                    <div className="related-card-meta">
+                      <span className={item.inStock ? 'is-available' : 'is-order'}>{item.inStock ? 'В наличии' : 'Под заказ'}</span>
+                      {item.category && <small>{item.category}</small>}
+                    </div>
+                    <Link href={`/product/${item.slug}`} className="related-card-title">{item.title}</Link>
+                    <p className="related-card-subtitle">{item.short || item.material}</p>
+                    <div className="related-card-tags">
+                      {item.material && <span>{item.material}</span>}
+                      {item.sizes?.[0] && <span>{item.sizes[0]}</span>}
+                    </div>
+                    <div className="related-card-bottom">
+                      <div className="related-card-price">
+                        <b>от {money(item.price)} BYN</b>
+                        {item.oldPrice && item.oldPrice > item.price && <del>{money(item.oldPrice)} BYN</del>}
+                      </div>
+                      <button type="button" aria-label={`Добавить в корзину: ${item.title}`} onClick={() => handleAddRelatedToCart(item)}>
+                        <Icon name="cart" />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
       )}
