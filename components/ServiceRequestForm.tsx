@@ -42,29 +42,58 @@ export function ServiceRequestForm() {
   }
 
   return (
-    <form className="service-request-form-pro" onSubmit={submit}>
-      <h2>Отправьте чертеж или эскиз</h2>
-      <p>Прикрепите файл или ссылку на пример — мы рассчитаем стоимость и сроки.</p>
-      <div className="service-form-grid">
-        <input value={form.name} onChange={(event) => patch('name', event.target.value)} placeholder="Ваше имя" required />
-        <input value={form.phone} onChange={(event) => patch('phone', event.target.value)} placeholder="Телефон" required />
+    <form className="service-request-form-v2" onSubmit={submit}>
+      <div className="service-form-head-v2">
+        <h2>Заявка на расчет</h2>
+        <p>Заполните контакты и опишите задачу. Файл можно прикрепить сразу или отправить позже.</p>
       </div>
-      <input value={form.email} onChange={(event) => patch('email', event.target.value)} placeholder="Email" />
-      <select value={form.service} onChange={(event) => patch('service', event.target.value)}>
-        <option>Лазерная резка / гибка металла</option>
-        <option>Лазерная резка</option>
-        <option>Гибка металла</option>
-        <option>Изготовление изделия по эскизу</option>
-        <option>Мелкий опт металлопроката</option>
-      </select>
-      <input value={form.link} onChange={(event) => patch('link', event.target.value)} placeholder="Ссылка на пример товара" />
-      <label className="file-drop-pro">
-        <input type="file" multiple onChange={(event) => setFiles(event.target.files)} />
-        <span>{files?.length ? `Выбрано файлов: ${files.length}` : 'Прикрепить чертеж, фото или эскиз'}</span>
+
+      <div className="service-form-grid-v2">
+        <label>
+          <span>Имя</span>
+          <input value={form.name} onChange={(event) => patch('name', event.target.value)} placeholder="Например, Даниил" required />
+        </label>
+        <label>
+          <span>Телефон</span>
+          <input value={form.phone} onChange={(event) => patch('phone', event.target.value)} placeholder="+375 ..." required />
+        </label>
+      </div>
+
+      <label>
+        <span>Что нужно рассчитать</span>
+        <select value={form.service} onChange={(event) => patch('service', event.target.value)}>
+          <option>Лазерная резка / гибка металла</option>
+          <option>Лазерная резка</option>
+          <option>Гибка металла</option>
+          <option>Изготовление изделия по эскизу</option>
+          <option>Мелкий опт металлопроката</option>
+        </select>
       </label>
-      <textarea value={form.text} onChange={(event) => patch('text', event.target.value)} rows={5} placeholder="Что нужно изготовить? Размеры, материал, количество, пожелания" />
-      {message && <p className="service-message">{message}</p>}
-      <button disabled={loading}>{loading ? 'Отправляем...' : 'Отправить заявку'}</button>
+
+      <div className="service-form-grid-v2">
+        <label>
+          <span>Email</span>
+          <input value={form.email} onChange={(event) => patch('email', event.target.value)} placeholder="Email, если удобно" />
+        </label>
+        <label>
+          <span>Ссылка на пример</span>
+          <input value={form.link} onChange={(event) => patch('link', event.target.value)} placeholder="Ссылка на товар / фото" />
+        </label>
+      </div>
+
+      <label>
+        <span>Описание задачи</span>
+        <textarea value={form.text} onChange={(event) => patch('text', event.target.value)} rows={5} placeholder="Что нужно изготовить? Размеры, материал, количество, пожелания" />
+      </label>
+
+      <label className="file-drop-v2">
+        <input type="file" multiple onChange={(event) => setFiles(event.target.files)} />
+        <b>{files?.length ? `Выбрано файлов: ${files.length}` : 'Прикрепить файл'}</b>
+        <span>чертеж, фото, эскиз или ТЗ</span>
+      </label>
+
+      {message && <p className="service-message-v2">{message}</p>}
+      <button type="submit" disabled={loading}>{loading ? 'Отправляем...' : 'Отправить заявку'}</button>
     </form>
   );
 }
