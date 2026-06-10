@@ -3,7 +3,7 @@
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import type { CatalogProduct, ImageDisplaySettings } from '@/lib/products';
+import type { CatalogProduct, ImageDisplayContext, ImageDisplaySettings, ImageFit } from '@/lib/products';
 
 type ProductForm = {
   id?: string;
@@ -33,6 +33,16 @@ type ProductForm = {
   image_settings: Record<string, ImageDisplaySettings>;
 };
 
+const imageContexts: Array<{ key: ImageDisplayContext; label: string; hint: string; aspect: string; defaultFit: ImageFit }> = [
+  { key: 'catalog', label: 'Каталог', hint: 'карточка в сетке каталога', aspect: '4 / 3', defaultFit: 'cover' },
+  { key: 'product', label: 'Карточка товара', hint: 'главное фото товара', aspect: '4 / 3', defaultFit: 'contain' },
+  { key: 'thumb', label: 'Миниатюры', hint: 'галерея слева и снизу', aspect: '1 / 1', defaultFit: 'cover' },
+  { key: 'variant', label: 'Варианты цвета', hint: 'переключатели цвета/исполнения', aspect: '1 / 1', defaultFit: 'cover' },
+  { key: 'related', label: 'Похожие товары', hint: 'карточки рекомендаций', aspect: '4 / 3', defaultFit: 'cover' },
+  { key: 'modal', label: 'Просмотр фото', hint: 'увеличение по клику', aspect: '16 / 10', defaultFit: 'contain' },
+  { key: 'home', label: 'Главная', hint: 'популярные товары/ленты', aspect: '4 / 3', defaultFit: 'cover' }
+];
+
 const defaultImageSetting: Required<ImageDisplaySettings> = {
   catalogFit: 'cover',
   catalogX: 50,
@@ -41,7 +51,27 @@ const defaultImageSetting: Required<ImageDisplaySettings> = {
   productFit: 'contain',
   productX: 50,
   productY: 50,
-  productZoom: 1
+  productZoom: 1,
+  thumbFit: 'cover',
+  thumbX: 50,
+  thumbY: 50,
+  thumbZoom: 1,
+  variantFit: 'cover',
+  variantX: 50,
+  variantY: 50,
+  variantZoom: 1,
+  relatedFit: 'cover',
+  relatedX: 50,
+  relatedY: 50,
+  relatedZoom: 1,
+  modalFit: 'contain',
+  modalX: 50,
+  modalY: 50,
+  modalZoom: 1,
+  homeFit: 'cover',
+  homeX: 50,
+  homeY: 50,
+  homeZoom: 1
 };
 
 const emptyForm: ProductForm = {
@@ -107,16 +137,30 @@ function normalizeSetting(value?: ImageDisplaySettings): Required<ImageDisplaySe
   };
 }
 
-function styleFromSettings(settings: Required<ImageDisplaySettings>, scope: 'catalog' | 'product') {
-  const fit = scope === 'catalog' ? settings.catalogFit : settings.productFit;
-  const x = scope === 'catalog' ? settings.catalogX : settings.productX;
-  const y = scope === 'catalog' ? settings.catalogY : settings.productY;
-  const zoom = scope === 'catalog' ? settings.catalogZoom : settings.productZoom;
+function readContextSetting(settings: Required<ImageDisplaySettings>, context: ImageDisplayContext) {
+  const fit = settings[`${context}Fit` as keyof Required<ImageDisplaySettings>] as ImageFit;
+  const x = Number(settings[`${context}X` as keyof Required<ImageDisplaySettings>] || 50);
+  const y = Number(settings[`${context}Y` as keyof Required<ImageDisplaySettings>] || 50);
+  const zoom = Number(settings[`${context}Zoom` as keyof Required<ImageDisplaySettings>] || 1);
+  return { fit, x, y, zoom };
+}
+
+function styleFromSettings(settings: Required<ImageDisplaySettings>, context: ImageDisplayContext) {
+  const { fit, x, y, zoom } = readContextSetting(settings, context);
   return {
     objectFit: fit,
     objectPosition: `${x}% ${y}%`,
     transform: `scale(${zoom})`
   } as const;
+}
+
+function patchContext(context: ImageDisplayContext, partial: { fit?: ImageFit; x?: number; y?: number; zoom?: number }): Partial<ImageDisplaySettings> {
+  const next: Partial<ImageDisplaySettings> = {};
+  if (partial.fit) (next as any)[`${context}Fit`] = partial.fit;
+  if (typeof partial.x === 'number') (next as any)[`${context}X`] = partial.x;
+  if (typeof partial.y === 'number') (next as any)[`${context}Y`] = partial.y;
+  if (typeof partial.zoom === 'number') (next as any)[`${context}Zoom`] = partial.zoom;
+  return next;
 }
 
 function productToForm(product: CatalogProduct): ProductForm {
@@ -158,6 +202,7 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
   const [uploading, setUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [selectedCropContext, setSelectedCropContext] = useState<ImageDisplayContext>('catalog');
 
   const activeImage = selectedImage || form.images[0] || '';
   const activeSettings = normalizeSetting(activeImage ? form.image_settings[activeImage] : form.image_settings.__global);
@@ -461,39 +506,86 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
             </div>
           </div>
 
-          <div className="admin-crop-studio">
+          <div className="admin-crop-studio admin-crop-studio--contexts">
             <div className="admin-card-title">
-              <h2>Кадрирование фото</h2>
-              <span>Выберите фото выше и настройте отображение отдельно для каталога и карточки товара.</span>
+              <h2>Кадрирование фото по зонам сайта</h2>
+              <span>Одно фото может выглядеть по-разному в каталоге, карточке, миниатюрах, вариантах цвета, модалке и на главной.</span>
             </div>
             {activeImage ? (
-              <div className="crop-studio-grid">
-                <div className="crop-previews">
-                  <div>
-                    <b>Каталог</b>
-                    <div className="crop-preview crop-preview--catalog"><img src={activeImage} alt="Превью каталога" style={styleFromSettings(activeSettings, 'catalog')} /></div>
-                  </div>
-                  <div>
-                    <b>Карточка товара</b>
-                    <div className="crop-preview crop-preview--product"><img src={activeImage} alt="Превью карточки" style={styleFromSettings(activeSettings, 'product')} /></div>
-                  </div>
+              <div className="crop-studio-layout">
+                <div className="crop-context-sidebar" aria-label="Зоны отображения фото">
+                  {imageContexts.map((context) => {
+                    const ctx = readContextSetting(activeSettings, context.key);
+                    return (
+                      <button
+                        key={context.key}
+                        type="button"
+                        className={selectedCropContext === context.key ? 'is-active' : ''}
+                        onClick={() => setSelectedCropContext(context.key)}
+                      >
+                        <b>{context.label}</b>
+                        <span>{context.hint}</span>
+                        <small>{ctx.fit === 'cover' ? 'заполнить' : 'целиком'} · {ctx.zoom.toFixed(2)}× · {ctx.x}/{ctx.y}</small>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div className="crop-controls">
-                  <h3>Каталог</h3>
-                  <label>Режим<select value={activeSettings.catalogFit} onChange={(e) => patchActiveImageSetting({ catalogFit: e.target.value as 'cover' | 'contain' })}><option value="cover">Заполнить карточку</option><option value="contain">Показать целиком</option></select></label>
-                  <label>Увеличение: {activeSettings.catalogZoom.toFixed(2)}×<input type="range" min="1" max="2.5" step="0.01" value={activeSettings.catalogZoom} onChange={(e) => patchActiveImageSetting({ catalogZoom: Number(e.target.value) })} /></label>
-                  <label>Позиция X: {activeSettings.catalogX}%<input type="range" min="0" max="100" value={activeSettings.catalogX} onChange={(e) => patchActiveImageSetting({ catalogX: Number(e.target.value) })} /></label>
-                  <label>Позиция Y: {activeSettings.catalogY}%<input type="range" min="0" max="100" value={activeSettings.catalogY} onChange={(e) => patchActiveImageSetting({ catalogY: Number(e.target.value) })} /></label>
+                <div className="crop-studio-main">
+                  {imageContexts.map((context) => {
+                    const ctx = readContextSetting(activeSettings, context.key);
+                    const isActive = selectedCropContext === context.key;
+                    return (
+                      <section key={context.key} className={isActive ? 'crop-context-panel is-active' : 'crop-context-panel'} aria-hidden={!isActive}>
+                        <div className="crop-context-head">
+                          <div>
+                            <h3>{context.label}</h3>
+                            <p>{context.hint}</p>
+                          </div>
+                          <span>{ctx.fit === 'cover' ? 'Заполняет блок' : 'Показывает целиком'}</span>
+                        </div>
 
-                  <h3>Карточка товара</h3>
-                  <label>Режим<select value={activeSettings.productFit} onChange={(e) => patchActiveImageSetting({ productFit: e.target.value as 'cover' | 'contain' })}><option value="contain">Показать целиком</option><option value="cover">Заполнить блок</option></select></label>
-                  <label>Увеличение: {activeSettings.productZoom.toFixed(2)}×<input type="range" min="1" max="2.5" step="0.01" value={activeSettings.productZoom} onChange={(e) => patchActiveImageSetting({ productZoom: Number(e.target.value) })} /></label>
-                  <label>Позиция X: {activeSettings.productX}%<input type="range" min="0" max="100" value={activeSettings.productX} onChange={(e) => patchActiveImageSetting({ productX: Number(e.target.value) })} /></label>
-                  <label>Позиция Y: {activeSettings.productY}%<input type="range" min="0" max="100" value={activeSettings.productY} onChange={(e) => patchActiveImageSetting({ productY: Number(e.target.value) })} /></label>
+                        <div className="crop-live-preview" style={{ aspectRatio: context.aspect }}>
+                          <img src={activeImage} alt={`Превью: ${context.label}`} style={styleFromSettings(activeSettings, context.key)} />
+                        </div>
+
+                        <div className="crop-controls-grid">
+                          <label>Режим
+                            <select
+                              value={ctx.fit}
+                              onChange={(e) => patchActiveImageSetting(patchContext(context.key, { fit: e.target.value as ImageFit }))}
+                            >
+                              <option value="cover">Заполнить блок</option>
+                              <option value="contain">Показать целиком</option>
+                            </select>
+                          </label>
+                          <label>Увеличение: {ctx.zoom.toFixed(2)}×
+                            <input type="range" min="1" max="3" step="0.01" value={ctx.zoom} onChange={(e) => patchActiveImageSetting(patchContext(context.key, { zoom: Number(e.target.value) }))} />
+                          </label>
+                          <label>Позиция X: {ctx.x}%
+                            <input type="range" min="0" max="100" value={ctx.x} onChange={(e) => patchActiveImageSetting(patchContext(context.key, { x: Number(e.target.value) }))} />
+                          </label>
+                          <label>Позиция Y: {ctx.y}%
+                            <input type="range" min="0" max="100" value={ctx.y} onChange={(e) => patchActiveImageSetting(patchContext(context.key, { y: Number(e.target.value) }))} />
+                          </label>
+                        </div>
+                      </section>
+                    );
+                  })}
+
+                  <div className="crop-preview-matrix">
+                    {imageContexts.map((context) => (
+                      <div key={context.key}>
+                        <b>{context.label}</b>
+                        <div style={{ aspectRatio: context.key === 'modal' ? '16 / 10' : context.key === 'thumb' || context.key === 'variant' ? '1 / 1' : '4 / 3' }}>
+                          <img src={activeImage} alt="" style={styleFromSettings(activeSettings, context.key)} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
                   <div className="crop-actions">
-                    <button type="button" onClick={applySettingsToAllImages}>Применить ко всем фото</button>
+                    <button type="button" onClick={applySettingsToAllImages}>Применить эти настройки ко всем фото</button>
                     <button type="button" onClick={resetActiveImageSettings}>Сбросить выбранное фото</button>
                   </div>
                 </div>

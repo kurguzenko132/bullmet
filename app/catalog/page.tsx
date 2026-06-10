@@ -4,7 +4,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
 import { clockCatalogCategories, getCatalogProducts, getProductReviewStats } from '@/lib/products';
-import { getImageSettings } from '@/lib/imageDisplay';
+import { getImagePreset } from '@/lib/imageDisplay';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,7 +103,7 @@ export default async function CatalogPage() {
 
               <div className="catalog-products-grid catalog-products-grid--premium">
                 {products.map((product) => {
-                  const imageSettings = getImageSettings(product, product.image);
+                  const imageSettings = getImagePreset(product, product.image, 'catalog');
                   const discount = discountPercent(product.price, product.oldPrice);
                   const stats = reviewStats[product.slug] || { average: 0, count: 0 };
                   const ratingLabel = stats.count ? stats.average.toFixed(1) : '5.0';
@@ -115,11 +115,7 @@ export default async function CatalogPage() {
                         <img
                           src={product.image}
                           alt={product.title}
-                          style={{
-                            objectFit: imageSettings.catalogFit,
-                            objectPosition: imageSettings.catalogPosition,
-                            transform: `scale(${imageSettings.catalogZoom || 1})`
-                          }}
+                          style={imageSettings.style}
                         />
                         <span className="catalog-card-badges">
                           {discount && <b className="badge-sale">-{discount}%</b>}

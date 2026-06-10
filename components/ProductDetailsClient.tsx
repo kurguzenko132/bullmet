@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from './Icon';
 import type { CatalogProduct } from '@/lib/products';
-import { getImageSettings } from '@/lib/imageDisplay';
+import { getImagePreset } from '@/lib/imageDisplay';
 import { supabase } from '@/lib/supabase';
 
 type ProductReview = {
@@ -54,7 +54,8 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const activeImage = images[activeIndex] || product.image;
-  const activeImageSettings = getImageSettings(product, activeImage);
+  const activeImageSettings = getImagePreset(product, activeImage, 'product');
+  const activeModalSettings = getImagePreset(product, activeImage, 'modal');
   const discount = discountPercent(product.price, product.oldPrice);
   const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length : 0;
   const sortedColorVariants = useMemo(() => {
@@ -213,7 +214,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             <div className="product-thumbs" aria-label="Фотографии товара">
               {images.map((image, index) => (
                 <button key={`${image}-${index}`} className={activeIndex === index ? 'is-active' : ''} type="button" onClick={() => setActiveIndex(index)} aria-label={`Показать фото ${index + 1}`}>
-                  <img src={image} alt="" />
+                  <img src={image} alt="" style={getImagePreset(product, image, 'thumb').style} />
                 </button>
               ))}
             </div>
@@ -227,7 +228,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               tabIndex={0}
               aria-label="Открыть фото товара"
             >
-              <img src={activeImage} alt={product.title} style={{ objectFit: activeImageSettings.productFit, objectPosition: activeImageSettings.productPosition, transform: `scale(${activeImageSettings.productZoom || 1})` }} />
+              <img src={activeImage} alt={product.title} style={activeImageSettings.style} />
               {images.length > 1 && (
                 <>
                   <button className="gallery-nav gallery-nav--prev" type="button" onClick={(event) => { event.stopPropagation(); prevImage(); }} aria-label="Предыдущее фото">‹</button>
@@ -275,7 +276,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                   {sortedColorVariants.map((variant) => {
                     const previewImages = normalizeImages(variant);
                     const preview = previewImages[0] || variant.image;
-                    const previewSettings = getImageSettings(variant, preview);
+                    const previewSettings = getImagePreset(variant, preview, 'variant');
                     const label = variant.colorName || variant.title;
                     const isActive = variant.slug === product.slug;
 
@@ -285,10 +286,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                           <img
                             src={preview}
                             alt={label}
-                            style={{
-                              objectFit: previewSettings.catalogFit || previewSettings.productFit || 'cover',
-                              objectPosition: previewSettings.catalogPosition || previewSettings.productPosition || 'center center'
-                            }}
+                            style={previewSettings.style}
                           />
                         </span>
                         <span className="variant-text">
@@ -412,7 +410,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <div className="related-grid">
             {related.map((item) => (
               <article className="related-card" key={item.slug}>
-                <Link href={`/product/${item.slug}`} className="related-image"><img src={item.image} alt={item.title} style={{ objectFit: getImageSettings(item, item.image).catalogFit, objectPosition: getImageSettings(item, item.image).catalogPosition, transform: `scale(${getImageSettings(item, item.image).catalogZoom || 1})` }} /></Link>
+                <Link href={`/product/${item.slug}`} className="related-image"><img src={item.image} alt={item.title} style={getImagePreset(item, item.image, 'related').style} /></Link>
                 <div><Link href={`/product/${item.slug}`}>{item.title}</Link><p>{item.short || item.material}</p><b>от {money(item.price)} BYN</b></div>
               </article>
             ))}
@@ -450,14 +448,14 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <button className="lightbox-close" type="button" onClick={() => setLightboxOpen(false)} aria-label="Закрыть">×</button>
           {images.length > 1 && <button className="lightbox-arrow lightbox-arrow--prev" type="button" onClick={prevImage} aria-label="Предыдущее фото">‹</button>}
           <div className="lightbox-stage" onTouchStart={(event) => setTouchStartX(event.changedTouches[0]?.clientX ?? null)} onTouchEnd={(event) => onTouchEnd(event.changedTouches[0]?.clientX ?? 0)}>
-            <img src={activeImage} alt={product.title} />
+            <img src={activeImage} alt={product.title} style={activeModalSettings.style} />
           </div>
           {images.length > 1 && <button className="lightbox-arrow lightbox-arrow--next" type="button" onClick={nextImage} aria-label="Следующее фото">›</button>}
           {images.length > 1 && (
             <div className="lightbox-thumbs">
               {images.map((image, index) => (
                 <button key={`${image}-lightbox-${index}`} className={activeIndex === index ? 'is-active' : ''} type="button" onClick={() => setActiveIndex(index)}>
-                  <img src={image} alt="" />
+                  <img src={image} alt="" style={getImagePreset(product, image, 'thumb').style} />
                 </button>
               ))}
             </div>

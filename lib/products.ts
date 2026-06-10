@@ -2,15 +2,50 @@ import { supabase } from './supabase';
 
 export type ImageFit = 'cover' | 'contain';
 
+export type ImageDisplayContext =
+  | 'catalog'
+  | 'product'
+  | 'thumb'
+  | 'variant'
+  | 'related'
+  | 'modal'
+  | 'home';
+
 export type ImageDisplaySettings = {
   catalogFit?: ImageFit;
   catalogX?: number;
   catalogY?: number;
   catalogZoom?: number;
+
   productFit?: ImageFit;
   productX?: number;
   productY?: number;
   productZoom?: number;
+
+  thumbFit?: ImageFit;
+  thumbX?: number;
+  thumbY?: number;
+  thumbZoom?: number;
+
+  variantFit?: ImageFit;
+  variantX?: number;
+  variantY?: number;
+  variantZoom?: number;
+
+  relatedFit?: ImageFit;
+  relatedX?: number;
+  relatedY?: number;
+  relatedZoom?: number;
+
+  modalFit?: ImageFit;
+  modalX?: number;
+  modalY?: number;
+  modalZoom?: number;
+
+  homeFit?: ImageFit;
+  homeX?: number;
+  homeY?: number;
+  homeZoom?: number;
 };
 
 export type CatalogProduct = {
