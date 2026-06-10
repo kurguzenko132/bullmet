@@ -18,19 +18,15 @@ export default function LoginPage() {
         <div className="auth-container">
           <div className="auth-info">
             <p className="auth-eyebrow">Личный кабинет Bullmet</p>
-            <h1>Вход или регистрация</h1>
+            <h1>Войти в аккаунт</h1>
             <p>
-              В личном кабинете покупатель сможет отслеживать заказы, сохранять товары,
-              быстрее отправлять заявки на расчет и повторять прошлые покупки.
+              Сохраняйте товары, быстрее отправляйте заявки на расчет и возвращайтесь к выбранным изделиям без повторного поиска.
             </p>
             <div className="auth-benefits">
-              <div><Icon name="cart" /><span>История заказов</span></div>
+              <div><Icon name="cart" /><span>Быстрое оформление</span></div>
               <div><Icon name="request" /><span>Заявки на расчет</span></div>
-              <div><Icon name="package" /><span>Статусы доставки</span></div>
+              <div><Icon name="shield" /><span>Сохраненные данные</span></div>
             </div>
-            <p className="auth-admin-link">
-              Администратор? <Link href="/login?next=/admin">Войти в панель управления</Link>
-            </p>
           </div>
 
           <Suspense fallback={<div className="auth-card">Загрузка формы...</div>}>

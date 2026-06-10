@@ -31,7 +31,7 @@ export function AuthForm() {
 
   const nextUrl = useMemo(() => {
     const value = searchParams.get('next');
-    if (!value || !value.startsWith('/')) return '/admin';
+    if (!value || !value.startsWith('/')) return '/catalog';
     return value;
   }, [searchParams]);
 
@@ -105,16 +105,16 @@ export function AuthForm() {
     <section className="auth-card auth-card--polished" aria-label="Форма входа и регистрации">
       <div className="auth-mode-cards">
         <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => setMode('login')}>
-          <b>Вход</b><span>Для покупателей и администратора</span>
+          <b>Вход</b><span>Войти по email и паролю</span>
         </button>
         <button className={mode === 'register' ? 'active' : ''} type="button" onClick={() => setMode('register')}>
-          <b>Регистрация</b><span>Создать новый аккаунт</span>
+          <b>Регистрация</b><span>Создать личный аккаунт</span>
         </button>
       </div>
 
       <div className="auth-form-head">
-        <h2>{mode === 'login' ? 'Войти в аккаунт' : 'Создать аккаунт'}</h2>
-        <p>{mode === 'login' ? 'Введите email и пароль. Если это админ-email, откроется панель управления.' : 'После регистрации вы сможете быстрее оформлять заявки и сохранять товары.'}</p>
+        <h2>{mode === 'login' ? 'С возвращением' : 'Создать аккаунт'}</h2>
+        <p>{mode === 'login' ? 'Введите email и пароль, чтобы продолжить оформление заказа или посмотреть сохраненные товары.' : 'Аккаунт пригодится для заказов, избранного и быстрых заявок на расчет.'}</p>
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
@@ -164,7 +164,7 @@ export function AuthForm() {
         </button>
 
         <div className="auth-links">
-          <Link href="/contacts">Нужна помощь со входом?</Link>
+          <Link href="/contacts">Нужна помощь?</Link>
           <Link href="/catalog">Вернуться в каталог</Link>
         </div>
       </form>

@@ -127,11 +127,11 @@ export default async function HomePage() {
             <div className="service-row-exact">
               <article>
                 <img src={img.serviceMetal} alt="Лазерная резка" />
-                <div><h4>Лазерная резка</h4><p>Художественная резка из листового металла для декора, вывесок, панелей и деталей</p><Link href="/services">ЗАКАЗАТЬ РАСЧЕТ</Link></div>
+                <div><h4>Лазерная резка</h4><p>Художественная резка из листового металла для декора, вывесок, панелей и деталей</p><Link href="/services#request">ЗАКАЗАТЬ РАСЧЕТ</Link></div>
               </article>
               <article>
                 <img src={img.serviceWood} alt="Гибка металла" />
-                <div><h4>Гибка металла</h4><p>Гибка листового металла для мебельных каркасов, навесов, деталей и малых форм</p><Link href="/services">ЗАКАЗАТЬ РАСЧЕТ</Link></div>
+                <div><h4>Гибка металла</h4><p>Гибка листового металла для мебельных каркасов, навесов, деталей и малых форм</p><Link href="/services#request">ЗАКАЗАТЬ РАСЧЕТ</Link></div>
               </article>
             </div>
           </div>
