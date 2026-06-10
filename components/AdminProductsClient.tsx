@@ -305,7 +305,17 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
               <label>Цвет<input type="color" value={form.color_hex} onChange={(e) => patch('color_hex', e.target.value)} /></label>
             </div>
             <p>Все товары с одинаковым <b>color_group_id</b> автоматически станут переключателями цвета на странице карточки товара.</p>
-            {!!sameGroup.length && <div className="admin-variant-pills">{sameGroup.map((item) => <Link href={`/product/${item.slug}`} key={item.slug} target="_blank"><i style={{ background: item.colorHex || '#111' }} />{item.colorName || item.title}</Link>)}</div>}
+            {!!sameGroup.length && (
+              <div className="admin-variant-pills">
+                {sameGroup.map((item) => (
+                  <Link href={`/product/${item.slug}`} key={item.slug} target="_blank">
+                    <img src={item.image} alt={item.colorName || item.title} />
+                    <i style={{ background: item.colorHex || '#111' }} />
+                    <span>{item.colorName || item.title}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="admin-image-manager">

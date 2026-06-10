@@ -58,6 +58,13 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const settings = getImageSettings(product, activeImage);
   const discount = discountPercent(product.price, product.oldPrice);
   const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length : 0;
+  const sortedColorVariants = useMemo(() => {
+    return [...colorVariants].sort((a, b) => {
+      if (a.slug === product.slug) return -1;
+      if (b.slug === product.slug) return 1;
+      return (a.colorName || a.title).localeCompare(b.colorName || b.title, 'ru');
+    });
+  }, [colorVariants, product.slug]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -259,16 +266,39 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
 
             <p className="product-description-full">{product.description}</p>
 
-            {colorVariants.length > 1 && (
+            {sortedColorVariants.length > 1 && (
               <div className="product-choice-block">
-                <p>Цвет / вариант</p>
-                <div className="color-variants">
-                  {colorVariants.map((variant) => (
-                    <Link key={variant.slug} href={`/product/${variant.slug}`} className={variant.slug === product.slug ? 'is-active' : ''} title={variant.colorName || variant.title}>
-                      <i style={{ background: variant.colorHex || '#222' }} />
-                      <span>{variant.colorName || variant.title}</span>
-                    </Link>
-                  ))}
+                <div className="choice-headline">
+                  <p>Цвет / вариант</p>
+                  <span>Выберите нужное исполнение по фото</span>
+                </div>
+                <div className="color-variants color-variants--photos">
+                  {sortedColorVariants.map((variant) => {
+                    const previewImages = normalizeImages(variant);
+                    const preview = previewImages[0] || variant.image;
+                    const previewSettings = getImageSettings(variant, preview);
+                    const label = variant.colorName || variant.title;
+                    const isActive = variant.slug === product.slug;
+
+                    return (
+                      <Link key={variant.slug} href={`/product/${variant.slug}`} className={isActive ? 'is-active' : ''} title={label} aria-label={`Открыть вариант: ${label}`}>
+                        <span className="variant-photo">
+                          <img
+                            src={preview}
+                            alt={label}
+                            style={{
+                              objectFit: previewSettings.catalogFit || previewSettings.productFit || 'cover',
+                              objectPosition: previewSettings.catalogPosition || previewSettings.productPosition || 'center center'
+                            }}
+                          />
+                        </span>
+                        <span className="variant-text">
+                          <b>{label}</b>
+                          {isActive ? <small>Сейчас выбран</small> : <small>Смотреть вариант</small>}
+                        </span>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}
