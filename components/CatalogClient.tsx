@@ -308,9 +308,9 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
                   </div>
                   <h3>{product.title}</h3>
                   <p>{product.short || product.material}</p>
-                  <div className="catalog-card-tags-market">
-                    <span>{product.category || 'Каталог'}</span>
-                    <span>{product.inStock ? 'В наличии' : 'Под заказ'}</span>
+                  <div className="catalog-card-status-market">
+                    <span className={product.inStock ? 'is-available' : 'is-order'}>{product.inStock ? 'В наличии' : 'Под заказ'}</span>
+                    {product.category && <small>{product.category}</small>}
                   </div>
                   <div className="catalog-card-bottom-market">
                     <div>
