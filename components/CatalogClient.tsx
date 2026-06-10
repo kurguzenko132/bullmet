@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { KeyboardEvent, MouseEvent, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Icon } from './Icon';
 import type { CatalogProduct, ProductReviewStats } from '@/lib/products';
 import { getImagePreset } from '@/lib/imageDisplay';
@@ -69,7 +69,6 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const materials = useMemo(() => Array.from(new Set(products.map((product) => product.material).filter(Boolean))), [products]);
-  const maxProductPrice = useMemo(() => Math.max(...products.map((product) => product.price), 0), [products]);
 
   const categoryCounts = useMemo(() => {
     return products.reduce<Record<string, number>>((acc, product) => {
@@ -78,6 +77,10 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
       return acc;
     }, {});
   }, [products]);
+
+  const visibleCategories = useMemo(() => {
+    return categories.filter((item) => (categoryCounts[item] || 0) > 0 || item === category);
+  }, [categories, categoryCounts, category]);
 
   const filteredProducts = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -141,77 +144,60 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
   }
 
   return (
-    <div className="catalog-layout catalog-layout--shop">
-      <aside className={filtersOpen ? 'catalog-smart-filter is-open' : 'catalog-smart-filter'} aria-label="Фильтры каталога">
-        <div className="catalog-smart-filter-head">
-          <div>
-            <span>Фильтр</span>
-            <h2>Подберите изделие</h2>
-          </div>
-          <button type="button" onClick={() => setFiltersOpen(false)} aria-label="Закрыть фильтр">×</button>
+    <div className="catalog-layout-market">
+      <div className="catalog-mobile-filter-trigger catalog-mobile-filter-trigger--market">
+        <button type="button" onClick={() => setFiltersOpen(true)}>Фильтры {selectedFiltersCount > 0 && <span>{selectedFiltersCount}</span>}</button>
+        {selectedFiltersCount > 0 && <button type="button" onClick={reset}>Сбросить</button>}
+      </div>
+
+      <aside className={filtersOpen ? 'catalog-filter-market is-open' : 'catalog-filter-market'} aria-label="Фильтры каталога">
+        <div className="catalog-filter-market-head">
+          <b>Фильтры</b>
+          {selectedFiltersCount > 0 && <button type="button" onClick={reset}>Сбросить</button>}
+          <button className="catalog-filter-close" type="button" onClick={() => setFiltersOpen(false)} aria-label="Закрыть фильтр">×</button>
         </div>
 
-        <label className="catalog-filter-search-modern">
-          <Icon name="search" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск: римские, кофе, качели..." />
-        </label>
-
-        <div className="catalog-filter-section-modern">
-          <div className="catalog-filter-title-modern"><b>Категории</b><small>{category || 'Все товары'}</small></div>
-          <div className="catalog-category-modern-list">
+        <section className="catalog-filter-market-section">
+          <h3>Категория</h3>
+          <div className="catalog-category-pills-market">
             <button className={!category ? 'is-active' : ''} type="button" onClick={() => setCategory('')}><span>Все товары</span><b>{products.length}</b></button>
-            {categories.map((item) => (
+            {visibleCategories.map((item) => (
               <button key={item} className={category === item ? 'is-active' : ''} type="button" onClick={() => setCategory(item)}>
                 <span>{item}</span><b>{categoryCounts[item] || 0}</b>
               </button>
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="catalog-filter-section-modern">
-          <div className="catalog-filter-title-modern"><b>Цена</b><small>{maxProductPrice ? `до ${money(maxProductPrice)} BYN` : 'по каталогу'}</small></div>
-          <div className="catalog-price-grid-modern">
+        <details className="catalog-filter-market-section" open>
+          <summary>Цена</summary>
+          <div className="catalog-price-inputs-market">
             <input type="number" value={minPrice} onChange={(event) => { setMinPrice(event.target.value); setPricePreset(''); }} placeholder="от" aria-label="Цена от" />
             <input type="number" value={maxPrice} onChange={(event) => { setMaxPrice(event.target.value); setPricePreset(''); }} placeholder="до" aria-label="Цена до" />
           </div>
-          <div className="catalog-price-presets-modern">
+          <div className="catalog-price-presets-market">
             <button className={pricePreset === 'cheap' ? 'is-active' : ''} type="button" onClick={() => choosePricePreset('cheap')}>до 200</button>
             <button className={pricePreset === 'middle' ? 'is-active' : ''} type="button" onClick={() => choosePricePreset('middle')}>200–700</button>
             <button className={pricePreset === 'premium' ? 'is-active' : ''} type="button" onClick={() => choosePricePreset('premium')}>от 700</button>
           </div>
-        </div>
+        </details>
 
-        <div className="catalog-filter-section-modern">
-          <div className="catalog-filter-title-modern"><b>Материал</b><small>{material || 'Все'}</small></div>
-          <select value={material} onChange={(event) => setMaterial(event.target.value)}>
-            <option value="">Все материалы</option>
-            {materials.map((item) => <option value={item} key={item}>{item}</option>)}
-          </select>
-        </div>
-
-        {selectedFiltersCount > 0 && (
-          <div className="catalog-active-chips-modern">
-            {query.trim() && <button type="button" onClick={() => setQuery('')}>Поиск: {query} ×</button>}
-            {category && <button type="button" onClick={() => setCategory('')}>{category} ×</button>}
-            {material && <button type="button" onClick={() => setMaterial('')}>{material} ×</button>}
-            {(minPrice || maxPrice) && <button type="button" onClick={() => { setMinPrice(''); setMaxPrice(''); setPricePreset(''); }}>Цена ×</button>}
+        <details className="catalog-filter-market-section" open>
+          <summary>Материал</summary>
+          <div className="catalog-radio-list-market">
+            <button className={!material ? 'is-active' : ''} type="button" onClick={() => setMaterial('')}>Все материалы</button>
+            {materials.map((item) => <button className={material === item ? 'is-active' : ''} type="button" onClick={() => setMaterial(item)} key={item}>{item}</button>)}
           </div>
-        )}
-
-        <button className="catalog-reset-modern" type="button" onClick={reset}>Сбросить фильтры</button>
+        </details>
       </aside>
 
-      <section className="catalog-content catalog-content--shop" aria-label="Список товаров">
-        <div className="catalog-mobile-filter-trigger">
-          <button type="button" onClick={() => setFiltersOpen(true)}>Фильтры {selectedFiltersCount > 0 && <span>{selectedFiltersCount}</span>}</button>
-          <button type="button" onClick={reset}>Сбросить</button>
-        </div>
+      <section className="catalog-content-market" aria-label="Список товаров">
+        <div className="catalog-toolbar-market">
+          <label className="catalog-search-market">
+            <Icon name="search" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Искать в каталоге: часы, кофе, качели..." />
+          </label>
 
-        <div className="catalog-toolbar catalog-toolbar--shop">
-          <div>
-            <span>Найдено</span>
-            <b>{filteredProducts.length} из {products.length}</b>
-          </div>
           <select aria-label="Сортировка" value={sort} onChange={(event) => setSort(event.target.value)}>
             <option value="popular">По популярности</option>
             <option value="price-asc">Сначала дешевле</option>
@@ -219,15 +205,26 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
             <option value="new">Новинки</option>
             <option value="discount">Со скидкой</option>
           </select>
-          <div className="view-switcher" aria-label="Вид каталога">
+
+          <div className="view-switcher view-switcher--market" aria-label="Вид каталога">
             <button type="button" aria-label="Плитка" className={view === 'grid' ? 'is-active' : ''} onClick={() => setView('grid')}><span className="grid-icon" /></button>
             <button type="button" aria-label="Список" className={view === 'list' ? 'is-active' : ''} onClick={() => setView('list')}><span className="list-icon" /></button>
           </div>
         </div>
 
-        {notice && <div className="catalog-cart-notice">{notice}</div>}
+        <div className="catalog-results-row-market">
+          <b>{filteredProducts.length} товаров</b>
+          <div className="catalog-active-chips-market">
+            {query.trim() && <button type="button" onClick={() => setQuery('')}>Поиск: {query} ×</button>}
+            {category && <button type="button" onClick={() => setCategory('')}>{category} ×</button>}
+            {material && <button type="button" onClick={() => setMaterial('')}>{material} ×</button>}
+            {(minPrice || maxPrice) && <button type="button" onClick={() => { setMinPrice(''); setMaxPrice(''); setPricePreset(''); }}>Цена ×</button>}
+          </div>
+        </div>
 
-        <div className={view === 'grid' ? 'catalog-products-grid catalog-products-grid--shop' : 'catalog-products-grid catalog-products-grid--shop catalog-products-grid--list'}>
+        {notice && <div className="catalog-cart-notice catalog-cart-notice--market">{notice}</div>}
+
+        <div className={view === 'grid' ? 'catalog-grid-market' : 'catalog-grid-market catalog-grid-market--list'}>
           {filteredProducts.map((product) => {
             const imageSettings = getImagePreset(product, product.image, 'catalog');
             const discount = discountPercent(product.price, product.oldPrice);
@@ -237,7 +234,7 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
 
             return (
               <article
-                className="catalog-product-card-shop"
+                className="catalog-card-market"
                 key={product.slug}
                 role="link"
                 tabIndex={0}
@@ -245,26 +242,22 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
                 onKeyDown={(event) => onCardKeyDown(event, product.slug)}
                 aria-label={`Открыть товар: ${product.title}`}
               >
-                <div className="catalog-product-image-shop">
+                <div className="catalog-card-image-market">
                   <img src={product.image} alt={product.title} style={imageSettings.style} />
-                  <span className="catalog-card-badges catalog-card-badges--shop">
-                    {discount && <b className="badge-sale">-{discount}%</b>}
-                    {product.isNew && <b className="badge-new">Новинка</b>}
-                    {product.isPopular && <b className="badge-hit">Хит</b>}
-                  </span>
+                  {discount && <span className="catalog-sale-market">-{discount}%</span>}
                 </div>
-                <div className="catalog-product-body-shop">
-                  <div className={stats.count ? 'catalog-rating-row-shop' : 'catalog-rating-row-shop is-empty'}>
+                <div className="catalog-card-body-market">
+                  <div className="catalog-card-rating-market">
                     <span>★ {ratingLabel}</span>
                     <small>{reviewsLabel}</small>
                   </div>
                   <h3>{product.title}</h3>
                   <p>{product.short || product.material}</p>
-                  <div className="catalog-product-tags-shop">
+                  <div className="catalog-card-tags-market">
                     <span>{product.category || 'Каталог'}</span>
-                    <span>{product.inStock ? 'В наличии / под заказ' : 'Под заказ'}</span>
+                    <span>{product.inStock ? 'В наличии' : 'Под заказ'}</span>
                   </div>
-                  <div className="catalog-product-bottom-shop">
+                  <div className="catalog-card-bottom-market">
                     <div>
                       <b>от {money(product.price)} BYN</b>
                       {product.oldPrice && product.oldPrice > product.price && <del>{money(product.oldPrice)} BYN</del>}
