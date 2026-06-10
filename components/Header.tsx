@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Icon } from './Icon';
 
 type SearchProduct = {
@@ -28,7 +29,10 @@ function readCartCount() {
   }
 }
 
+const quickSearches = ['римские', 'кофе', 'качели', 'лазерная резка', 'лофт'];
+
 export function Header() {
+  const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -38,6 +42,22 @@ export function Header() {
 
   const trimmedQuery = query.trim();
   const hasResults = results.length > 0;
+
+  const nav = useMemo(() => [
+    { href: '/catalog', label: 'Каталог' },
+    { href: '/production', label: 'Производство' },
+    { href: '/services', label: 'Услуги' },
+    { href: '/about', label: 'О компании' },
+    { href: '/contacts', label: 'Контакты' }
+  ], []);
+
+  const bottomNav = useMemo(() => [
+    { href: '/', label: 'Главная', icon: 'factory' as const },
+    { href: '/catalog', label: 'Каталог', icon: 'search' as const },
+    { href: '/services#request', label: 'Расчет', icon: 'request' as const },
+    { href: '/cart', label: 'Корзина', icon: 'cart' as const },
+    { href: '/login', label: 'Профиль', icon: 'user' as const }
+  ], []);
 
   useEffect(() => {
     const update = () => setCartCount(readCartCount());
@@ -51,9 +71,12 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    if (!searchOpen) return;
+    if (!searchOpen && !mobileOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSearchOpen(false);
+      if (event.key === 'Escape') {
+        setSearchOpen(false);
+        setMobileOpen(false);
+      }
     };
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKeyDown);
@@ -61,11 +84,12 @@ export function Header() {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [searchOpen]);
+  }, [searchOpen, mobileOpen]);
 
   useEffect(() => {
     if (!searchOpen || trimmedQuery.length < 2) {
       setResults([]);
+      setLoading(false);
       return;
     }
 
@@ -81,7 +105,7 @@ export function Header() {
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
-    }, 250);
+    }, 220);
 
     return () => {
       window.clearTimeout(timer);
@@ -91,60 +115,80 @@ export function Header() {
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (trimmedQuery) {
-      setSearchOpen(false);
-      window.location.href = `/catalog?q=${encodeURIComponent(trimmedQuery)}`;
-    }
+    if (!trimmedQuery) return;
+    setSearchOpen(false);
+    window.location.href = `/catalog?q=${encodeURIComponent(trimmedQuery)}`;
   }
 
-  const nav = useMemo(() => [
-    { href: '/catalog', label: 'КАТАЛОГ' },
-    { href: '/#production', label: 'ПРОИЗВОДСТВО' },
-    { href: '/services', label: 'УСЛУГИ' },
-    { href: '/about', label: 'О КОМПАНИИ' },
-    { href: '/contacts', label: 'КОНТАКТЫ' }
-  ], []);
+  function useQuickSearch(value: string) {
+    setQuery(value);
+  }
 
   return (
-    <header className="site-header-exact">
-      <div className="home-container header-inner-exact">
-        <Link href="/" className="brand-exact" aria-label="Bullmet">
-          <img src="/logo-shield-check.svg" alt="" className="brand-mark" />
-          <span className="brand-text"><b>BULLMET</b><small>металл с элементами дерева</small></span>
-        </Link>
+    <>
+      <header className="site-header-exact site-header-polished">
+        <div className="home-container header-inner-exact header-inner-polished">
+          <Link href="/" className="brand-exact" aria-label="Bullmet">
+            <img src="/logo-shield-check.svg" alt="" className="brand-mark" />
+            <span className="brand-text"><b>BULLMET</b><small>металл с элементами дерева</small></span>
+          </Link>
 
-        <nav className="nav-exact">
-          {nav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
-        </nav>
+          <nav className="nav-exact nav-polished">
+            {nav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+          </nav>
 
-        <div className="header-actions-exact">
-          <button aria-label="Поиск" className="icon-btn" type="button" onClick={() => setSearchOpen(true)}><Icon name="search" /></button>
-          <Link href="/cart" className="cart-mini" aria-label="Корзина"><Icon name="cart" />{cartCount > 0 && <span>{cartCount}</span>}</Link>
-          <Link href="/login" className="login-btn"><Icon name="user" /><span>Войти</span></Link>
-          <Link href="/contacts" className="calc-btn">ЗАКАЗАТЬ РАСЧЕТ</Link>
-          <button className="mobile-menu-btn" type="button" onClick={() => setMobileOpen((value) => !value)} aria-label="Меню"><span /><span /><span /></button>
+          <div className="header-actions-exact header-actions-polished">
+            <button aria-label="Поиск" className="icon-btn" type="button" onClick={() => setSearchOpen(true)}><Icon name="search" /></button>
+            <Link href="/cart" className="cart-mini" aria-label="Корзина"><Icon name="cart" />{cartCount > 0 && <span>{cartCount}</span>}</Link>
+            <Link href="/login" className="login-btn"><Icon name="user" /><span>Войти</span></Link>
+            <Link href="/services#request" className="calc-btn">Заказать расчет</Link>
+            <button className={mobileOpen ? 'mobile-menu-btn is-open' : 'mobile-menu-btn'} type="button" onClick={() => setMobileOpen((value) => !value)} aria-label="Меню"><span /><span /><span /></button>
+          </div>
         </div>
-      </div>
+      </header>
 
       {mobileOpen && (
-        <div className="mobile-header-menu">
-          {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}</Link>)}
-          <Link href="/contacts" onClick={() => setMobileOpen(false)}>Заказать расчет</Link>
+        <div className="mobile-menu-overlay" role="dialog" aria-modal="true">
+          <button className="mobile-menu-backdrop" type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть меню" />
+          <div className="mobile-menu-panel">
+            <div className="mobile-menu-head">
+              <b>BULLMET</b>
+              <button type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть">×</button>
+            </div>
+            <button className="mobile-menu-search" type="button" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}><Icon name="search" /> Поиск по каталогу</button>
+            <nav>
+              {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}</Link>)}
+              <Link href="/services#request" onClick={() => setMobileOpen(false)}>Заказать расчет</Link>
+            </nav>
+            <div className="mobile-menu-contact">
+              <span>Нужен расчет изделия?</span>
+              <Link href="/contacts" onClick={() => setMobileOpen(false)}>Связаться с Bullmet</Link>
+            </div>
+          </div>
         </div>
       )}
 
       {searchOpen && (
-        <div className="site-search-modal" role="dialog" aria-modal="true">
+        <div className="site-search-modal site-search-modal--polished" role="dialog" aria-modal="true">
           <button className="site-search-backdrop" type="button" onClick={() => setSearchOpen(false)} aria-label="Закрыть поиск" />
-          <div className="site-search-card">
+          <div className="site-search-card site-search-card--polished">
             <button className="site-search-close" type="button" onClick={() => setSearchOpen(false)} aria-label="Закрыть">×</button>
-            <p>Поиск по каталогу</p>
-            <form onSubmit={submitSearch}>
+            <div className="site-search-head">
+              <span>Поиск по каталогу</span>
+              <h2>Что ищем?</h2>
+              <p>Введите название, категорию или направление: часы, качели, резка, лофт.</p>
+            </div>
+            <form onSubmit={submitSearch} className="site-search-form-polished">
+              <Icon name="search" />
               <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: римские, кофе, качели, спорт" />
               <button type="submit">Найти</button>
             </form>
-            <div className="site-search-results">
+            <div className="site-search-quick">
+              {quickSearches.map((item) => <button key={item} type="button" onClick={() => useQuickSearch(item)}>{item}</button>)}
+            </div>
+            <div className="site-search-results site-search-results--polished">
               {loading && <span>Ищу товары...</span>}
+              {!loading && trimmedQuery.length < 2 && <span>Начните вводить минимум 2 символа или выберите быстрый запрос.</span>}
               {!loading && trimmedQuery.length >= 2 && !hasResults && <span>Ничего не найдено. Попробуйте другой запрос.</span>}
               {hasResults && results.map((product) => (
                 <Link href={`/product/${product.slug}`} key={product.slug} onClick={() => setSearchOpen(false)}>
@@ -157,6 +201,19 @@ export function Header() {
           </div>
         </div>
       )}
-    </header>
+
+      <nav className="mobile-bottom-nav" aria-label="Быстрая навигация">
+        {bottomNav.map((item) => {
+          const active = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href.split('#')[0]);
+          return (
+            <Link href={item.href} key={item.href} className={active ? 'is-active' : ''}>
+              <Icon name={item.icon} />
+              <span>{item.label}</span>
+              {item.href === '/cart' && cartCount > 0 && <b>{cartCount}</b>}
+            </Link>
+          );
+        })}
+      </nav>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
+import { HomeProductsClient } from '@/components/HomeProductsClient';
 import { getCatalogProducts } from '@/lib/products';
 
 const img = {
@@ -31,12 +32,12 @@ const featureItems = [
 ];
 
 const categories = [
-  { title: 'Настенные\nчасы', img: img.clock },
-  { title: 'Садовая\nмебель', img: img.swing },
-  { title: 'Мебель для дома\nв стиле лофт', img: img.custom },
-  { title: 'Лазерная\nрезка', img: img.metal },
-  { title: 'Мелкий опт\nметаллопроката', img: img.wood },
-  { title: 'Гибка\nметалла', img: img.serviceMetal }
+  { title: 'Настенные\nчасы', img: img.clock, href: '/catalog?category=Настенные часы' },
+  { title: 'Садовая\nмебель', img: img.swing, href: '/catalog?category=Садовая мебель' },
+  { title: 'Мебель для дома\nв стиле лофт', img: img.custom, href: '/catalog?category=Мебель для дома в стиле лофт' },
+  { title: 'Лазерная\nрезка', img: img.metal, href: '/services#laser' },
+  { title: 'Мелкий опт\nметаллопроката', img: img.wood, href: '/services#metal' },
+  { title: 'Гибка\nметалла', img: img.serviceMetal, href: '/services#bending' }
 ];
 
 const productionBenefits = [
@@ -75,7 +76,7 @@ export default async function HomePage() {
               <p>Изготавливаем садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.</p>
               <div className="hero-actions">
                 <Link href="/catalog" className="btn-orange">ПЕРЕЙТИ В КАТАЛОГ</Link>
-                <Link href="/contacts" className="btn-outline">ЗАКАЗАТЬ РАСЧЕТ</Link>
+                <Link href="/services#request" className="btn-outline">ЗАКАЗАТЬ РАСЧЕТ</Link>
               </div>
             </div>
           </div>
@@ -92,7 +93,7 @@ export default async function HomePage() {
 
         <section className="home-container category-grid-exact">
           {categories.map((item) => (
-            <Link href="/catalog" className="category-tile" key={item.title}>
+            <Link href={item.href} className="category-tile" key={item.title}>
               <img src={item.img} alt={item.title.replace(/\n/g, ' ')} />
               <span className="tile-title"><Lines value={item.title} /></span>
               <span className="tile-arrow"><Icon name="arrow" /></span>
@@ -105,7 +106,7 @@ export default async function HomePage() {
             <p className="eyebrow">мы изготавливаем сами</p>
             <h2>Собственное производство Bullmet</h2>
             <p className="body-text">Мы изготавливаем садовую мебель, мебель для дома в стиле лофт, качели, навесы и малые архитектурные формы. Также выполняем художественную лазерную резку из листового металла.</p>
-            <Link href="/about" className="small-orange">ПОДРОБНЕЕ О ПРОИЗВОДСТВЕ</Link>
+            <Link href="/production" className="small-orange">ПОДРОБНЕЕ О ПРОИЗВОДСТВЕ</Link>
           </div>
           <div className="production-image"><img src={img.workshop} alt="Производство Bullmet" /></div>
           <div className="production-list">
@@ -118,16 +119,7 @@ export default async function HomePage() {
         <section className="home-container products-services">
           <div className="popular-block">
             <h3>ПОПУЛЯРНЫЕ ТОВАРЫ</h3>
-            <div className="product-row-exact">
-              {products.map((product) => (
-                <article className="product-card-exact" key={product.title}>
-                  <div className="product-img-wrap"><img src={product.image} alt={product.title} /></div>
-                  <h4>{product.title}</h4>
-                  <p>{product.material}</p>
-                  <div className="product-bottom"><b>от {product.price} BYN</b><button aria-label="В корзину"><Icon name="cart" /></button></div>
-                </article>
-              ))}
-            </div>
+            <HomeProductsClient products={products} />
           </div>
 
           <div className="services-block">
@@ -177,7 +169,7 @@ export default async function HomePage() {
           <div className="cta-copy">
             <h2>НУЖНО ИЗДЕЛИЕ ПО ВАШИМ РАЗМЕРАМ?</h2>
             <p>Изготовим мебель, качели, навесы, малые архитектурные формы, декоративные панели или детали по вашему эскизу и размерам.</p>
-            <Link href="/contacts">ОБСУДИТЬ ПРОЕКТ</Link>
+            <Link href="/services#request">ОБСУДИТЬ ПРОЕКТ</Link>
           </div>
           <div className="cta-image"><img src={img.cta} alt="Изделие по вашим размерам" /></div>
         </section>

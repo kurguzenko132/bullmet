@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: 'Каталог Bullmet: настенные часы, садовая мебель, мебель для дома в стиле лофт, лазерная резка, гибка металла и мелкий опт металлопроката.'
 };
 
-export default async function CatalogPage({ searchParams }: { searchParams?: { q?: string } }) {
+export default async function CatalogPage({ searchParams }: { searchParams?: { q?: string; category?: string } }) {
   const products = await getCatalogProducts();
   const reviewStats = await getProductReviewStats(products.map((product) => product.slug));
   const categories = Array.from(new Set([...clockCatalogCategories, ...products.map((product) => product.category).filter((item): item is string => Boolean(item))]));
@@ -29,7 +29,7 @@ export default async function CatalogPage({ searchParams }: { searchParams?: { q
           </nav>
 
           <h1 className="catalog-title">Каталог товаров</h1>
-          <CatalogClient products={products} reviewStats={reviewStats} categories={categories} initialQuery={searchParams?.q || ''} />
+          <CatalogClient products={products} reviewStats={reviewStats} categories={categories} initialQuery={searchParams?.q || ''} initialCategory={searchParams?.category || ''} />
         </div>
       </main>
       <Footer />

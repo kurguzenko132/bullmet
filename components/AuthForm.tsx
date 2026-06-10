@@ -24,6 +24,7 @@ export function AuthForm() {
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -47,6 +48,11 @@ export function AuthForm() {
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !password) {
       setError('Введите email и пароль.');
+      return;
+    }
+
+    if (mode === 'register' && password !== confirmPassword) {
+      setError('Пароли не совпадают.');
       return;
     }
 
@@ -96,14 +102,19 @@ export function AuthForm() {
   }
 
   return (
-    <section className="auth-card" aria-label="Форма входа и регистрации">
-      <div className="auth-tabs">
+    <section className="auth-card auth-card--polished" aria-label="Форма входа и регистрации">
+      <div className="auth-mode-cards">
         <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => setMode('login')}>
-          Вход
+          <b>Вход</b><span>Для покупателей и администратора</span>
         </button>
         <button className={mode === 'register' ? 'active' : ''} type="button" onClick={() => setMode('register')}>
-          Регистрация
+          <b>Регистрация</b><span>Создать новый аккаунт</span>
         </button>
+      </div>
+
+      <div className="auth-form-head">
+        <h2>{mode === 'login' ? 'Войти в аккаунт' : 'Создать аккаунт'}</h2>
+        <p>{mode === 'login' ? 'Введите email и пароль. Если это админ-email, откроется панель управления.' : 'После регистрации вы сможете быстрее оформлять заявки и сохранять товары.'}</p>
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
@@ -111,7 +122,7 @@ export function AuthForm() {
           Email
           <input
             type="email"
-            placeholder="Введите email"
+            placeholder="example@mail.com"
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -122,7 +133,7 @@ export function AuthForm() {
           Пароль
           <input
             type="password"
-            placeholder="Введите пароль"
+            placeholder={mode === 'login' ? 'Ваш пароль' : 'Минимум 6 символов'}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -130,24 +141,33 @@ export function AuthForm() {
             required
           />
         </label>
+        {mode === 'register' && (
+          <label>
+            Повторите пароль
+            <input
+              type="password"
+              placeholder="Повторите пароль"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              minLength={6}
+              required
+            />
+          </label>
+        )}
 
         {error && <p className="auth-message auth-message-error">{error}</p>}
         {message && <p className="auth-message auth-message-success">{message}</p>}
 
         <button type="submit" className="auth-submit" disabled={loading}>
-          {loading ? 'ПОДОЖДИТЕ...' : mode === 'login' ? 'ВОЙТИ В АККАУНТ' : 'ЗАРЕГИСТРИРОВАТЬСЯ'}
+          {loading ? 'ПОДОЖДИТЕ...' : mode === 'login' ? 'ВОЙТИ' : 'СОЗДАТЬ АККАУНТ'}
         </button>
 
         <div className="auth-links">
-          <Link href="/contacts">Забыли пароль?</Link>
+          <Link href="/contacts">Нужна помощь со входом?</Link>
           <Link href="/catalog">Вернуться в каталог</Link>
         </div>
       </form>
-
-      <p className="auth-note">
-        После успешного входа администратор автоматически попадает в панель управления.
-        Для защиты админки добавь email администратора в переменную NEXT_PUBLIC_ADMIN_EMAIL.
-      </p>
     </section>
   );
 }
