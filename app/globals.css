@@ -6935,3 +6935,96 @@ img { display: block; max-width: 100%; }
   .catalog-card-market { min-height: 0; }
   .catalog-card-image-market { height: 245px; }
 }
+
+/* ===== Catalog filter hierarchy: all / clocks / swings, then clock themes ===== */
+.catalog-filter-market-section--main {
+  padding-bottom: 12px;
+}
+.catalog-main-groups-market {
+  display: grid;
+  gap: 8px;
+}
+.catalog-main-groups-market button {
+  width: 100%;
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #eee3d8;
+  border-radius: 10px;
+  background: #fff;
+  padding: 9px 10px;
+  color: #2a2724;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .14s ease, background .14s ease, color .14s ease;
+}
+.catalog-main-groups-market button span {
+  font-size: 14px;
+  font-weight: 950;
+}
+.catalog-main-groups-market button b {
+  min-width: 25px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #f1ece6;
+  color: #79716a;
+  font-size: 11px;
+  font-weight: 950;
+}
+.catalog-main-groups-market button:hover {
+  border-color: #efc7aa;
+  background: #fff8f2;
+}
+.catalog-main-groups-market button.is-active {
+  border-color: var(--orange);
+  background: #fff0e5;
+  color: var(--orange);
+}
+.catalog-main-groups-market button.is-active b {
+  background: var(--orange);
+  color: #fff;
+}
+.catalog-filter-market-section--themes {
+  background: #fffaf5;
+}
+.catalog-category-pills-market--nested {
+  max-height: 300px;
+}
+.catalog-category-pills-market--nested button {
+  min-height: 33px;
+  padding: 7px 9px;
+}
+.catalog-category-pills-market--nested button span {
+  font-size: 13px;
+  font-weight: 850;
+}
+
+/* smaller cart button inside catalog cards */
+.catalog-card-bottom-market {
+  align-items: center;
+  padding-top: 12px;
+}
+.catalog-card-bottom-market button {
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 0;
+}
+.catalog-card-bottom-market button svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+.catalog-card-bottom-market b {
+  font-size: 17px;
+}
+@media (max-width: 640px) {
+  .catalog-card-bottom-market button {
+    flex-basis: 38px !important;
+    width: 38px !important;
+    height: 38px !important;
+  }
+}
