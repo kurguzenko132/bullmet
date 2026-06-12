@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Icon } from './Icon';
-import { supabase } from '@/lib/supabase';
 
 type SearchProduct = {
   slug: string;
@@ -40,7 +39,6 @@ export function Header() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchProduct[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false);
 
   const trimmedQuery = query.trim();
   const hasResults = results.length > 0;
@@ -58,7 +56,7 @@ export function Header() {
     { href: '/catalog', label: 'Каталог', icon: 'search' as const },
     { href: '/services#request', label: 'Расчет', icon: 'request' as const },
     { href: '/cart', label: 'Корзина', icon: 'cart' as const },
-    { href: '/account', label: 'Профиль', icon: 'user' as const }
+    { href: '/login', label: 'Профиль', icon: 'user' as const }
   ], []);
 
   useEffect(() => {
@@ -69,27 +67,6 @@ export function Header() {
     return () => {
       window.removeEventListener('storage', update);
       window.removeEventListener('bullmet-cart-updated', update);
-    };
-  }, []);
-
-
-  useEffect(() => {
-    let active = true;
-
-    async function checkSession() {
-      if (!supabase) return;
-      const { data } = await supabase.auth.getSession();
-      if (active) setIsSignedIn(Boolean(data.session));
-    }
-
-    checkSession();
-    const { data } = supabase?.auth.onAuthStateChange((_event, session) => {
-      setIsSignedIn(Boolean(session));
-    }) || { data: null };
-
-    return () => {
-      active = false;
-      data?.subscription?.unsubscribe();
     };
   }, []);
 
@@ -163,7 +140,7 @@ export function Header() {
           <div className="header-actions-exact header-actions-polished">
             <button aria-label="Поиск" className="icon-btn" type="button" onClick={() => setSearchOpen(true)}><Icon name="search" /></button>
             <Link href="/cart" className="cart-mini" aria-label="Корзина"><Icon name="cart" />{cartCount > 0 && <span>{cartCount}</span>}</Link>
-            <Link href={isSignedIn ? '/account' : '/login?next=/account'} className="login-btn"><Icon name="user" /><span>{isSignedIn ? 'Кабинет' : 'Войти'}</span></Link>
+            <Link href="/login" className="login-btn"><Icon name="user" /><span>Войти</span></Link>
             <Link href="/services#request" className="calc-btn">Заказать расчет</Link>
             <button className={mobileOpen ? 'mobile-menu-btn is-open' : 'mobile-menu-btn'} type="button" onClick={() => setMobileOpen((value) => !value)} aria-label="Меню"><span /><span /><span /></button>
           </div>

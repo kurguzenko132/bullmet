@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -31,38 +31,9 @@ export function AuthForm() {
 
   const nextUrl = useMemo(() => {
     const value = searchParams.get('next');
-    if (!value || !value.startsWith('/')) return '/account';
+    if (!value || !value.startsWith('/')) return '/catalog';
     return value;
   }, [searchParams]);
-
-  const hasExplicitNext = useMemo(() => {
-    const value = searchParams.get('next');
-    return Boolean(value && value.startsWith('/'));
-  }, [searchParams]);
-
-  useEffect(() => {
-    let active = true;
-
-    async function redirectIfAlreadyLoggedIn() {
-      if (!supabase) return;
-      const { data } = await supabase.auth.getSession();
-      const userEmail = data.session?.user.email?.toLowerCase() || '';
-      if (!active || !data.session) return;
-
-      const adminEmails = getAdminEmails();
-      const targetUrl = !hasExplicitNext && adminEmails.length > 0 && adminEmails.includes(userEmail)
-        ? '/admin'
-        : nextUrl;
-
-      window.location.replace(targetUrl);
-    }
-
-    redirectIfAlreadyLoggedIn();
-
-    return () => {
-      active = false;
-    };
-  }, [hasExplicitNext, nextUrl]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -122,12 +93,8 @@ export function AuthForm() {
         return;
       }
 
-      const targetUrl = !hasExplicitNext && adminEmails.length > 0 && adminEmails.includes(userEmail)
-        ? '/admin'
-        : nextUrl;
-
+      router.replace(nextUrl);
       router.refresh();
-      window.location.assign(targetUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось выполнить вход.');
       setLoading(false);
@@ -198,7 +165,7 @@ export function AuthForm() {
 
         <div className="auth-links">
           <Link href="/contacts">Нужна помощь?</Link>
-          <Link href="/account">Личный кабинет</Link>
+          <Link href="/catalog">Вернуться в каталог</Link>
         </div>
       </form>
     </section>
