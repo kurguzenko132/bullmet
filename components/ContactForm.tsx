@@ -33,13 +33,27 @@ export function ContactForm() {
   }
 
   return (
-    <form className="contact-form-pro" onSubmit={submit}>
-      <input value={form.name} onChange={(event) => patch('name', event.target.value)} placeholder="Ваше имя" required />
-      <input value={form.phone} onChange={(event) => patch('phone', event.target.value)} placeholder="Телефон" required />
-      <input value={form.email} onChange={(event) => patch('email', event.target.value)} placeholder="Email" />
-      <textarea value={form.text} onChange={(event) => patch('text', event.target.value)} rows={5} placeholder="Сообщение" />
-      {message && <p>{message}</p>}
-      <button disabled={loading}>{loading ? 'Отправляем...' : 'Отправить'}</button>
+    <form className="contact-form-pro contact-form-pro--rich" onSubmit={submit}>
+      <div className="contact-form-row-rich">
+        <label>
+          <span>Ваше имя</span>
+          <input value={form.name} onChange={(event) => patch('name', event.target.value)} placeholder="Например, Дмитрий" required />
+        </label>
+        <label>
+          <span>Телефон</span>
+          <input value={form.phone} onChange={(event) => patch('phone', event.target.value)} placeholder="+375 29 000-00-00" required />
+        </label>
+      </div>
+      <label>
+        <span>Email</span>
+        <input value={form.email} onChange={(event) => patch('email', event.target.value)} placeholder="mail@example.com" />
+      </label>
+      <label>
+        <span>Сообщение</span>
+        <textarea value={form.text} onChange={(event) => patch('text', event.target.value)} rows={5} placeholder="Опишите задачу: что нужно изготовить, размер, материал, сроки" />
+      </label>
+      {message && <p className="contact-form-message">{message}</p>}
+      <button disabled={loading}>{loading ? 'Отправляем...' : 'Отправить сообщение'}</button>
     </form>
   );
 }
