@@ -121,6 +121,29 @@ function writeLocalFavorites(items: FavoriteItem[]) {
   window.localStorage.setItem('bullmet_favorites', JSON.stringify(items));
 }
 
+function readRememberedAccount() {
+  if (typeof window === 'undefined') return null as null | { email: string; createdAt?: string };
+
+  try {
+    const email = String(window.localStorage.getItem('bullmet_account_last_email') || '').trim();
+    const loginAt = Number(window.localStorage.getItem('bullmet_account_last_login_at') || 0);
+    const isFresh = loginAt && Date.now() - loginAt < 1000 * 60 * 60 * 24 * 30;
+
+    if (!email || !isFresh) return null;
+    return { email, createdAt: new Date(loginAt).toISOString() };
+  } catch {
+    return null;
+  }
+}
+
+function clearRememberedAccount() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem('bullmet_account_last_email');
+    window.localStorage.removeItem('bullmet_account_last_login_at');
+  } catch {}
+}
+
 function normalizeFavorite(item: any): FavoriteItem | null {
   const slug = String(item?.product_slug || item?.slug || '').trim();
   const title = String(item?.title || '').trim();
@@ -165,7 +188,7 @@ export function AccountClient() {
     async function readSessionWithRetry() {
       if (!supabase) return null;
 
-      for (let attempt = 0; attempt < 5; attempt += 1) {
+      for (let attempt = 0; attempt < 8; attempt += 1) {
         const { data } = await supabase.auth.getSession();
         if (data.session) return data.session;
 
@@ -175,23 +198,44 @@ export function AccountClient() {
           if (refreshed.data.session) return refreshed.data.session;
         }
 
-        await new Promise((resolve) => window.setTimeout(resolve, 180));
+        await new Promise((resolve) => window.setTimeout(resolve, 220));
       }
 
       return null;
     }
 
+    function openLocalCabinet() {
+      const remembered = readRememberedAccount();
+      if (!remembered || !active) return false;
+
+      setUser({
+        id: 'local-account',
+        email: remembered.email,
+        createdAt: remembered.createdAt
+      });
+      setStatus('ready');
+      setCart(readLocalCart());
+      setFavorites(readLocalFavorites());
+      return true;
+    }
+
     async function loadSession() {
       if (!supabase) {
+        if (openLocalCabinet()) return;
         if (active) setStatus('config-error');
         return;
       }
+
+      // Сразу открываем кабинет, если пользователь только что успешно вошел.
+      // Реальную Supabase-сессию дотянем ниже, когда localStorage успеет обновиться.
+      openLocalCabinet();
 
       const session = await readSessionWithRetry();
 
       if (!active) return;
 
       if (!session) {
+        if (openLocalCabinet()) return;
         router.replace('/login?next=/account');
         return;
       }
@@ -203,6 +247,10 @@ export function AccountClient() {
       };
 
       authReady = true;
+      try {
+        window.localStorage.setItem('bullmet_account_last_email', currentUser.email);
+        window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
+      } catch {}
       setUser(currentUser);
       setStatus('ready');
       setCart(readLocalCart());
@@ -222,6 +270,10 @@ export function AccountClient() {
           email: session.user.email || '',
           createdAt: session.user.created_at
         };
+        try {
+          window.localStorage.setItem('bullmet_account_last_email', currentUser.email);
+          window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
+        } catch {}
         setUser(currentUser);
         setStatus('ready');
         setCart(readLocalCart());
@@ -230,7 +282,8 @@ export function AccountClient() {
         return;
       }
 
-      if (authReady) router.replace('/login?next=/account');
+      // Не выбрасываем мгновенно на /login — иначе на Vercel возможен цикл после входа.
+      if (authReady && !readRememberedAccount()) router.replace('/login?next=/account');
     }) || { data: null };
 
     const updateLocalData = () => {
@@ -321,13 +374,17 @@ export function AccountClient() {
 
   async function signOut() {
     setSigningOut(true);
+    clearRememberedAccount();
     await supabase?.auth.signOut();
     window.location.href = '/login?next=/account';
   }
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase || !user) return;
+    if (!supabase || !user || user.id === 'local-account') {
+      setProfileMessage('Кабинет открыт. Для сохранения профиля обновите страницу после входа или войдите повторно.');
+      return;
+    }
     setProfileMessage('');
     setSavingProfile(true);
     try {
