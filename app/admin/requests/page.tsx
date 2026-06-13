@@ -1,1 +1,10 @@
-export default function AdminRequests(){return <div className="admin-dashboard-pro"><div className="admin-page-head"><div><p>Заявки</p><h1>Заявки на расчет</h1><span>Раздел подготовлен под заявки с форм, быстрых заказов и индивидуального изготовления.</span></div></div><section className="admin-panel-card"><p>После подключения таблицы requests здесь будут отображаться заявки, файлы чертежей, ссылки на примеры и статусы обработки.</p></section></div>}
+import { AdminRequestsClient } from '@/components/AdminRequestsClient';
+import { getAdminRequests } from '@/lib/adminCommerce';
+
+export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Заявки | Админка Bullmet' };
+
+export default async function AdminRequestsPage() {
+  const requests = await getAdminRequests();
+  return <AdminRequestsClient initialRequests={requests} />;
+}

@@ -31,7 +31,7 @@ export function AuthForm() {
 
   const nextUrl = useMemo(() => {
     const value = searchParams.get('next');
-    if (!value || !value.startsWith('/')) return '/catalog';
+    if (!value || !value.startsWith('/')) return '/account';
     return value;
   }, [searchParams]);
 
@@ -95,6 +95,12 @@ export function AuthForm() {
 
       router.replace(nextUrl);
       router.refresh();
+
+      // Жесткий переход нужен, чтобы Supabase-сессия точно успела сохраниться
+      // и защищенная страница /account не вернула пользователя обратно на /login.
+      window.setTimeout(() => {
+        window.location.href = nextUrl;
+      }, 50);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось выполнить вход.');
       setLoading(false);

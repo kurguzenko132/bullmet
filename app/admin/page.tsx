@@ -1,15 +1,23 @@
 import Link from 'next/link';
 import { getCatalogProducts } from '@/lib/products';
+import { getAdminOrders, getAdminRequests, money } from '@/lib/adminCommerce';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Админка Bullmet' };
 
 export default async function AdminPage() {
-  const products = await getCatalogProducts();
+  const [products, orders, requests] = await Promise.all([
+    getCatalogProducts(),
+    getAdminOrders(),
+    getAdminRequests()
+  ]);
   const active = products.filter((item) => item.status !== 'draft').length;
   const groups = new Set(products.map((item) => item.colorGroupId).filter(Boolean)).size;
   const withManyPhotos = products.filter((item) => item.images.length > 1).length;
   const popular = products.filter((item) => item.isPopular).slice(0, 6);
+  const activeOrders = orders.filter((item) => item.status !== 'Выполнен' && item.status !== 'Отменён').length;
+  const newRequests = requests.filter((item) => item.status === 'Новая').length;
+  const revenue = orders.filter((item) => item.status !== 'Отменён').reduce((sum, item) => sum + Number(item.total || 0), 0);
 
   return (
     <div className="admin-dashboard-pro">
@@ -20,9 +28,9 @@ export default async function AdminPage() {
 
       <section className="admin-stat-grid">
         <article><span>Товары</span><b>{products.length}</b><em>{active} активных</em></article>
-        <article><span>Фото-галереи</span><b>{withManyPhotos}</b><em>с несколькими фото</em></article>
-        <article><span>Группы цвета</span><b>{groups}</b><em>переключатели вариантов</em></article>
-        <article><span>Популярные</span><b>{products.filter((p) => p.isPopular).length}</b><em>на главной/в каталоге</em></article>
+        <article><span>Заказы</span><b>{orders.length}</b><em>{activeOrders} активных</em></article>
+        <article><span>Заявки</span><b>{requests.length}</b><em>{newRequests} новых</em></article>
+        <article><span>Оборот</span><b>{money(revenue)}</b><em>BYN без отмененных</em></article>
       </section>
 
       <section className="admin-dashboard-grid">
@@ -43,6 +51,7 @@ export default async function AdminPage() {
             <Link href="/admin/products">Товары и фото</Link>
             <Link href="/admin/homepage">Главная страница</Link>
             <Link href="/admin/orders">Заказы</Link>
+            <Link href="/admin/requests">Заявки</Link>
             <Link href="/admin/stats">Статистика</Link>
           </div>
         </div>

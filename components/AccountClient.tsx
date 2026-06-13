@@ -160,6 +160,26 @@ export function AccountClient() {
 
   useEffect(() => {
     let active = true;
+    let authReady = false;
+
+    async function readSessionWithRetry() {
+      if (!supabase) return null;
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) return data.session;
+
+        const userResult = await supabase.auth.getUser();
+        if (userResult.data.user) {
+          const refreshed = await supabase.auth.refreshSession();
+          if (refreshed.data.session) return refreshed.data.session;
+        }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 180));
+      }
+
+      return null;
+    }
 
     async function loadSession() {
       if (!supabase) {
@@ -167,15 +187,14 @@ export function AccountClient() {
         return;
       }
 
-      const { data, error } = await supabase.auth.getSession();
-      const session = data.session;
+      const session = await readSessionWithRetry();
 
-      if (error || !session) {
+      if (!active) return;
+
+      if (!session) {
         router.replace('/login?next=/account');
         return;
       }
-
-      if (!active) return;
 
       const currentUser = {
         id: session.user.id,
@@ -183,6 +202,7 @@ export function AccountClient() {
         createdAt: session.user.created_at
       };
 
+      authReady = true;
       setUser(currentUser);
       setStatus('ready');
       setCart(readLocalCart());
@@ -193,7 +213,24 @@ export function AccountClient() {
     loadSession();
 
     const { data } = supabase?.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.replace('/login?next=/account');
+      if (!active) return;
+
+      if (session) {
+        authReady = true;
+        const currentUser = {
+          id: session.user.id,
+          email: session.user.email || '',
+          createdAt: session.user.created_at
+        };
+        setUser(currentUser);
+        setStatus('ready');
+        setCart(readLocalCart());
+        setFavorites(readLocalFavorites());
+        void loadAccountData(currentUser);
+        return;
+      }
+
+      if (authReady) router.replace('/login?next=/account');
     }) || { data: null };
 
     const updateLocalData = () => {
@@ -212,15 +249,40 @@ export function AccountClient() {
   }, [router]);
 
   async function loadAccountData(currentUser: AccountUser) {
-    if (!supabase) return;
+    const client = supabase;
+    if (!client) return;
     setLoadingData(true);
 
     try {
+      const safeProfileQuery = async () => {
+        const withPhone = await client.from('profiles').select('full_name, phone').eq('id', currentUser.id).maybeSingle();
+        if (!withPhone.error) return withPhone;
+
+        // На старой базе поля phone может еще не быть. Кабинет не должен из-за этого падать.
+        const withoutPhone = await client.from('profiles').select('full_name').eq('id', currentUser.id).maybeSingle();
+        return withoutPhone;
+      };
+
+      const safeFavoritesQuery = async () => {
+        const result = await client.from('favorites').select('product_slug, title, price, image, short, category, created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+        return result;
+      };
+
+      const safeOrdersQuery = async () => {
+        const result = await client.from('orders').select('id, created_at, customer, items, total, status, delivery').order('created_at', { ascending: false }).limit(30);
+        return result;
+      };
+
+      const safeRequestsQuery = async () => {
+        const result = await client.from('requests').select('id, created_at, customer, kind, type, product_title, product_image, product_price, quantity, status, comment').order('created_at', { ascending: false }).limit(30);
+        return result;
+      };
+
       const [profileResult, favoritesResult, ordersResult, requestsResult] = await Promise.allSettled([
-        supabase.from('profiles').select('full_name, phone').eq('id', currentUser.id).maybeSingle(),
-        supabase.from('favorites').select('product_slug, title, price, image, short, category, created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
-        supabase.from('orders').select('id, created_at, customer, items, total, status, delivery').order('created_at', { ascending: false }).limit(30),
-        supabase.from('requests').select('id, created_at, customer, kind, type, product_title, product_image, product_price, quantity, status, comment').order('created_at', { ascending: false }).limit(30)
+        safeProfileQuery(),
+        safeFavoritesQuery(),
+        safeOrdersQuery(),
+        safeRequestsQuery()
       ]);
 
       if (profileResult.status === 'fulfilled' && !profileResult.value.error && profileResult.value.data) {
@@ -276,7 +338,15 @@ export function AccountClient() {
         phone: profileDraft.phone.trim()
       };
       const { error } = await supabase.from('profiles').upsert(payload);
-      if (error) throw error;
+      if (error) {
+        // На старой базе поля phone может еще не быть — сохраняем хотя бы имя и email.
+        const fallback = await supabase.from('profiles').upsert({
+          id: user.id,
+          email: user.email,
+          full_name: payload.full_name
+        });
+        if (fallback.error) throw fallback.error;
+      }
       setProfile({ full_name: payload.full_name, phone: payload.phone });
       setProfileMessage('Данные сохранены.');
     } catch (error) {
