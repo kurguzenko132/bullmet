@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { OrderSuccessClient } from '@/components/OrderSuccessClient';
@@ -12,7 +13,9 @@ export default function OrderSuccessPage() {
     <>
       <Header />
       <main className="order-success-page-stage2">
-        <OrderSuccessClient />
+        <Suspense fallback={<div className="order-success-loading-stage2">Загружаем данные заказа...</div>}>
+          <OrderSuccessClient />
+        </Suspense>
       </main>
       <Footer />
     </>
