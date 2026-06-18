@@ -30,9 +30,24 @@ export function AuthForm() {
   const [error, setError] = useState('');
 
   const nextUrl = useMemo(() => {
-    const value = searchParams.get('next');
-    if (!value || !value.startsWith('/')) return '/account';
-    return value;
+    const rawValue = searchParams.get('next') || '/account';
+    let value = rawValue.trim();
+
+    try {
+      value = decodeURIComponent(value);
+    } catch {}
+
+    if (!value.startsWith('/') || value.startsWith('//')) return '/account';
+
+    const cleanValue = value.split('#')[0].split('?')[0].replace(/\/$/, '') || '/account';
+
+    if (cleanValue === '/profile' || cleanValue === '/cabinet' || cleanValue === '/lk') return '/account';
+    if (cleanValue.startsWith('/account')) return '/account';
+    if (cleanValue.startsWith('/admin')) return cleanValue;
+    if (cleanValue.startsWith('/cart')) return '/cart';
+    if (cleanValue.startsWith('/order-success')) return value;
+
+    return '/account';
   }, [searchParams]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -98,14 +113,15 @@ export function AuthForm() {
         return;
       }
 
-      router.replace(nextUrl);
+      const targetUrl = nextUrl || '/account';
+      router.replace(targetUrl);
       router.refresh();
 
       // Жесткий переход нужен, чтобы Supabase-сессия точно успела сохраниться
       // и защищенная страница /account не вернула пользователя обратно на /login.
       window.setTimeout(() => {
-        window.location.assign(nextUrl);
-      }, 80);
+        window.location.href = targetUrl;
+      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось выполнить вход.');
       setLoading(false);
