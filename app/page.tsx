@@ -62,7 +62,14 @@ const workBenefits = [
   { icon: 'truck' as const, title: 'Доставка по Беларуси', desc: 'Аккуратно передаём заказ в нужный регион' }
 ];
 
-const gallery = [img.gallery1, img.gallery2, img.gallery3, img.gallery4, img.gallery5, img.gallery6];
+
+const productionGallery = [
+  { src: img.gallery1, title: 'Лазерная резка', note: 'Ровный и аккуратный рез листового металла' },
+  { src: img.gallery2, title: 'Сварка и сборка', note: 'Подготавливаем и собираем конструкцию под задачу' },
+  { src: img.gallery3, title: 'Работа оборудования', note: 'Используем современное оборудование на производстве' },
+  { src: img.gallery4, title: 'Готовые изделия', note: 'Показываем реальные изделия и элементы отделки' },
+  { src: img.gallery5, title: 'Контроль деталей', note: 'Проверяем качество и точность перед выдачей' }
+];
 
 function Lines({ value }: { value: string }) {
   return <>{value.split('\n').map((line) => <span key={line}>{line}</span>)}</>;
@@ -176,27 +183,70 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="home-container gallery-section">
-          <div className="section-head">
-            <h3>ПРОИЗВОДСТВО BULLMET</h3>
-            <Link href="/about">Смотреть все фото</Link>
+        <section className="home-container production-showcase-v2">
+          <div className="production-showcase-head-v2">
+            <div>
+              <p className="eyebrow">фото производства и готовых изделий</p>
+              <h3>ПРОИЗВОДСТВО BULLMET</h3>
+            </div>
+            <Link href="/about" className="production-showcase-link">Смотреть все фото</Link>
           </div>
-          <div className="gallery-slider" aria-label="Фото производства Bullmet">
-            {gallery.map((src, index) => (
-              <article className="gallery-slide" key={src}>
-                <img src={src} alt={`Производство Bullmet ${index + 1}`} />
-              </article>
-            ))}
-          </div>
-        </section>
 
-        <section className="home-container cta-exact">
-          <div className="cta-copy">
-            <h2>НУЖНО ИЗДЕЛИЕ ПО ВАШИМ РАЗМЕРАМ?</h2>
-            <p>Изготовим мебель, качели, навесы, малые архитектурные формы, декоративные панели или детали по вашему эскизу и размерам.</p>
-            <Link href="/services#request">ОБСУДИТЬ ПРОЕКТ</Link>
+          <div className="production-showcase-grid-v2">
+            <article className="production-gallery-featured">
+              <img src={productionGallery[0].src} alt={productionGallery[0].title} />
+              <div className="production-gallery-featured-copy">
+                <span>Собственное производство</span>
+                <h4>{productionGallery[0].title}</h4>
+                <p>{productionGallery[0].note}</p>
+              </div>
+            </article>
+
+            <div className="production-gallery-list-v2">
+              {productionGallery.slice(1).map((item) => (
+                <article className="production-gallery-card-v2" key={item.src}>
+                  <img src={item.src} alt={item.title} />
+                  <div className="production-gallery-card-copy">
+                    <h4>{item.title}</h4>
+                    <p>{item.note}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
-          <div className="cta-image"><img src={img.cta} alt="Изделие по вашим размерам" /></div>
+
+          <div className="production-cta-v2">
+            <div className="production-cta-copy-v2">
+              <p className="eyebrow">индивидуальный заказ</p>
+              <h2>Нужно изделие по вашим размерам?</h2>
+              <p>Изготовим мебель, качели, навесы, декоративные панели, малые архитектурные формы и детали по вашему эскизу, фото или точным размерам.</p>
+
+              <div className="production-cta-tags-v2">
+                <span>По эскизу или фото</span>
+                <span>Подбор размеров и материалов</span>
+                <span>Согласование перед запуском</span>
+              </div>
+
+              <div className="production-cta-actions-v2">
+                <Link href="/services#request" className="production-cta-primary">Обсудить проект</Link>
+                <Link href="/production" className="production-cta-secondary">О производстве</Link>
+              </div>
+            </div>
+
+            <div className="production-cta-visual-v2">
+              <img src={img.cta} alt="Изготовление по индивидуальным размерам" />
+              <div className="production-cta-facts-v2">
+                <article>
+                  <strong>Под заказ</strong>
+                  <span>адаптируем форму, размер и комплектацию</span>
+                </article>
+                <article>
+                  <strong>Контроль качества</strong>
+                  <span>проверяем изделие до передачи клиенту</span>
+                </article>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
       <Footer />
