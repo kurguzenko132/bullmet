@@ -183,68 +183,47 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="home-container production-showcase-v2">
-          <div className="production-showcase-head-v2">
+        <section className="home-container production-simple">
+          <div className="production-simple-head">
             <div>
-              <p className="eyebrow">фото производства и готовых изделий</p>
+              <p className="eyebrow">собственное производство</p>
               <h3>ПРОИЗВОДСТВО BULLMET</h3>
             </div>
-            <Link href="/about" className="production-showcase-link">Смотреть все фото</Link>
+            <Link href="/about" className="production-simple-link">Смотреть все фото</Link>
           </div>
 
-          <div className="production-showcase-grid-v2">
-            <article className="production-gallery-featured">
-              <img src={productionGallery[0].src} alt={productionGallery[0].title} />
-              <div className="production-gallery-featured-copy">
-                <span>Собственное производство</span>
-                <h4>{productionGallery[0].title}</h4>
-                <p>{productionGallery[0].note}</p>
-              </div>
-            </article>
-
-            <div className="production-gallery-list-v2">
-              {productionGallery.slice(1).map((item) => (
-                <article className="production-gallery-card-v2" key={item.src}>
-                  <img src={item.src} alt={item.title} />
-                  <div className="production-gallery-card-copy">
-                    <h4>{item.title}</h4>
-                    <p>{item.note}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
+          <div className="production-simple-grid">
+            {productionGallery.slice(0, 4).map((item) => (
+              <article className="production-simple-card" key={item.src}>
+                <img src={item.src} alt={item.title} />
+                <div className="production-simple-card-copy">
+                  <h4>{item.title}</h4>
+                  <p>{item.note}</p>
+                </div>
+              </article>
+            ))}
           </div>
 
-          <div className="production-cta-v2">
-            <div className="production-cta-copy-v2">
+          <div className="production-simple-cta">
+            <div className="production-simple-copy">
               <p className="eyebrow">индивидуальный заказ</p>
               <h2>Нужно изделие по вашим размерам?</h2>
-              <p>Изготовим мебель, качели, навесы, декоративные панели, малые архитектурные формы и детали по вашему эскизу, фото или точным размерам.</p>
+              <p>Изготовим мебель, качели, навесы, декоративные панели и детали по вашему эскизу, фото или точным размерам.</p>
 
-              <div className="production-cta-tags-v2">
-                <span>По эскизу или фото</span>
-                <span>Подбор размеров и материалов</span>
-                <span>Согласование перед запуском</span>
-              </div>
+              <ul className="production-simple-list">
+                <li>Работаем по эскизу, фото или примеру</li>
+                <li>Подбираем материал и размеры под задачу</li>
+                <li>Согласовываем внешний вид перед запуском</li>
+              </ul>
 
-              <div className="production-cta-actions-v2">
-                <Link href="/services#request" className="production-cta-primary">Обсудить проект</Link>
-                <Link href="/production" className="production-cta-secondary">О производстве</Link>
+              <div className="production-simple-actions">
+                <Link href="/services#request" className="btn-orange">Обсудить проект</Link>
+                <Link href="/production" className="btn-outline">О производстве</Link>
               </div>
             </div>
 
-            <div className="production-cta-visual-v2">
+            <div className="production-simple-image">
               <img src={img.cta} alt="Изготовление по индивидуальным размерам" />
-              <div className="production-cta-facts-v2">
-                <article>
-                  <strong>Под заказ</strong>
-                  <span>адаптируем форму, размер и комплектацию</span>
-                </article>
-                <article>
-                  <strong>Контроль качества</strong>
-                  <span>проверяем изделие до передачи клиенту</span>
-                </article>
-              </div>
             </div>
           </div>
         </section>
