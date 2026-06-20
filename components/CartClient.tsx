@@ -34,6 +34,28 @@ function readCart(): CartItem[] {
   }
 }
 
+function readRememberedEmail() {
+  try {
+    return String(window.localStorage.getItem('bullmet_account_last_email') || '').trim().toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function persistLocalOrder(order: Record<string, unknown>) {
+  try {
+    window.sessionStorage.setItem('bullmet_last_order', JSON.stringify(order));
+    window.localStorage.setItem('bullmet_last_order', JSON.stringify(order));
+
+    const rawHistory = window.localStorage.getItem('bullmet_local_orders');
+    const parsedHistory = rawHistory ? JSON.parse(rawHistory) : [];
+    const history = Array.isArray(parsedHistory) ? parsedHistory : [];
+    const next = [order, ...history.filter((item) => item?.id !== order.id)].slice(0, 20);
+    window.localStorage.setItem('bullmet_local_orders', JSON.stringify(next));
+    window.dispatchEvent(new Event('bullmet-orders-updated'));
+  } catch {}
+}
+
 function money(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
 }
@@ -63,27 +85,43 @@ export function CartClient() {
 
   useEffect(() => {
     async function fillUserData() {
-      if (!supabase || formTouched) return;
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
-      if (!session?.user) return;
+      if (formTouched) return;
 
-      const email = session.user.email || '';
-      let fullName = '';
-      let phone = '';
-
-      const profile = await supabase.from('profiles').select('full_name, phone').eq('id', session.user.id).maybeSingle();
-      if (!profile.error && profile.data) {
-        fullName = String(profile.data.full_name || '');
-        phone = String(profile.data.phone || '');
+      const rememberedEmail = readRememberedEmail();
+      if (rememberedEmail) {
+        setForm((current) => ({ ...current, email: current.email || rememberedEmail }));
       }
 
-      setForm((current) => ({
-        ...current,
-        name: current.name || fullName,
-        phone: current.phone || phone,
-        email: current.email || email
-      }));
+      if (!supabase) return;
+
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data.session;
+        if (!session?.user) return;
+
+        const email = session.user.email || rememberedEmail;
+        let fullName = '';
+        let phone = '';
+
+        const profileWithPhone = await supabase.from('profiles').select('full_name, phone').eq('id', session.user.id).maybeSingle();
+        const profile = profileWithPhone.error
+          ? await supabase.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle()
+          : profileWithPhone;
+
+        if (!profile.error && profile.data) {
+          fullName = String(profile.data.full_name || '');
+          phone = String((profile.data as { phone?: string | null }).phone || '');
+        }
+
+        setForm((current) => ({
+          ...current,
+          name: current.name || fullName,
+          phone: current.phone || phone,
+          email: current.email || email
+        }));
+      } catch {
+        // Корзина не должна ломаться, если профиль временно не подтянулся.
+      }
     }
 
     fillUserData();
@@ -128,24 +166,32 @@ export function CartClient() {
 
     setLoading(true);
     try {
+      const cleanCustomer = {
+        ...form,
+        email: form.email || readRememberedEmail()
+      };
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer: form, delivery: form.delivery, comment: form.comment, items })
+        body: JSON.stringify({ customer: cleanCustomer, delivery: form.delivery, comment: form.comment, items, accountEmail: cleanCustomer.email })
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось оформить заказ.');
 
       const orderId = data.id || '';
-      window.sessionStorage.setItem('bullmet_last_order', JSON.stringify({
+      persistLocalOrder({
         id: orderId,
+        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         total,
         totalQty,
         delivery: form.delivery,
-        customer: form,
+        customer: cleanCustomer,
         items,
-        createdAt: new Date().toISOString()
-      }));
+        status: 'Новый',
+        savedToSupabase: data.savedToSupabase !== false,
+        warning: data.warning || ''
+      });
       window.localStorage.removeItem('bullmet_cart');
       window.dispatchEvent(new Event('bullmet-cart-updated'));
       setItems([]);

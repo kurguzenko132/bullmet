@@ -17,12 +17,18 @@ function customerLine(request: AdminRequest) {
   return [request.customer?.name, request.customer?.phone, request.customer?.email].filter(Boolean).join(' · ') || 'Клиент не указан';
 }
 
-export function AdminRequestsClient({ initialRequests }: { initialRequests: AdminRequest[] }) {
+function nowLabel() {
+  return new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
+export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { initialRequests: AdminRequest[]; supabaseConfigured: boolean }) {
   const [requests, setRequests] = useState(initialRequests);
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const [activeId, setActiveId] = useState(initialRequests[0]?.id || '');
   const [message, setMessage] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastSync, setLastSync] = useState(nowLabel());
 
   const filtered = useMemo(() => {
     const clean = query.trim().toLowerCase();
@@ -51,6 +57,25 @@ export function AdminRequestsClient({ initialRequests }: { initialRequests: Admi
   const doneCount = requests.filter((request) => ['Рассчитана', 'Закрыта'].includes(request.status || '')).length;
   const filesCount = requests.reduce((sum, request) => sum + (request.file_urls?.length || 0), 0);
 
+  async function refreshRequests() {
+    setMessage('');
+    setRefreshing(true);
+    try {
+      const response = await fetch('/api/admin/requests', { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось обновить список заявок.');
+      const nextRequests = Array.isArray(data.requests) ? data.requests as AdminRequest[] : [];
+      setRequests(nextRequests);
+      setActiveId((current) => nextRequests.some((request) => request.id === current) ? current : nextRequests[0]?.id || '');
+      setLastSync(nowLabel());
+      setMessage('Заявки обновлены.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось обновить список заявок.');
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   async function updateRequest(id: string, patch: Partial<Pick<AdminRequest, 'status' | 'admin_note'>>) {
     setMessage('');
     const previous = requests;
@@ -64,6 +89,7 @@ export function AdminRequestsClient({ initialRequests }: { initialRequests: Admi
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось обновить заявку.');
+      setLastSync(nowLabel());
       setMessage('Изменения сохранены.');
     } catch (error) {
       setRequests(previous);
@@ -80,10 +106,19 @@ export function AdminRequestsClient({ initialRequests }: { initialRequests: Admi
           <span>Все обращения с форм, быстрых заказов, страницы услуг и контактов.</span>
         </div>
         <div className="admin-head-actions">
+          <button type="button" onClick={refreshRequests} disabled={refreshing}>{refreshing ? 'Обновляем...' : 'Обновить'}</button>
           <a href="/services#request" target="_blank">Тест заявки ↗</a>
           <a href="/admin/orders">Заказы</a>
         </div>
       </div>
+
+      <section className="admin-sync-panel">
+        <div>
+          <b>{supabaseConfigured ? 'Supabase подключен' : 'Supabase не подключен'}</b>
+          <span>{supabaseConfigured ? `Последняя синхронизация: ${lastSync}. Новые заявки появятся после нажатия “Обновить” или перезагрузки страницы.` : 'Добавьте NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY / anon key, иначе заявки будут уходить только в Telegram и не появятся в админке.'}</span>
+        </div>
+        <button type="button" onClick={refreshRequests} disabled={refreshing}>{refreshing ? 'Ждём...' : 'Проверить новые заявки'}</button>
+      </section>
 
       <section className="admin-commerce-stats">
         <article><span>Всего заявок</span><b>{requests.length}</b><em>{newCount} новых</em></article>
@@ -108,8 +143,17 @@ export function AdminRequestsClient({ initialRequests }: { initialRequests: Admi
       {!requests.length ? (
         <section className="admin-empty-commerce">
           <h2>Заявок пока нет</h2>
-          <p>Когда клиент отправит расчет, форму контактов или быстрый заказ, обращение появится здесь.</p>
-          <a href="/services#request" target="_blank">Проверить форму</a>
+          <p>{supabaseConfigured ? 'Отправьте тестовую заявку через форму услуг, затем нажмите “Проверить новые заявки”.' : 'Supabase не подключен, поэтому админка не может получить заявки из базы.'}</p>
+          <div className="admin-empty-actions">
+            <a href="/services#request" target="_blank">Проверить форму</a>
+            <button type="button" onClick={refreshRequests} disabled={refreshing}>Обновить список</button>
+          </div>
+        </section>
+      ) : !filtered.length ? (
+        <section className="admin-empty-commerce">
+          <h2>Ничего не найдено</h2>
+          <p>Измените поиск или сбросьте фильтр статуса.</p>
+          <button type="button" onClick={() => { setQuery(''); setFilter('all'); }}>Сбросить фильтры</button>
         </section>
       ) : (
         <section className="admin-commerce-layout">

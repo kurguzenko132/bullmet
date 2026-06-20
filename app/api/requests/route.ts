@@ -79,12 +79,21 @@ export async function POST(request: NextRequest) {
       status: 'Новая'
     };
 
+    let savedToSupabase = false;
+    let supabaseWarning = '';
+
     if (serverSupabase) {
       const { error } = await serverSupabase.from('requests').insert(payload);
-      if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+      if (error) {
+        supabaseWarning = `Supabase не сохранил заявку: ${error.message}`;
+      } else {
+        savedToSupabase = true;
+      }
+    } else {
+      supabaseWarning = 'Supabase не подключен, заявка отправлена только в Telegram.';
     }
 
-    await notifyTelegram({
+    const telegramResult = await notifyTelegram({
       title: kind === 'quick_order' ? 'Заявка “Купить в 1 клик”' : kind === 'contact' ? 'Сообщение с сайта Bullmet' : 'Новая заявка на расчет Bullmet',
       lines: [
         `ID: ${id}`,
@@ -96,11 +105,19 @@ export async function POST(request: NextRequest) {
         payload.sizes && `Размер/вариант: ${payload.sizes}`,
         payload.quantity && `Количество: ${payload.quantity}`,
         payload.comment && `Комментарий: ${payload.comment}`,
-        fileUrls.length && `Файлы: ${fileUrls.join(', ')}`
+        fileUrls.length && `Файлы: ${fileUrls.join(', ')}`,
+        supabaseWarning && `Внимание: ${supabaseWarning}`
       ]
     });
 
-    return NextResponse.json({ ok: true, id, fileUrls, warning: serverSupabase ? undefined : 'Supabase не подключен, заявка отправлена только в Telegram.' });
+    return NextResponse.json({
+      ok: true,
+      id,
+      fileUrls,
+      savedToSupabase,
+      telegramSent: telegramResult.ok,
+      warning: supabaseWarning || (telegramResult.ok ? undefined : telegramResult.reason)
+    });
   } catch (error) {
     return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : 'Не удалось отправить заявку.' }, { status: 500 });
   }

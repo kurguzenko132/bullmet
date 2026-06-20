@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { serverSupabase } from '@/lib/serverSupabase';
 import { requestStatuses } from '@/lib/adminCommerce';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     if (!serverSupabase) {
@@ -24,6 +26,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const { error } = await serverSupabase.from('requests').update(update).eq('id', params.id);
+
+    if (error && update.status && update.admin_note) {
+      const fallback = await serverSupabase.from('requests').update({ status: update.status }).eq('id', params.id);
+      if (!fallback.error) {
+        return NextResponse.json({ ok: true, warning: 'Статус сохранен. Заметка не сохранена: проверьте колонку requests.admin_note.' });
+      }
+    }
+
     if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
     return NextResponse.json({ ok: true });

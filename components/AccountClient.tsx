@@ -7,12 +7,12 @@ import { supabase } from '@/lib/supabase';
 import { Icon } from './Icon';
 
 type AccountStatus = 'loading' | 'ready' | 'config-error';
-type AccountSection = 'overview' | 'orders' | 'requests' | 'favorites' | 'profile';
 
 type AccountUser = {
   id: string;
   email: string;
   createdAt?: string;
+  source: 'supabase' | 'local';
 };
 
 type Profile = {
@@ -21,7 +21,7 @@ type Profile = {
 };
 
 type CartItem = {
-  slug: string;
+  slug?: string;
   title: string;
   price: number;
   quantity?: number;
@@ -64,10 +64,7 @@ type RequestRow = {
 };
 
 function getAdminEmails() {
-  return [
-    process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-    process.env.NEXT_PUBLIC_ADMIN_EMAILS
-  ]
+  return [process.env.NEXT_PUBLIC_ADMIN_EMAIL, process.env.NEXT_PUBLIC_ADMIN_EMAILS]
     .filter(Boolean)
     .flatMap((value) => String(value).split(','))
     .map((email) => email.trim().toLowerCase())
@@ -89,55 +86,64 @@ function dateLabel(value?: string) {
 
 function statusClass(status?: string) {
   const text = String(status || '').toLowerCase();
-  if (text.includes('выполн') || text.includes('completed')) return 'is-done';
-  if (text.includes('работ') || text.includes('process')) return 'is-progress';
-  if (text.includes('отмен') || text.includes('cancel')) return 'is-cancel';
+  if (text.includes('выполн') || text.includes('закры') || text.includes('рассчит')) return 'is-done';
+  if (text.includes('работ') || text.includes('ожида')) return 'is-progress';
+  if (text.includes('отмен')) return 'is-cancel';
   return 'is-new';
 }
 
-function readLocalCart() {
-  if (typeof window === 'undefined') return [] as CartItem[];
+function readJsonList<T>(key: string) {
+  if (typeof window === 'undefined') return [] as T[];
   try {
-    const raw = window.localStorage.getItem('bullmet_cart');
+    const raw = window.localStorage.getItem(key);
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed as T[] : [] as T[];
   } catch {
-    return [];
+    return [] as T[];
   }
 }
 
-function readLocalFavorites() {
-  if (typeof window === 'undefined') return [] as FavoriteItem[];
-  try {
-    const raw = window.localStorage.getItem('bullmet_favorites');
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+function readCart() {
+  return readJsonList<CartItem>('bullmet_cart');
 }
 
-function writeLocalFavorites(items: FavoriteItem[]) {
-  window.localStorage.setItem('bullmet_favorites', JSON.stringify(items));
+function readFavorites() {
+  return readJsonList<FavoriteItem>('bullmet_favorites');
+}
+
+function readLocalOrders() {
+  return readJsonList<OrderRow>('bullmet_local_orders')
+    .map((order) => ({ ...order, created_at: order.created_at || (order as { createdAt?: string }).createdAt }))
+    .filter((order) => order.id);
+}
+
+function writeFavorites(items: FavoriteItem[]) {
+  try {
+    window.localStorage.setItem('bullmet_favorites', JSON.stringify(items));
+  } catch {}
 }
 
 function readRememberedAccount() {
   if (typeof window === 'undefined') return null as null | { email: string; createdAt?: string };
-
   try {
-    const email = String(window.localStorage.getItem('bullmet_account_last_email') || '').trim();
+    const email = String(window.localStorage.getItem('bullmet_account_last_email') || '').trim().toLowerCase();
     const loginAt = Number(window.localStorage.getItem('bullmet_account_last_login_at') || 0);
-    const isFresh = loginAt && Date.now() - loginAt < 1000 * 60 * 60 * 24 * 30;
-
-    if (!email || !isFresh) return null;
+    const fresh = loginAt && Date.now() - loginAt < 1000 * 60 * 60 * 24 * 30;
+    if (!email || !fresh) return null;
     return { email, createdAt: new Date(loginAt).toISOString() };
   } catch {
     return null;
   }
 }
 
+function rememberAccount(email: string) {
+  try {
+    window.localStorage.setItem('bullmet_account_last_email', email.toLowerCase());
+    window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
+  } catch {}
+}
+
 function clearRememberedAccount() {
-  if (typeof window === 'undefined') return;
   try {
     window.localStorage.removeItem('bullmet_account_last_email');
     window.localStorage.removeItem('bullmet_account_last_login_at');
@@ -158,10 +164,28 @@ function normalizeFavorite(item: any): FavoriteItem | null {
   };
 }
 
+async function getSessionWithRetry() {
+  if (!supabase) return null;
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const sessionResult = await supabase.auth.getSession();
+    if (sessionResult.data.session) return sessionResult.data.session;
+
+    const userResult = await supabase.auth.getUser();
+    if (userResult.data.user) {
+      const refreshed = await supabase.auth.refreshSession();
+      if (refreshed.data.session) return refreshed.data.session;
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, 180));
+  }
+
+  return null;
+}
+
 export function AccountClient() {
   const router = useRouter();
   const [status, setStatus] = useState<AccountStatus>('loading');
-  const [section, setSection] = useState<AccountSection>('overview');
   const [user, setUser] = useState<AccountUser | null>(null);
   const [profile, setProfile] = useState<Profile>({});
   const [profileDraft, setProfileDraft] = useState({ fullName: '', phone: '' });
@@ -173,202 +197,165 @@ export function AccountClient() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [dataMessage, setDataMessage] = useState('');
 
-  const adminEmails = getAdminEmails();
-  const isAdmin = !!user?.email && adminEmails.includes(user.email.toLowerCase());
-  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [cart]);
   const cartCount = useMemo(() => cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [cart]);
-  const lastOrder = orders[0];
-  const lastRequest = requests[0];
+  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [cart]);
+  const adminEmails = useMemo(() => getAdminEmails(), []);
+  const isAdmin = !!user?.email && adminEmails.includes(user.email.toLowerCase());
+  const displayName = profile.full_name || profileDraft.fullName || user?.email?.split('@')[0] || 'клиент';
 
   useEffect(() => {
     let active = true;
-    let authReady = false;
 
-    async function readSessionWithRetry() {
-      if (!supabase) return null;
-
-      for (let attempt = 0; attempt < 8; attempt += 1) {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) return data.session;
-
-        const userResult = await supabase.auth.getUser();
-        if (userResult.data.user) {
-          const refreshed = await supabase.auth.refreshSession();
-          if (refreshed.data.session) return refreshed.data.session;
-        }
-
-        await new Promise((resolve) => window.setTimeout(resolve, 220));
-      }
-
-      return null;
-    }
-
-    function openLocalCabinet() {
+    function openLocalIfPossible() {
       const remembered = readRememberedAccount();
       if (!remembered || !active) return false;
 
-      setUser({
-        id: 'local-account',
-        email: remembered.email,
-        createdAt: remembered.createdAt
-      });
+      setUser({ id: 'local-account', email: remembered.email, createdAt: remembered.createdAt, source: 'local' });
       setStatus('ready');
-      setCart(readLocalCart());
-      setFavorites(readLocalFavorites());
+      setCart(readCart());
+      setFavorites(readFavorites());
+      setOrders(readLocalOrders());
+      setDataMessage('Кабинет открыт. Данные заказов подтянутся после восстановления Supabase-сессии.');
       return true;
     }
 
-    async function loadSession() {
+    async function initAccount() {
+      setCart(readCart());
+      setFavorites(readFavorites());
+      setOrders(readLocalOrders());
+
       if (!supabase) {
-        if (openLocalCabinet()) return;
+        if (openLocalIfPossible()) return;
         if (active) setStatus('config-error');
         return;
       }
 
-      // Сразу открываем кабинет, если пользователь только что успешно вошел.
-      // Реальную Supabase-сессию дотянем ниже, когда localStorage успеет обновиться.
-      openLocalCabinet();
+      // Сначала показываем кабинет по локальному признаку входа, чтобы не было 404/цикла редиректа.
+      openLocalIfPossible();
 
-      const session = await readSessionWithRetry();
-
+      const session = await getSessionWithRetry();
       if (!active) return;
 
       if (!session) {
-        if (openLocalCabinet()) return;
+        if (openLocalIfPossible()) return;
         router.replace('/login?next=/account');
         return;
       }
 
-      const currentUser = {
+      const nextUser: AccountUser = {
         id: session.user.id,
         email: session.user.email || '',
-        createdAt: session.user.created_at
+        createdAt: session.user.created_at,
+        source: 'supabase'
       };
 
-      authReady = true;
-      try {
-        window.localStorage.setItem('bullmet_account_last_email', currentUser.email);
-        window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
-      } catch {}
-      setUser(currentUser);
+      rememberAccount(nextUser.email);
+      setUser(nextUser);
       setStatus('ready');
-      setCart(readLocalCart());
-      setFavorites(readLocalFavorites());
-      void loadAccountData(currentUser);
+      setDataMessage('');
+      await loadAccountData(nextUser, active);
     }
 
-    loadSession();
+    initAccount();
 
     const { data } = supabase?.auth.onAuthStateChange((_event, session) => {
-      if (!active) return;
-
-      if (session) {
-        authReady = true;
-        const currentUser = {
-          id: session.user.id,
-          email: session.user.email || '',
-          createdAt: session.user.created_at
-        };
-        try {
-          window.localStorage.setItem('bullmet_account_last_email', currentUser.email);
-          window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
-        } catch {}
-        setUser(currentUser);
-        setStatus('ready');
-        setCart(readLocalCart());
-        setFavorites(readLocalFavorites());
-        void loadAccountData(currentUser);
-        return;
-      }
-
-      // Не выбрасываем мгновенно на /login — иначе на Vercel возможен цикл после входа.
-      if (authReady && !readRememberedAccount()) router.replace('/login?next=/account');
+      if (!active || !session) return;
+      const nextUser: AccountUser = {
+        id: session.user.id,
+        email: session.user.email || '',
+        createdAt: session.user.created_at,
+        source: 'supabase'
+      };
+      rememberAccount(nextUser.email);
+      setUser(nextUser);
+      setStatus('ready');
+      setDataMessage('');
+      void loadAccountData(nextUser, active);
     }) || { data: null };
 
-    const updateLocalData = () => {
-      setCart(readLocalCart());
-      setFavorites(readLocalFavorites());
+    const syncLocal = () => {
+      setCart(readCart());
+      setFavorites(readFavorites());
+      setOrders((current) => [...readLocalOrders(), ...current].filter((order, index, arr) => arr.findIndex((item) => item.id === order.id) === index));
     };
-    window.addEventListener('storage', updateLocalData);
-    window.addEventListener('bullmet-cart-updated', updateLocalData);
+
+    window.addEventListener('storage', syncLocal);
+    window.addEventListener('bullmet-cart-updated', syncLocal);
+    window.addEventListener('bullmet-orders-updated', syncLocal);
 
     return () => {
       active = false;
       data?.subscription?.unsubscribe();
-      window.removeEventListener('storage', updateLocalData);
-      window.removeEventListener('bullmet-cart-updated', updateLocalData);
+      window.removeEventListener('storage', syncLocal);
+      window.removeEventListener('bullmet-cart-updated', syncLocal);
+      window.removeEventListener('bullmet-orders-updated', syncLocal);
     };
   }, [router]);
 
-  async function loadAccountData(currentUser: AccountUser) {
-    const client = supabase;
-    if (!client) return;
+  async function loadAccountData(currentUser: AccountUser, active = true) {
+    if (!supabase || currentUser.source !== 'supabase') return;
+
     setLoadingData(true);
+    setDataMessage('');
+
+    let warnings = 0;
 
     try {
-      const safeProfileQuery = async () => {
-        const withPhone = await client.from('profiles').select('full_name, phone').eq('id', currentUser.id).maybeSingle();
-        if (!withPhone.error) return withPhone;
+      try {
+        const withPhone = await supabase.from('profiles').select('full_name, phone').eq('id', currentUser.id).maybeSingle();
+        const profileResult = withPhone.error
+          ? await supabase.from('profiles').select('full_name').eq('id', currentUser.id).maybeSingle()
+          : withPhone;
 
-        // На старой базе поля phone может еще не быть. Кабинет не должен из-за этого падать.
-        const withoutPhone = await client.from('profiles').select('full_name').eq('id', currentUser.id).maybeSingle();
-        return withoutPhone;
-      };
-
-      const safeFavoritesQuery = async () => {
-        const result = await client.from('favorites').select('product_slug, title, price, image, short, category, created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
-        return result;
-      };
-
-      const safeOrdersQuery = async () => {
-        const result = await client.from('orders').select('id, created_at, customer, items, total, status, delivery').order('created_at', { ascending: false }).limit(30);
-        return result;
-      };
-
-      const safeRequestsQuery = async () => {
-        const result = await client.from('requests').select('id, created_at, customer, kind, type, product_title, product_image, product_price, quantity, status, comment').order('created_at', { ascending: false }).limit(30);
-        return result;
-      };
-
-      const [profileResult, favoritesResult, ordersResult, requestsResult] = await Promise.allSettled([
-        safeProfileQuery(),
-        safeFavoritesQuery(),
-        safeOrdersQuery(),
-        safeRequestsQuery()
-      ]);
-
-      if (profileResult.status === 'fulfilled' && !profileResult.value.error && profileResult.value.data) {
-        const nextProfile = profileResult.value.data as Profile;
-        setProfile(nextProfile);
-        setProfileDraft({
-          fullName: nextProfile.full_name || '',
-          phone: nextProfile.phone || ''
-        });
-      } else {
-        setProfileDraft((current) => ({ ...current, fullName: current.fullName || '', phone: current.phone || '' }));
+        if (!profileResult.error && profileResult.data && active) {
+          const nextProfile = profileResult.data as Profile;
+          setProfile(nextProfile);
+          setProfileDraft({ fullName: nextProfile.full_name || '', phone: nextProfile.phone || '' });
+        }
+      } catch {
+        warnings += 1;
       }
 
-      if (favoritesResult.status === 'fulfilled' && !favoritesResult.value.error && favoritesResult.value.data) {
-        const fromDb = favoritesResult.value.data.map(normalizeFavorite).filter(Boolean) as FavoriteItem[];
-        const fromLocal = readLocalFavorites();
-        const merged = [...fromDb, ...fromLocal].filter((item, index, arr) => arr.findIndex((x) => x.slug === item.slug) === index);
-        setFavorites(merged);
+      try {
+        const favoritesResult = await supabase.from('favorites').select('product_slug, title, price, image, short, category, created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+        if (!favoritesResult.error && favoritesResult.data && active) {
+          const fromDb = favoritesResult.data.map(normalizeFavorite).filter(Boolean) as FavoriteItem[];
+          const fromLocal = readFavorites();
+          setFavorites([...fromDb, ...fromLocal].filter((item, index, arr) => arr.findIndex((x) => x.slug === item.slug) === index));
+        }
+      } catch {
+        warnings += 1;
       }
 
-      if (ordersResult.status === 'fulfilled' && !ordersResult.value.error && ordersResult.value.data) {
-        const email = currentUser.email.toLowerCase();
-        const filtered = (ordersResult.value.data as OrderRow[]).filter((order) => String(order.customer?.email || '').toLowerCase() === email);
-        setOrders(filtered);
+      try {
+        const ordersResult = await supabase.from('orders').select('id, created_at, customer, items, total, status, delivery').order('created_at', { ascending: false }).limit(40);
+        if (!ordersResult.error && ordersResult.data && active) {
+          const email = currentUser.email.toLowerCase();
+          const fromDb = (ordersResult.data as OrderRow[]).filter((order) => String(order.customer?.email || '').toLowerCase() === email);
+          const fromLocal = readLocalOrders().filter((order) => !order.customer?.email || String(order.customer?.email || '').toLowerCase() === email);
+          setOrders([...fromLocal, ...fromDb].filter((order, index, arr) => arr.findIndex((item) => item.id === order.id) === index));
+        }
+      } catch {
+        warnings += 1;
       }
 
-      if (requestsResult.status === 'fulfilled' && !requestsResult.value.error && requestsResult.value.data) {
-        const email = currentUser.email.toLowerCase();
-        const filtered = (requestsResult.value.data as RequestRow[]).filter((request) => String(request.customer?.email || '').toLowerCase() === email);
-        setRequests(filtered);
+      try {
+        const requestsResult = await supabase.from('requests').select('id, created_at, customer, kind, type, product_title, product_image, product_price, quantity, status, comment').order('created_at', { ascending: false }).limit(40);
+        if (!requestsResult.error && requestsResult.data && active) {
+          const email = currentUser.email.toLowerCase();
+          setRequests((requestsResult.data as RequestRow[]).filter((request) => String(request.customer?.email || '').toLowerCase() === email));
+        }
+      } catch {
+        warnings += 1;
+      }
+
+      if (warnings && active) {
+        setDataMessage('Кабинет открыт. Часть данных временно не подтянулась из Supabase, но основные действия доступны.');
       }
     } finally {
-      setLoadingData(false);
+      if (active) setLoadingData(false);
     }
   }
 
@@ -376,16 +363,19 @@ export function AccountClient() {
     setSigningOut(true);
     clearRememberedAccount();
     await supabase?.auth.signOut();
-    window.location.href = '/login?next=/account';
+    window.location.assign('/login?next=/account');
   }
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase || !user || user.id === 'local-account') {
-      setProfileMessage('Кабинет открыт. Для сохранения профиля обновите страницу после входа или войдите повторно.');
+    setProfileMessage('');
+
+    if (!supabase || !user || user.source !== 'supabase') {
+      setProfile({ full_name: profileDraft.fullName.trim(), phone: profileDraft.phone.trim() });
+      setProfileMessage('Сохранил на странице. После восстановления Supabase-сессии данные можно будет записать в профиль.');
       return;
     }
-    setProfileMessage('');
+
     setSavingProfile(true);
     try {
       const payload = {
@@ -394,16 +384,13 @@ export function AccountClient() {
         full_name: profileDraft.fullName.trim(),
         phone: profileDraft.phone.trim()
       };
-      const { error } = await supabase.from('profiles').upsert(payload);
-      if (error) {
-        // На старой базе поля phone может еще не быть — сохраняем хотя бы имя и email.
-        const fallback = await supabase.from('profiles').upsert({
-          id: user.id,
-          email: user.email,
-          full_name: payload.full_name
-        });
+
+      const result = await supabase.from('profiles').upsert(payload);
+      if (result.error) {
+        const fallback = await supabase.from('profiles').upsert({ id: user.id, email: user.email, full_name: payload.full_name });
         if (fallback.error) throw fallback.error;
       }
+
       setProfile({ full_name: payload.full_name, phone: payload.phone });
       setProfileMessage('Данные сохранены.');
     } catch (error) {
@@ -413,32 +400,34 @@ export function AccountClient() {
     }
   }
 
-  function addFavoriteToCart(item: FavoriteItem) {
-    const cartItem = {
-      slug: item.slug,
-      title: item.title,
-      price: Number(item.price || 0),
-      image: item.image || '',
-      quantity: 1,
-      size: 'Под заказ',
-      material: item.short || item.category || ''
-    };
-    const current = readLocalCart();
-    const existingIndex = current.findIndex((x) => x.slug === cartItem.slug && x.size === cartItem.size);
-    if (existingIndex >= 0) current[existingIndex].quantity = Number(current[existingIndex].quantity || 0) + 1;
-    else current.push(cartItem);
-    window.localStorage.setItem('bullmet_cart', JSON.stringify(current));
-    window.dispatchEvent(new Event('bullmet-cart-updated'));
-    setCart(current);
-  }
-
   function removeFavorite(slug: string) {
     const next = favorites.filter((item) => item.slug !== slug);
     setFavorites(next);
-    writeLocalFavorites(next);
-    if (supabase && user) {
+    writeFavorites(next);
+    if (supabase && user?.source === 'supabase') {
       void supabase.from('favorites').delete().eq('user_id', user.id).eq('product_slug', slug);
     }
+  }
+
+  function addFavoriteToCart(item: FavoriteItem) {
+    const current = readCart();
+    const cartItem: CartItem = {
+      slug: item.slug,
+      title: item.title,
+      price: Number(item.price || 0),
+      image: item.image,
+      quantity: 1,
+      size: 'Под заказ',
+      material: item.category || item.short || ''
+    };
+
+    const index = current.findIndex((entry) => entry.slug === cartItem.slug && entry.size === cartItem.size);
+    if (index >= 0) current[index].quantity = Number(current[index].quantity || 1) + 1;
+    else current.push(cartItem);
+
+    window.localStorage.setItem('bullmet_cart', JSON.stringify(current));
+    window.dispatchEvent(new Event('bullmet-cart-updated'));
+    setCart(current);
   }
 
   if (status === 'loading') {
@@ -446,7 +435,7 @@ export function AccountClient() {
       <section className="account-state-card account-state-card--rich">
         <div className="account-loader" />
         <h1>Открываем личный кабинет</h1>
-        <p>Проверяем вход и подгружаем ваши данные.</p>
+        <p>Проверяем вход и загружаем данные без лишних редиректов.</p>
       </section>
     );
   }
@@ -455,305 +444,184 @@ export function AccountClient() {
     return (
       <section className="account-state-card account-state-card--rich">
         <h1>Supabase не подключен</h1>
-        <p>Добавьте переменные NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY в Vercel и .env.local.</p>
+        <p>Добавьте NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY в Vercel и .env.local.</p>
+        <Link className="account-state-link" href="/login?next=/account">Вернуться ко входу</Link>
       </section>
     );
   }
 
   return (
-    <section className="account-page-shell account-page-shell--rich">
-      <div className="account-hero-card account-hero-card--rich">
+    <section className="account-stable-shell">
+      <div className="account-stable-hero">
         <div>
-          <p className="section-kicker">Личный кабинет Bullmet</p>
-          <h1>{profile.full_name ? `Здравствуйте, ${profile.full_name}` : 'Добро пожаловать'}</h1>
+          <p className="section-kicker">Личный кабинет</p>
+          <h1>Здравствуйте, {displayName}</h1>
           <span>{user?.email}</span>
+          {dataMessage && <small>{dataMessage}</small>}
         </div>
-        <div className="account-hero-actions">
+        <div className="account-stable-hero-actions">
           {isAdmin && <Link href="/admin">Админка</Link>}
           <button type="button" onClick={signOut} disabled={signingOut}>{signingOut ? 'Выходим...' : 'Выйти'}</button>
         </div>
       </div>
 
-      <div className="account-overview-stats">
-        <article>
-          <Icon name="cart" />
-          <span>В корзине</span>
-          <b>{cartCount}</b>
-          <small>{money(cartTotal)} BYN</small>
-        </article>
-        <article>
-          <Icon name="request" />
-          <span>Заявки</span>
-          <b>{requests.length}</b>
-          <small>{lastRequest ? `последняя: ${dateLabel(lastRequest.created_at)}` : 'пока нет'}</small>
-        </article>
-        <article>
-          <Icon name="package" />
-          <span>Заказы</span>
-          <b>{orders.length}</b>
-          <small>{lastOrder ? `последний: ${dateLabel(lastOrder.created_at)}` : 'пока нет'}</small>
-        </article>
-        <article>
-          <Icon name="shield" />
-          <span>Избранное</span>
-          <b>{favorites.length}</b>
-          <small>{loadingData ? 'обновляем...' : 'сохраненные товары'}</small>
-        </article>
+      <div className="account-stable-stats">
+        <StatCard icon="cart" label="Корзина" value={String(cartCount)} hint={`${money(cartTotal)} BYN`} />
+        <StatCard icon="package" label="Заказы" value={String(orders.length)} hint={orders[0] ? dateLabel(orders[0].created_at) : 'пока нет'} />
+        <StatCard icon="request" label="Заявки" value={String(requests.length)} hint={requests[0] ? dateLabel(requests[0].created_at) : 'пока нет'} />
+        <StatCard icon="shield" label="Избранное" value={String(favorites.length)} hint={loadingData ? 'обновляем...' : 'сохранено'} />
       </div>
 
-      <div className="account-layout-rich">
-        <aside className="account-sidebar-rich">
-          {[
-            ['overview', 'Обзор', 'factory'],
-            ['orders', 'Заказы', 'package'],
-            ['requests', 'Заявки', 'request'],
-            ['favorites', 'Избранное', 'shield'],
-            ['profile', 'Профиль', 'user']
-          ].map(([key, label, icon]) => (
-            <button key={key} type="button" className={section === key ? 'is-active' : ''} onClick={() => setSection(key as AccountSection)}>
-              <Icon name={icon as any} />
-              <span>{label}</span>
-            </button>
-          ))}
-          <div className="account-sidebar-cta">
-            <b>Нужен расчет?</b>
-            <span>Отправьте чертеж, фото или описание задачи.</span>
-            <Link href="/services#request">Заказать расчет</Link>
-          </div>
-        </aside>
-
-        <div className="account-content-rich">
-          {section === 'overview' && (
-            <div className="account-section-rich">
-              <div className="account-section-head">
-                <div>
-                  <p className="section-kicker">Обзор</p>
-                  <h2>Ваши быстрые действия</h2>
-                </div>
-                <Link href="/catalog">Вернуться в каталог</Link>
-              </div>
-
-              <div className="account-actions-grid-rich">
-                <article>
-                  <Icon name="cart" />
-                  <h3>Корзина</h3>
-                  <p>{cartCount ? `В корзине ${cartCount} товар(ов) на сумму ${money(cartTotal)} BYN.` : 'Корзина пока пустая. Добавьте товары из каталога.'}</p>
-                  <Link href="/cart">{cartCount ? 'Оформить заказ' : 'Перейти в каталог'}</Link>
-                </article>
-                <article>
-                  <Icon name="request" />
-                  <h3>Расчет изделия</h3>
-                  <p>Пришлите фото, чертеж или описание. Мы уточним детали и подготовим стоимость.</p>
-                  <Link href="/services#request">Заказать расчет</Link>
-                </article>
-                <article>
-                  <Icon name="search" />
-                  <h3>Каталог</h3>
-                  <p>Посмотрите часы, качели, садовую мебель и другие изделия Bullmet.</p>
-                  <Link href="/catalog">Смотреть товары</Link>
-                </article>
-              </div>
-
-              <div className="account-two-columns-rich">
-                <LatestOrders orders={orders} />
-                <LatestRequests requests={requests} />
+      <div className="account-stable-layout">
+        <div className="account-stable-main">
+          <section className="account-stable-card">
+            <div className="account-stable-card-head">
+              <div>
+                <p className="section-kicker">Быстрые действия</p>
+                <h2>Что можно сделать</h2>
               </div>
             </div>
-          )}
-
-          {section === 'orders' && (
-            <div className="account-section-rich">
-              <div className="account-section-head">
-                <div>
-                  <p className="section-kicker">Заказы</p>
-                  <h2>История заказов</h2>
-                </div>
-                <Link href="/cart">Открыть корзину</Link>
-              </div>
-              <OrdersList orders={orders} />
+            <div className="account-stable-actions">
+              <ActionCard icon="cart" title="Открыть корзину" text={cartCount ? `В корзине ${cartCount} товар(ов).` : 'Корзина пока пустая.'} href="/cart" label={cartCount ? 'Оформить' : 'Перейти'} />
+              <ActionCard icon="request" title="Заказать расчет" text="Отправьте фото, чертеж или описание изделия." href="/services#request" label="Создать заявку" />
+              <ActionCard icon="search" title="Каталог" text="Вернитесь к товарам и подберите изделие." href="/catalog" label="Смотреть" />
             </div>
-          )}
+          </section>
 
-          {section === 'requests' && (
-            <div className="account-section-rich">
-              <div className="account-section-head">
-                <div>
-                  <p className="section-kicker">Заявки</p>
-                  <h2>Заявки и расчеты</h2>
-                </div>
-                <Link href="/services#request">Новая заявка</Link>
+          <section className="account-stable-card">
+            <div className="account-stable-card-head">
+              <div>
+                <p className="section-kicker">Заказы и заявки</p>
+                <h2>Последняя активность</h2>
               </div>
-              <RequestsList requests={requests} />
+              <Link href="/cart">Новый заказ</Link>
             </div>
-          )}
-
-          {section === 'favorites' && (
-            <div className="account-section-rich">
-              <div className="account-section-head">
-                <div>
-                  <p className="section-kicker">Избранное</p>
-                  <h2>Сохраненные товары</h2>
-                </div>
-                <Link href="/catalog">Добавить товары</Link>
-              </div>
-              <FavoritesGrid favorites={favorites} onAdd={addFavoriteToCart} onRemove={removeFavorite} />
+            <div className="account-stable-feed">
+              <OrdersPreview orders={orders} />
+              <RequestsPreview requests={requests} />
             </div>
-          )}
-
-          {section === 'profile' && (
-            <div className="account-section-rich">
-              <div className="account-section-head">
-                <div>
-                  <p className="section-kicker">Профиль</p>
-                  <h2>Контактные данные</h2>
-                </div>
-              </div>
-              <form className="account-profile-form-rich" onSubmit={saveProfile}>
-                <label>
-                  <span>Имя</span>
-                  <input value={profileDraft.fullName} onChange={(event) => setProfileDraft((current) => ({ ...current, fullName: event.target.value }))} placeholder="Как к вам обращаться" />
-                </label>
-                <label>
-                  <span>Телефон</span>
-                  <input value={profileDraft.phone} onChange={(event) => setProfileDraft((current) => ({ ...current, phone: event.target.value }))} placeholder="+375 29 000-00-00" />
-                </label>
-                <label>
-                  <span>Email</span>
-                  <input value={user?.email || ''} disabled />
-                </label>
-                {profileMessage && <p>{profileMessage}</p>}
-                <button disabled={savingProfile}>{savingProfile ? 'Сохраняем...' : 'Сохранить данные'}</button>
-              </form>
-            </div>
-          )}
+          </section>
         </div>
+
+        <aside className="account-stable-side">
+          <section className="account-stable-card">
+            <div className="account-stable-card-head">
+              <div>
+                <p className="section-kicker">Профиль</p>
+                <h2>Контакты</h2>
+              </div>
+            </div>
+            <form className="account-stable-profile-form" onSubmit={saveProfile}>
+              <label>
+                <span>Имя</span>
+                <input value={profileDraft.fullName} onChange={(event) => setProfileDraft((current) => ({ ...current, fullName: event.target.value }))} placeholder="Как к вам обращаться" />
+              </label>
+              <label>
+                <span>Телефон</span>
+                <input value={profileDraft.phone} onChange={(event) => setProfileDraft((current) => ({ ...current, phone: event.target.value }))} placeholder="+375 29 000-00-00" />
+              </label>
+              <label>
+                <span>Email</span>
+                <input value={user?.email || ''} disabled />
+              </label>
+              {profileMessage && <p>{profileMessage}</p>}
+              <button disabled={savingProfile}>{savingProfile ? 'Сохраняем...' : 'Сохранить'}</button>
+            </form>
+          </section>
+
+          <section className="account-stable-card">
+            <div className="account-stable-card-head">
+              <div>
+                <p className="section-kicker">Избранное</p>
+                <h2>Сохраненные товары</h2>
+              </div>
+              <Link href="/catalog">Добавить</Link>
+            </div>
+            <FavoritesPreview favorites={favorites} onAdd={addFavoriteToCart} onRemove={removeFavorite} />
+          </section>
+        </aside>
       </div>
     </section>
   );
 }
 
-function EmptyState({ title, text, href, action }: { title: string; text: string; href: string; action: string }) {
+function StatCard({ icon, label, value, hint }: { icon: 'cart' | 'package' | 'request' | 'shield'; label: string; value: string; hint: string }) {
   return (
-    <div className="account-empty-rich">
-      <b>{title}</b>
+    <article>
+      <Icon name={icon} />
+      <span>{label}</span>
+      <b>{value}</b>
+      <small>{hint}</small>
+    </article>
+  );
+}
+
+function ActionCard({ icon, title, text, href, label }: { icon: 'cart' | 'request' | 'search'; title: string; text: string; href: string; label: string }) {
+  return (
+    <article>
+      <Icon name={icon} />
+      <h3>{title}</h3>
       <p>{text}</p>
-      <Link href={href}>{action}</Link>
+      <Link href={href}>{label}</Link>
+    </article>
+  );
+}
+
+function EmptyMini({ text, href, label }: { text: string; href: string; label: string }) {
+  return (
+    <div className="account-stable-empty">
+      <p>{text}</p>
+      <Link href={href}>{label}</Link>
     </div>
   );
 }
 
-function LatestOrders({ orders }: { orders: OrderRow[] }) {
-  return (
-    <article className="account-mini-panel-rich">
-      <div><h3>Последние заказы</h3><Link href="#" onClick={(event) => event.preventDefault()}>История</Link></div>
-      {orders.length ? orders.slice(0, 3).map((order) => (
-        <div className="account-mini-row" key={order.id}>
-          <span>{order.id}</span>
-          <b>{money(Number(order.total || 0))} BYN</b>
-          <em className={statusClass(order.status)}>{order.status || 'Новый'}</em>
-        </div>
-      )) : <p>Заказов пока нет. Они появятся после оформления корзины.</p>}
-    </article>
-  );
-}
-
-function LatestRequests({ requests }: { requests: RequestRow[] }) {
-  return (
-    <article className="account-mini-panel-rich">
-      <div><h3>Последние заявки</h3><Link href="/services#request">Новая</Link></div>
-      {requests.length ? requests.slice(0, 3).map((request) => (
-        <div className="account-mini-row" key={request.id}>
-          <span>{request.type || 'Заявка'}</span>
-          <b>{request.product_title || dateLabel(request.created_at)}</b>
-          <em className={statusClass(request.status)}>{request.status || 'Новая'}</em>
-        </div>
-      )) : <p>Заявок пока нет. Отправьте чертеж или описание на расчет.</p>}
-    </article>
-  );
-}
-
-function OrdersList({ orders }: { orders: OrderRow[] }) {
-  if (!orders.length) {
-    return <EmptyState title="Заказов пока нет" text="Добавьте товары в корзину и оформите заказ — история появится здесь." href="/catalog" action="Перейти в каталог" />;
-  }
+function OrdersPreview({ orders }: { orders: OrderRow[] }) {
+  if (!orders.length) return <EmptyMini text="Заказов пока нет. После оформления корзины они появятся здесь." href="/catalog" label="Перейти в каталог" />;
 
   return (
-    <div className="account-list-rich">
-      {orders.map((order) => (
+    <div className="account-stable-list">
+      {orders.slice(0, 4).map((order) => (
         <article key={order.id}>
-          <div className="account-list-head">
-            <div>
-              <b>{order.id}</b>
-              <span>{dateLabel(order.created_at)}</span>
-            </div>
+          <div>
+            <b>{order.id}</b>
             <em className={statusClass(order.status)}>{order.status || 'Новый'}</em>
           </div>
-          <div className="account-list-items">
-            {(order.items || []).slice(0, 4).map((item, index) => (
-              <div key={`${item.slug}-${index}`}>
-                {item.image && <img src={item.image} alt="" />}
-                <span>{item.title} × {item.quantity || 1}</span>
-                <b>{money(Number(item.price || 0))} BYN</b>
-              </div>
-            ))}
-          </div>
-          <div className="account-list-bottom">
-            <span>{order.delivery || 'Доставка по Беларуси'}</span>
-            <b>Итого: {money(Number(order.total || 0))} BYN</b>
-          </div>
+          <span>{dateLabel(order.created_at)} · {money(Number(order.total || 0))} BYN</span>
         </article>
       ))}
     </div>
   );
 }
 
-function RequestsList({ requests }: { requests: RequestRow[] }) {
-  if (!requests.length) {
-    return <EmptyState title="Заявок пока нет" text="Отправьте фото, чертеж или описание изделия — статус заявки появится здесь." href="/services#request" action="Отправить заявку" />;
-  }
+function RequestsPreview({ requests }: { requests: RequestRow[] }) {
+  if (!requests.length) return <EmptyMini text="Заявок пока нет. Отправьте чертеж или описание на расчет." href="/services#request" label="Отправить заявку" />;
 
   return (
-    <div className="account-list-rich">
-      {requests.map((request) => (
+    <div className="account-stable-list">
+      {requests.slice(0, 4).map((request) => (
         <article key={request.id}>
-          <div className="account-list-head">
-            <div>
-              <b>{request.type || 'Заявка'}</b>
-              <span>{request.id} · {dateLabel(request.created_at)}</span>
-            </div>
+          <div>
+            <b>{request.type || request.product_title || 'Заявка'}</b>
             <em className={statusClass(request.status)}>{request.status || 'Новая'}</em>
           </div>
-          {request.product_title && (
-            <div className="account-request-product">
-              {request.product_image && <img src={request.product_image} alt="" />}
-              <div>
-                <b>{request.product_title}</b>
-                <span>{request.quantity ? `Количество: ${request.quantity}` : 'Количество не указано'}{request.product_price ? ` · ${money(Number(request.product_price))} BYN` : ''}</span>
-              </div>
-            </div>
-          )}
-          {request.comment && <p>{request.comment}</p>}
+          <span>{request.product_title || request.id} · {dateLabel(request.created_at)}</span>
         </article>
       ))}
     </div>
   );
 }
 
-function FavoritesGrid({ favorites, onAdd, onRemove }: { favorites: FavoriteItem[]; onAdd: (item: FavoriteItem) => void; onRemove: (slug: string) => void }) {
-  if (!favorites.length) {
-    return <EmptyState title="Избранных товаров пока нет" text="Нажимайте сердечко на карточке товара, чтобы быстро возвращаться к понравившимся изделиям." href="/catalog" action="Смотреть товары" />;
-  }
+function FavoritesPreview({ favorites, onAdd, onRemove }: { favorites: FavoriteItem[]; onAdd: (item: FavoriteItem) => void; onRemove: (slug: string) => void }) {
+  if (!favorites.length) return <EmptyMini text="Избранных товаров пока нет." href="/catalog" label="Смотреть товары" />;
 
   return (
-    <div className="account-favorites-grid-rich">
-      {favorites.map((item) => (
+    <div className="account-stable-favorites">
+      {favorites.slice(0, 4).map((item) => (
         <article key={item.slug}>
-          <Link href={`/product/${item.slug}`} className="account-favorite-image">
-            {item.image ? <img src={item.image} alt={item.title} /> : <span>Нет фото</span>}
-          </Link>
+          <Link href={`/product/${item.slug}`}>{item.image ? <img src={item.image} alt="" /> : <span>Фото</span>}</Link>
           <div>
             <Link href={`/product/${item.slug}`}>{item.title}</Link>
-            <p>{item.short || item.category || 'Товар Bullmet'}</p>
             <b>от {money(Number(item.price || 0))} BYN</b>
             <div>
               <button type="button" onClick={() => onAdd(item)}>В корзину</button>

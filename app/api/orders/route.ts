@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const customer = {
       name: cleanText(body.customer?.name || body.name),
       phone: cleanText(body.customer?.phone || body.phone),
-      email: cleanText(body.customer?.email || body.email)
+      email: cleanText(body.customer?.email || body.email || body.accountEmail)
     };
 
     if (!normalizedItems.length) {
@@ -82,10 +82,23 @@ export async function POST(request: NextRequest) {
 
     const { error } = await serverSupabase.from('orders').insert(order);
     if (error) {
-      return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+      await notifyTelegram({
+        title: 'Новый заказ Bullmet — Supabase не сохранил',
+        lines: [
+          `Заказ: ${order.id}`,
+          `Клиент: ${customer.name}`,
+          `Телефон: ${customer.phone}`,
+          customer.email && `Email: ${customer.email}`,
+          `Сумма: ${money(total)} BYN`,
+          `Товары: ${normalizedItems.map((item) => `${item.title} × ${item.quantity}`).join('; ')}`,
+          `Ошибка Supabase: ${error.message}`,
+          order.comment && `Комментарий: ${order.comment}`
+        ]
+      });
+      return NextResponse.json({ ok: true, id: order.id, savedToSupabase: false, warning: `Supabase не сохранил заказ: ${error.message}` });
     }
 
-    await notifyTelegram({
+    const telegramResult = await notifyTelegram({
       title: 'Новый заказ Bullmet',
       lines: [
         `Заказ: ${order.id}`,
@@ -98,7 +111,7 @@ export async function POST(request: NextRequest) {
       ]
     });
 
-    return NextResponse.json({ ok: true, id: order.id });
+    return NextResponse.json({ ok: true, id: order.id, savedToSupabase: true, telegramSent: telegramResult.ok, warning: telegramResult.ok ? undefined : telegramResult.reason });
   } catch (error) {
     return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : 'Не удалось оформить заказ.' }, { status: 500 });
   }

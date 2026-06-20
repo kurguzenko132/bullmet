@@ -13,6 +13,8 @@ type LastOrder = {
   createdAt?: string;
   customer?: { name?: string; phone?: string; email?: string };
   items?: { title: string; quantity?: number; price?: number; image?: string; slug?: string }[];
+  warning?: string;
+  savedToSupabase?: boolean;
 };
 
 function money(value: number) {
@@ -35,13 +37,19 @@ export function OrderSuccessClient() {
 
   useEffect(() => {
     try {
-      const raw = window.sessionStorage.getItem('bullmet_last_order');
-      const parsed = raw ? JSON.parse(raw) : null;
-      setOrder(parsed && typeof parsed === 'object' ? parsed : null);
+      const rawSession = window.sessionStorage.getItem('bullmet_last_order');
+      const rawLocal = window.localStorage.getItem('bullmet_last_order');
+      const rawHistory = window.localStorage.getItem('bullmet_local_orders');
+      const history = rawHistory ? JSON.parse(rawHistory) : [];
+      const parsedSession = rawSession ? JSON.parse(rawSession) : null;
+      const parsedLocal = rawLocal ? JSON.parse(rawLocal) : null;
+      const fromHistory = Array.isArray(history) ? history.find((item) => item?.id === queryId) : null;
+      const nextOrder = fromHistory || parsedSession || parsedLocal;
+      setOrder(nextOrder && typeof nextOrder === 'object' ? nextOrder : null);
     } catch {
       setOrder(null);
     }
-  }, []);
+  }, [queryId]);
 
   const orderId = useMemo(() => queryId || order?.id || 'BM-заказ', [queryId, order?.id]);
   const items = order?.items || [];
@@ -53,6 +61,8 @@ export function OrderSuccessClient() {
         <p className="section-kicker">Заказ оформлен</p>
         <h1>Спасибо, мы получили ваш заказ</h1>
         <p>Номер заказа: <b>{orderId}</b>. Менеджер Bullmet свяжется с вами, подтвердит детали, сроки и способ получения.</p>
+        {order?.warning && <div className="order-success-warning-stage3">Заказ принят. Дополнительно: {order.warning}</div>}
+        {!order && <div className="order-success-warning-stage3">Данные заказа не найдены в браузере, но если номер есть в адресе, используйте его при обращении к менеджеру.</div>}
         <div className="order-success-actions-stage2">
           <Link href="/account">Перейти в личный кабинет</Link>
           <Link href="/catalog">Вернуться в каталог</Link>
