@@ -13832,3 +13832,301 @@ img { display: block; max-width: 100%; }
   .production-simple-grid { grid-template-columns: 1fr; gap: 12px; }
   .production-simple-card-copy h4 { font-size: 17px; }
 }
+
+/* ===== Mobile homepage QA polish (requested) ===== */
+@media (max-width: 760px) {
+  .exact-home {
+    padding-bottom: 6px;
+  }
+
+  .hero-exact {
+    min-height: 400px !important;
+  }
+
+  .hero-inner {
+    min-height: 400px !important;
+    padding-top: 28px !important;
+    padding-bottom: 24px !important;
+  }
+
+  .hero-copy {
+    max-width: 100% !important;
+  }
+
+  .hero-copy h1 {
+    font-size: 26px !important;
+    line-height: 1.08 !important;
+    letter-spacing: .03em !important;
+    max-width: 350px;
+  }
+
+  .hero-copy p {
+    margin-top: 14px !important;
+    font-size: 16px !important;
+    line-height: 1.42 !important;
+    max-width: 345px !important;
+  }
+
+  .hero-actions {
+    margin-top: 18px !important;
+    width: 100%;
+    gap: 10px !important;
+  }
+
+  .btn-orange,
+  .btn-outline {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 46px !important;
+  }
+
+  .features-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding-top: 16px !important;
+    padding-bottom: 8px !important;
+    min-height: 0 !important;
+  }
+
+  .feature-item {
+    min-height: 82px;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 10px 4px;
+  }
+
+  .feature-item p {
+    font-size: 13px !important;
+    line-height: 1.12 !important;
+  }
+
+  .feature-item svg {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .category-grid-exact {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-top: 10px !important;
+  }
+
+  .category-tile {
+    height: 165px !important;
+  }
+
+  .tile-title {
+    left: 12px !important;
+    bottom: 12px !important;
+    font-size: 13px !important;
+    line-height: 1.04 !important;
+    letter-spacing: .04em !important;
+    max-width: calc(100% - 56px);
+  }
+
+  .tile-arrow {
+    width: 34px !important;
+    height: 34px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+  }
+
+  .production-section {
+    margin-top: 28px !important;
+    min-height: 0 !important;
+  }
+
+  .production-text {
+    padding: 24px 20px 20px !important;
+  }
+
+  .production-text h2 {
+    font-size: 20px !important;
+    line-height: 1.1 !important;
+  }
+
+  .body-text {
+    margin: 12px 0 16px !important;
+    font-size: 14px !important;
+    line-height: 1.42 !important;
+  }
+
+  .small-orange {
+    width: 100%;
+    max-width: 100%;
+    height: 44px !important;
+  }
+
+  .production-image {
+    min-height: 230px !important;
+  }
+
+  .production-list {
+    padding: 20px !important;
+    gap: 16px !important;
+  }
+
+  .production-list p {
+    font-size: 14px !important;
+  }
+
+  .products-services {
+    margin-top: 28px !important;
+    gap: 26px !important;
+  }
+
+  .popular-block h3,
+  .services-block h3,
+  .production-simple-head h3 {
+    margin-bottom: 16px !important;
+    font-size: 18px !important;
+    letter-spacing: .09em !important;
+  }
+
+  .home-product-grid-shop--catalog-style {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .home-catalog-card-market {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-image-market {
+    height: 150px !important;
+    flex: 0 0 150px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-body-market {
+    padding: 10px 10px 12px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-rating-market {
+    font-size: 11px !important;
+    gap: 8px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-rating-market small {
+    font-size: 10px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-body-market h3 {
+    min-height: 36px !important;
+    margin-top: 8px !important;
+    font-size: 16px !important;
+    line-height: 1.12 !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-body-market p {
+    min-height: 0 !important;
+    margin-top: 8px !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-status-market {
+    min-height: 0 !important;
+    margin-top: 10px !important;
+    gap: 6px !important;
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-status-market span {
+    font-size: 11px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-status-market small {
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-bottom-market {
+    min-height: 0 !important;
+    padding-top: 10px !important;
+    gap: 8px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-bottom-market b {
+    font-size: 14px !important;
+    line-height: 1 !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-bottom-market del {
+    margin-top: 4px !important;
+    font-size: 11px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-bottom-market button {
+    width: 36px !important;
+    height: 36px !important;
+    flex: 0 0 36px !important;
+  }
+
+  .steps-section-v2 {
+    margin-top: 34px !important;
+    padding-top: 28px !important;
+  }
+
+  .steps-head-v2 h3 {
+    font-size: 28px !important;
+    line-height: 1.04 !important;
+  }
+
+  .steps-head-v2 span {
+    font-size: 14px !important;
+  }
+
+  .production-simple {
+    margin-top: 30px !important;
+  }
+
+  .production-simple-head {
+    margin-bottom: 14px !important;
+  }
+
+  .production-simple-link {
+    font-size: 13px !important;
+  }
+
+  .footer-exact {
+    margin-top: 28px !important;
+    padding-top: 28px !important;
+    padding-bottom: 100px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero-copy h1 {
+    font-size: 24px !important;
+    max-width: 320px;
+  }
+
+  .hero-copy p {
+    max-width: 320px !important;
+    font-size: 15px !important;
+  }
+
+  .feature-item {
+    min-height: 74px;
+  }
+
+  .feature-item p {
+    font-size: 12px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-image-market {
+    height: 132px !important;
+    flex-basis: 132px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-body-market h3 {
+    font-size: 15px !important;
+  }
+
+  .home-product-grid-shop--catalog-style .catalog-card-bottom-market b {
+    font-size: 13px !important;
+  }
+}
