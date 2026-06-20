@@ -48,11 +48,18 @@ const productionBenefits = [
 ];
 
 const steps = [
-  { icon: 'request' as const, num: '01', title: 'Вы оставляете\nзаявку', desc: 'Через форму на сайте\nили по телефону' },
-  { icon: 'ruler' as const, num: '02', title: 'Мы уточняем детали', desc: 'Размеры, материалы,\nпожелания' },
-  { icon: 'calculator' as const, num: '03', title: 'Рассчитываем\nстоимость', desc: 'Согласовываем цену\nи сроки' },
-  { icon: 'hammer' as const, num: '04', title: 'Изготавливаем\nизделие', desc: 'Контроль качества\nна каждом этапе' },
-  { icon: 'package' as const, num: '05', title: 'Передаем или\nдоставляем заказ', desc: 'Самовывоз или доставка\nпо Беларуси' }
+  { icon: 'request' as const, num: '01', title: 'Заявка', desc: 'Вы оставляете заявку на сайте или связываетесь с нами удобным способом' },
+  { icon: 'calculator' as const, num: '02', title: 'Расчёт', desc: 'Мы рассчитываем стоимость, сроки и предлагаем подходящий вариант' },
+  { icon: 'ruler' as const, num: '03', title: 'Проектирование', desc: 'При необходимости готовим чертёж и согласовываем все детали' },
+  { icon: 'hammer' as const, num: '04', title: 'Производство', desc: 'Запускаем изделие в работу на собственном производстве Bullmet' },
+  { icon: 'package' as const, num: '05', title: 'Передача заказа', desc: 'Передаём готовое изделие, организуем самовывоз или доставку' }
+];
+
+const workBenefits = [
+  { icon: 'shield' as const, title: 'Гарантия качества', desc: 'Контролируем каждый этап производства' },
+  { icon: 'clock' as const, title: 'Соблюдаем сроки', desc: 'Заранее согласовываем дату готовности' },
+  { icon: 'factory' as const, title: 'Опыт и производство', desc: 'Делаем изделия сами, без лишних посредников' },
+  { icon: 'truck' as const, title: 'Доставка по Беларуси', desc: 'Аккуратно передаём заказ в нужный регион' }
 ];
 
 const gallery = [img.gallery1, img.gallery2, img.gallery3, img.gallery4, img.gallery5, img.gallery6];
@@ -137,15 +144,33 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="home-container steps-section">
-          <h3>КАК МЫ РАБОТАЕМ</h3>
-          <div className="steps-grid">
-            {steps.map((step) => (
+        <section className="home-container steps-section steps-section-v2">
+          <div className="steps-head-v2">
+            <p>Как мы работаем</p>
+            <h3>Простой алгоритм от идеи до результата</h3>
+            <span>Мы берём на себя все этапы — вам остаётся получить готовое изделие.</span>
+          </div>
+
+          <div className="steps-grid steps-grid-v2">
+            {steps.map((step, index) => (
               <article key={step.num}>
-                <Icon name={step.icon} className="step-icon" />
                 <span className="step-num">{step.num}</span>
-                <h4><Lines value={step.title} /></h4>
-                <p><Lines value={step.desc} /></p>
+                <div className="step-icon-circle"><Icon name={step.icon} className="step-icon" /></div>
+                <h4>{step.title}</h4>
+                <p>{step.desc}</p>
+                {index < steps.length - 1 && <span className="step-arrow-v2" aria-hidden="true">›</span>}
+              </article>
+            ))}
+          </div>
+
+          <div className="work-benefits-v2">
+            {workBenefits.map((item) => (
+              <article key={item.title}>
+                <Icon name={item.icon} />
+                <div>
+                  <h4>{item.title}</h4>
+                  <p>{item.desc}</p>
+                </div>
               </article>
             ))}
           </div>
