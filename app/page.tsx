@@ -62,7 +62,7 @@ function Lines({ value }: { value: string }) {
 }
 
 export default async function HomePage() {
-  const products = (await getCatalogProducts()).slice(0, 4);
+  const products = (await getCatalogProducts()).slice(0, 3);
   return (
     <>
       <Header />
