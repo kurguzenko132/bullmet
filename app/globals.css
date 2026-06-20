@@ -13817,27 +13817,13 @@ img { display: block; max-width: 100%; }
 .production-simple-card-copy h4 { margin: 0; font-size: 18px; line-height: 1.15; }
 .production-simple-card-copy p { margin: 8px 0 0; font-size: 14px; line-height: 1.45; color: #625a50; }
 
-.production-simple-cta { margin-top: 18px; display: grid; grid-template-columns: 1fr 1.1fr; background: #fff; border: 1px solid #ebe4da; }
-.production-simple-copy { padding: 30px 32px; }
-.production-simple-copy h2 { margin: 0; font-size: 34px; line-height: 1.08; font-weight: 950; max-width: 460px; }
-.production-simple-copy > p { margin: 14px 0 0; font-size: 16px; line-height: 1.55; color: #534d44; max-width: 520px; }
-.production-simple-list { margin: 18px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
-.production-simple-list li { position: relative; padding-left: 18px; font-size: 14px; line-height: 1.45; color: #3f3a34; }
-.production-simple-list li::before { content: ''; position: absolute; left: 0; top: .56em; width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
-.production-simple-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
-.production-simple-image { min-height: 320px; }
-.production-simple-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 @media (max-width: 1180px) {
   .production-simple-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .production-simple-cta { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 780px) {
   .production-simple-head { flex-direction: column; align-items: flex-start; }
-  .production-simple-copy { padding: 24px 20px; }
-  .production-simple-copy h2 { font-size: 28px; }
-  .production-simple-image { min-height: 240px; }
 }
 
 @media (max-width: 640px) {
@@ -13845,8 +13831,4 @@ img { display: block; max-width: 100%; }
   .production-simple-head h3 { font-size: 20px; }
   .production-simple-grid { grid-template-columns: 1fr; gap: 12px; }
   .production-simple-card-copy h4 { font-size: 17px; }
-  .production-simple-copy h2 { font-size: 25px; }
-  .production-simple-copy > p { font-size: 15px; }
-  .production-simple-actions { flex-direction: column; }
-  .production-simple-actions .btn-orange, .production-simple-actions .btn-outline { width: 100%; max-width: none; }
 }

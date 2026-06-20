@@ -203,29 +203,6 @@ export default async function HomePage() {
               </article>
             ))}
           </div>
-
-          <div className="production-simple-cta">
-            <div className="production-simple-copy">
-              <p className="eyebrow">индивидуальный заказ</p>
-              <h2>Нужно изделие по вашим размерам?</h2>
-              <p>Изготовим мебель, качели, навесы, декоративные панели и детали по вашему эскизу, фото или точным размерам.</p>
-
-              <ul className="production-simple-list">
-                <li>Работаем по эскизу, фото или примеру</li>
-                <li>Подбираем материал и размеры под задачу</li>
-                <li>Согласовываем внешний вид перед запуском</li>
-              </ul>
-
-              <div className="production-simple-actions">
-                <Link href="/services#request" className="btn-orange">Обсудить проект</Link>
-                <Link href="/production" className="btn-outline">О производстве</Link>
-              </div>
-            </div>
-
-            <div className="production-simple-image">
-              <img src={img.cta} alt="Изготовление по индивидуальным размерам" />
-            </div>
-          </div>
         </section>
       </main>
       <Footer />
