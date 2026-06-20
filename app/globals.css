@@ -13342,3 +13342,89 @@ img { display: block; max-width: 100%; }
     min-height: 0 !important;
   }
 }
+
+/* ===== Home popular products: same card as catalog ===== */
+.home-product-grid-shop--catalog-style {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  align-items: stretch !important;
+}
+
+.home-product-grid-shop--catalog-style .home-catalog-card-market {
+  min-width: 0 !important;
+  height: 416px !important;
+  min-height: 416px !important;
+  box-shadow: 0 8px 22px rgba(31, 24, 18, .035) !important;
+}
+
+.home-product-grid-shop--catalog-style .catalog-card-image-market {
+  height: 168px !important;
+  flex: 0 0 168px !important;
+}
+
+.home-product-grid-shop--catalog-style .catalog-card-body-market {
+  min-height: 0 !important;
+  padding: 12px 14px 16px !important;
+}
+
+.home-product-grid-shop--catalog-style .catalog-card-body-market h3 {
+  min-height: 42px !important;
+  font-size: 18px !important;
+}
+
+.home-product-grid-shop--catalog-style .catalog-card-body-market p {
+  min-height: 20px !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+.home-product-grid-shop--catalog-style .catalog-card-status-market {
+  min-height: 24px !important;
+  margin-top: 10px !important;
+}
+
+.home-product-grid-shop--catalog-style .catalog-card-bottom-market {
+  min-height: 52px !important;
+  padding-top: 12px !important;
+}
+
+.home-product-grid-shop--catalog-style .catalog-card-bottom-market button {
+  flex: 0 0 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+}
+
+@media (min-width: 1021px) {
+  .products-services .home-product-grid-shop--catalog-style {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .products-services .home-product-grid-shop--catalog-style .home-catalog-card-market,
+  .products-services .service-row-exact article {
+    height: 416px !important;
+    min-height: 416px !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  .home-product-grid-shop--catalog-style {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-product-grid-shop--catalog-style {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .home-product-grid-shop--catalog-style .home-catalog-card-market {
+    height: auto !important;
+    min-height: 392px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-product-grid-shop--catalog-style {
+    grid-template-columns: 1fr !important;
+  }
+}

@@ -52,25 +52,45 @@ export function HomeProductsClient({ products }: { products: CatalogProduct[] })
   }
 
   return (
-    <div className="home-product-grid-shop">
+    <div className="home-product-grid-shop home-product-grid-shop--catalog-style">
       {products.map((product) => {
-        const imageSettings = getImagePreset(product, product.image, 'home');
+        const imageSettings = getImagePreset(product, product.image, 'catalog');
         const discount = discountPercent(product.price, product.oldPrice);
+
         return (
-          <article className="home-product-card-shop" key={product.slug} role="link" tabIndex={0} onClick={() => open(product.slug)} onKeyDown={(event) => onKeyDown(event, product.slug)}>
-            <div className="home-product-image-shop">
+          <article
+            className="catalog-card-market home-catalog-card-market"
+            key={product.slug}
+            role="link"
+            tabIndex={0}
+            onClick={() => open(product.slug)}
+            onKeyDown={(event) => onKeyDown(event, product.slug)}
+            aria-label={`Открыть товар: ${product.title}`}
+          >
+            <div className="catalog-card-image-market">
               <img src={product.image} alt={product.title} style={imageSettings.style} />
-              {discount && <span>-{discount}%</span>}
+              {discount && <span className="catalog-sale-market">-{discount}%</span>}
             </div>
-            <div className="home-product-body-shop">
-              <h4>{product.title}</h4>
-              <p>{product.short || product.material}</p>
-              <div className="home-product-tags-shop">
-                <span>{product.category || 'Каталог'}</span>
-                <span>{product.inStock ? 'В наличии' : 'Под заказ'}</span>
+
+            <div className="catalog-card-body-market">
+              <div className="catalog-card-rating-market">
+                <span>★ 0.0</span>
+                <small>нет отзывов</small>
               </div>
-              <div className="home-product-bottom-shop">
-                <b>от {money(product.price)} BYN</b>
+
+              <h3>{product.title}</h3>
+              <p>{product.short || product.material}</p>
+
+              <div className="catalog-card-status-market">
+                <span className={product.inStock ? 'is-available' : 'is-order'}>{product.inStock ? 'В наличии' : 'Под заказ'}</span>
+                {product.category && <small>{product.category}</small>}
+              </div>
+
+              <div className="catalog-card-bottom-market">
+                <div>
+                  <b>от {money(product.price)} BYN</b>
+                  {product.oldPrice && product.oldPrice > product.price && <del>{money(product.oldPrice)} BYN</del>}
+                </div>
                 <button type="button" aria-label={`Добавить в корзину: ${product.title}`} onClick={(event) => onCartClick(event, product)}><Icon name="cart" /></button>
               </div>
             </div>
