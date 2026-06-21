@@ -76,26 +76,27 @@ function Lines({ value }: { value: string }) {
 }
 
 export default async function HomePage() {
-  const products = (await getCatalogProducts()).slice(0, 3);
+  const products = (await getCatalogProducts()).slice(0, 4);
   return (
     <>
       <Header />
-      <main className="exact-home">
-        <section className="hero-exact">
+      <main className="exact-home home-final-page">
+        <section className="hero-exact home-final-hero">
           <img src={img.hero} alt="Станок режет металл" className="hero-photo" />
           <div className="hero-fade" />
           <div className="home-container hero-inner">
             <div className="hero-copy">
-              <h1>BULLMET — ИЗДЕЛИЯ ИЗ МЕТАЛЛА С ЭЛЕМЕНТАМИ ДЕРЕВА</h1>
-              <p>Изготавливаем садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.</p>
+              <span className="home-hero-kicker">Собственное производство Bullmet</span>
+              <h1>Изделия из металла с элементами дерева</h1>
+              <p>Настенные часы, садовая мебель, качели, мебель в стиле лофт и услуги лазерной резки — изготавливаем под заказ и продаём готовые изделия.</p>
               <div className="hero-actions">
-                <Link href="/catalog" className="btn-orange">ПЕРЕЙТИ В КАТАЛОГ</Link>
+                <Link href="/catalog" className="btn-orange">Перейти в каталог</Link>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="home-container features-row">
+        <section className="home-container features-row home-trust-row">
           {featureItems.map((item) => (
             <div className="feature-item" key={item.text}>
               <Icon name={item.icon} />
@@ -104,22 +105,68 @@ export default async function HomePage() {
           ))}
         </section>
 
-        <section className="home-container category-grid-exact">
-          {categories.map((item) => (
-            <Link href={item.href} className="category-tile" key={item.title}>
-              <img src={item.img} alt={item.title.replace(/\n/g, ' ')} />
-              <span className="tile-title"><Lines value={item.title} /></span>
-              <span className="tile-arrow"><Icon name="arrow" /></span>
-            </Link>
-          ))}
+        <section className="home-container home-categories-final">
+          <div className="home-section-title-row">
+            <div>
+              <p className="eyebrow">выберите направление</p>
+              <h2>Каталог и услуги Bullmet</h2>
+              <span>Готовые изделия, мебель и производственные услуги в одном месте.</span>
+            </div>
+            <Link href="/catalog">Смотреть каталог</Link>
+          </div>
+
+          <div className="category-grid-exact category-grid-final">
+            {categories.map((item) => (
+              <Link href={item.href} className="category-tile" key={item.title}>
+                <img src={item.img} alt={item.title.replace(/\n/g, ' ')} />
+                <span className="tile-title"><Lines value={item.title} /></span>
+                <span className="tile-arrow"><Icon name="arrow" /></span>
+              </Link>
+            ))}
+          </div>
         </section>
 
-        <section className="home-container production-section" id="production">
+        <section className="home-container home-shop-final">
+          <div className="home-section-title-row">
+            <div>
+              <p className="eyebrow">покупают чаще всего</p>
+              <h2>Популярные товары</h2>
+              <span>Подборка изделий, которые проще всего выбрать и заказать сразу.</span>
+            </div>
+            <Link href="/catalog">Все товары</Link>
+          </div>
+
+          <div className="products-services products-services-final">
+            <div className="popular-block">
+              <HomeProductsClient products={products} />
+            </div>
+
+            <div className="services-block services-block-final">
+              <div className="services-block-head-final">
+                <p className="eyebrow">производственные услуги</p>
+                <h3>Резка и гибка металла</h3>
+                <span>Подойдёт для декора, панелей, вывесок, мебельных деталей и индивидуальных проектов.</span>
+              </div>
+              <div className="service-row-exact service-row-final">
+                <article>
+                  <img src={img.serviceMetal} alt="Лазерная резка" />
+                  <div><h4>Лазерная резка</h4><p>Аккуратная резка листового металла для декора, вывесок, панелей и деталей</p><Link href="/services">Подробнее</Link></div>
+                </article>
+                <article>
+                  <img src={img.serviceWood} alt="Гибка металла" />
+                  <div><h4>Гибка металла</h4><p>Гибка листового металла для мебельных каркасов, навесов и малых форм</p><Link href="/services">Подробнее</Link></div>
+                </article>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="home-container production-section production-section-final" id="production">
           <div className="production-text">
             <p className="eyebrow">мы изготавливаем сами</p>
-            <h2>Собственное производство Bullmet</h2>
-            <p className="body-text">Мы изготавливаем садовую мебель, мебель для дома в стиле лофт, качели, навесы и малые архитектурные формы. Также выполняем художественную лазерную резку из листового металла.</p>
-            <Link href="/production" className="small-orange">ПОДРОБНЕЕ О ПРОИЗВОДСТВЕ</Link>
+            <h2>Собственное производство</h2>
+            <p className="body-text">Изготавливаем изделия на собственном производстве: работаем с металлом, деревом, декоративными элементами и готовим изделия под конкретную задачу.</p>
+            <Link href="/production" className="small-orange">О производстве</Link>
           </div>
           <div className="production-image"><img src={img.workshop} alt="Производство Bullmet" /></div>
           <div className="production-list">
@@ -129,35 +176,14 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="home-container products-services">
-          <div className="popular-block">
-            <h3>ПОПУЛЯРНЫЕ ТОВАРЫ</h3>
-            <HomeProductsClient products={products} />
-          </div>
-
-          <div className="services-block">
-            <h3>УСЛУГИ РЕЗКИ</h3>
-            <div className="service-row-exact">
-              <article>
-                <img src={img.serviceMetal} alt="Лазерная резка" />
-                <div><h4>Лазерная резка</h4><p>Художественная резка из листового металла для декора, вывесок, панелей и деталей</p><Link href="/services">ПОДРОБНЕЕ</Link></div>
-              </article>
-              <article>
-                <img src={img.serviceWood} alt="Гибка металла" />
-                <div><h4>Гибка металла</h4><p>Гибка листового металла для мебельных каркасов, навесов, деталей и малых форм</p><Link href="/services">ПОДРОБНЕЕ</Link></div>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section className="home-container steps-section steps-section-v2">
+        <section className="home-container steps-section steps-section-v2 steps-section-final">
           <div className="steps-head-v2">
             <p>Как мы работаем</p>
-            <h3>Простой алгоритм от идеи до результата</h3>
-            <span>Мы берём на себя все этапы — вам остаётся получить готовое изделие.</span>
+            <h3>Понятный путь от идеи до готового изделия</h3>
+            <span>Мы заранее согласуем стоимость, сроки, материалы и детали заказа.</span>
           </div>
 
-          <div className="steps-grid steps-grid-v2">
+          <div className="steps-grid steps-grid-v2 steps-grid-final">
             {steps.map((step, index) => (
               <article key={step.num}>
                 <span className="step-num">{step.num}</span>
@@ -169,7 +195,7 @@ export default async function HomePage() {
             ))}
           </div>
 
-          <div className="work-benefits-v2">
+          <div className="work-benefits-v2 work-benefits-final">
             {workBenefits.map((item) => (
               <article key={item.title}>
                 <Icon name={item.icon} />
@@ -182,13 +208,13 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="home-container production-simple">
+        <section className="home-container production-simple production-simple-final">
           <div className="production-simple-head">
             <div>
-              <p className="eyebrow">собственное производство</p>
-              <h3>ПРОИЗВОДСТВО BULLMET</h3>
+              <p className="eyebrow">детали и готовые изделия</p>
+              <h3>Производство Bullmet</h3>
             </div>
-            <Link href="/about" className="production-simple-link">Смотреть все фото</Link>
+            <Link href="/about" className="production-simple-link">Больше о компании</Link>
           </div>
 
           <div className="production-simple-grid">
@@ -201,6 +227,18 @@ export default async function HomePage() {
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="home-container home-final-cta">
+          <div>
+            <p className="eyebrow">готовы выбрать изделие?</p>
+            <h2>Посмотрите каталог Bullmet</h2>
+            <span>Выберите готовый товар или свяжитесь с нами, если нужен индивидуальный размер, цвет или проект.</span>
+          </div>
+          <div className="home-final-cta-actions">
+            <Link href="/catalog" className="btn-orange">Перейти в каталог</Link>
+            <Link href="/contacts" className="btn-outline">Связаться</Link>
           </div>
         </section>
       </main>
