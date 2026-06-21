@@ -14559,3 +14559,300 @@ img { display: block; max-width: 100%; }
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Final mobile/home polish: remove calculation buttons, compact production, footer cleanup ===== */
+.hero-actions .btn-orange:only-child {
+  min-width: 260px;
+}
+
+@media (min-width: 981px) {
+  .header-actions-polished {
+    gap: 14px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero-actions .btn-orange:only-child {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .production-section {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    margin-top: 26px !important;
+    background: #fff !important;
+    border-top: 1px solid #eee5dc;
+    border-bottom: 1px solid #eee5dc;
+  }
+
+  .production-text {
+    order: 1;
+    padding: 24px 18px 18px !important;
+  }
+
+  .production-text .eyebrow {
+    margin-bottom: 8px !important;
+    font-size: 12px !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase;
+  }
+
+  .production-text h2 {
+    max-width: 330px;
+    font-size: 25px !important;
+    line-height: 1.08 !important;
+    letter-spacing: .02em;
+  }
+
+  .production-text .body-text {
+    max-width: 345px !important;
+    margin: 14px 0 16px !important;
+    font-size: 15px !important;
+    line-height: 1.48 !important;
+    color: #4e4943;
+  }
+
+  .production-text .small-orange {
+    width: 100%;
+    max-width: 330px;
+    height: 44px !important;
+    font-size: 10px !important;
+  }
+
+  .production-image {
+    order: 2;
+    min-height: 0 !important;
+    height: 210px !important;
+    margin: 0 18px 18px;
+    border: 1px solid #ede3d8;
+    background: #f4eee7;
+  }
+
+  .production-image img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  .production-list {
+    order: 3;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding: 0 18px 22px !important;
+    background: #fff !important;
+  }
+
+  .production-list div {
+    display: grid !important;
+    grid-template-columns: 30px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    align-items: center !important;
+    min-height: 82px;
+    border: 1px solid #eee5dc;
+    background: #fbf8f3;
+    padding: 12px !important;
+  }
+
+  .production-list svg {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .production-list p {
+    font-size: 12px !important;
+    line-height: 1.18 !important;
+    font-weight: 900;
+  }
+
+  .products-services {
+    margin-top: 26px !important;
+  }
+
+  .service-row-exact a {
+    font-size: 10px !important;
+  }
+
+  .production-simple {
+    margin-top: 30px !important;
+  }
+
+  .production-simple-head {
+    display: grid !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .production-simple-head .eyebrow {
+    margin-bottom: 6px !important;
+    font-size: 12px !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase;
+  }
+
+  .production-simple-head h3 {
+    font-size: 21px !important;
+    line-height: 1.1 !important;
+    letter-spacing: .08em !important;
+  }
+
+  .production-simple-link {
+    width: fit-content;
+    font-size: 13px !important;
+    font-weight: 900;
+    color: #171514 !important;
+  }
+
+  .production-simple-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .production-simple-card {
+    border: 1px solid #eee5dc !important;
+    background: #fff !important;
+  }
+
+  .production-simple-card img {
+    height: 120px !important;
+    aspect-ratio: auto !important;
+    object-fit: cover !important;
+  }
+
+  .production-simple-card-copy {
+    padding: 10px !important;
+  }
+
+  .production-simple-card-copy h4 {
+    font-size: 13px !important;
+    line-height: 1.18 !important;
+  }
+
+  .production-simple-card-copy p {
+    display: none !important;
+  }
+
+  .footer-exact {
+    margin-top: 34px !important;
+    padding: 28px 0 108px !important;
+    border-top: 1px solid #eee5dc !important;
+  }
+
+  .footer-grid-exact {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 26px 18px !important;
+  }
+
+  .footer-grid-exact > div:first-child,
+  .footer-grid-exact > .footer-contacts {
+    grid-column: 1 / -1;
+  }
+
+  .footer-brand {
+    margin-bottom: 14px !important;
+  }
+
+  .footer-exact .brand-mark {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .footer-exact .brand-text b {
+    font-size: 25px !important;
+  }
+
+  .footer-exact .brand-text small {
+    font-size: 9px !important;
+  }
+
+  .footer-exact h4 {
+    margin: 0 0 12px !important;
+    font-size: 14px !important;
+    line-height: 1.1;
+    letter-spacing: .07em;
+  }
+
+  .footer-exact p,
+  .footer-exact a {
+    margin-bottom: 10px !important;
+    font-size: 14px !important;
+    line-height: 1.36 !important;
+  }
+
+  .footer-grid-exact > div:first-child > p {
+    max-width: 320px;
+    color: #5e574f;
+    font-size: 14px !important;
+  }
+
+  .footer-contacts {
+    border-top: 1px solid #eee5dc;
+    padding-top: 22px;
+  }
+
+  .footer-contacts p {
+    display: grid !important;
+    grid-template-columns: 22px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px !important;
+  }
+
+  .footer-contacts svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .socials {
+    margin-top: 16px !important;
+  }
+
+  .socials span {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .production-image {
+    height: 190px !important;
+    margin-left: 14px;
+    margin-right: 14px;
+  }
+
+  .production-list {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    gap: 8px !important;
+  }
+
+  .production-list div {
+    grid-template-columns: 26px minmax(0, 1fr) !important;
+    min-height: 76px;
+    padding: 10px !important;
+  }
+
+  .production-list svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .production-list p {
+    font-size: 11px !important;
+  }
+
+  .production-simple-grid {
+    gap: 8px !important;
+  }
+
+  .production-simple-card img {
+    height: 105px !important;
+  }
+
+  .footer-grid-exact {
+    gap: 24px 14px !important;
+  }
+}

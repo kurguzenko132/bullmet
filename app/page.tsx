@@ -90,7 +90,6 @@ export default async function HomePage() {
               <p>Изготавливаем садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.</p>
               <div className="hero-actions">
                 <Link href="/catalog" className="btn-orange">ПЕРЕЙТИ В КАТАЛОГ</Link>
-                <Link href="/services#request" className="btn-outline">ЗАКАЗАТЬ РАСЧЕТ</Link>
               </div>
             </div>
           </div>
@@ -141,11 +140,11 @@ export default async function HomePage() {
             <div className="service-row-exact">
               <article>
                 <img src={img.serviceMetal} alt="Лазерная резка" />
-                <div><h4>Лазерная резка</h4><p>Художественная резка из листового металла для декора, вывесок, панелей и деталей</p><Link href="/services#request">ЗАКАЗАТЬ РАСЧЕТ</Link></div>
+                <div><h4>Лазерная резка</h4><p>Художественная резка из листового металла для декора, вывесок, панелей и деталей</p><Link href="/services">ПОДРОБНЕЕ</Link></div>
               </article>
               <article>
                 <img src={img.serviceWood} alt="Гибка металла" />
-                <div><h4>Гибка металла</h4><p>Гибка листового металла для мебельных каркасов, навесов, деталей и малых форм</p><Link href="/services#request">ЗАКАЗАТЬ РАСЧЕТ</Link></div>
+                <div><h4>Гибка металла</h4><p>Гибка листового металла для мебельных каркасов, навесов, деталей и малых форм</p><Link href="/services">ПОДРОБНЕЕ</Link></div>
               </article>
             </div>
           </div>

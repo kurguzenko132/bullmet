@@ -54,7 +54,7 @@ export function Header() {
   const bottomNav = useMemo(() => [
     { href: '/', label: 'Главная', icon: 'factory' as const },
     { href: '/catalog', label: 'Каталог', icon: 'search' as const },
-    { href: '/services#request', label: 'Расчет', icon: 'request' as const },
+    { href: '/services', label: 'Услуги', icon: 'tools' as const },
     { href: '/cart', label: 'Корзина', icon: 'cart' as const },
     { href: '/login', label: 'Профиль', icon: 'user' as const }
   ], []);
@@ -141,7 +141,6 @@ export function Header() {
             <button aria-label="Поиск" className="icon-btn" type="button" onClick={() => setSearchOpen(true)}><Icon name="search" /></button>
             <Link href="/cart" className="cart-mini" aria-label="Корзина"><Icon name="cart" />{cartCount > 0 && <span>{cartCount}</span>}</Link>
             <Link href="/login" className="login-btn"><Icon name="user" /><span>Войти</span></Link>
-            <Link href="/services#request" className="calc-btn">Заказать расчет</Link>
             <button className={mobileOpen ? 'mobile-menu-btn is-open' : 'mobile-menu-btn'} type="button" onClick={() => setMobileOpen((value) => !value)} aria-label="Меню"><span /><span /><span /></button>
           </div>
         </div>
@@ -161,13 +160,12 @@ export function Header() {
             <button className="mobile-menu-search" type="button" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}><Icon name="search" /> Поиск по каталогу</button>
             <nav>
               {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}<span>→</span></Link>)}
-              <Link href="/services#request" onClick={() => setMobileOpen(false)}>Заказать расчет<span>→</span></Link>
             </nav>
             <div className="mobile-menu-contact">
-              <span>Нужна консультация или расчет?</span>
+              <span>Нужна консультация?</span>
               <div className="mobile-menu-contact-actions">
                 <Link href="/contacts" onClick={() => setMobileOpen(false)}>Контакты</Link>
-                <Link href="/services#request" onClick={() => setMobileOpen(false)}>Оставить заявку</Link>
+                <Link href="/services" onClick={() => setMobileOpen(false)}>Услуги</Link>
               </div>
             </div>
           </div>
