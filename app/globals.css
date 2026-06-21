@@ -14373,3 +14373,189 @@ img { display: block; max-width: 100%; }
     font-size: 9px !important;
   }
 }
+
+
+/* ===== Burger menu aligned with site design ===== */
+.mobile-menu-overlay {
+  z-index: 260;
+}
+.mobile-menu-backdrop {
+  background: rgba(17, 15, 13, .42);
+  backdrop-filter: blur(3px);
+}
+.mobile-menu-panel {
+  border-left: 1px solid #ede1d4;
+  border-radius: 0 !important;
+  box-shadow: -18px 0 48px rgba(20, 15, 11, .12);
+  background: #fff;
+}
+.mobile-menu-head {
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1e7dc;
+}
+.mobile-menu-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #151311;
+  min-width: 0;
+}
+.mobile-menu-brand-mark {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+}
+.mobile-menu-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.mobile-menu-brand-text b {
+  font-size: 24px !important;
+  letter-spacing: .12em;
+  line-height: .95;
+}
+.mobile-menu-brand-text small {
+  margin-top: 4px;
+  color: #7a7168;
+  font-size: 10px;
+  letter-spacing: .03em;
+}
+.mobile-menu-head > button {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border: 1px solid #eadfd3;
+  background: #fff;
+  color: #171514;
+  font-size: 29px;
+  line-height: 1;
+}
+.mobile-menu-search {
+  min-height: 52px;
+  border: 1px solid #eadfd3;
+  background: #faf7f2;
+  color: var(--orange);
+  border-radius: 0 !important;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 900;
+}
+.mobile-menu-search svg {
+  flex: 0 0 auto;
+}
+.mobile-menu-panel nav {
+  gap: 10px;
+  margin: 18px 0 22px;
+}
+.mobile-menu-panel nav a {
+  min-height: 54px;
+  justify-content: space-between;
+  border: 1px solid #ece2d7;
+  background: #fff;
+  padding: 0 16px;
+  font-size: 16px;
+  font-weight: 900;
+  border-radius: 0 !important;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.mobile-menu-panel nav a span {
+  color: #9b9187;
+  font-size: 18px;
+  line-height: 1;
+}
+.mobile-menu-panel nav a:hover,
+.mobile-menu-panel nav a:active {
+  background: #faf7f2;
+  border-color: #d9cab9;
+  color: #171514;
+}
+.mobile-menu-panel nav a:hover span,
+.mobile-menu-panel nav a:active span {
+  color: var(--orange);
+}
+.mobile-menu-contact {
+  border: 1px solid #ede3d8;
+  background: #faf7f2;
+  padding: 16px;
+  border-radius: 0 !important;
+}
+.mobile-menu-contact span {
+  display: block;
+  margin-bottom: 12px;
+  color: #5e554d;
+  font-size: 14px;
+}
+.mobile-menu-contact-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.mobile-menu-contact-actions a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #eadfd3;
+  background: #fff;
+  color: #171514;
+  text-decoration: none;
+  font-weight: 800;
+}
+.mobile-menu-contact-actions a:last-child {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+}
+@media (max-width: 760px) {
+  .mobile-menu-panel {
+    width: min(88vw, 356px) !important;
+    padding: 18px 16px 18px !important;
+  }
+  .mobile-menu-head {
+    margin-bottom: 18px !important;
+    padding-bottom: 14px;
+  }
+  .mobile-menu-brand-text b {
+    font-size: 22px !important;
+  }
+  .mobile-menu-brand-text small {
+    font-size: 9px;
+  }
+  .mobile-menu-head > button {
+    width: 44px;
+    height: 44px;
+  }
+  .mobile-menu-search {
+    min-height: 48px !important;
+    padding: 0 14px;
+  }
+  .mobile-menu-panel nav a {
+    min-height: 50px !important;
+    font-size: 15px;
+  }
+}
+@media (max-width: 390px) {
+  .mobile-menu-panel {
+    width: min(90vw, 340px) !important;
+    padding: 16px 14px !important;
+  }
+  .mobile-menu-brand-mark {
+    width: 28px;
+    height: 28px;
+  }
+  .mobile-menu-brand-text b {
+    font-size: 20px !important;
+    letter-spacing: .1em;
+  }
+  .mobile-menu-brand-text small {
+    font-size: 8px;
+  }
+  .mobile-menu-contact-actions {
+    grid-template-columns: 1fr;
+  }
+}

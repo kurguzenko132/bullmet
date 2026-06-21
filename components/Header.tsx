@@ -152,17 +152,23 @@ export function Header() {
           <button className="mobile-menu-backdrop" type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть меню" />
           <div className="mobile-menu-panel">
             <div className="mobile-menu-head">
-              <b>BULLMET</b>
+              <Link href="/" className="mobile-menu-brand" onClick={() => setMobileOpen(false)}>
+                <img src="/logo-shield-check.svg" alt="" className="mobile-menu-brand-mark" />
+                <span className="mobile-menu-brand-text"><b>BULLMET</b><small>металл с элементами дерева</small></span>
+              </Link>
               <button type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть">×</button>
             </div>
             <button className="mobile-menu-search" type="button" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}><Icon name="search" /> Поиск по каталогу</button>
             <nav>
-              {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}</Link>)}
-              <Link href="/services#request" onClick={() => setMobileOpen(false)}>Заказать расчет</Link>
+              {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}<span>→</span></Link>)}
+              <Link href="/services#request" onClick={() => setMobileOpen(false)}>Заказать расчет<span>→</span></Link>
             </nav>
             <div className="mobile-menu-contact">
-              <span>Нужен расчет изделия?</span>
-              <Link href="/contacts" onClick={() => setMobileOpen(false)}>Связаться с Bullmet</Link>
+              <span>Нужна консультация или расчет?</span>
+              <div className="mobile-menu-contact-actions">
+                <Link href="/contacts" onClick={() => setMobileOpen(false)}>Контакты</Link>
+                <Link href="/services#request" onClick={() => setMobileOpen(false)}>Оставить заявку</Link>
+              </div>
             </div>
           </div>
         </div>
