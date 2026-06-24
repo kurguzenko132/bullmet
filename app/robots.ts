@@ -4,7 +4,7 @@ export default function robots(): MetadataRoute.Robots {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bullmet.by';
   return {
     rules: [
-      { userAgent: '*', allow: '/', disallow: ['/admin/'] }
+      { userAgent: '*', allow: '/', disallow: ['/admin/', '/services'] }
     ],
     sitemap: `${siteUrl}/sitemap.xml`
   };

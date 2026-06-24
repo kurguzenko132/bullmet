@@ -26,49 +26,44 @@ const img = {
 
 const featureItems = [
   { icon: 'factory' as const, text: 'Собственное\nпроизводство' },
-  { icon: 'custom' as const, text: 'Индивидуальные\nзаказы' },
+  { icon: 'clock' as const, text: 'Настенные\nчасы' },
   { icon: 'materials' as const, text: 'Металл\nс элементами дерева' },
   { icon: 'truck' as const, text: 'Доставка по\nБеларуси' }
 ];
 
 const categories = [
-  { title: 'Настенные\nчасы', img: img.clock, href: '/catalog?category=Настенные часы' },
-  { title: 'Садовая\nмебель', img: img.swing, href: '/catalog?category=Садовая мебель' },
-  { title: 'Мебель для дома\nв стиле лофт', img: img.custom, href: '/catalog?category=Мебель для дома в стиле лофт' },
-  { title: 'Лазерная\nрезка', img: img.metal, href: '/services#laser' },
-  { title: 'Мелкий опт\nметаллопроката', img: img.wood, href: '/services#metal' },
-  { title: 'Гибка\nметалла', img: img.serviceMetal, href: '/services#bending' }
+  { title: 'Все\nчасы', img: img.clock, href: '/catalog' },
+  { title: 'Классика', img: img.gallery4, href: '/catalog?category=Классика' },
+  { title: 'Кофе\nи кухня', img: img.clock, href: '/catalog?category=Кофе и кухня' },
+  { title: 'Для дома\nи подарка', img: img.custom, href: '/catalog?category=Настенные часы' }
 ];
 
 const productionBenefits = [
-  { icon: 'spark' as const, title: 'Лазерная и станочная\nрезка' },
-  { icon: 'materials' as const, title: 'Работа с металлом\nи элементами дерева' },
-  { icon: 'tools' as const, title: 'Изготовление\nпод заказ' },
-  { icon: 'shield' as const, title: 'Контроль качества\nна каждом этапе' }
+  { icon: 'clock' as const, title: 'Настенные часы\nсобственного изготовления' },
+  { icon: 'materials' as const, title: 'Металл\nс элементами дерева' },
+  { icon: 'tools' as const, title: 'Подбор размера\nи оформления' },
+  { icon: 'shield' as const, title: 'Контроль качества\nперед выдачей' }
 ];
 
 const steps = [
-  { icon: 'request' as const, num: '01', title: 'Заявка', desc: 'Вы оставляете заявку на сайте или связываетесь с нами удобным способом' },
-  { icon: 'calculator' as const, num: '02', title: 'Расчёт', desc: 'Мы рассчитываем стоимость, сроки и предлагаем подходящий вариант' },
-  { icon: 'ruler' as const, num: '03', title: 'Проектирование', desc: 'При необходимости готовим чертёж и согласовываем все детали' },
-  { icon: 'hammer' as const, num: '04', title: 'Производство', desc: 'Запускаем изделие в работу на собственном производстве Bullmet' },
-  { icon: 'package' as const, num: '05', title: 'Передача заказа', desc: 'Передаём готовое изделие, организуем самовывоз или доставку' }
+  { icon: 'search' as const, num: '01', title: 'Выбор часов', desc: 'Вы выбираете модель в каталоге или пишете нам, если нужен другой размер или цвет' },
+  { icon: 'request' as const, num: '02', title: 'Уточнение деталей', desc: 'Мы подтверждаем наличие, стоимость, сроки изготовления и способ получения' },
+  { icon: 'hammer' as const, num: '03', title: 'Изготовление', desc: 'Готовим часы на собственном производстве и контролируем качество изделия' },
+  { icon: 'package' as const, num: '04', title: 'Передача заказа', desc: 'Передаём заказ самовывозом или согласуем доставку по Беларуси' }
 ];
 
 const workBenefits = [
-  { icon: 'shield' as const, title: 'Гарантия качества', desc: 'Контролируем каждый этап производства' },
-  { icon: 'clock' as const, title: 'Соблюдаем сроки', desc: 'Заранее согласовываем дату готовности' },
-  { icon: 'factory' as const, title: 'Опыт и производство', desc: 'Делаем изделия сами, без лишних посредников' },
-  { icon: 'truck' as const, title: 'Доставка по Беларуси', desc: 'Аккуратно передаём заказ в нужный регион' }
+  { icon: 'shield' as const, title: 'Гарантия качества', desc: 'Проверяем часы перед передачей клиенту' },
+  { icon: 'clock' as const, title: 'Согласуем сроки', desc: 'Заранее сообщаем дату готовности заказа' },
+  { icon: 'factory' as const, title: 'Свое производство', desc: 'Делаем изделия сами, без лишних посредников' },
+  { icon: 'truck' as const, title: 'Доставка по Беларуси', desc: 'Согласуем удобный способ получения' }
 ];
 
-
 const productionGallery = [
-  { src: img.gallery1, title: 'Лазерная резка', note: 'Ровный и аккуратный рез листового металла' },
-  { src: img.gallery2, title: 'Сварка и сборка', note: 'Подготавливаем и собираем конструкцию под задачу' },
-  { src: img.gallery3, title: 'Работа оборудования', note: 'Используем современное оборудование на производстве' },
-  { src: img.gallery4, title: 'Готовые изделия', note: 'Показываем реальные изделия и элементы отделки' },
-  { src: img.gallery5, title: 'Контроль деталей', note: 'Проверяем качество и точность перед выдачей' }
+  { src: img.gallery4, title: 'Готовые часы', note: 'Настенные часы из металла с элементами дерева' },
+  { src: img.gallery1, title: 'Работа с деталями', note: 'Подготовка металлических элементов на производстве' },
+  { src: img.gallery3, title: 'Производство', note: 'Собственное производство Bullmet в Беларуси' },
+  { src: img.gallery5, title: 'Контроль качества', note: 'Проверяем внешний вид и сборку перед передачей' }
 ];
 
 function Lines({ value }: { value: string }) {
@@ -76,7 +71,7 @@ function Lines({ value }: { value: string }) {
 }
 
 export default async function HomePage() {
-  const products = (await getCatalogProducts()).slice(0, 4);
+  const products = (await getCatalogProducts()).filter((product) => [product.title, product.category, product.clockTheme, product.slug].join(' ').toLowerCase().includes('час') || Boolean(product.clockTheme)).slice(0, 4);
   return (
     <>
       <Header />
@@ -86,9 +81,9 @@ export default async function HomePage() {
           <div className="hero-fade" />
           <div className="home-container hero-inner">
             <div className="hero-copy">
-              <span className="home-hero-kicker">Собственное производство Bullmet</span>
-              <h1>Изделия из металла с элементами дерева</h1>
-              <p>Настенные часы, садовая мебель, качели, мебель в стиле лофт и услуги лазерной резки — изготавливаем под заказ и продаём готовые изделия.</p>
+              <span className="home-hero-kicker">Производство металлоизделий Bullmet</span>
+              <h1>Настенные часы из металла с элементами дерева</h1>
+              <p>Первый запуск Bullmet — каталог настенных часов собственного производства. Постепенно будем расширять ассортимент, но сейчас фокусируемся на часах.</p>
               <div className="hero-actions">
                 <Link href="/catalog" className="btn-orange">Перейти в каталог</Link>
               </div>
@@ -108,11 +103,11 @@ export default async function HomePage() {
         <section className="home-container home-categories-final">
           <div className="home-section-title-row">
             <div>
-              <p className="eyebrow">выберите направление</p>
-              <h2>Каталог и услуги Bullmet</h2>
-              <span>Готовые изделия, мебель и производственные услуги в одном месте.</span>
+              <p className="eyebrow">первый запуск каталога</p>
+              <h2>Настенные часы Bullmet</h2>
+              <span>Собственное производство металлоизделий. Сейчас публично запускаем направление настенных часов.</span>
             </div>
-            <Link href="/catalog">Смотреть каталог</Link>
+            <Link href="/catalog">Смотреть часы</Link>
           </div>
 
           <div className="category-grid-exact category-grid-final">
@@ -129,43 +124,25 @@ export default async function HomePage() {
         <section className="home-container home-shop-final">
           <div className="home-section-title-row">
             <div>
-              <p className="eyebrow">покупают чаще всего</p>
-              <h2>Популярные товары</h2>
-              <span>Подборка изделий, которые проще всего выбрать и заказать сразу.</span>
+              <p className="eyebrow">популярные модели</p>
+              <h2>Популярные часы</h2>
+              <span>Модели, с которых удобно начать знакомство с Bullmet.</span>
             </div>
-            <Link href="/catalog">Все товары</Link>
+            <Link href="/catalog">Все часы</Link>
           </div>
 
-          <div className="products-services products-services-final">
+          <div className="products-services products-services-final products-services-final--clocks">
             <div className="popular-block">
               <HomeProductsClient products={products} />
-            </div>
-
-            <div className="services-block services-block-final">
-              <div className="services-block-head-final">
-                <p className="eyebrow">производственные услуги</p>
-                <h3>Резка и гибка металла</h3>
-                <span>Подойдёт для декора, панелей, вывесок, мебельных деталей и индивидуальных проектов.</span>
-              </div>
-              <div className="service-row-exact service-row-final">
-                <article>
-                  <img src={img.serviceMetal} alt="Лазерная резка" />
-                  <div><h4>Лазерная резка</h4><p>Аккуратная резка листового металла для декора, вывесок, панелей и деталей</p><Link href="/services">Подробнее</Link></div>
-                </article>
-                <article>
-                  <img src={img.serviceWood} alt="Гибка металла" />
-                  <div><h4>Гибка металла</h4><p>Гибка листового металла для мебельных каркасов, навесов и малых форм</p><Link href="/services">Подробнее</Link></div>
-                </article>
-              </div>
             </div>
           </div>
         </section>
 
         <section className="home-container production-section production-section-final" id="production">
           <div className="production-text">
-            <p className="eyebrow">мы изготавливаем сами</p>
-            <h2>Собственное производство</h2>
-            <p className="body-text">Изготавливаем изделия на собственном производстве: работаем с металлом, деревом, декоративными элементами и готовим изделия под конкретную задачу.</p>
+            <p className="eyebrow">производство металлоизделий</p>
+            <h2>Делаем часы на собственном производстве</h2>
+            <p className="body-text">Bullmet — производство металлоизделий в Беларуси. Сейчас мы публично запускаем направление настенных часов и постепенно будем расширять каталог.</p>
             <Link href="/production" className="small-orange">О производстве</Link>
           </div>
           <div className="production-image"><img src={img.workshop} alt="Производство Bullmet" /></div>
@@ -179,8 +156,8 @@ export default async function HomePage() {
         <section className="home-container steps-section steps-section-v2 steps-section-final">
           <div className="steps-head-v2">
             <p>Как мы работаем</p>
-            <h3>Понятный путь от идеи до готового изделия</h3>
-            <span>Мы заранее согласуем стоимость, сроки, материалы и детали заказа.</span>
+            <h3>Как заказать часы Bullmet</h3>
+            <span>Простой путь: выбрали модель, уточнили детали, получили готовые часы.</span>
           </div>
 
           <div className="steps-grid steps-grid-v2 steps-grid-final">
@@ -211,10 +188,10 @@ export default async function HomePage() {
         <section className="home-container production-simple production-simple-final">
           <div className="production-simple-head">
             <div>
-              <p className="eyebrow">детали и готовые изделия</p>
-              <h3>Производство Bullmet</h3>
+              <p className="eyebrow">производство и детали</p>
+              <h3>Как выглядят изделия Bullmet</h3>
             </div>
-            <Link href="/about" className="production-simple-link">Больше о компании</Link>
+            <Link href="/about" className="production-simple-link">О компании</Link>
           </div>
 
           <div className="production-simple-grid">
@@ -232,9 +209,9 @@ export default async function HomePage() {
 
         <section className="home-container home-final-cta">
           <div>
-            <p className="eyebrow">готовы выбрать изделие?</p>
-            <h2>Посмотрите каталог Bullmet</h2>
-            <span>Выберите готовый товар или свяжитесь с нами, если нужен индивидуальный размер, цвет или проект.</span>
+            <p className="eyebrow">готовы выбрать часы?</p>
+            <h2>Откройте каталог настенных часов</h2>
+            <span>Выберите модель, добавьте товар в корзину или свяжитесь с нами для уточнения деталей.</span>
           </div>
           <div className="home-final-cta-actions">
             <Link href="/catalog" className="btn-orange">Перейти в каталог</Link>

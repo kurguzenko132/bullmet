@@ -8,12 +8,16 @@ import { clockCatalogCategories, getCatalogProducts, getProductReviewStats } fro
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Каталог товаров Bullmet',
-  description: 'Каталог Bullmet: настенные часы, садовая мебель, мебель для дома в стиле лофт, лазерная резка, гибка металла и мелкий опт металлопроката.'
+  title: 'Каталог настенных часов Bullmet',
+  description: 'Каталог Bullmet: настенные часы из металла с элементами дерева собственного производства.'
 };
 
 export default async function CatalogPage({ searchParams }: { searchParams?: { q?: string; category?: string } }) {
-  const products = await getCatalogProducts();
+  const allProducts = await getCatalogProducts();
+  const products = allProducts.filter((product) => {
+    const text = [product.title, product.category, product.clockTheme, product.slug].join(' ').toLowerCase();
+    return text.includes('час') || Boolean(product.clockTheme);
+  });
   const reviewStats = await getProductReviewStats(products.map((product) => product.slug));
   const categories = Array.from(new Set([...clockCatalogCategories, ...products.map((product) => product.category).filter((item): item is string => Boolean(item))]));
 
@@ -28,7 +32,7 @@ export default async function CatalogPage({ searchParams }: { searchParams?: { q
             <span>Каталог</span>
           </nav>
 
-          <h1 className="catalog-title">Каталог товаров</h1>
+          <h1 className="catalog-title">Каталог настенных часов</h1>
           <CatalogClient products={products} reviewStats={reviewStats} categories={categories} initialQuery={searchParams?.q || ''} initialCategory={searchParams?.category || ''} />
         </div>
       </main>

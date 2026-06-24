@@ -7,7 +7,7 @@ import type { CatalogProduct, ProductReviewStats } from '@/lib/products';
 import { clockCatalogCategories } from '@/lib/products';
 import { getImagePreset } from '@/lib/imageDisplay';
 
-type MainCatalogGroup = 'all' | 'clocks' | 'swings';
+type MainCatalogGroup = 'clocks';
 
 function money(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
@@ -31,17 +31,8 @@ function isClockProduct(product: CatalogProduct) {
   return text.includes('час') || Boolean(product.clockTheme);
 }
 
-function isSwingProduct(product: CatalogProduct) {
-  const text = [product.title, product.slug, product.category].join(' ').toLowerCase();
-  return text.includes('качел') || text.includes('садовая мебель');
-}
-
-function getInitialGroup(initialCategory: string): MainCatalogGroup {
-  const value = initialCategory.toLowerCase();
-  if (!initialCategory) return 'all';
-  if (clockCatalogCategories.includes(initialCategory) || value.includes('час')) return 'clocks';
-  if (value.includes('качел') || value.includes('садовая мебель')) return 'swings';
-  return 'all';
+function getInitialGroup(_initialCategory: string): MainCatalogGroup {
+  return 'clocks';
 }
 
 function getInitialClockTheme(initialCategory: string) {
@@ -95,13 +86,7 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const clockProducts = useMemo(() => products.filter(isClockProduct), [products]);
-  const swingProducts = useMemo(() => products.filter(isSwingProduct), [products]);
-
-  const productsByMainGroup = useMemo(() => {
-    if (mainGroup === 'clocks') return clockProducts;
-    if (mainGroup === 'swings') return swingProducts;
-    return products;
-  }, [clockProducts, mainGroup, products, swingProducts]);
+  const productsByMainGroup = useMemo(() => clockProducts, [clockProducts]);
 
   const materials = useMemo(() => Array.from(new Set(productsByMainGroup.map((product) => product.material).filter(Boolean))), [productsByMainGroup]);
 
@@ -140,11 +125,11 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
       });
   }, [productsByMainGroup, query, mainGroup, clockTheme, material, minPrice, maxPrice, sort]);
 
-  const selectedFiltersCount = [query.trim(), mainGroup !== 'all' ? mainGroup : '', clockTheme, material, minPrice, maxPrice].filter(Boolean).length;
+  const selectedFiltersCount = [query.trim(), clockTheme, material, minPrice, maxPrice].filter(Boolean).length;
 
   function reset() {
     setQuery('');
-    setMainGroup('all');
+    setMainGroup('clocks');
     setClockTheme('');
     setMaterial('');
     setMinPrice('');
@@ -202,9 +187,7 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
         <section className="catalog-filter-market-section catalog-filter-market-section--main">
           <h3>Раздел</h3>
           <div className="catalog-main-groups-market">
-            <button className={mainGroup === 'all' ? 'is-active' : ''} type="button" onClick={() => chooseMainGroup('all')}><span>Все товары</span><b>{products.length}</b></button>
-            <button className={mainGroup === 'clocks' ? 'is-active' : ''} type="button" onClick={() => chooseMainGroup('clocks')}><span>Часы</span><b>{clockProducts.length}</b></button>
-            <button className={mainGroup === 'swings' ? 'is-active' : ''} type="button" onClick={() => chooseMainGroup('swings')}><span>Качели</span><b>{swingProducts.length}</b></button>
+            <button className="is-active" type="button" onClick={() => chooseMainGroup('clocks')}><span>Настенные часы</span><b>{clockProducts.length}</b></button>
           </div>
         </section>
 
@@ -248,7 +231,7 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
         <div className="catalog-toolbar-market">
           <label className="catalog-search-market">
             <Icon name="search" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Искать в каталоге: часы, кофе, качели..." />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Искать часы: римские, кофе, классика..." />
           </label>
 
           <select aria-label="Сортировка" value={sort} onChange={(event) => setSort(event.target.value)}>
@@ -269,8 +252,6 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
           <b>{filteredProducts.length} товаров</b>
           <div className="catalog-active-chips-market">
             {query.trim() && <button type="button" onClick={() => setQuery('')}>Поиск: {query} ×</button>}
-            {mainGroup === 'clocks' && <button type="button" onClick={() => chooseMainGroup('all')}>Часы ×</button>}
-            {mainGroup === 'swings' && <button type="button" onClick={() => chooseMainGroup('all')}>Качели ×</button>}
             {clockTheme && <button type="button" onClick={() => setClockTheme('')}>{clockTheme} ×</button>}
             {material && <button type="button" onClick={() => setMaterial('')}>{material} ×</button>}
             {(minPrice || maxPrice) && <button type="button" onClick={() => { setMinPrice(''); setMaxPrice(''); setPricePreset(''); }}>Цена ×</button>}

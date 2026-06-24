@@ -208,10 +208,10 @@ export function CartClient() {
       <section className="cart-empty-card cart-empty-card--stage2">
         <div className="cart-empty-icon"><Icon name="cart" /></div>
         <h2>Корзина пустая</h2>
-        <p>Добавьте товар из каталога или отправьте заявку на индивидуальный расчет изделия.</p>
+        <p>Добавьте настенные часы из каталога и оформите заказ.</p>
         <div>
           <Link href="/catalog">Перейти в каталог</Link>
-          <Link href="/services#request">Заказать расчет</Link>
+          <Link href="/contacts">Связаться</Link>
         </div>
       </section>
     );
@@ -252,10 +252,10 @@ export function CartClient() {
         <div className="cart-upsell-stage2">
           <Icon name="custom" />
           <div>
-            <b>{hasCustomItems ? 'Заказ требует уточнения' : 'Можно изготовить под ваш размер'}</b>
-            <p>{hasCustomItems ? 'Менеджер свяжется, уточнит материал, размеры, цвет и точную стоимость.' : 'Если нужен другой размер, цвет или материал — укажите это в комментарии к заказу.'}</p>
+            <b>{hasCustomItems ? 'Заказ требует уточнения' : 'Можно уточнить размер и цвет'}</b>
+            <p>{hasCustomItems ? 'Менеджер свяжется, уточнит материал, размеры, цвет и точную стоимость.' : 'Если нужен другой размер или цвет — укажите это в комментарии к заказу.'}</p>
           </div>
-          <Link href="/services#request">Индивидуальный расчет</Link>
+          <Link href="/contacts">Связаться</Link>
         </div>
       </section>
 

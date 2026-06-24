@@ -29,7 +29,7 @@ function readCartCount() {
   }
 }
 
-const quickSearches = ['римские', 'кофе', 'качели', 'лазерная резка', 'лофт'];
+const quickSearches = ['римские', 'кофе', 'классика', 'кухня', 'настенные часы'];
 
 export function Header() {
   const pathname = usePathname();
@@ -46,7 +46,6 @@ export function Header() {
   const nav = useMemo(() => [
     { href: '/catalog', label: 'Каталог' },
     { href: '/production', label: 'Производство' },
-    { href: '/services', label: 'Услуги' },
     { href: '/about', label: 'О компании' },
     { href: '/contacts', label: 'Контакты' }
   ], []);
@@ -54,7 +53,7 @@ export function Header() {
   const bottomNav = useMemo(() => [
     { href: '/', label: 'Главная', icon: 'factory' as const },
     { href: '/catalog', label: 'Каталог', icon: 'search' as const },
-    { href: '/services', label: 'Услуги', icon: 'tools' as const },
+    { href: '/about', label: 'О нас', icon: 'shield' as const },
     { href: '/cart', label: 'Корзина', icon: 'cart' as const },
     { href: '/login', label: 'Профиль', icon: 'user' as const }
   ], []);
@@ -162,10 +161,10 @@ export function Header() {
               {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}<span>→</span></Link>)}
             </nav>
             <div className="mobile-menu-contact">
-              <span>Нужна консультация?</span>
+              <span>Нужна консультация по часам?</span>
               <div className="mobile-menu-contact-actions">
                 <Link href="/contacts" onClick={() => setMobileOpen(false)}>Контакты</Link>
-                <Link href="/services" onClick={() => setMobileOpen(false)}>Услуги</Link>
+                <Link href="/catalog" onClick={() => setMobileOpen(false)}>Каталог</Link>
               </div>
             </div>
           </div>
@@ -180,11 +179,11 @@ export function Header() {
             <div className="site-search-head">
               <span>Поиск по каталогу</span>
               <h2>Что ищем?</h2>
-              <p>Введите название, категорию или направление: часы, качели, резка, лофт.</p>
+              <p>Введите название или тематику часов: римские, кофе, классика, кухня.</p>
             </div>
             <form onSubmit={submitSearch} className="site-search-form-polished">
               <Icon name="search" />
-              <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: римские, кофе, качели, спорт" />
+              <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: римские, кофе, классика, кухня" />
               <button type="submit">Найти</button>
             </form>
             <div className="site-search-quick">

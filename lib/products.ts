@@ -436,6 +436,12 @@ export async function getProductReviewStats(slugs: string[]): Promise<ProductRev
   }
 }
 
+
+export function isPublicClockProduct(product: CatalogProduct) {
+  const text = [product.title, product.slug, product.category, product.clockTheme].join(' ').toLowerCase();
+  return text.includes('час') || Boolean(product.clockTheme);
+}
+
 export async function getCatalogProducts(): Promise<CatalogProduct[]> {
   if (!supabase) return localFallbackProducts;
 
@@ -457,11 +463,12 @@ export async function getCatalogProducts(): Promise<CatalogProduct[]> {
 
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | null> {
   const products = await getCatalogProducts();
-  return products.find((product) => product.slug === slug) || null;
+  const product = products.find((item) => item.slug === slug) || null;
+  return product && isPublicClockProduct(product) ? product : null;
 }
 
 export async function getProductPageData(slug: string): Promise<{ product: CatalogProduct | null; related: CatalogProduct[]; colorVariants: CatalogProduct[] }> {
-  const products = await getCatalogProducts();
+  const products = (await getCatalogProducts()).filter(isPublicClockProduct);
   const product = products.find((item) => item.slug === slug) || null;
   if (!product) return { product: null, related: [], colorVariants: [] };
 

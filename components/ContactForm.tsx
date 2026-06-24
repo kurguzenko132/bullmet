@@ -50,7 +50,7 @@ export function ContactForm() {
       </label>
       <label>
         <span>Сообщение</span>
-        <textarea value={form.text} onChange={(event) => patch('text', event.target.value)} rows={5} placeholder="Опишите задачу: что нужно изготовить, размер, материал, сроки" />
+        <textarea value={form.text} onChange={(event) => patch('text', event.target.value)} rows={5} placeholder="Напишите, какие часы интересуют, нужный размер, цвет или удобный способ получения" />
       </label>
       {message && <p className="contact-form-message">{message}</p>}
       <button disabled={loading}>{loading ? 'Отправляем...' : 'Отправить сообщение'}</button>

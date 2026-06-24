@@ -3,13 +3,13 @@ import { products } from '@/lib/data';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bullmet.by';
-  const staticPages = ['', '/catalog', '/services', '/about', '/contacts'].map((url) => ({
+  const staticPages = ['', '/catalog', '/production', '/about', '/contacts'].map((url) => ({
     url: `${siteUrl}${url}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: url === '' ? 1 : 0.8
   }));
-  const productPages = products.map((product) => ({
+  const productPages = products.filter((product) => [product.title, product.slug, product.category].join(' ').toLowerCase().includes('час')).map((product) => ({
     url: `${siteUrl}/product/${product.slug}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,

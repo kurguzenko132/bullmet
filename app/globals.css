@@ -15609,3 +15609,197 @@ img { display: block; max-width: 100%; }
     height: 108px !important;
   }
 }
+
+
+/* ===== Bullmet public launch: clocks-only visibility ===== */
+.products-services-final--clocks {
+  display: block !important;
+  grid-template-columns: 1fr !important;
+}
+
+.products-services-final--clocks .popular-block {
+  width: 100% !important;
+}
+
+.products-services-final--clocks .home-product-grid-shop--catalog-style {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.home-categories-final .home-section-title-row h2,
+.home-shop-final .home-section-title-row h2 {
+  max-width: 760px;
+}
+
+.category-grid-final {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  height: 240px !important;
+}
+
+.home-final-page .home-hero-kicker {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.home-final-page .hero-copy h1 {
+  max-width: 760px;
+}
+
+.home-final-page .hero-copy p {
+  max-width: 640px;
+}
+
+.footer-grid-launch {
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) minmax(260px, 1.35fr) !important;
+}
+
+.footer-grid-launch .footer-contacts p {
+  align-items: flex-start;
+}
+
+.footer-grid-launch .footer-contacts span {
+  overflow-wrap: anywhere;
+}
+
+.about-gallery-rich--clocks {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1180px) {
+  .products-services-final--clocks .home-product-grid-shop--catalog-style {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .category-grid-final {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    height: auto !important;
+  }
+
+  .category-grid-final .category-tile {
+    height: 210px;
+  }
+
+  .footer-grid-launch {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .footer-grid-launch > div:first-child,
+  .footer-grid-launch .footer-contacts {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .home-final-page .hero-exact,
+  .home-final-page .home-final-hero {
+    min-height: 430px !important;
+  }
+
+  .home-final-page .hero-inner {
+    min-height: 430px !important;
+    align-items: stretch !important;
+    padding-top: 26px !important;
+    padding-bottom: 24px !important;
+  }
+
+  .home-final-page .hero-copy {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-height: 380px !important;
+  }
+
+  .home-final-page .home-hero-kicker {
+    margin-bottom: 10px;
+    font-size: 10px !important;
+    letter-spacing: .1em;
+  }
+
+  .home-final-page .hero-copy h1 {
+    font-size: 25px !important;
+    line-height: 1.08 !important;
+    letter-spacing: .035em !important;
+  }
+
+  .home-final-page .hero-copy p {
+    margin-top: 14px !important;
+    font-size: 15px !important;
+    line-height: 1.42 !important;
+  }
+
+  .home-final-page .hero-actions {
+    margin-top: auto !important;
+    padding-bottom: 4px !important;
+  }
+
+  .home-final-page .hero-actions .btn-orange {
+    width: 100% !important;
+  }
+
+  .products-services-final--clocks .home-product-grid-shop--catalog-style {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .category-grid-final {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .category-grid-final .category-tile {
+    height: 150px !important;
+  }
+
+  .footer-grid-launch {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 28px 20px !important;
+  }
+
+  .footer-grid-launch > div:first-child,
+  .footer-grid-launch .footer-contacts {
+    grid-column: 1 / -1;
+  }
+
+  .footer-grid-launch .footer-contacts p {
+    display: grid !important;
+    grid-template-columns: 22px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    align-items: start !important;
+  }
+
+  .footer-grid-launch .footer-contacts svg {
+    width: 18px !important;
+    height: 18px !important;
+    margin-top: 2px;
+  }
+
+  .footer-grid-launch .footer-contacts span {
+    display: block;
+    min-width: 0;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .about-gallery-rich--clocks {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .home-final-page .hero-copy h1 {
+    font-size: 23px !important;
+  }
+
+  .products-services-final--clocks .home-product-grid-shop--catalog-style .catalog-card-image-market {
+    height: 128px !important;
+    flex-basis: 128px !important;
+  }
+
+  .footer-grid-launch {
+    grid-template-columns: 1fr !important;
+  }
+}
