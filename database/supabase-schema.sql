@@ -309,11 +309,11 @@ create table if not exists public.product_reviews (
   photo_urls text[] not null default '{}',
   status text not null default 'published' check (status in ('pending', 'published', 'hidden')),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique(product_slug, user_id)
+  updated_at timestamptz not null default now()
 );
 
 alter table public.product_reviews add column if not exists photo_urls text[] not null default '{}';
+alter table public.product_reviews drop constraint if exists product_reviews_product_slug_user_id_key;
 alter table public.product_reviews add column if not exists status text not null default 'published' check (status in ('pending', 'published', 'hidden'));
 alter table public.product_reviews alter column status set default 'published';
 update public.product_reviews set status = 'published' where status = 'pending';

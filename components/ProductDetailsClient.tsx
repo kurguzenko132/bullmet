@@ -86,6 +86,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [reviewComment, setReviewComment] = useState('');
   const [reviewPhotos, setReviewPhotos] = useState<File[]>([]);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewPhotoLightbox, setReviewPhotoLightbox] = useState<string | null>(null);
   const activeImage = images[activeIndex] || product.image;
   const activeImageSettings = getImagePreset(product, activeImage, 'product');
   const activeModalSettings = getImagePreset(product, activeImage, 'modal');
@@ -322,7 +323,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     try {
       const uploadedPhotoUrls = await uploadReviewPhotos(session.user.id);
 
-      const { data, error } = await supabase.from('product_reviews').upsert({
+      const { data, error } = await supabase.from('product_reviews').insert({
         product_slug: product.slug,
         user_id: session.user.id,
         user_email: session.user.email,
@@ -331,7 +332,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
         comment: reviewComment.trim(),
         photo_urls: uploadedPhotoUrls,
         status: 'published'
-      }, { onConflict: 'product_slug,user_id' }).select('id, user_name, user_email, rating, comment, photo_urls, created_at, status').single();
+      }).select('id, user_name, user_email, rating, comment, photo_urls, created_at, status').single();
 
       if (error) throw error;
 
@@ -555,7 +556,15 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                     <RatingStars value={review.rating} readOnly size="small" />
                   </div>
                   <p>{review.comment}</p>
-                  {!!review.photo_urls?.length && <div className="review-photos">{review.photo_urls.map((url) => <img key={url} src={url} alt="Фото отзыва" />)}</div>}
+                  {!!review.photo_urls?.length && (
+                    <div className="review-photos">
+                      {review.photo_urls.map((url) => (
+                        <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)} aria-label="Открыть фото отзыва">
+                          <img src={url} alt="Фото отзыва" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </article>
               )) : (
                 <div className="empty-reviews empty-reviews--redesign">
@@ -652,6 +661,13 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               <button type="submit" disabled={quickOrderLoading}>{quickOrderLoading ? 'Отправляем...' : 'Отправить заявку'}</button>
             </form>
           </div>
+        </div>
+      )}
+
+      {reviewPhotoLightbox && (
+        <div className="review-photo-lightbox" role="dialog" aria-modal="true" onClick={() => setReviewPhotoLightbox(null)}>
+          <button type="button" onClick={() => setReviewPhotoLightbox(null)} aria-label="Закрыть фото">×</button>
+          <img src={reviewPhotoLightbox} alt="Фото из отзыва" onClick={(event) => event.stopPropagation()} />
         </div>
       )}
 
