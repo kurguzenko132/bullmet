@@ -15842,3 +15842,89 @@ img { display: block; max-width: 100%; }
     max-width: 350px !important;
   }
 }
+
+
+/* ===== Workflow cards final alignment and arrows polish ===== */
+.steps-grid-v2 article {
+  display: grid !important;
+  grid-template-rows: auto auto auto 1fr !important;
+  align-content: start !important;
+  justify-items: center !important;
+}
+
+.steps-grid-v2 .step-num {
+  width: 100% !important;
+  min-height: 44px !important;
+}
+
+.steps-grid-v2 .step-icon-circle {
+  flex: none !important;
+}
+
+.steps-grid-v2 h4 {
+  min-height: 46px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.steps-grid-v2 p {
+  min-height: 92px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.step-arrow-v2 {
+  right: -33px !important;
+  top: 50% !important;
+  width: 32px !important;
+  height: 1px !important;
+  transform: translateY(-50%) !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  background: rgba(229, 91, 28, .42) !important;
+}
+
+.step-arrow-v2::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-top: 1px solid rgba(229, 91, 28, .7);
+  border-right: 1px solid rgba(229, 91, 28, .7);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+@media (max-width: 1220px) {
+  .step-arrow-v2 {
+    display: none !important;
+  }
+
+  .steps-grid-v2 h4 {
+    min-height: 34px !important;
+  }
+
+  .steps-grid-v2 p {
+    min-height: 68px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .steps-grid-v2 article {
+    grid-template-rows: auto auto auto auto !important;
+  }
+
+  .steps-grid-v2 .step-num {
+    min-height: auto !important;
+  }
+
+  .steps-grid-v2 h4,
+  .steps-grid-v2 p {
+    min-height: auto !important;
+  }
+}
