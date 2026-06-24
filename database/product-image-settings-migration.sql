@@ -25,7 +25,7 @@ create table if not exists public.product_reviews (
   rating integer not null default 5 check (rating >= 1 and rating <= 5),
   comment text not null,
   photo_urls text[] default '{}',
-  status text not null default 'pending',
+  status text not null default 'published',
   created_at timestamptz not null default now()
 );
 

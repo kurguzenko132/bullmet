@@ -1,1 +1,16 @@
-export default function AdminReviews(){return <div className="admin-dashboard-pro"><div className="admin-page-head"><div><p>Отзывы</p><h1>Модерация отзывов</h1><span>Отзывы с фото отправляются на модерацию и после публикации появляются на карточке товара.</span></div></div><section className="admin-panel-card"><p>Раздел готов к подключению таблицы product_reviews. Статусы: pending, published, hidden.</p></section></div>}
+export default function AdminReviews(){
+  return (
+    <div className="admin-dashboard-pro">
+      <div className="admin-page-head">
+        <div>
+          <p>Отзывы</p>
+          <h1>Отзывы покупателей</h1>
+          <span>Отзывы публикуются сразу на карточке товара. Фото к отзывам сохраняются в Supabase Storage.</span>
+        </div>
+      </div>
+      <section className="admin-panel-card">
+        <p>Модерация отключена: новый отзыв получает статус published. При необходимости отзыв можно скрыть через таблицу product_reviews в Supabase, выставив status = hidden.</p>
+      </section>
+    </div>
+  );
+}

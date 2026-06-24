@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from './Icon';
 import type { CatalogProduct } from '@/lib/products';
@@ -84,6 +84,8 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [reviewMessage, setReviewMessage] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewPhotos, setReviewPhotos] = useState<File[]>([]);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const activeImage = images[activeIndex] || product.image;
   const activeImageSettings = getImagePreset(product, activeImage, 'product');
   const activeModalSettings = getImagePreset(product, activeImage, 'modal');
@@ -259,34 +261,93 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     } catch {}
   }
 
+
+  function chooseReviewPhotos(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files || [])
+      .filter((file) => file.type.startsWith('image/'))
+      .slice(0, 5);
+
+    setReviewPhotos(files);
+  }
+
+  async function uploadReviewPhotos(userId: string) {
+    if (!supabase || !reviewPhotos.length) return [] as string[];
+
+    const bucket = process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_IMAGES_BUCKET || 'product-images';
+    const uploaded: string[] = [];
+
+    for (const file of reviewPhotos) {
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+      const path = `reviews/${product.slug}/${userId}/${safeName}`;
+
+      const { error } = await supabase.storage.from(bucket).upload(path, file, {
+        upsert: false,
+        contentType: file.type || 'image/jpeg'
+      });
+
+      if (error) throw error;
+
+      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+      if (data.publicUrl) uploaded.push(data.publicUrl);
+    }
+
+    return uploaded;
+  }
+
   async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setReviewMessage('');
+
     if (!supabase) {
       setReviewMessage('Supabase не подключен. Отзыв пока нельзя отправить.');
       return;
     }
+
     const { data: sessionData } = await supabase.auth.getSession();
     const session = sessionData.session;
+
     if (!session) {
       setReviewMessage('Чтобы оставить отзыв, войдите в аккаунт.');
       return;
     }
-    const { error } = await supabase.from('product_reviews').upsert({
-      product_slug: product.slug,
-      user_id: session.user.id,
-      user_email: session.user.email,
-      user_name: session.user.email?.split('@')[0] || 'Покупатель',
-      rating: reviewRating,
-      comment: reviewComment.trim(),
-      photo_urls: [],
-      status: 'pending'
-    }, { onConflict: 'product_slug,user_id' });
-    if (error) setReviewMessage(error.message);
-    else {
-      setReviewMessage('Отзыв отправлен на модерацию. После проверки он появится на сайте.');
+
+    if (!reviewComment.trim()) {
+      setReviewMessage('Напишите короткий комментарий к отзыву.');
+      return;
+    }
+
+    setReviewSubmitting(true);
+
+    try {
+      const uploadedPhotoUrls = await uploadReviewPhotos(session.user.id);
+
+      const { data, error } = await supabase.from('product_reviews').upsert({
+        product_slug: product.slug,
+        user_id: session.user.id,
+        user_email: session.user.email,
+        user_name: session.user.email?.split('@')[0] || 'Покупатель',
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+        photo_urls: uploadedPhotoUrls,
+        status: 'published'
+      }, { onConflict: 'product_slug,user_id' }).select('id, user_name, user_email, rating, comment, photo_urls, created_at, status').single();
+
+      if (error) throw error;
+
+      setReviews((current) => {
+        const nextReview = data as ProductReview;
+        return [nextReview, ...current.filter((item) => item.id !== nextReview.id)];
+      });
+
+      setReviewMessage('Отзыв опубликован. Он уже отображается на странице товара.');
       setReviewComment('');
       setReviewRating(5);
+      setReviewPhotos([]);
+    } catch (error) {
+      setReviewMessage(error instanceof Error ? error.message : 'Не удалось отправить отзыв.');
+    } finally {
+      setReviewSubmitting(false);
     }
   }
 
@@ -506,7 +567,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
 
             <form className="review-form review-form--redesign" onSubmit={submitReview}>
               <h3>Оставить отзыв</h3>
-              <p>Оцените товар звёздами и напишите короткий комментарий. Отзыв появится после модерации.</p>
+              <p>Оцените товар, напишите комментарий и при желании добавьте фото. Отзыв появится сразу.</p>
               <label className="review-stars-field">
                 <span>Ваша оценка</span>
                 <RatingStars value={reviewRating} onChange={setReviewRating} />
@@ -515,8 +576,13 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                 <span>Комментарий</span>
                 <textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} rows={5} placeholder="Расскажите о товаре" required />
               </label>
+              <label className="review-photo-field">
+                <span>Фото к отзыву</span>
+                <input type="file" accept="image/*" multiple onChange={chooseReviewPhotos} />
+                <small>{reviewPhotos.length ? `Выбрано фото: ${reviewPhotos.length}` : 'Можно добавить до 5 фото'}</small>
+              </label>
               {reviewMessage && <p className="review-message">{reviewMessage}</p>}
-              <button type="submit">Отправить на модерацию</button>
+              <button type="submit" disabled={reviewSubmitting}>{reviewSubmitting ? 'Публикуем...' : 'Опубликовать отзыв'}</button>
             </form>
           </div>
         </article>

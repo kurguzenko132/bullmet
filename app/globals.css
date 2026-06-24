@@ -16002,3 +16002,51 @@ img { display: block; max-width: 100%; }
     min-height: auto;
   }
 }
+
+
+/* ===== Reviews: instant publish and photo upload ===== */
+.review-photo-field {
+  display: grid;
+  gap: 8px;
+}
+
+.review-photo-field input[type="file"] {
+  width: 100%;
+  border: 1px dashed #dccfc1;
+  background: #fffaf5;
+  padding: 14px;
+  color: #5f554c;
+  cursor: pointer;
+}
+
+.review-photo-field small {
+  color: #7b7066;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.review-form--redesign button:disabled {
+  opacity: .65;
+  cursor: wait;
+}
+
+.review-photos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 74px));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.review-photos img {
+  width: 74px;
+  height: 74px;
+  object-fit: cover;
+  border: 1px solid #eee2d7;
+  background: #f7f0e8;
+}
+
+@media (max-width: 760px) {
+  .review-photos {
+    grid-template-columns: repeat(3, minmax(0, 74px));
+  }
+}
