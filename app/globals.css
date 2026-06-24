@@ -7259,8 +7259,8 @@ img { display: block; max-width: 100%; }
   }
 
   .product-main-photo {
-    height: clamp(500px, 58vh, 640px) !important;
-    min-height: 500px !important;
+    height: clamp(460px, 54vh, 580px) !important;
+    min-height: 460px !important;
     padding: 12px !important;
     box-shadow: 0 10px 26px rgba(35,29,23,.045) !important;
   }
@@ -16144,10 +16144,10 @@ img { display: block; max-width: 100%; }
 /* ===== Product page: move "About product" under gallery photo ===== */
 .product-about-under-photo {
   grid-column: 2 / 3;
-  margin-top: 18px;
+  margin-top: 10px;
   background: #fff;
   border: 1px solid #eee7dd;
-  padding: 30px 34px;
+  padding: 28px 34px;
   box-shadow: 0 12px 30px rgba(35,29,23,.035);
 }
 
