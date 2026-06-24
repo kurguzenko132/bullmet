@@ -15803,3 +15803,41 @@ img { display: block; max-width: 100%; }
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* ===== Content feedback: main directions 6 items ===== */
+.category-grid-final {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  height: 250px !important;
+}
+.home-final-page .hero-copy h1 {
+  max-width: 790px;
+}
+.home-final-page .hero-copy p {
+  max-width: 790px;
+}
+@media (max-width: 1180px) {
+  .category-grid-final {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    height: auto !important;
+  }
+  .category-grid-final .category-tile {
+    height: 190px !important;
+  }
+}
+@media (max-width: 760px) {
+  .category-grid-final {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    height: auto !important;
+  }
+  .category-grid-final .category-tile {
+    height: 150px !important;
+  }
+  .home-final-page .hero-copy h1 {
+    font-size: 24px !important;
+  }
+  .home-final-page .hero-copy p {
+    font-size: 14px !important;
+    max-width: 350px !important;
+  }
+}

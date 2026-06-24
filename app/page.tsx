@@ -32,10 +32,12 @@ const featureItems = [
 ];
 
 const categories = [
-  { title: 'Все\nчасы', img: img.clock, href: '/catalog' },
-  { title: 'Классика', img: img.gallery4, href: '/catalog?category=Классика' },
-  { title: 'Кофе\nи кухня', img: img.clock, href: '/catalog?category=Кофе и кухня' },
-  { title: 'Для дома\nи подарка', img: img.custom, href: '/catalog?category=Настенные часы' }
+  { title: 'Настенные\nчасы', img: img.clock, href: '/catalog?category=Настенные часы' },
+  { title: 'Садовая\nмебель', img: img.swing, href: '/catalog?category=Садовая мебель' },
+  { title: 'Мебель для дома\nв стиле лофт', img: img.custom, href: '/catalog?category=Мебель для дома в стиле лофт' },
+  { title: 'Лазерная\nрезка', img: img.metal, href: '/services#laser' },
+  { title: 'Мелкий опт\nметаллопроката', img: img.wood, href: '/services#metal' },
+  { title: 'Гибка\nметалла', img: img.serviceMetal, href: '/services#bending' }
 ];
 
 const productionBenefits = [
@@ -82,8 +84,8 @@ export default async function HomePage() {
           <div className="home-container hero-inner">
             <div className="hero-copy">
               <span className="home-hero-kicker">Производство металлоизделий Bullmet</span>
-              <h1>Настенные часы из металла с элементами дерева</h1>
-              <p>Первый запуск Bullmet — каталог настенных часов собственного производства. Постепенно будем расширять ассортимент, но сейчас фокусируемся на часах.</p>
+              <h1>Изделия из металла с элементами дерева</h1>
+              <p>ИЗГОТАВЛИВАЕМ: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.</p>
               <div className="hero-actions">
                 <Link href="/catalog" className="btn-orange">Перейти в каталог</Link>
               </div>
@@ -103,11 +105,11 @@ export default async function HomePage() {
         <section className="home-container home-categories-final">
           <div className="home-section-title-row">
             <div>
-              <p className="eyebrow">первый запуск каталога</p>
-              <h2>Настенные часы Bullmet</h2>
-              <span>Собственное производство металлоизделий. Сейчас публично запускаем направление настенных часов.</span>
+              <p className="eyebrow">главные переходы</p>
+              <h2>Направления Bullmet</h2>
+              <span>Выберите нужное направление: от настенных часов до резки, гибки и металлопроката.</span>
             </div>
-            <Link href="/catalog">Смотреть часы</Link>
+            <Link href="/catalog">Смотреть каталог</Link>
           </div>
 
           <div className="category-grid-exact category-grid-final">
@@ -141,8 +143,8 @@ export default async function HomePage() {
         <section className="home-container production-section production-section-final" id="production">
           <div className="production-text">
             <p className="eyebrow">производство металлоизделий</p>
-            <h2>Делаем часы на собственном производстве</h2>
-            <p className="body-text">Bullmet — производство металлоизделий в Беларуси. Сейчас мы публично запускаем направление настенных часов и постепенно будем расширять каталог.</p>
+            <h2>Собственное производство Bullmet</h2>
+            <p className="body-text">ИЗГОТАВЛИВАЕМ: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.</p>
             <Link href="/production" className="small-orange">О производстве</Link>
           </div>
           <div className="production-image"><img src={img.workshop} alt="Производство Bullmet" /></div>

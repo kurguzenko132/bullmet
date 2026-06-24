@@ -6,9 +6,8 @@ import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 import { Icon } from '@/components/Icon';
 
 export const metadata = {
-  title: 'Услуги Bullmet — временно скрыто',
-  description: 'Раздел производственных услуг Bullmet временно скрыт из публичной навигации.',
-  robots: { index: false, follow: false }
+  title: 'Услуги Bullmet — лазерная резка, гибка металла и изделия под заказ',
+  description: 'Производственные услуги Bullmet: лазерная резка, гибка металла, мелкий опт металлопроката и изготовление изделий по чертежу, фото или эскизу.'
 };
 
 const services = [

@@ -3,7 +3,7 @@ import { products } from '@/lib/data';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bullmet.by';
-  const staticPages = ['', '/catalog', '/production', '/about', '/contacts'].map((url) => ({
+  const staticPages = ['', '/catalog', '/services', '/production', '/about', '/contacts'].map((url) => ({
     url: `${siteUrl}${url}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
