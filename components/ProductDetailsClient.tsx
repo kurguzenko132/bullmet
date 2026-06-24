@@ -391,6 +391,13 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                 </>
               )}
             </div>
+
+            <article className="product-about-under-photo">
+              <p className="product-section-eyebrow">О товаре</p>
+              <h2>{product.title}</h2>
+              <p>{product.description}</p>
+              <p>Изготовление выполняется на собственном производстве Bullmet. Размер, цвет, материал и оформление можно адаптировать под ваш проект.</p>
+            </article>
           </div>
 
           <aside className="product-info-panel">
@@ -502,13 +509,6 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       </section>
 
       <section className="product-content-section">
-        <article className="product-content-card product-content-card--wide">
-          <p className="product-section-eyebrow">О товаре</p>
-          <h2>{product.title}</h2>
-          <p>{product.description}</p>
-          <p>Изготовление выполняется на собственном производстве Bullmet. Размер, цвет, материал и оформление можно адаптировать под ваш проект.</p>
-        </article>
-
         <article className="product-content-card">
           <p className="product-section-eyebrow">Характеристики</p>
           <h2>Основные параметры</h2>

@@ -16139,3 +16139,51 @@ img { display: block; max-width: 100%; }
     height: 44px;
   }
 }
+
+
+/* ===== Product page: move "About product" under gallery photo ===== */
+.product-about-under-photo {
+  grid-column: 2 / 3;
+  margin-top: 18px;
+  background: #fff;
+  border: 1px solid #eee7dd;
+  padding: 30px 34px;
+  box-shadow: 0 12px 30px rgba(35,29,23,.035);
+}
+
+.product-about-under-photo h2 {
+  margin: 0 0 14px;
+  color: #202020;
+  font-size: clamp(24px, 2.2vw, 34px);
+  line-height: 1.08;
+  font-weight: 950;
+  letter-spacing: -.025em;
+}
+
+.product-about-under-photo p:not(.product-section-eyebrow) {
+  margin: 0 0 12px;
+  color: #5f5a53;
+  font-size: 17px;
+  line-height: 1.58;
+}
+
+.product-about-under-photo p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  .product-about-under-photo {
+    grid-column: 1 / -1;
+    order: 3;
+    margin-top: 0;
+    padding: 22px;
+  }
+
+  .product-about-under-photo h2 {
+    font-size: 24px;
+  }
+
+  .product-about-under-photo p:not(.product-section-eyebrow) {
+    font-size: 15px;
+  }
+}
