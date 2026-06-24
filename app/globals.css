@@ -16187,3 +16187,45 @@ img { display: block; max-width: 100%; }
     font-size: 15px;
   }
 }
+
+
+/* ===== Product page: remove empty space under gallery ===== */
+@media (min-width: 1024px) {
+  .product-main-photo {
+    height: clamp(330px, 40vh, 430px) !important;
+    min-height: 330px !important;
+    max-height: 430px !important;
+    padding: 10px !important;
+  }
+
+  .product-about-under-photo {
+    margin-top: 8px !important;
+    padding: 26px 34px !important;
+  }
+
+  .product-gallery-panel {
+    align-content: start !important;
+  }
+
+  .product-thumbs {
+    align-content: start !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  .product-main-photo {
+    height: clamp(340px, 42vh, 460px) !important;
+    min-height: 340px !important;
+    max-height: 460px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .product-main-photo {
+    min-height: 320px !important;
+  }
+
+  .product-about-under-photo {
+    margin-top: 10px !important;
+  }
+}
