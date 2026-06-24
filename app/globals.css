@@ -13485,10 +13485,11 @@ img { display: block; max-width: 100%; }
 
 .steps-grid-v2 {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 34px;
   border: 0 !important;
   background: transparent !important;
+  align-items: stretch;
 }
 
 .steps-grid-v2 article {
