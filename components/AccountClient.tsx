@@ -362,6 +362,7 @@ export function AccountClient() {
   async function signOut() {
     setSigningOut(true);
     clearRememberedAccount();
+    try { window.dispatchEvent(new Event('bullmet-auth-updated')); } catch {}
     await supabase?.auth.signOut();
     window.location.assign('/login?next=/account');
   }
@@ -435,7 +436,7 @@ export function AccountClient() {
       <section className="account-state-card account-state-card--rich">
         <div className="account-loader" />
         <h1>Открываем личный кабинет</h1>
-        <p>Проверяем вход и загружаем данные без лишних редиректов.</p>
+        <p>Проверяем вход. Если вы уже входили, кабинет откроется без повторного ввода пароля.</p>
       </section>
     );
   }
@@ -444,7 +445,7 @@ export function AccountClient() {
     return (
       <section className="account-state-card account-state-card--rich">
         <h1>Supabase не подключен</h1>
-        <p>Добавьте NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY в Vercel и .env.local.</p>
+        <p>Добавьте NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY в Vercel и .env.local, чтобы вход работал стабильно.</p>
         <Link className="account-state-link" href="/login?next=/account">Вернуться ко входу</Link>
       </section>
     );
@@ -468,7 +469,7 @@ export function AccountClient() {
       <div className="account-stable-stats">
         <StatCard icon="cart" label="Корзина" value={String(cartCount)} hint={`${money(cartTotal)} BYN`} />
         <StatCard icon="package" label="Заказы" value={String(orders.length)} hint={orders[0] ? dateLabel(orders[0].created_at) : 'пока нет'} />
-        <StatCard icon="request" label="Заявки" value={String(requests.length)} hint={requests[0] ? dateLabel(requests[0].created_at) : 'пока нет'} />
+        <StatCard icon="clock" label="Консультации" value={String(requests.length)} hint={requests[0] ? dateLabel(requests[0].created_at) : 'пока нет'} />
         <StatCard icon="shield" label="Избранное" value={String(favorites.length)} hint={loadingData ? 'обновляем...' : 'сохранено'} />
       </div>
 
@@ -483,15 +484,15 @@ export function AccountClient() {
             </div>
             <div className="account-stable-actions">
               <ActionCard icon="cart" title="Открыть корзину" text={cartCount ? `В корзине ${cartCount} товар(ов).` : 'Корзина пока пустая.'} href="/cart" label={cartCount ? 'Оформить' : 'Перейти'} />
-              <ActionCard icon="request" title="Заказать расчет" text="Отправьте фото, чертеж или описание изделия." href="/services#request" label="Создать заявку" />
-              <ActionCard icon="search" title="Каталог" text="Вернитесь к товарам и подберите изделие." href="/catalog" label="Смотреть" />
+              <ActionCard icon="search" title="Каталог часов" text="Вернитесь к настенным часам и выберите модель." href="/catalog" label="Смотреть" />
+              <ActionCard icon="shield" title="Контакты" text="Уточните размер, цвет, наличие или доставку." href="/contacts" label="Связаться" />
             </div>
           </section>
 
           <section className="account-stable-card">
             <div className="account-stable-card-head">
               <div>
-                <p className="section-kicker">Заказы и заявки</p>
+                <p className="section-kicker">Заказы и обращения</p>
                 <h2>Последняя активность</h2>
               </div>
               <Link href="/cart">Новый заказ</Link>
@@ -545,7 +546,7 @@ export function AccountClient() {
   );
 }
 
-function StatCard({ icon, label, value, hint }: { icon: 'cart' | 'package' | 'request' | 'shield'; label: string; value: string; hint: string }) {
+function StatCard({ icon, label, value, hint }: { icon: 'cart' | 'package' | 'request' | 'shield' | 'clock'; label: string; value: string; hint: string }) {
   return (
     <article>
       <Icon name={icon} />
@@ -556,7 +557,7 @@ function StatCard({ icon, label, value, hint }: { icon: 'cart' | 'package' | 're
   );
 }
 
-function ActionCard({ icon, title, text, href, label }: { icon: 'cart' | 'request' | 'search'; title: string; text: string; href: string; label: string }) {
+function ActionCard({ icon, title, text, href, label }: { icon: 'cart' | 'request' | 'search' | 'shield'; title: string; text: string; href: string; label: string }) {
   return (
     <article>
       <Icon name={icon} />
@@ -595,7 +596,7 @@ function OrdersPreview({ orders }: { orders: OrderRow[] }) {
 }
 
 function RequestsPreview({ requests }: { requests: RequestRow[] }) {
-  if (!requests.length) return <EmptyMini text="Заявок пока нет. Отправьте чертеж или описание на расчет." href="/services#request" label="Отправить заявку" />;
+  if (!requests.length) return <EmptyMini text="Обращений пока нет. По вопросам о часах можно связаться с нами напрямую." href="/contacts" label="Связаться" />;
 
   return (
     <div className="account-stable-list">

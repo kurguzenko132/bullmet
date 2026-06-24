@@ -136,6 +136,7 @@ export function AuthForm() {
       try {
         window.localStorage.setItem('bullmet_account_last_email', cleanEmail);
         window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
+        window.dispatchEvent(new Event('bullmet-auth-updated'));
       } catch {}
 
       const adminEmails = getAdminEmails();
@@ -153,7 +154,7 @@ export function AuthForm() {
       router.refresh();
 
       // Жесткий переход нужен, чтобы Supabase-сессия точно успела сохраниться
-      // и защищенная страница /account не вернула пользователя обратно на /login.
+      // и личный кабинет открылся без повторного ввода пароля.
       window.setTimeout(() => {
         window.location.href = targetUrl;
       }, 100);

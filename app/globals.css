@@ -15943,3 +15943,62 @@ img { display: block; max-width: 100%; }
   background: #fff1e5;
   border-color: var(--orange);
 }
+
+
+/* ===== Account UX polish: persistent cabinet button ===== */
+.login-btn--active {
+  border-color: rgba(229, 91, 28, .38) !important;
+  background: #fff6ef !important;
+  color: var(--orange) !important;
+}
+
+.login-btn--active svg {
+  color: var(--orange) !important;
+}
+
+.mobile-bottom-nav a[href^="/account"] {
+  color: var(--orange);
+}
+
+.account-stable-hero {
+  gap: 22px;
+}
+
+.account-stable-hero > div:first-child small {
+  display: block;
+  margin-top: 10px;
+  color: #7a7067;
+  line-height: 1.45;
+}
+
+.account-stable-actions article {
+  min-height: 190px;
+}
+
+.account-stable-actions article h3,
+.account-stable-actions article p {
+  max-width: 260px;
+}
+
+@media (max-width: 760px) {
+  .login-btn--active span {
+    display: inline !important;
+  }
+
+  .account-stable-hero {
+    align-items: stretch;
+  }
+
+  .account-stable-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .account-stable-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .account-stable-actions article {
+    min-height: auto;
+  }
+}

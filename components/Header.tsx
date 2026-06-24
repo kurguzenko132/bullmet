@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { Icon } from './Icon';
 
 type SearchProduct = {
@@ -31,6 +32,19 @@ function readCartCount() {
 
 const quickSearches = ['римские', 'кофе', 'классика', 'кухня', 'настенные часы'];
 
+
+function readRememberedAccountEmail() {
+  if (typeof window === 'undefined') return '';
+  try {
+    const email = String(window.localStorage.getItem('bullmet_account_last_email') || '').trim().toLowerCase();
+    const loginAt = Number(window.localStorage.getItem('bullmet_account_last_login_at') || 0);
+    const fresh = loginAt && Date.now() - loginAt < 1000 * 60 * 60 * 24 * 30;
+    return email && fresh ? email : '';
+  } catch {
+    return '';
+  }
+}
+
 export function Header() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
@@ -39,6 +53,7 @@ export function Header() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchProduct[]>([]);
   const [loading, setLoading] = useState(false);
+  const [accountEmail, setAccountEmail] = useState('');
 
   const trimmedQuery = query.trim();
   const hasResults = results.length > 0;
@@ -50,13 +65,16 @@ export function Header() {
     { href: '/contacts', label: 'Контакты' }
   ], []);
 
+  const accountHref = accountEmail ? '/account' : '/login?next=/account';
+  const accountLabel = accountEmail ? 'Кабинет' : 'Войти';
+
   const bottomNav = useMemo(() => [
     { href: '/', label: 'Главная', icon: 'factory' as const },
     { href: '/catalog', label: 'Каталог', icon: 'search' as const },
     { href: '/about', label: 'О нас', icon: 'shield' as const },
     { href: '/cart', label: 'Корзина', icon: 'cart' as const },
-    { href: '/login', label: 'Профиль', icon: 'user' as const }
-  ], []);
+    { href: accountHref, label: accountEmail ? 'Кабинет' : 'Войти', icon: 'user' as const }
+  ], [accountEmail, accountHref]);
 
   useEffect(() => {
     const update = () => setCartCount(readCartCount());
@@ -66,6 +84,58 @@ export function Header() {
     return () => {
       window.removeEventListener('storage', update);
       window.removeEventListener('bullmet-cart-updated', update);
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const updateAccount = async () => {
+      const remembered = readRememberedAccountEmail();
+      if (active) setAccountEmail(remembered);
+
+      if (!supabase) return;
+
+      const { data } = await supabase.auth.getSession();
+      const email = data.session?.user?.email?.toLowerCase() || remembered;
+      if (!active) return;
+
+      setAccountEmail(email);
+      if (email) {
+        try {
+          window.localStorage.setItem('bullmet_account_last_email', email);
+          window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
+        } catch {}
+      }
+    };
+
+    void updateAccount();
+
+    const { data } = supabase?.auth.onAuthStateChange((event, session) => {
+      const email = session?.user?.email?.toLowerCase() || '';
+      setAccountEmail(email || readRememberedAccountEmail());
+
+      if (email) {
+        try {
+          window.localStorage.setItem('bullmet_account_last_email', email);
+          window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
+        } catch {}
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setAccountEmail('');
+      }
+    }) || { data: null };
+
+    const onStorage = () => setAccountEmail(readRememberedAccountEmail());
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('bullmet-auth-updated', onStorage);
+
+    return () => {
+      active = false;
+      data?.subscription?.unsubscribe();
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('bullmet-auth-updated', onStorage);
     };
   }, []);
 
@@ -139,7 +209,7 @@ export function Header() {
           <div className="header-actions-exact header-actions-polished">
             <button aria-label="Поиск" className="icon-btn" type="button" onClick={() => setSearchOpen(true)}><Icon name="search" /></button>
             <Link href="/cart" className="cart-mini" aria-label="Корзина"><Icon name="cart" />{cartCount > 0 && <span>{cartCount}</span>}</Link>
-            <Link href="/login" className="login-btn"><Icon name="user" /><span>Войти</span></Link>
+            <Link href={accountHref} className={accountEmail ? 'login-btn login-btn--active' : 'login-btn'} title={accountEmail ? `Личный кабинет: ${accountEmail}` : 'Войти в аккаунт'}><Icon name="user" /><span>{accountLabel}</span></Link>
             <button className={mobileOpen ? 'mobile-menu-btn is-open' : 'mobile-menu-btn'} type="button" onClick={() => setMobileOpen((value) => !value)} aria-label="Меню"><span /><span /><span /></button>
           </div>
         </div>
@@ -159,6 +229,7 @@ export function Header() {
             <button className="mobile-menu-search" type="button" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}><Icon name="search" /> Поиск по каталогу</button>
             <nav>
               {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}<span>→</span></Link>)}
+              <Link href={accountHref} onClick={() => setMobileOpen(false)}>{accountEmail ? 'Личный кабинет' : 'Войти в аккаунт'}<span>→</span></Link>
             </nav>
             <div className="mobile-menu-contact">
               <span>Нужна консультация по часам?</span>
