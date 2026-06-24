@@ -20,11 +20,11 @@ export default function LoginPage() {
             <p className="auth-eyebrow">Личный кабинет Bullmet</p>
             <h1>Войти в аккаунт</h1>
             <p>
-              Сохраняйте товары, быстрее отправляйте заявки на расчет и возвращайтесь к выбранным изделиям без повторного поиска.
+              Сохраняйте выбранные часы, быстрее оформляйте заказ и возвращайтесь к товарам без повторного поиска.
             </p>
             <div className="auth-benefits">
               <div><Icon name="cart" /><span>Быстрое оформление</span></div>
-              <div><Icon name="request" /><span>Заявки на расчет</span></div>
+              <div><Icon name="clock" /><span>Заказы часов</span></div>
               <div><Icon name="shield" /><span>Сохраненные данные</span></div>
             </div>
           </div>

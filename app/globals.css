@@ -15926,3 +15926,20 @@ img { display: block; max-width: 100%; }
     margin-bottom: 14px !important;
   }
 }
+
+
+/* ===== Auth form helper action ===== */
+.auth-inline-action {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #e7d9c9;
+  background: #fff7ef;
+  color: var(--orange);
+  font-weight: 900;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.auth-inline-action:hover {
+  background: #fff1e5;
+  border-color: var(--orange);
+}

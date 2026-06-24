@@ -18,6 +18,39 @@ function getAdminEmails() {
     .filter(Boolean);
 }
 
+
+function getReadableAuthError(error: unknown, mode: Mode, adminLogin: boolean) {
+  const raw = error instanceof Error ? error.message : String(error || '');
+  const lower = raw.toLowerCase();
+
+  if (lower.includes('invalid login credentials')) {
+    return adminLogin
+      ? 'Неверный email или пароль. Для входа в админку пользователь должен быть создан в Supabase Auth и его email должен совпадать с NEXT_PUBLIC_ADMIN_EMAIL / NEXT_PUBLIC_ADMIN_EMAILS.'
+      : 'Неверный email или пароль. Если аккаунта ещё нет, сначала нажмите «Регистрация» и создайте личный кабинет.';
+  }
+
+  if (lower.includes('email not confirmed') || lower.includes('confirm')) {
+    return 'Email ещё не подтверждён. Откройте письмо от Supabase и подтвердите почту, затем войдите снова.';
+  }
+
+  if (lower.includes('user already registered') || lower.includes('already registered')) {
+    return 'Аккаунт с таким email уже существует. Переключитесь на «Вход» и введите пароль.';
+  }
+
+  if (lower.includes('password should be') || lower.includes('password')) {
+    return mode === 'register'
+      ? 'Пароль слишком короткий или не подходит. Используйте минимум 6 символов.'
+      : 'Проверьте пароль и попробуйте ещё раз.';
+  }
+
+  return raw || (mode === 'login' ? 'Не удалось выполнить вход.' : 'Не удалось создать аккаунт.');
+}
+
+function isInvalidCredentialsError(error: unknown) {
+  const raw = error instanceof Error ? error.message : String(error || '');
+  return raw.toLowerCase().includes('invalid login credentials');
+}
+
 export function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,6 +61,7 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showCreateHint, setShowCreateHint] = useState(false);
 
   const nextUrl = useMemo(() => {
     const rawValue = searchParams.get('next') || '/account';
@@ -54,6 +88,7 @@ export function AuthForm() {
     event.preventDefault();
     setError('');
     setMessage('');
+    setShowCreateHint(false);
 
     if (!supabase) {
       setError('Supabase не подключен. Проверь NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY.');
@@ -85,7 +120,7 @@ export function AuthForm() {
 
         if (signUpError) throw signUpError;
 
-        setMessage('Аккаунт создан. Если в Supabase включено подтверждение email, подтвердите почту и затем войдите.');
+        setMessage('Аккаунт создан. Если включено подтверждение email, подтвердите почту и затем войдите. Если подтверждение отключено — можно сразу попробовать войти.');
         setMode('login');
         setLoading(false);
         return;
@@ -123,7 +158,9 @@ export function AuthForm() {
         window.location.href = targetUrl;
       }, 100);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось выполнить вход.');
+      const adminLogin = nextUrl.startsWith('/admin');
+      setError(getReadableAuthError(err, mode, adminLogin));
+      setShowCreateHint(mode === 'login' && !adminLogin && isInvalidCredentialsError(err));
       setLoading(false);
     }
   }
@@ -131,17 +168,17 @@ export function AuthForm() {
   return (
     <section className="auth-card auth-card--polished" aria-label="Форма входа и регистрации">
       <div className="auth-mode-cards">
-        <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => setMode('login')}>
+        <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => { setMode('login'); setError(''); setMessage(''); setShowCreateHint(false); }}>
           <b>Вход</b><span>Войти по email и паролю</span>
         </button>
-        <button className={mode === 'register' ? 'active' : ''} type="button" onClick={() => setMode('register')}>
+        <button className={mode === 'register' ? 'active' : ''} type="button" onClick={() => { setMode('register'); setError(''); setMessage(''); setShowCreateHint(false); }}>
           <b>Регистрация</b><span>Создать личный аккаунт</span>
         </button>
       </div>
 
       <div className="auth-form-head">
         <h2>{mode === 'login' ? 'С возвращением' : 'Создать аккаунт'}</h2>
-        <p>{mode === 'login' ? 'Введите email и пароль, чтобы продолжить оформление заказа или посмотреть сохраненные товары.' : 'Аккаунт пригодится для заказов, избранного и быстрых заявок на расчет.'}</p>
+        <p>{mode === 'login' ? 'Введите email и пароль, чтобы продолжить оформление заказа или посмотреть сохраненные товары.' : 'Аккаунт пригодится для заказов, избранного и быстрого оформления.'}</p>
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
@@ -184,6 +221,15 @@ export function AuthForm() {
         )}
 
         {error && <p className="auth-message auth-message-error">{error}</p>}
+        {showCreateHint && (
+          <button
+            className="auth-inline-action"
+            type="button"
+            onClick={() => { setMode('register'); setError(''); setMessage(''); setShowCreateHint(false); }}
+          >
+            Создать аккаунт с этим email
+          </button>
+        )}
         {message && <p className="auth-message auth-message-success">{message}</p>}
 
         <button type="submit" className="auth-submit" disabled={loading}>
