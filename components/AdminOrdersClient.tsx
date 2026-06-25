@@ -1,13 +1,40 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { CalendarClock, Mail, Phone, Send, UserRound } from 'lucide-react';
 import type { AdminOrder } from '@/lib/adminCommerce';
-import { formatDate, money, orderStatuses, statusClass } from '@/lib/adminCommerce';
+import { formatDate, money, orderStatuses, priorityOptions, statusClass } from '@/lib/adminCommerce';
 
-type Filter = 'all' | 'Новый' | 'В работе' | 'Ожидает оплаты' | 'Выполнен' | 'Отменён';
+type Filter = 'all' | 'Новый' | 'В работе' | 'Ожидает оплаты' | 'Оплачен' | 'Передан в доставку' | 'Выполнен' | 'Отменён';
 
 function customerLine(order: AdminOrder) {
   return [order.customer?.name, order.customer?.phone, order.customer?.email].filter(Boolean).join(' · ') || 'Клиент не указан';
+}
+
+
+function priorityLabel(value?: string) {
+  if (value === 'urgent') return 'Срочно';
+  if (value === 'high') return 'Высокий';
+  return 'Обычный';
+}
+
+function priorityClass(value?: string) {
+  if (value === 'urgent') return 'is-urgent';
+  if (value === 'high') return 'is-high';
+  return 'is-normal';
+}
+
+function cleanPhone(value?: string) {
+  return String(value || '').replace(/[^\d+]/g, '');
+}
+
+function telegramLink(phone?: string) {
+  const digits = cleanPhone(phone).replace(/^\+/, '');
+  return digits ? `https://t.me/+${digits}` : '';
+}
+
+function mailLink(email?: string, subject?: string) {
+  return email ? `mailto:${email}?subject=${encodeURIComponent(subject || 'Bullmet')}` : '';
 }
 
 function nowLabel() {
@@ -36,6 +63,10 @@ export function AdminOrdersClient({ initialOrders, supabaseConfigured }: { initi
         order.status,
         order.delivery,
         order.comment,
+        order.admin_note,
+        order.priority,
+        order.manager,
+        order.follow_up_at,
         ...(order.items || []).map((item) => item.title)
       ].filter(Boolean).join(' ').toLowerCase();
       return byStatus && (!clean || haystack.includes(clean));
@@ -47,6 +78,8 @@ export function AdminOrdersClient({ initialOrders, supabaseConfigured }: { initi
   const newCount = orders.filter((order) => order.status === 'Новый').length;
   const workCount = orders.filter((order) => ['В работе', 'Ожидает оплаты'].includes(order.status || '')).length;
   const doneCount = orders.filter((order) => order.status === 'Выполнен').length;
+  const urgentCount = orders.filter((order) => order.priority === 'urgent' || order.priority === 'high').length;
+  const followUpCount = orders.filter((order) => order.follow_up_at).length;
 
   async function refreshOrders() {
     setMessage('');
@@ -67,7 +100,7 @@ export function AdminOrdersClient({ initialOrders, supabaseConfigured }: { initi
     }
   }
 
-  async function updateOrder(id: string, patch: Partial<Pick<AdminOrder, 'status' | 'admin_note'>>) {
+  async function updateOrder(id: string, patch: Partial<Pick<AdminOrder, 'status' | 'admin_note' | 'priority' | 'follow_up_at' | 'manager'>>) {
     setMessage('');
     const previous = orders;
     setOrders((current) => current.map((order) => order.id === id ? { ...order, ...patch } : order));
@@ -111,10 +144,12 @@ export function AdminOrdersClient({ initialOrders, supabaseConfigured }: { initi
         <button type="button" onClick={refreshOrders} disabled={refreshing}>{refreshing ? 'Ждём...' : 'Проверить новые заказы'}</button>
       </section>
 
-      <section className="admin-commerce-stats">
+      <section className="admin-commerce-stats admin-commerce-stats--crm">
         <article><span>Всего заказов</span><b>{orders.length}</b><em>{newCount} новых</em></article>
         <article><span>В работе</span><b>{workCount}</b><em>активная обработка</em></article>
         <article><span>Выполнено</span><b>{doneCount}</b><em>закрытые сделки</em></article>
+        <article><span>Приоритет</span><b>{urgentCount}</b><em>важные/срочные</em></article>
+        <article><span>Напоминания</span><b>{followUpCount}</b><em>есть follow-up</em></article>
         <article><span>Оборот</span><b>{money(totalRevenue)}</b><em>BYN без отмененных</em></article>
       </section>
 
@@ -157,6 +192,7 @@ export function AdminOrdersClient({ initialOrders, supabaseConfigured }: { initi
                 </div>
                 <span>{customerLine(order)}</span>
                 <small>{formatDate(order.created_at)} · {money(Number(order.total || 0))} BYN</small>
+                <i className={`admin-crm-priority ${priorityClass(order.priority)}`}>{priorityLabel(order.priority)}</i>
               </button>
             ))}
           </div>
@@ -174,13 +210,40 @@ export function AdminOrdersClient({ initialOrders, supabaseConfigured }: { initi
                 </select>
               </div>
 
-              <div className="admin-customer-box">
+              <div className="admin-crm-pipeline">
+                {orderStatuses.map((status) => (
+                  <button key={status} type="button" className={active.status === status ? 'is-current' : ''} onClick={() => updateOrder(active.id, { status })}>
+                    {status}
+                  </button>
+                ))}
+              </div>
+
+              <div className="admin-crm-management">
+                <label>Приоритет
+                  <select value={active.priority || 'normal'} onChange={(event) => updateOrder(active.id, { priority: event.target.value })}>
+                    {priorityOptions.map((priority) => <option key={priority} value={priority}>{priorityLabel(priority)}</option>)}
+                  </select>
+                </label>
+                <label>Ответственный
+                  <input value={active.manager || ''} onChange={(event) => updateOrder(active.id, { manager: event.target.value })} placeholder="Имя менеджера" />
+                </label>
+                <label>Напомнить
+                  <input type="datetime-local" value={active.follow_up_at ? active.follow_up_at.slice(0, 16) : ''} onChange={(event) => updateOrder(active.id, { follow_up_at: event.target.value })} />
+                </label>
+              </div>
+
+              <div className="admin-customer-box admin-customer-box--crm">
                 <h3>Клиент</h3>
-                <p><b>Имя:</b> {active.customer?.name || 'не указано'}</p>
-                <p><b>Телефон:</b> {active.customer?.phone || 'не указан'}</p>
-                <p><b>Email:</b> {active.customer?.email || 'не указан'}</p>
-                <p><b>Получение:</b> {active.delivery || 'не указано'}</p>
+                <p><UserRound size={15} /><b>Имя:</b> {active.customer?.name || 'не указано'}</p>
+                <p><Phone size={15} /><b>Телефон:</b> {active.customer?.phone || 'не указан'}</p>
+                <p><Mail size={15} /><b>Email:</b> {active.customer?.email || 'не указан'}</p>
+                <p><CalendarClock size={15} /><b>Получение:</b> {active.delivery || 'не указано'}</p>
                 {active.comment && <p><b>Комментарий:</b> {active.comment}</p>}
+                <div className="admin-crm-contact-actions">
+                  {active.customer?.phone && <a href={`tel:${cleanPhone(active.customer.phone)}`}>Позвонить</a>}
+                  {active.customer?.phone && <a href={telegramLink(active.customer.phone)} target="_blank">Telegram</a>}
+                  {active.customer?.email && <a href={mailLink(active.customer.email, `Заказ Bullmet ${active.id}`)}>Email</a>}
+                </div>
               </div>
 
               <div className="admin-order-items">
@@ -206,6 +269,14 @@ export function AdminOrdersClient({ initialOrders, supabaseConfigured }: { initi
                 Заметка администратора
                 <textarea defaultValue={active.admin_note || ''} rows={4} onBlur={(event) => updateOrder(active.id, { admin_note: event.target.value })} placeholder="Например: клиент просил перезвонить после 18:00" />
               </label>
+
+              <div className="admin-crm-timeline">
+                <h3>История обработки</h3>
+                <p><Send size={15} /> Заказ создан: {formatDate(active.created_at)}</p>
+                <p><CalendarClock size={15} /> Текущий статус: {active.status || 'Новый'}</p>
+                {active.follow_up_at && <p><CalendarClock size={15} /> Напоминание: {formatDate(active.follow_up_at)}</p>}
+                {active.manager && <p><UserRound size={15} /> Ответственный: {active.manager}</p>}
+              </div>
             </article>
           )}
         </section>

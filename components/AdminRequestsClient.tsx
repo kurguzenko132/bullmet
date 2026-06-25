@@ -1,10 +1,37 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { CalendarClock, Mail, Phone, Send, UserRound } from 'lucide-react';
 import type { AdminRequest } from '@/lib/adminCommerce';
-import { formatDate, money, requestStatuses, statusClass } from '@/lib/adminCommerce';
+import { formatDate, money, priorityOptions, requestStatuses, statusClass } from '@/lib/adminCommerce';
 
 type Filter = 'all' | 'Новая' | 'В работе' | 'Ожидает ответа' | 'Рассчитана' | 'Закрыта' | 'Отменена';
+
+
+function priorityLabel(value?: string) {
+  if (value === 'urgent') return 'Срочно';
+  if (value === 'high') return 'Высокий';
+  return 'Обычный';
+}
+
+function priorityClass(value?: string) {
+  if (value === 'urgent') return 'is-urgent';
+  if (value === 'high') return 'is-high';
+  return 'is-normal';
+}
+
+function cleanPhone(value?: string) {
+  return String(value || '').replace(/[^\d+]/g, '');
+}
+
+function telegramLink(phone?: string) {
+  const digits = cleanPhone(phone).replace(/^\+/, '');
+  return digits ? `https://t.me/+${digits}` : '';
+}
+
+function mailLink(email?: string, subject?: string) {
+  return email ? `mailto:${email}?subject=${encodeURIComponent(subject || 'Bullmet')}` : '';
+}
 
 function kindLabel(kind?: string) {
   if (kind === 'quick_order') return 'Купить в 1 клик';
@@ -45,6 +72,10 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
         request.material,
         request.sizes,
         request.comment,
+        request.admin_note,
+        request.priority,
+        request.manager,
+        request.follow_up_at,
         request.status
       ].filter(Boolean).join(' ').toLowerCase();
       return byStatus && (!clean || haystack.includes(clean));
@@ -56,6 +87,8 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
   const workCount = requests.filter((request) => ['В работе', 'Ожидает ответа'].includes(request.status || '')).length;
   const doneCount = requests.filter((request) => ['Рассчитана', 'Закрыта'].includes(request.status || '')).length;
   const filesCount = requests.reduce((sum, request) => sum + (request.file_urls?.length || 0), 0);
+  const urgentCount = requests.filter((request) => request.priority === 'urgent' || request.priority === 'high').length;
+  const followUpCount = requests.filter((request) => request.follow_up_at).length;
 
   async function refreshRequests() {
     setMessage('');
@@ -76,7 +109,7 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
     }
   }
 
-  async function updateRequest(id: string, patch: Partial<Pick<AdminRequest, 'status' | 'admin_note'>>) {
+  async function updateRequest(id: string, patch: Partial<Pick<AdminRequest, 'status' | 'admin_note' | 'priority' | 'follow_up_at' | 'manager'>>) {
     setMessage('');
     const previous = requests;
     setRequests((current) => current.map((request) => request.id === id ? { ...request, ...patch } : request));
@@ -120,11 +153,13 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
         <button type="button" onClick={refreshRequests} disabled={refreshing}>{refreshing ? 'Ждём...' : 'Проверить новые заявки'}</button>
       </section>
 
-      <section className="admin-commerce-stats">
+      <section className="admin-commerce-stats admin-commerce-stats--crm">
         <article><span>Всего заявок</span><b>{requests.length}</b><em>{newCount} новых</em></article>
         <article><span>В работе</span><b>{workCount}</b><em>активная обработка</em></article>
         <article><span>Закрыто</span><b>{doneCount}</b><em>рассчитано/закрыто</em></article>
         <article><span>Файлы</span><b>{filesCount}</b><em>чертежи и вложения</em></article>
+        <article><span>Приоритет</span><b>{urgentCount}</b><em>важные/срочные</em></article>
+        <article><span>Напоминания</span><b>{followUpCount}</b><em>есть follow-up</em></article>
       </section>
 
       <div className="admin-commerce-toolbar">
@@ -166,6 +201,7 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
                 </div>
                 <span>{customerLine(request)}</span>
                 <small>{formatDate(request.created_at)} · {request.id}</small>
+                <i className={`admin-crm-priority ${priorityClass(request.priority)}`}>{priorityLabel(request.priority)}</i>
               </button>
             ))}
           </div>
@@ -183,12 +219,39 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
                 </select>
               </div>
 
-              <div className="admin-customer-box">
+              <div className="admin-crm-pipeline">
+                {requestStatuses.map((status) => (
+                  <button key={status} type="button" className={active.status === status ? 'is-current' : ''} onClick={() => updateRequest(active.id, { status })}>
+                    {status}
+                  </button>
+                ))}
+              </div>
+
+              <div className="admin-crm-management">
+                <label>Приоритет
+                  <select value={active.priority || 'normal'} onChange={(event) => updateRequest(active.id, { priority: event.target.value })}>
+                    {priorityOptions.map((priority) => <option key={priority} value={priority}>{priorityLabel(priority)}</option>)}
+                  </select>
+                </label>
+                <label>Ответственный
+                  <input value={active.manager || ''} onChange={(event) => updateRequest(active.id, { manager: event.target.value })} placeholder="Имя менеджера" />
+                </label>
+                <label>Напомнить
+                  <input type="datetime-local" value={active.follow_up_at ? active.follow_up_at.slice(0, 16) : ''} onChange={(event) => updateRequest(active.id, { follow_up_at: event.target.value })} />
+                </label>
+              </div>
+
+              <div className="admin-customer-box admin-customer-box--crm">
                 <h3>Клиент</h3>
-                <p><b>Имя:</b> {active.customer?.name || 'не указано'}</p>
-                <p><b>Телефон:</b> {active.customer?.phone || 'не указан'}</p>
-                <p><b>Email:</b> {active.customer?.email || 'не указан'}</p>
-                {active.contact_method && <p><b>Способ связи:</b> {active.contact_method}</p>}
+                <p><UserRound size={15} /><b>Имя:</b> {active.customer?.name || 'не указано'}</p>
+                <p><Phone size={15} /><b>Телефон:</b> {active.customer?.phone || 'не указан'}</p>
+                <p><Mail size={15} /><b>Email:</b> {active.customer?.email || 'не указан'}</p>
+                {active.contact_method && <p><Send size={15} /><b>Способ связи:</b> {active.contact_method}</p>}
+                <div className="admin-crm-contact-actions">
+                  {active.customer?.phone && <a href={`tel:${cleanPhone(active.customer.phone)}`}>Позвонить</a>}
+                  {active.customer?.phone && <a href={telegramLink(active.customer.phone)} target="_blank">Telegram</a>}
+                  {active.customer?.email && <a href={mailLink(active.customer.email, `Заявка Bullmet ${active.id}`)}>Email</a>}
+                </div>
               </div>
 
               {active.product_title && (
@@ -225,6 +288,14 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
                 Заметка администратора
                 <textarea defaultValue={active.admin_note || ''} rows={4} onBlur={(event) => updateRequest(active.id, { admin_note: event.target.value })} placeholder="Например: посчитать два варианта — черный и белый" />
               </label>
+
+              <div className="admin-crm-timeline">
+                <h3>История обработки</h3>
+                <p><Send size={15} /> Заявка создана: {formatDate(active.created_at)}</p>
+                <p><CalendarClock size={15} /> Текущий статус: {active.status || 'Новая'}</p>
+                {active.follow_up_at && <p><CalendarClock size={15} /> Напоминание: {formatDate(active.follow_up_at)}</p>}
+                {active.manager && <p><UserRound size={15} /> Ответственный: {active.manager}</p>}
+              </div>
             </article>
           )}
         </section>

@@ -17,6 +17,9 @@ export type AdminOrder = {
   delivery?: string;
   comment?: string;
   admin_note?: string;
+  priority?: string;
+  follow_up_at?: string;
+  manager?: string;
   items?: AdminOrderItem[];
   total?: number;
   status?: string;
@@ -33,6 +36,9 @@ export type AdminRequest = {
   sizes?: string;
   comment?: string;
   admin_note?: string;
+  priority?: string;
+  follow_up_at?: string;
+  manager?: string;
   product_slug?: string;
   product_title?: string;
   product_image?: string;
@@ -43,8 +49,9 @@ export type AdminRequest = {
   status?: string;
 };
 
-export const orderStatuses = ['Новый', 'В работе', 'Ожидает оплаты', 'Выполнен', 'Отменён'];
+export const orderStatuses = ['Новый', 'В работе', 'Ожидает оплаты', 'Оплачен', 'Передан в доставку', 'Выполнен', 'Отменён'];
 export const requestStatuses = ['Новая', 'В работе', 'Ожидает ответа', 'Рассчитана', 'Закрыта', 'Отменена'];
+export const priorityOptions = ['normal', 'high', 'urgent'] as const;
 
 export function money(value?: number | null) {
   return new Intl.NumberFormat('ru-RU').format(Number(value || 0));
@@ -78,7 +85,7 @@ export async function getAdminOrders() {
 
   const { data, error } = await serverSupabase
     .from('orders')
-    .select('id, created_at, customer, delivery, comment, admin_note, items, total, status')
+    .select('id, created_at, customer, delivery, comment, admin_note, priority, follow_up_at, manager, items, total, status')
     .order('created_at', { ascending: false })
     .limit(200);
 
@@ -95,7 +102,7 @@ export async function getAdminRequests() {
 
   const { data, error } = await serverSupabase
     .from('requests')
-    .select('id, created_at, customer, kind, contact_method, type, material, sizes, comment, admin_note, product_slug, product_title, product_image, product_price, quantity, file_name, file_urls, status')
+    .select('id, created_at, customer, kind, contact_method, type, material, sizes, comment, admin_note, priority, follow_up_at, manager, product_slug, product_title, product_image, product_price, quantity, file_name, file_urls, status')
     .order('created_at', { ascending: false })
     .limit(200);
 
