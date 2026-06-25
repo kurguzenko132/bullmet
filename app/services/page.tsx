@@ -4,15 +4,26 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 import { Icon } from '@/components/Icon';
+import { getSiteControlSettings } from '@/lib/siteControl';
+import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catalogControl';
+import { notFound } from 'next/navigation';
 
-export const metadata = {
-  title: 'Услуги Bullmet — лазерная резка, гибка металла и изделия под заказ',
-  description: 'Производственные услуги Bullmet: лазерная резка, гибка металла, мелкий опт металлопроката и изготовление изделий по чертежу, фото или эскизу.'
-};
+export async function generateMetadata() {
+  const site = await getSiteControlSettings();
+  const anyServiceVisible = site.directions.some((direction) => direction.visible && direction.key !== 'clocks');
+  return {
+    title: anyServiceVisible ? 'Услуги Bullmet — производство металлоизделий' : 'Раздел временно скрыт | Bullmet',
+    description: anyServiceVisible
+      ? 'Производственные услуги Bullmet: лазерная резка, гибка металла, металлопрокат и изделия под заказ.'
+      : 'Раздел услуг временно скрыт до готовности направления.',
+    robots: anyServiceVisible && site.seo.robotsIndex ? { index: true, follow: true } : { index: false, follow: false }
+  };
+}
 
 const services = [
   {
     id: 'laser',
+    directionKey: 'laser_cutting',
     icon: 'spark',
     title: 'Лазерная резка',
     subtitle: 'Декор, таблички, вывески, панели и детали из листового металла.',
@@ -22,6 +33,7 @@ const services = [
   },
   {
     id: 'bending',
+    directionKey: 'metal_bending',
     icon: 'materials',
     title: 'Гибка металла',
     subtitle: 'Детали для мебели, навесов, каркасов и малых архитектурных форм.',
@@ -31,6 +43,7 @@ const services = [
   },
   {
     id: 'custom',
+    directionKey: 'loft_furniture',
     icon: 'custom',
     title: 'Изделия под заказ',
     subtitle: 'Изготовление по фото, ссылке на пример, чертежу или вашей идее.',
@@ -40,6 +53,7 @@ const services = [
   },
   {
     id: 'metal',
+    directionKey: 'metal_wholesale',
     icon: 'factory',
     title: 'Мелкий опт металлопроката',
     subtitle: 'Подбор и подготовка металла под производство, участок или ремонт.',
@@ -65,7 +79,18 @@ const examples = [
   'изделие по фото'
 ];
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const [site, catalog] = await Promise.all([
+    getSiteControlSettings(),
+    getCatalogControlSettings()
+  ]);
+
+  const visibleDirectionKeys = new Set<string>(site.directions.filter((direction) => direction.visible).map((direction) => direction.key));
+  const visibleServiceCategories = new Set(visibleCatalogCategories(catalog, 'service').map((category) => category.slug));
+  const visibleServices = services.filter((service) => visibleDirectionKeys.has(service.directionKey) || visibleServiceCategories.has(service.directionKey));
+
+  if (!visibleServices.length) notFound();
+
   return (
     <>
       <Header />
@@ -96,7 +121,7 @@ export default function ServicesPage() {
         </section>
 
         <section className="services-quick-v2" aria-label="Основные услуги">
-          {services.map((service) => (
+          {visibleServices.map((service) => (
             <Link href={service.href} key={service.id}>
               <Icon name={service.icon as any} />
               <span>{service.title}</span>
@@ -112,7 +137,7 @@ export default function ServicesPage() {
           </div>
 
           <div className="services-grid-v2">
-            {services.map((service) => (
+            {visibleServices.map((service) => (
               <article id={service.id} key={service.id}>
                 <div className="service-image-v2">
                   <Image src={service.image} alt={service.title} width={620} height={410} />

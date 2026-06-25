@@ -1,19 +1,49 @@
 import type { MetadataRoute } from 'next';
-import { products } from '@/lib/data';
+import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catalogControl';
+import { getCatalogProducts, isPublicClockProduct } from '@/lib/products';
+import { getSiteControlSettings, visibleDirections } from '@/lib/siteControl';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bullmet.by';
-  const staticPages = ['', '/catalog', '/services', '/production', '/about', '/contacts'].map((url) => ({
+  const [site, catalog, products] = await Promise.all([
+    getSiteControlSettings(),
+    getCatalogControlSettings(),
+    getCatalogProducts()
+  ]);
+
+  if (!site.seo.robotsIndex) return [];
+
+  const activeDirections = visibleDirections(site);
+  const hasServices = activeDirections.some((direction) => direction.key !== 'clocks');
+  const visibleClockCategories = visibleCatalogCategories(catalog, 'clock');
+  const visibleCategoryValues = new Set(visibleClockCategories.map((category) => category.slug));
+
+  const staticPageUrls = ['', '/catalog', '/production', '/about', '/contacts'];
+  if (hasServices) staticPageUrls.push('/services');
+
+  const staticPages = staticPageUrls.map((url) => ({
     url: `${siteUrl}${url}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: url === '' ? 1 : 0.8
   }));
-  const productPages = products.filter((product) => [product.title, product.slug, product.category].join(' ').toLowerCase().includes('час')).map((product) => ({
-    url: `${siteUrl}/product/${product.slug}`,
+
+  const categoryPages = visibleClockCategories.map((category) => ({
+    url: `${siteUrl}/catalog?category=${encodeURIComponent(category.slug)}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
-    priority: 0.7
+    priority: 0.65
   }));
-  return [...staticPages, ...productPages];
+
+  const productPages = products
+    .filter(isPublicClockProduct)
+    .filter((product) => !catalog.enabled || !visibleCategoryValues.size || visibleCategoryValues.has(product.category || '') || visibleCategoryValues.has(product.clockTheme || ''))
+    .map((product) => ({
+      url: `${siteUrl}/product/${product.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7
+    }));
+
+  return [...staticPages, ...categoryPages, ...productPages];
 }

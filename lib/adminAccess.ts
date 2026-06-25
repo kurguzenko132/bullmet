@@ -12,7 +12,7 @@ export const adminRoles: AdminRoleInfo[] = [
     value: 'admin',
     label: 'Администратор',
     description: 'Полный доступ ко всем разделам сайта и настройкам.',
-    access: ['Настройки сайта', 'Товары', 'Заказы', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Пользователи', 'Роли', 'Журнал действий']
+    access: ['Настройки сайта', 'Категории', 'Товары', 'Заказы', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Пользователи', 'Роли', 'Журнал действий']
   },
   {
     value: 'manager',
@@ -24,7 +24,7 @@ export const adminRoles: AdminRoleInfo[] = [
     value: 'content_manager',
     label: 'Контент-менеджер',
     description: 'Управление товарами, фото, главной страницей, баннерами и SEO-контентом.',
-    access: ['Главная админки', 'Главная страница', 'Товары', 'Фото', 'Медиа', 'Баннеры']
+    access: ['Главная админки', 'Главная страница', 'Категории', 'Товары', 'Фото', 'Медиа', 'Баннеры']
   },
   {
     value: 'customer',
@@ -37,7 +37,7 @@ export const adminRoles: AdminRoleInfo[] = [
 const rolePathAccess: Record<AdminRole, string[]> = {
   admin: ['/admin'],
   manager: ['/admin', '/admin/orders', '/admin/requests', '/admin/reviews', '/admin/stats'],
-  content_manager: ['/admin', '/admin/homepage', '/admin/products', '/admin/media', '/admin/banners'],
+  content_manager: ['/admin', '/admin/homepage', '/admin/categories', '/admin/products', '/admin/media', '/admin/banners'],
   customer: []
 };
 
@@ -94,6 +94,7 @@ export function actionLabel(action?: string | null) {
     review_update: 'Отзыв обновлён',
     review_delete: 'Отзыв удалён',
     banner_control_update: 'Баннеры обновлены',
+    catalog_categories_update: 'Категории обновлены',
     user_update: 'Пользователь обновлён'
   };
 

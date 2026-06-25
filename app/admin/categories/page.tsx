@@ -1,3 +1,11 @@
-import { clockCatalogCategories, getCatalogProducts } from '@/lib/products';
+import { AdminCategoriesClient } from '@/components/AdminCategoriesClient';
+import { getCatalogControlSettings } from '@/lib/catalogControl';
+import { isSupabaseConfigured } from '@/lib/serverSupabase';
+
 export const dynamic = 'force-dynamic';
-export default async function AdminCategories(){const products=await getCatalogProducts();return <div className="admin-dashboard-pro"><div className="admin-page-head"><div><p>Каталог</p><h1>Категории</h1><span>Категории часов и направления Bullmet.</span></div></div><section className="admin-panel-card"><div className="admin-card-title"><h2>Каталог часов</h2><span>{clockCatalogCategories.length} разделов</span></div><div className="admin-category-grid">{clockCatalogCategories.map((name)=><article key={name}><b>{name}</b><span>{products.filter(p=>p.clockTheme===name || p.category===name).length} товаров</span></article>)}</div></section></div>}
+export const metadata = { title: 'Категории | Админка Bullmet' };
+
+export default async function AdminCategoriesPage() {
+  const settings = await getCatalogControlSettings();
+  return <AdminCategoriesClient initialSettings={settings} supabaseConfigured={isSupabaseConfigured()} />;
+}

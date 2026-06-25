@@ -1,18 +1,25 @@
 import type { Metadata } from 'next';
+import { getSiteControlSettings } from '@/lib/siteControl';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Bullmet — изделия из металла с элементами дерева',
-    template: '%s | Bullmet'
-  },
-  description: 'ИЗГОТАВЛИВАЕМ: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.',
-  openGraph: {
-    title: 'Bullmet — собственное производство',
-    description: 'Изделия из металла с элементами дерева собственного производства Bullmet.',
-    type: 'website'
-  }
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getSiteControlSettings();
+
+  return {
+    title: {
+      default: site.seo.defaultTitle || 'Bullmet — изделия из металла с элементами дерева',
+      template: `%s | ${site.general.siteName || 'Bullmet'}`
+    },
+    description: site.seo.defaultDescription || 'Изделия из металла с элементами дерева собственного производства Bullmet.',
+    robots: site.seo.robotsIndex ? { index: true, follow: true } : { index: false, follow: false },
+    openGraph: {
+      title: site.seo.defaultTitle || 'Bullmet — собственное производство',
+      description: site.seo.defaultDescription || 'Изделия из металла с элементами дерева собственного производства Bullmet.',
+      type: 'website',
+      images: site.seo.ogImage ? [site.seo.ogImage] : undefined
+    }
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return <html lang="ru"><body>{children}</body></html>;

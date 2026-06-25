@@ -1,10 +1,30 @@
 import type { MetadataRoute } from 'next';
+import { getSiteControlSettings, visibleDirections } from '@/lib/siteControl';
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bullmet.by';
+  const site = await getSiteControlSettings();
+  const hasServices = visibleDirections(site).some((direction) => direction.key !== 'clocks');
+
+  if (!site.seo.robotsIndex) {
+    return {
+      rules: [{ userAgent: '*', disallow: '/' }],
+      sitemap: `${siteUrl}/sitemap.xml`
+    };
+  }
+
   return {
     rules: [
-      { userAgent: '*', allow: '/', disallow: ['/admin/'] }
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: [
+          '/admin/',
+          '/account/',
+          '/login',
+          ...(hasServices ? [] : ['/services'])
+        ]
+      }
     ],
     sitemap: `${siteUrl}/sitemap.xml`
   };

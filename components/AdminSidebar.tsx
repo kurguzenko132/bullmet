@@ -37,6 +37,7 @@ const groups = [
     links: [
       ['Главная страница', '/admin/homepage', Home],
       ['Страницы', '/admin/homepage', ClipboardList],
+      ['Категории', '/admin/categories', ClipboardList],
       ['Каталог товаров', '/admin/products', Package],
       ['Услуги', '/admin/requests', Wrench],
       ['Производство', '/admin/homepage', Boxes],
