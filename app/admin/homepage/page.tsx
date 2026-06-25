@@ -1,1 +1,10 @@
-export default function AdminHomepage(){return <><h1 className="text-3xl font-black">Редактирование главной страницы</h1><div className="mt-6 grid gap-6 lg:grid-cols-2"><form className="bg-white p-6 shadow-soft"><h2 className="text-xl font-bold">Hero-блок</h2><label className="mt-4 block text-sm font-bold">Заголовок</label><input className="mt-2 w-full border p-3" defaultValue="Bullmet — изделия из металла с элементами дерева"/><label className="mt-4 block text-sm font-bold">Подзаголовок</label><textarea className="mt-2 w-full border p-3" rows={4} defaultValue="Изготавливаем садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла."/><label className="mt-4 block text-sm font-bold">Главное изображение</label><input className="mt-2 w-full border p-3" type="file"/><button className="mt-5 bg-bull-orange px-6 py-3 font-bold text-white">Сохранить</button></form><form className="bg-white p-6 shadow-soft"><h2 className="text-xl font-bold">SEO главной</h2><input className="mt-4 w-full border p-3" defaultValue="Bullmet — изделия из металла с элементами дерева"/><textarea className="mt-3 w-full border p-3" rows={5} defaultValue="ИЗГОТАВЛИВАЕМ: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла."/><button className="mt-5 bg-bull-orange px-6 py-3 font-bold text-white">Сохранить SEO</button></form></div></>}
+import { AdminHomepageClient } from '@/components/AdminHomepageClient';
+import { getHomepageControlSettings } from '@/lib/homepageControl';
+
+export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Главная страница | Админка Bullmet' };
+
+export default async function AdminHomepage() {
+  const settings = await getHomepageControlSettings();
+  return <AdminHomepageClient initialSettings={settings} />;
+}
