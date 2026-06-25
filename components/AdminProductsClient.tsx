@@ -2,6 +2,7 @@
 
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { Eye, EyeOff, PackageCheck, PackageX, Search, Star, Wand2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { CatalogProduct, ImageDisplayContext, ImageDisplaySettings, ImageFit } from '@/lib/products';
 
@@ -16,7 +17,10 @@ type ProductForm = {
   description: string;
   price: string;
   old_price: string;
-  status: 'active' | 'draft';
+  seo_title: string;
+  seo_description: string;
+  sort_order: string;
+  status: 'active' | 'draft' | 'hidden' | 'out_of_stock';
   in_stock: boolean;
   is_popular: boolean;
   is_new: boolean;
@@ -84,6 +88,9 @@ const emptyForm: ProductForm = {
   description: '',
   price: '',
   old_price: '',
+  seo_title: '',
+  seo_description: '',
+  sort_order: '100',
   status: 'active',
   in_stock: true,
   is_popular: false,
@@ -175,7 +182,10 @@ function productToForm(product: CatalogProduct): ProductForm {
     description: product.description || '',
     price: String(product.price || ''),
     old_price: product.oldPrice ? String(product.oldPrice) : '',
-    status: product.status === 'draft' ? 'draft' : 'active',
+    seo_title: product.seoTitle || '',
+    seo_description: product.seoDescription || '',
+    sort_order: String(product.sortOrder ?? 100),
+    status: ['active', 'draft', 'hidden', 'out_of_stock'].includes(String(product.status)) ? product.status as ProductForm['status'] : 'active',
     in_stock: product.inStock !== false,
     is_popular: Boolean(product.isPopular),
     is_new: Boolean(product.isNew),
@@ -197,6 +207,7 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
   const [products, setProducts] = useState(initialProducts);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | ProductForm['status']>('all');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -209,9 +220,36 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (!q) return products;
-    return products.filter((product) => [product.title, product.slug, product.category, product.colorGroupId].join(' ').toLowerCase().includes(q));
-  }, [products, query]);
+    return products.filter((product) => {
+      const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
+      const matchesQuery = !q || [product.title, product.slug, product.category, product.colorGroupId, product.colorName].join(' ').toLowerCase().includes(q);
+      return matchesStatus && matchesQuery;
+    });
+  }, [products, query, statusFilter]);
+
+  const productStats = useMemo(() => {
+    const missingPhotos = products.filter((product) => !product.images?.length || !product.image).length;
+    const missingDescription = products.filter((product) => !product.description || product.description.length < 40).length;
+    const missingPrice = products.filter((product) => !Number(product.price)).length;
+    const drafts = products.filter((product) => product.status === 'draft').length;
+    const hidden = products.filter((product) => product.status === 'hidden').length;
+    const active = products.filter((product) => product.status === 'active').length;
+    return { missingPhotos, missingDescription, missingPrice, drafts, hidden, active };
+  }, [products]);
+
+  function productStatusLabel(status?: string) {
+    if (status === 'draft') return 'Черновик';
+    if (status === 'hidden') return 'Скрыт';
+    if (status === 'out_of_stock') return 'Нет в наличии';
+    return 'Опубликован';
+  }
+
+  function productStatusClass(status?: string) {
+    if (status === 'draft') return 'is-draft';
+    if (status === 'hidden') return 'is-hidden';
+    if (status === 'out_of_stock') return 'is-out';
+    return 'is-active';
+  }
 
   const sameGroup = useMemo(() => {
     if (!form.color_group_id) return [];
@@ -278,7 +316,7 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
 
   async function reload() {
     if (!supabase) return;
-    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase.from('products').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false });
     if (data) {
       const next = data.map((row: any) => ({
         id: row.id,
@@ -291,12 +329,15 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
         description: row.description,
         price: Number(row.price || 0),
         oldPrice: row.old_price ? Number(row.old_price) : undefined,
+        seoTitle: row.seo_title || undefined,
+        seoDescription: row.seo_description || undefined,
+        sortOrder: Number(row.sort_order || 0),
         image: row.image || row.images?.[0] || '/assets/prod-clock-loft.jpg',
         images: Array.isArray(row.images) && row.images.length ? row.images : [row.image].filter(Boolean),
         sizes: Array.isArray(row.sizes) ? row.sizes : [],
         specs: Array.isArray(row.specs) ? row.specs : [],
         status: row.status,
-        inStock: row.in_stock !== false,
+        inStock: row.in_stock !== false && row.status !== 'out_of_stock' && row.status !== 'hidden' && row.status !== 'draft',
         isPopular: Boolean(row.is_popular),
         isNew: Boolean(row.is_new),
         catalogImageFit: row.catalog_image_fit || 'cover',
@@ -370,12 +411,15 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
       description: form.description.trim(),
       price: Number(form.price || 0),
       old_price: form.old_price ? Number(form.old_price) : null,
+      seo_title: form.seo_title.trim() || null,
+      seo_description: form.seo_description.trim() || null,
+      sort_order: Number(form.sort_order || 100),
       image: images[0] || '/assets/prod-clock-loft.jpg',
       images,
       sizes: csv(form.sizes),
       specs: csv(form.specs),
       status: form.status,
-      in_stock: form.in_stock,
+      in_stock: form.status === 'out_of_stock' ? false : form.in_stock,
       is_popular: form.is_popular,
       is_new: form.is_new,
       catalog_image_fit: mainSettings.catalogFit || form.catalog_image_fit,
@@ -393,12 +437,28 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
     const { error, data } = await request as any;
     setLoading(false);
     if (error) {
-      setMessage(error.message.includes('image_settings') ? `${error.message}. Выполни SQL-миграцию из database/product-image-settings-migration.sql.` : error.message);
+      setMessage(error.message.includes('seo_title') || error.message.includes('sort_order') ? `${error.message}. Выполни SQL database/admin-products-full-control.sql.` : error.message.includes('image_settings') ? `${error.message}. Выполни SQL-миграцию из database/product-image-settings-migration.sql.` : error.message);
       return;
     }
     if (data?.id) setForm((current) => ({ ...current, id: data.id, slug: normalizedSlug }));
     setMessage('Товар сохранен. Фото, кадрирование, цветовые варианты и характеристики обновлены.');
     await reload();
+  }
+
+
+  async function quickStatus(product: CatalogProduct, status: ProductForm['status']) {
+    if (!supabase || !product.id) return;
+    const payload = {
+      status,
+      in_stock: status === 'out_of_stock' ? false : product.inStock !== false
+    };
+
+    const { error } = await supabase.from('products').update(payload).eq('id', product.id);
+    if (error) setMessage(error.message);
+    else {
+      setMessage(`Статус товара “${product.title}” изменен: ${productStatusLabel(status)}.`);
+      await reload();
+    }
   }
 
   async function remove(product: CatalogProduct) {
@@ -436,6 +496,15 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
 
       {message && <div className="admin-message">{message}</div>}
 
+      <section className="admin-products-control-dashboard">
+        <article><PackageCheck size={21} /><div><b>{productStats.active}</b><span>опубликовано</span></div></article>
+        <article><Wand2 size={21} /><div><b>{productStats.drafts}</b><span>черновиков</span></div></article>
+        <article><EyeOff size={21} /><div><b>{productStats.hidden}</b><span>скрыто</span></div></article>
+        <article><PackageX size={21} /><div><b>{productStats.missingPhotos}</b><span>без фото</span></div></article>
+        <article><Search size={21} /><div><b>{productStats.missingDescription}</b><span>слабое описание</span></div></article>
+        <article><Star size={21} /><div><b>{productStats.missingPrice}</b><span>без цены</span></div></article>
+      </section>
+
       <section className="admin-product-editor admin-product-editor--premium">
         <form onSubmit={save} className="admin-product-form admin-product-form--premium">
           <div className="admin-card-title"><h2>{form.id ? 'Редактирование товара' : 'Новый товар'}</h2><span>{form.id ? `ID: ${form.id}` : 'Сохранится в Supabase products'}</span></div>
@@ -446,10 +515,13 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
             <label>Тема часов<input value={form.clock_theme} onChange={(e) => patch('clock_theme', e.target.value)} placeholder="Авто-мир / Классика / Спорт" /></label>
             <label>Цена<input value={form.price} onChange={(e) => patch('price', e.target.value)} inputMode="decimal" /></label>
             <label>Старая цена<input value={form.old_price} onChange={(e) => patch('old_price', e.target.value)} inputMode="decimal" /></label>
+            <label>Сортировка<input value={form.sort_order} onChange={(e) => patch('sort_order', e.target.value)} inputMode="numeric" /></label>
             <label>Материал<input value={form.material} onChange={(e) => patch('material', e.target.value)} /></label>
-            <label>Статус<select value={form.status} onChange={(e) => patch('status', e.target.value as ProductForm['status'])}><option value="active">Активен</option><option value="draft">Черновик</option></select></label>
+            <label>Статус<select value={form.status} onChange={(e) => patch('status', e.target.value as ProductForm['status'])}><option value="active">Опубликован</option><option value="draft">Черновик</option><option value="hidden">Скрыт</option><option value="out_of_stock">Нет в наличии</option></select></label>
             <label className="admin-wide">Краткое описание<textarea value={form.short} onChange={(e) => patch('short', e.target.value)} rows={2} /></label>
             <label className="admin-wide">Полное описание<textarea value={form.description} onChange={(e) => patch('description', e.target.value)} rows={4} /></label>
+            <label className="admin-wide">SEO title<input value={form.seo_title} onChange={(e) => patch('seo_title', e.target.value)} placeholder="Можно оставить пустым — возьмется название товара" /></label>
+            <label className="admin-wide">SEO description<textarea value={form.seo_description} onChange={(e) => patch('seo_description', e.target.value)} rows={3} placeholder="Краткое описание для поисковиков и превью" /></label>
             <label>Размеры / варианты<input value={form.sizes} onChange={(e) => patch('sizes', e.target.value)} /></label>
             <label>Характеристики<textarea value={form.specs} onChange={(e) => patch('specs', e.target.value)} rows={4} /></label>
           </div>
@@ -598,17 +670,33 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
 
         <aside className="admin-product-preview admin-product-preview--premium">
           <h2>Превью карточки</h2>
-          <div className="preview-card"><img src={form.images[0] || '/assets/prod-clock-loft.jpg'} alt="" style={form.images[0] ? styleFromSettings(normalizeSetting(form.image_settings[form.images[0]]), 'catalog') : undefined} /><div><p>{form.category}</p><h3>{form.title || 'Название товара'}</h3><span>{form.short || form.material}</span><b>от {form.price || 0} BYN</b></div></div>
+          <div className="preview-card"><img src={form.images[0] || '/assets/prod-clock-loft.jpg'} alt="" style={form.images[0] ? styleFromSettings(normalizeSetting(form.image_settings[form.images[0]]), 'catalog') : undefined} /><div><p>{form.category}</p><h3>{form.title || 'Название товара'}</h3><span>{form.short || form.material}</span><b>от {form.price || 0} BYN</b><em className={`admin-product-status ${productStatusClass(form.status)}`}>{productStatusLabel(form.status)}</em></div></div>
           <h2>Товары в базе</h2>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск по товарам" />
+          <div className="admin-products-filter-row">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск по товарам" />
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
+              <option value="all">Все статусы</option>
+              <option value="active">Опубликованы</option>
+              <option value="draft">Черновики</option>
+              <option value="hidden">Скрытые</option>
+              <option value="out_of_stock">Нет в наличии</option>
+            </select>
+          </div>
           <div className="admin-products-list admin-products-list--premium">
             {filtered.map((product) => (
               <article key={product.slug} className={form.id === product.id ? 'is-active' : ''}>
                 <img src={product.image} alt="" />
-                <div><b>{product.title}</b><span>{product.category} · {product.price} BYN</span>{product.colorGroupId && <small>Группа: {product.colorGroupId}</small>}</div>
-                <button type="button" onClick={() => edit(product)}>✎</button>
-                <button type="button" onClick={() => duplicate(product)}>⧉</button>
-                <button type="button" onClick={() => remove(product)}>×</button>
+                <div>
+                  <b>{product.title}</b>
+                  <span>{product.category} · {product.price} BYN</span>
+                  <em className={`admin-product-status ${productStatusClass(product.status)}`}>{productStatusLabel(product.status)}</em>
+                  {product.colorGroupId && <small>Группа: {product.colorGroupId}</small>}
+                </div>
+                <Link href={`/product/${product.slug}`} target="_blank" title="Открыть товар"><Eye size={15} /></Link>
+                <button type="button" onClick={() => quickStatus(product, product.status === 'active' ? 'hidden' : 'active')} title={product.status === 'active' ? 'Скрыть' : 'Опубликовать'}>{product.status === 'active' ? '○' : '●'}</button>
+                <button type="button" onClick={() => edit(product)} title="Редактировать">✎</button>
+                <button type="button" onClick={() => duplicate(product)} title="Дублировать">⧉</button>
+                <button type="button" onClick={() => remove(product)} title="Удалить">×</button>
               </article>
             ))}
           </div>

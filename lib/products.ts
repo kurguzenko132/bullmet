@@ -48,6 +48,8 @@ export type ImageDisplaySettings = {
   homeZoom?: number;
 };
 
+export type ProductStatus = 'active' | 'draft' | 'hidden' | 'out_of_stock';
+
 export type CatalogProduct = {
   id?: string;
   slug: string;
@@ -63,7 +65,10 @@ export type CatalogProduct = {
   images: string[];
   sizes: string[];
   specs: string[];
-  status?: string;
+  status?: ProductStatus | string;
+  seoTitle?: string;
+  seoDescription?: string;
+  sortOrder?: number;
   inStock: boolean;
   isPopular?: boolean;
   isNew?: boolean;
@@ -205,6 +210,9 @@ type RichProductRow = {
   sizes?: string[] | string | null;
   specs?: string[] | string | null;
   status?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  sort_order?: number | string | null;
   is_popular?: boolean | null;
   is_new?: boolean | null;
   in_stock?: boolean | null;
@@ -336,8 +344,11 @@ function normalizeRichProduct(row: RichProductRow): CatalogProduct | null {
     images: images.length ? images : [mainImage],
     sizes: sizes.length ? sizes : defaultSizes(category),
     specs: specs.length ? specs : defaultSpecs(category, material),
-    status: row.status || 'active',
-    inStock: row.in_stock !== false && row.status !== 'draft',
+    status: (row.status || 'active') as ProductStatus,
+    seoTitle: row.seo_title || undefined,
+    seoDescription: row.seo_description || undefined,
+    sortOrder: parseNumber(row.sort_order, 0),
+    inStock: row.in_stock !== false && row.status !== 'draft' && row.status !== 'hidden' && row.status !== 'out_of_stock',
     isPopular: Boolean(row.is_popular),
     isNew: Boolean(row.is_new),
     catalogImageFit: normalizeFit(row.catalog_image_fit, 'cover'),
@@ -378,8 +389,8 @@ function normalizeLegacyProduct(row: LegacyProductRow): CatalogProduct | null {
     images: images.length ? images : [mainImage],
     sizes: defaultSizes(category),
     specs: defaultSpecs(category, material),
-    status: row.status || 'active',
-    inStock: row.status !== 'draft',
+    status: (row.status || 'active') as ProductStatus,
+    inStock: row.status !== 'draft' && row.status !== 'hidden' && row.status !== 'out_of_stock',
     productImageFit: 'contain',
     productImagePosition: 'center center',
     catalogImageFit: 'cover',
@@ -387,13 +398,17 @@ function normalizeLegacyProduct(row: LegacyProductRow): CatalogProduct | null {
   };
 }
 
-async function fetchRichProducts() {
+async function fetchRichProducts(includeAll = false) {
   if (!supabase) return { data: null, error: new Error('Supabase is not configured') };
-  return supabase
+  let query = supabase
     .from('products')
-    .select('id, slug, title, category, clock_theme, material, short, description, price, old_price, image, images, sizes, specs, status, is_popular, is_new, in_stock, catalog_image_fit, catalog_image_position, product_image_fit, product_image_position, image_settings, color_group_id, color_name, color_hex, created_at')
-    .neq('status', 'draft')
-    .order('created_at', { ascending: false });
+    .select('id, slug, title, category, clock_theme, material, short, description, price, old_price, image, images, sizes, specs, status, seo_title, seo_description, sort_order, is_popular, is_new, in_stock, catalog_image_fit, catalog_image_position, product_image_fit, product_image_position, image_settings, color_group_id, color_name, color_hex, created_at');
+
+  if (!includeAll) {
+    query = query.not('status', 'in', '("draft","hidden")');
+  }
+
+  return query.order('sort_order', { ascending: true }).order('created_at', { ascending: false });
 }
 
 async function fetchLegacyProducts() {
@@ -445,7 +460,7 @@ export function isPublicClockProduct(product: CatalogProduct) {
 export async function getCatalogProducts(): Promise<CatalogProduct[]> {
   if (!supabase) return localFallbackProducts;
 
-  const rich = await fetchRichProducts();
+  const rich = await fetchRichProducts(false);
   if (!rich.error && rich.data) {
     const normalized = (rich.data as RichProductRow[]).map(normalizeRichProduct).filter(Boolean) as CatalogProduct[];
     if (normalized.length) return normalized;
@@ -458,6 +473,25 @@ export async function getCatalogProducts(): Promise<CatalogProduct[]> {
   }
 
   console.error('Supabase products load failed:', rich.error?.message || legacy.error?.message);
+  return localFallbackProducts;
+}
+
+
+export async function getAdminCatalogProducts(): Promise<CatalogProduct[]> {
+  if (!supabase) return localFallbackProducts;
+
+  const rich = await fetchRichProducts(true);
+  if (!rich.error && rich.data) {
+    const normalized = (rich.data as RichProductRow[]).map(normalizeRichProduct).filter(Boolean) as CatalogProduct[];
+    if (normalized.length) return normalized;
+  }
+
+  const legacy = await fetchLegacyProducts();
+  if (!legacy.error && legacy.data) {
+    const normalized = (legacy.data as LegacyProductRow[]).map(normalizeLegacyProduct).filter(Boolean) as CatalogProduct[];
+    if (normalized.length) return normalized;
+  }
+
   return localFallbackProducts;
 }
 
