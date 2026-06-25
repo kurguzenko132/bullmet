@@ -7,7 +7,7 @@ import { AuthForm } from '@/components/AuthForm';
 
 export const metadata = {
   title: 'Вход в аккаунт | Bullmet',
-  description: 'Войти или зарегистрироваться в личном кабинете Bullmet.'
+  description: 'Войти в личный кабинет или админ-панель Bullmet.'
 };
 
 export default function LoginPage() {
@@ -17,15 +17,15 @@ export default function LoginPage() {
       <main className="auth-page">
         <div className="auth-container">
           <div className="auth-info">
-            <p className="auth-eyebrow">Личный кабинет Bullmet</p>
+            <p className="auth-eyebrow">Аккаунт Bullmet</p>
             <h1>Войти в аккаунт</h1>
             <p>
-              Сохраняйте выбранные часы, быстрее оформляйте заказ и возвращайтесь к товарам без повторного поиска.
+              Для клиента откроется личный кабинет, для администратора — панель управления сайтом.
             </p>
             <div className="auth-benefits">
               <div><Icon name="cart" /><span>Быстрое оформление</span></div>
               <div><Icon name="clock" /><span>Заказы часов</span></div>
-              <div><Icon name="shield" /><span>Сохраненные данные</span></div>
+              <div><Icon name="shield" /><span>Доступ к админке</span></div>
             </div>
           </div>
 

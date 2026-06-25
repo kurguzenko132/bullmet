@@ -17091,3 +17091,134 @@ img { display: block; max-width: 100%; }
     justify-content: flex-start;
   }
 }
+
+
+/* ===== Admin: correct redirect UX and remove horizontal scroll ===== */
+html,
+body {
+  max-width: 100%;
+}
+
+body:has(.admin-shell-redesign) {
+  overflow-x: hidden !important;
+}
+
+.admin-shell-redesign,
+.admin-workspace-redesign,
+.admin-main-redesign,
+.admin-dashboard-redesign,
+.admin-hero-grid-redesign,
+.admin-main-grid-redesign,
+.admin-content-grid-redesign,
+.admin-bottom-grid-redesign,
+.admin-panel-redesign,
+.admin-hero-card-redesign,
+.admin-metric-grid-redesign,
+.admin-line-chart-redesign,
+.admin-orders-list-redesign,
+.admin-products-list-redesign {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.admin-workspace-redesign {
+  overflow-x: hidden !important;
+}
+
+.admin-main-redesign {
+  overflow-x: hidden !important;
+  width: 100% !important;
+}
+
+.admin-dashboard-redesign {
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.admin-hero-grid-redesign {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr) !important;
+}
+
+.admin-main-grid-redesign {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px) !important;
+}
+
+.admin-content-grid-redesign {
+  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr) minmax(0, .7fr) !important;
+}
+
+.admin-bottom-grid-redesign {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr) !important;
+}
+
+.admin-actions-redesign,
+.admin-metric-grid-redesign {
+  min-width: 0 !important;
+}
+
+.admin-topbar-redesign {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden;
+}
+
+.admin-topbar-search,
+.admin-topbar-actions,
+.admin-topbar-user,
+.admin-topbar-user div {
+  min-width: 0 !important;
+}
+
+.admin-topbar-user small {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-line-chart-redesign svg {
+  max-width: 100% !important;
+}
+
+.admin-orders-list-redesign a,
+.admin-products-list-redesign a {
+  min-width: 0 !important;
+}
+
+.admin-orders-list-redesign b,
+.admin-orders-list-redesign span,
+.admin-orders-list-redesign em,
+.admin-products-list-redesign b,
+.admin-products-list-redesign span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1500px) {
+  .admin-hero-grid-redesign,
+  .admin-main-grid-redesign,
+  .admin-content-grid-redesign,
+  .admin-bottom-grid-redesign {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .admin-topbar-redesign {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+  }
+
+  .admin-topbar-search input {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-topbar-redesign {
+    overflow: visible;
+  }
+}

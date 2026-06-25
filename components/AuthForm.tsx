@@ -63,6 +63,8 @@ export function AuthForm() {
   const [error, setError] = useState('');
   const [showCreateHint, setShowCreateHint] = useState(false);
 
+  const hasExplicitNext = searchParams.has('next');
+
   const nextUrl = useMemo(() => {
     const rawValue = searchParams.get('next') || '/account';
     let value = rawValue.trim();
@@ -149,12 +151,13 @@ export function AuthForm() {
         return;
       }
 
-      const targetUrl = nextUrl || '/account';
+      const isAdminUser = adminEmails.includes(userEmail);
+      const targetUrl = (!hasExplicitNext && isAdminUser) ? '/admin' : (nextUrl || '/account');
       router.replace(targetUrl);
       router.refresh();
 
       // Жесткий переход нужен, чтобы Supabase-сессия точно успела сохраниться
-      // и личный кабинет открылся без повторного ввода пароля.
+      // и нужная страница открылась без повторного ввода пароля.
       window.setTimeout(() => {
         window.location.href = targetUrl;
       }, 100);
