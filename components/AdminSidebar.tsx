@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  Activity,
   BarChart3,
   Boxes,
   ClipboardList,
@@ -57,15 +58,16 @@ const groups = [
     label: 'Аналитика',
     links: [
       ['Статистика', '/admin/stats', BarChart3],
-      ['Отчеты', '/admin/stats', ClipboardList]
+      ['Отчеты', '/admin/stats', ClipboardList],
+      ['Журнал действий', '/admin/activity', Activity]
     ]
   },
   {
     label: 'Настройки',
     links: [
       ['Настройки сайта', '/admin/settings', Settings],
-      ['Пользователи', '/admin/settings', UserCog],
-      ['Роли и права', '/admin/settings', ShieldCheck],
+      ['Пользователи', '/admin/users', UserCog],
+      ['Роли и права', '/admin/roles', ShieldCheck],
       ['Резервное копирование', '/admin/settings', DatabaseBackup]
     ]
   }

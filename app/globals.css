@@ -18578,3 +18578,433 @@ body:has(.admin-shell-redesign) {
     padding: 28px;
   }
 }
+
+
+/* ===== Admin users, roles and activity stage ===== */
+.admin-users-page,
+.admin-activity-page,
+.admin-roles-page {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.admin-users-stats,
+.admin-activity-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-users-stats article,
+.admin-activity-stats article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #e6e9ef;
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 12px 34px rgba(17, 24, 39, .045);
+}
+
+.admin-users-stats svg,
+.admin-activity-stats svg {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff7ed;
+  color: #f97316;
+}
+
+.admin-users-stats b,
+.admin-activity-stats b {
+  display: block;
+  color: #111827;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.admin-users-stats span,
+.admin-activity-stats span {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.admin-users-layout,
+.admin-activity-layout {
+  display: grid;
+  grid-template-columns: minmax(350px, 440px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.admin-users-list,
+.admin-activity-list {
+  display: grid;
+  gap: 10px;
+  max-height: calc(100vh - 310px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.admin-users-list button,
+.admin-activity-list button {
+  width: 100%;
+  border: 1px solid #e8e2d8;
+  background: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(26, 22, 18, .03);
+}
+
+.admin-users-list button.is-active,
+.admin-activity-list button.is-active {
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, .12);
+}
+
+.admin-users-list button > div,
+.admin-activity-list button > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.admin-users-list b,
+.admin-activity-list b {
+  overflow: hidden;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+}
+
+.admin-users-list span,
+.admin-users-list small,
+.admin-activity-list span,
+.admin-activity-list small {
+  display: block;
+  overflow: hidden;
+  margin-top: 7px;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-users-list em,
+.admin-user-detail-head em,
+.admin-activity-list em,
+.admin-activity-detail em {
+  width: fit-content;
+  min-height: 23px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 9px;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.admin-users-list em.is-admin,
+.admin-user-detail-head em.is-admin {
+  background: #111827;
+  color: #fff;
+}
+
+.admin-users-list em.is-manager,
+.admin-user-detail-head em.is-manager {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.admin-users-list em.is-content,
+.admin-user-detail-head em.is-content {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.admin-users-list em.is-customer,
+.admin-user-detail-head em.is-customer {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.admin-activity-list em.is-orders,
+.admin-activity-detail em.is-orders {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.admin-activity-list em.is-requests,
+.admin-activity-detail em.is-requests {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.admin-activity-list em.is-products,
+.admin-activity-detail em.is-products {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.admin-activity-list em.is-reviews,
+.admin-activity-detail em.is-reviews {
+  background: #fdf2f8;
+  color: #be185d;
+}
+
+.admin-activity-list em.is-users,
+.admin-activity-detail em.is-users {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.admin-activity-list em.is-settings,
+.admin-activity-detail em.is-settings {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.admin-user-detail,
+.admin-activity-detail,
+.admin-role-note {
+  background: #fff;
+  border: 1px solid #e8e2d8;
+  border-radius: 8px;
+  padding: 22px;
+  box-shadow: 0 16px 44px rgba(26, 22, 18, .04);
+}
+
+.admin-user-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.admin-user-detail-head p {
+  margin: 0 0 6px;
+  color: #f97316;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.admin-user-detail-head h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.08;
+  font-weight: 950;
+}
+
+.admin-user-detail-head span {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.admin-user-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-user-form label {
+  display: grid;
+  gap: 7px;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-user-form input,
+.admin-user-form select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 12px;
+  color: #111827;
+  font-weight: 800;
+}
+
+.admin-role-access-card {
+  margin-top: 18px;
+  border: 1px solid #eee8df;
+  background: #fbfaf8;
+  padding: 18px;
+}
+
+.admin-role-access-card h3,
+.admin-activity-payload h3,
+.admin-role-note h2 {
+  margin: 0 0 8px;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.admin-role-access-card p,
+.admin-role-note p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.55;
+}
+
+.admin-role-access-card div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.admin-role-access-card span,
+.admin-roles-grid li {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #e5ded4;
+  padding: 0 10px;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.admin-user-meta,
+.admin-activity-meta {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.admin-user-meta p,
+.admin-activity-meta p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.admin-activity-payload {
+  margin-top: 18px;
+}
+
+.admin-activity-payload pre {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #111827;
+  padding: 16px;
+  color: #d1d5db;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.admin-roles-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.admin-roles-grid article {
+  display: flex;
+  flex-direction: column;
+  min-height: 360px;
+  background: #fff;
+  border: 1px solid #e8e2d8;
+  border-radius: 8px;
+  padding: 22px;
+  box-shadow: 0 16px 44px rgba(26, 22, 18, .04);
+}
+
+.admin-roles-grid span {
+  color: #f97316;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.admin-roles-grid h2 {
+  margin: 8px 0 10px;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 950;
+}
+
+.admin-roles-grid p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.admin-roles-grid ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: auto 0 0;
+  padding: 20px 0 0;
+  list-style: none;
+}
+
+.admin-role-note {
+  max-width: 980px;
+}
+
+@media (max-width: 1400px) {
+  .admin-users-stats,
+  .admin-activity-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-users-layout,
+  .admin-activity-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-users-list,
+  .admin-activity-list {
+    max-height: none;
+  }
+
+  .admin-roles-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-users-stats,
+  .admin-activity-stats,
+  .admin-user-form,
+  .admin-roles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-detail-head {
+    display: grid;
+  }
+}
