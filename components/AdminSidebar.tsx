@@ -25,7 +25,7 @@ import {
   Wrench
 } from 'lucide-react';
 
-const groups = [
+const groups: Array<{ label: string; links: Array<[string, string, any, string?]> }> = [
   {
     label: '',
     links: [
@@ -36,11 +36,11 @@ const groups = [
     label: 'Контент',
     links: [
       ['Главная страница', '/admin/homepage', Home],
-      ['Страницы', '/admin/homepage', ClipboardList],
+      ['Страницы', '/admin/pages', ClipboardList],
       ['Категории', '/admin/categories', ClipboardList],
       ['Каталог товаров', '/admin/products', Package],
-      ['Услуги', '/admin/requests', Wrench],
-      ['Производство', '/admin/homepage', Boxes],
+      ['Услуги', '/admin/services', Wrench],
+      ['Производство', '/admin/production', Boxes],
       ['Отзывы', '/admin/reviews', MessageSquare],
       ['Баннеры', '/admin/banners', Image],
       ['Медиафайлы', '/admin/media', Image]
@@ -49,18 +49,18 @@ const groups = [
   {
     label: 'Интернет-магазин',
     links: [
-      ['Заказы', '/admin/orders', ShoppingBag, '12'],
-      ['Покупатели', '/admin/stats', Users],
-      ['Купоны и скидки', '/admin/stats', Percent],
-      ['Доставка', '/admin/settings', Truck],
-      ['Оплата', '/admin/settings', CreditCard]
+      ['Заказы', '/admin/orders', ShoppingBag],
+      ['Покупатели', '/admin/customers', Users],
+      ['Купоны и скидки', '/admin/coupons', Percent],
+      ['Доставка', '/admin/delivery', Truck],
+      ['Оплата', '/admin/payment', CreditCard]
     ]
   },
   {
     label: 'Аналитика',
     links: [
       ['Статистика', '/admin/stats', BarChart3],
-      ['Отчеты', '/admin/stats', ClipboardList],
+      ['Отчеты', '/admin/reports', ClipboardList],
       ['Журнал действий', '/admin/activity', Activity]
     ]
   },
@@ -73,7 +73,7 @@ const groups = [
       ['Резервное копирование', '/admin/backup', DatabaseBackup]
     ]
   }
-] as const;
+];
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -94,7 +94,9 @@ export function AdminSidebar() {
           return (
             <div className="admin-nav-group" key={`${group.label}-${groupIndex}`}>
               {group.label && <p>{group.label}</p>}
-              {links.map(([title, href, Icon, badge]) => {
+              {links.map((link) => {
+                const [title, href, Icon] = link;
+                const badge = (link as readonly unknown[])[3] as string | undefined;
                 const active = pathname === href || (href !== '/admin' && pathname?.startsWith(href));
                 return (
                   <Link key={`${title}-${href}`} href={href} className={active ? 'active' : ''}>

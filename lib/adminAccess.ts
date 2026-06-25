@@ -12,19 +12,19 @@ export const adminRoles: AdminRoleInfo[] = [
     value: 'admin',
     label: 'Администратор',
     description: 'Полный доступ ко всем разделам сайта и настройкам.',
-    access: ['Настройки сайта', 'Категории', 'Товары', 'Заказы', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Пользователи', 'Роли', 'Журнал действий', 'Резервные копии']
+    access: ['Настройки сайта', 'Страницы', 'Категории', 'Товары', 'Услуги', 'Производство', 'Заказы', 'Покупатели', 'Купоны', 'Доставка', 'Оплата', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Отчеты', 'Пользователи', 'Роли', 'Журнал действий', 'Резервные копии']
   },
   {
     value: 'manager',
     label: 'Менеджер',
     description: 'Работа с клиентами, заказами, заявками и отзывами без системных настроек.',
-    access: ['Главная админки', 'Заказы', 'Заявки', 'Отзывы', 'Статистика']
+    access: ['Главная админки', 'Заказы', 'Заявки', 'Отзывы', 'Покупатели', 'Статистика', 'Отчеты']
   },
   {
     value: 'content_manager',
     label: 'Контент-менеджер',
     description: 'Управление товарами, фото, главной страницей, баннерами и SEO-контентом.',
-    access: ['Главная админки', 'Главная страница', 'Категории', 'Товары', 'Фото', 'Медиа', 'Баннеры']
+    access: ['Главная админки', 'Главная страница', 'Страницы', 'Категории', 'Товары', 'Услуги', 'Производство', 'Фото', 'Медиа', 'Баннеры']
   },
   {
     value: 'customer',
@@ -36,8 +36,8 @@ export const adminRoles: AdminRoleInfo[] = [
 
 const rolePathAccess: Record<AdminRole, string[]> = {
   admin: ['/admin'],
-  manager: ['/admin', '/admin/orders', '/admin/requests', '/admin/reviews', '/admin/stats'],
-  content_manager: ['/admin', '/admin/homepage', '/admin/categories', '/admin/products', '/admin/media', '/admin/banners'],
+  manager: ['/admin', '/admin/orders', '/admin/requests', '/admin/reviews', '/admin/customers', '/admin/stats', '/admin/reports'],
+  content_manager: ['/admin', '/admin/homepage', '/admin/pages', '/admin/categories', '/admin/products', '/admin/services', '/admin/production', '/admin/media', '/admin/banners'],
   customer: []
 };
 
