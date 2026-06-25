@@ -17,6 +17,7 @@ import {
   Package,
   Percent,
   Settings,
+  Rocket,
   ShieldCheck,
   ShoppingBag,
   Truck,
@@ -29,7 +30,8 @@ const groups: Array<{ label: string; links: Array<[string, string, any, string?]
   {
     label: '',
     links: [
-      ['Главная', '/admin', LayoutDashboard]
+      ['Главная', '/admin', LayoutDashboard],
+      ['Боевой тест', '/admin/launch-test', Rocket]
     ]
   },
   {

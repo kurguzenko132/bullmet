@@ -12,7 +12,7 @@ export const adminRoles: AdminRoleInfo[] = [
     value: 'admin',
     label: 'Администратор',
     description: 'Полный доступ ко всем разделам сайта и настройкам.',
-    access: ['Настройки сайта', 'Страницы', 'Категории', 'Товары', 'Услуги', 'Производство', 'Заказы', 'Покупатели', 'Купоны', 'Доставка', 'Оплата', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Отчеты', 'Пользователи', 'Роли', 'Журнал действий', 'Резервные копии']
+    access: ['Настройки сайта', 'Страницы', 'Категории', 'Товары', 'Услуги', 'Производство', 'Заказы', 'Покупатели', 'Купоны', 'Доставка', 'Оплата', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Отчеты', 'Пользователи', 'Роли', 'Журнал действий', 'Резервные копии', 'Боевой тест запуска']
   },
   {
     value: 'manager',
@@ -79,7 +79,7 @@ export function defaultAdminPath(role?: string | null) {
   const normalized = normalizeAdminRole(role);
   if (normalized === 'manager') return '/admin/orders';
   if (normalized === 'content_manager') return '/admin/products';
-  if (normalized === 'admin') return '/admin';
+  if (normalized === 'admin') return '/admin/launch-test';
   return '/account';
 }
 
@@ -96,7 +96,8 @@ export function actionLabel(action?: string | null) {
     banner_control_update: 'Баннеры обновлены',
     catalog_categories_update: 'Категории обновлены',
     user_update: 'Пользователь обновлён',
-    backup_export: 'Экспорт данных'
+    backup_export: 'Экспорт данных',
+    launch_test_update: 'Боевой тест запуска'
   };
 
   return map[String(action || '')] || String(action || 'Действие');
