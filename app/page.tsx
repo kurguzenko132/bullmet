@@ -3,6 +3,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
 import { HomeProductsClient } from '@/components/HomeProductsClient';
+import { HomePromoBanners } from '@/components/HomePromoBanners';
 import { getHomepageControlSettings, visibleHomeItems } from '@/lib/homepageControl';
 import { getCatalogProducts } from '@/lib/products';
 
@@ -64,6 +65,8 @@ export default async function HomePage() {
             ))}
           </section>
         )}
+
+        <HomePromoBanners placement="home_top" />
 
         {home.directionsSection.enabled && !!categories.length && (
           <section className="home-container home-categories-final">

@@ -1,3 +1,11 @@
-import { getCatalogProducts } from '@/lib/products';
+import { AdminMediaClient } from '@/components/AdminMediaClient';
+import { getAdminMediaFiles } from '@/lib/adminContent';
+import { isSupabaseConfigured } from '@/lib/serverSupabase';
+
 export const dynamic = 'force-dynamic';
-export default async function AdminMedia(){const products=await getCatalogProducts();const images=[...new Set(products.flatMap(p=>p.images.length?p.images:[p.image]))];return <div className="admin-dashboard-pro"><div className="admin-page-head"><div><p>Медиа</p><h1>Медиафайлы</h1><span>Фото товаров, которые сейчас используются в каталоге и карточках.</span></div></div><section className="admin-media-grid">{images.map((url)=><article key={url}><img src={url} alt=""/><span>{url}</span></article>)}</section></div>}
+export const metadata = { title: 'Медиафайлы | Админка Bullmet' };
+
+export default async function AdminMedia() {
+  const files = await getAdminMediaFiles();
+  return <AdminMediaClient initialFiles={files} supabaseConfigured={isSupabaseConfigured()} />;
+}

@@ -39,7 +39,7 @@ const groups = [
       ['Услуги', '/admin/requests', Wrench],
       ['Производство', '/admin/homepage', Boxes],
       ['Отзывы', '/admin/reviews', MessageSquare],
-      ['Баннеры', '/admin/media', Image],
+      ['Баннеры', '/admin/banners', Image],
       ['Медиафайлы', '/admin/media', Image]
     ]
   },
