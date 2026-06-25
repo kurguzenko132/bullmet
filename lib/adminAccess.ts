@@ -12,7 +12,7 @@ export const adminRoles: AdminRoleInfo[] = [
     value: 'admin',
     label: 'Администратор',
     description: 'Полный доступ ко всем разделам сайта и настройкам.',
-    access: ['Настройки сайта', 'Категории', 'Товары', 'Заказы', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Пользователи', 'Роли', 'Журнал действий']
+    access: ['Настройки сайта', 'Категории', 'Товары', 'Заказы', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Пользователи', 'Роли', 'Журнал действий', 'Резервные копии']
   },
   {
     value: 'manager',
@@ -95,7 +95,8 @@ export function actionLabel(action?: string | null) {
     review_delete: 'Отзыв удалён',
     banner_control_update: 'Баннеры обновлены',
     catalog_categories_update: 'Категории обновлены',
-    user_update: 'Пользователь обновлён'
+    user_update: 'Пользователь обновлён',
+    backup_export: 'Экспорт данных'
   };
 
   return map[String(action || '')] || String(action || 'Действие');

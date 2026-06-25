@@ -70,7 +70,7 @@ const groups = [
       ['Настройки сайта', '/admin/settings', Settings],
       ['Пользователи', '/admin/users', UserCog],
       ['Роли и права', '/admin/roles', ShieldCheck],
-      ['Резервное копирование', '/admin/settings', DatabaseBackup]
+      ['Резервное копирование', '/admin/backup', DatabaseBackup]
     ]
   }
 ] as const;
