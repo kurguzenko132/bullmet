@@ -6,6 +6,34 @@ import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Icon } from './Icon';
 
+
+type SiteControlLite = {
+  general?: {
+    logoText?: string;
+    tagline?: string;
+  };
+  contacts?: {
+    phone?: string;
+  };
+  navigation?: {
+    id: string;
+    label: string;
+    href: string;
+    location: 'header' | 'mobile' | 'footer';
+    visible: boolean;
+    order: number;
+  }[];
+};
+
+function iconForNavItem(id: string, href: string) {
+  if (href === '/') return 'factory' as const;
+  if (href.startsWith('/catalog')) return 'search' as const;
+  if (href.startsWith('/cart')) return 'cart' as const;
+  if (href.startsWith('/account') || href.startsWith('/login')) return 'user' as const;
+  if (href.startsWith('/contacts')) return 'phone' as const;
+  return 'shield' as const;
+}
+
 type SearchProduct = {
   slug: string;
   title: string;
@@ -54,27 +82,65 @@ export function Header() {
   const [results, setResults] = useState<SearchProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [accountEmail, setAccountEmail] = useState('');
+  const [siteControl, setSiteControl] = useState<SiteControlLite | null>(null);
 
   const trimmedQuery = query.trim();
   const hasResults = results.length > 0;
 
-  const nav = useMemo(() => [
-    { href: '/catalog', label: 'Каталог' },
-    { href: '/production', label: 'Производство' },
-    { href: '/about', label: 'О компании' },
-    { href: '/contacts', label: 'Контакты' }
-  ], []);
+  const nav = useMemo(() => {
+    const fromSettings = siteControl?.navigation
+      ?.filter((item) => item.location === 'header' && item.visible)
+      .sort((a, b) => a.order - b.order)
+      .map((item) => ({ href: item.href, label: item.label }));
+
+    return fromSettings?.length ? fromSettings : [
+      { href: '/catalog', label: 'Каталог' },
+      { href: '/production', label: 'Производство' },
+      { href: '/about', label: 'О компании' },
+      { href: '/contacts', label: 'Контакты' }
+    ];
+  }, [siteControl]);
 
   const accountHref = accountEmail ? '/account' : '/login?next=/account';
   const accountLabel = accountEmail ? 'Кабинет' : 'Войти';
 
-  const bottomNav = useMemo(() => [
-    { href: '/', label: 'Главная', icon: 'factory' as const },
-    { href: '/catalog', label: 'Каталог', icon: 'search' as const },
-    { href: '/about', label: 'О нас', icon: 'shield' as const },
-    { href: '/cart', label: 'Корзина', icon: 'cart' as const },
-    { href: accountHref, label: accountEmail ? 'Кабинет' : 'Войти', icon: 'user' as const }
-  ], [accountEmail, accountHref]);
+  const bottomNav = useMemo(() => {
+    const fromSettings = siteControl?.navigation
+      ?.filter((item) => item.location === 'mobile' && item.visible)
+      .sort((a, b) => a.order - b.order)
+      .map((item) => {
+        const href = item.id === 'profile_mobile' ? accountHref : item.href;
+        return {
+          href,
+          label: item.id === 'profile_mobile' ? (accountEmail ? 'Кабинет' : 'Войти') : item.label,
+          icon: iconForNavItem(item.id, href)
+        };
+      });
+
+    return fromSettings?.length ? fromSettings : [
+      { href: '/', label: 'Главная', icon: 'factory' as const },
+      { href: '/catalog', label: 'Каталог', icon: 'search' as const },
+      { href: '/about', label: 'О нас', icon: 'shield' as const },
+      { href: '/cart', label: 'Корзина', icon: 'cart' as const },
+      { href: accountHref, label: accountEmail ? 'Кабинет' : 'Войти', icon: 'user' as const }
+    ];
+  }, [accountEmail, accountHref, siteControl]);
+
+
+  useEffect(() => {
+    let active = true;
+
+    fetch('/api/site-control')
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (active && data?.settings) setSiteControl(data.settings);
+      })
+      .catch(() => null);
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const update = () => setCartCount(readCartCount());
@@ -199,7 +265,7 @@ export function Header() {
         <div className="home-container header-inner-exact header-inner-polished">
           <Link href="/" className="brand-exact" aria-label="Bullmet">
             <img src="/logo-shield-check.svg" alt="" className="brand-mark" />
-            <span className="brand-text"><b>BULLMET</b><small>металл с элементами дерева</small></span>
+            <span className="brand-text"><b>{siteControl?.general?.logoText || 'BULLMET'}</b><small>{siteControl?.general?.tagline || 'металл с элементами дерева'}</small></span>
           </Link>
 
           <nav className="nav-exact nav-polished">
@@ -222,7 +288,7 @@ export function Header() {
             <div className="mobile-menu-head">
               <Link href="/" className="mobile-menu-brand" onClick={() => setMobileOpen(false)}>
                 <img src="/logo-shield-check.svg" alt="" className="mobile-menu-brand-mark" />
-                <span className="mobile-menu-brand-text"><b>BULLMET</b><small>металл с элементами дерева</small></span>
+                <span className="mobile-menu-brand-text"><b>{siteControl?.general?.logoText || 'BULLMET'}</b><small>{siteControl?.general?.tagline || 'металл с элементами дерева'}</small></span>
               </Link>
               <button type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть">×</button>
             </div>
@@ -232,7 +298,7 @@ export function Header() {
               <Link href={accountHref} onClick={() => setMobileOpen(false)}>{accountEmail ? 'Личный кабинет' : 'Войти в аккаунт'}<span>→</span></Link>
             </nav>
             <div className="mobile-menu-contact">
-              <span>Нужна консультация по часам?</span>
+              <span>Нужна консультация? {siteControl?.contacts?.phone || ''}</span>
               <div className="mobile-menu-contact-actions">
                 <Link href="/contacts" onClick={() => setMobileOpen(false)}>Контакты</Link>
                 <Link href="/catalog" onClick={() => setMobileOpen(false)}>Каталог</Link>
