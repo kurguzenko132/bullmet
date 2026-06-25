@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAdminAccess } from './AdminAccessContext';
 import {
   Activity,
   BarChart3,
@@ -75,6 +76,7 @@ const groups = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { canAccess, roleLabel } = useAdminAccess();
 
   return (
     <aside className="admin-sidebar-pro admin-sidebar-redesign">
@@ -84,22 +86,32 @@ export function AdminSidebar() {
       </Link>
 
       <nav className="admin-nav-redesign">
-        {groups.map((group, groupIndex) => (
-          <div className="admin-nav-group" key={`${group.label}-${groupIndex}`}>
-            {group.label && <p>{group.label}</p>}
-            {group.links.map(([title, href, Icon, badge]) => {
-              const active = pathname === href || (href !== '/admin' && pathname?.startsWith(href));
-              return (
-                <Link key={`${title}-${href}`} href={href} className={active ? 'active' : ''}>
-                  <Icon size={18} />
-                  <span>{title}</span>
-                  {badge && <b>{badge}</b>}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
+        {groups.map((group, groupIndex) => {
+          const links = group.links.filter(([, href]) => canAccess(href));
+          if (!links.length) return null;
+
+          return (
+            <div className="admin-nav-group" key={`${group.label}-${groupIndex}`}>
+              {group.label && <p>{group.label}</p>}
+              {links.map(([title, href, Icon, badge]) => {
+                const active = pathname === href || (href !== '/admin' && pathname?.startsWith(href));
+                return (
+                  <Link key={`${title}-${href}`} href={href} className={active ? 'active' : ''}>
+                    <Icon size={18} />
+                    <span>{title}</span>
+                    {badge && <b>{badge}</b>}
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })}
       </nav>
+
+      <div className="admin-sidebar-role">
+        <span>Текущая роль</span>
+        <b>{roleLabel}</b>
+      </div>
 
       <div className="admin-sidebar-bottom-redesign">
         <Link href="/login?next=/admin">Выйти из системы</Link>

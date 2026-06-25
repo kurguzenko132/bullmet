@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { defaultAdminPath, isStaffRole, normalizeAdminRole } from '@/lib/adminAccess';
 
 type Mode = 'login' | 'register';
 
@@ -18,6 +19,30 @@ function getAdminEmails() {
     .filter(Boolean);
 }
 
+
+
+async function getUserAdminRole(userId?: string, email?: string) {
+  const cleanEmail = String(email || '').toLowerCase();
+  const adminEmails = getAdminEmails();
+
+  if (!supabase || !userId) {
+    return adminEmails.includes(cleanEmail) ? 'admin' : 'customer';
+  }
+
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('role, status')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (data?.status === 'blocked') return 'customer';
+    const profileRole = normalizeAdminRole(data?.role);
+    return adminEmails.includes(cleanEmail) && profileRole === 'customer' ? 'admin' : profileRole;
+  } catch {
+    return adminEmails.includes(cleanEmail) ? 'admin' : 'customer';
+  }
+}
 
 function getReadableAuthError(error: unknown, mode: Mode, adminLogin: boolean) {
   const raw = error instanceof Error ? error.message : String(error || '');
@@ -141,18 +166,18 @@ export function AuthForm() {
         window.dispatchEvent(new Event('bullmet-auth-updated'));
       } catch {}
 
-      const adminEmails = getAdminEmails();
       const userEmail = data.user?.email?.toLowerCase() || cleanEmail;
+      const userRole = await getUserAdminRole(data.user?.id, userEmail);
+      const hasAdminAccess = isStaffRole(userRole);
 
-      if (nextUrl.startsWith('/admin') && adminEmails.length > 0 && !adminEmails.includes(userEmail)) {
+      if (nextUrl.startsWith('/admin') && !hasAdminAccess) {
         await supabase.auth.signOut();
-        setError('Этот email не добавлен в список администраторов. Проверь NEXT_PUBLIC_ADMIN_EMAIL в Vercel.');
+        setError('У этого пользователя нет роли для входа в админку. Попросите администратора назначить manager, content_manager или admin.');
         setLoading(false);
         return;
       }
 
-      const isAdminUser = adminEmails.includes(userEmail);
-      const targetUrl = (!hasExplicitNext && isAdminUser) ? '/admin' : (nextUrl || '/account');
+      const targetUrl = (!hasExplicitNext && hasAdminAccess) ? defaultAdminPath(userRole) : (nextUrl || '/account');
       router.replace(targetUrl);
       router.refresh();
 

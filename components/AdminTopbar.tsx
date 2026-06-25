@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Bell, ExternalLink, LogOut, Menu, Search, UserRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useAdminAccess } from './AdminAccessContext';
 
 export function AdminTopbar() {
-  const [email, setEmail] = useState('admin@bullmet.by');
+  const { profile, roleLabel } = useAdminAccess();
+  const [email, setEmail] = useState(profile.email || 'admin@bullmet.by');
 
   useEffect(() => {
     let active = true;
@@ -28,7 +30,7 @@ export function AdminTopbar() {
       active = false;
       data?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [profile.email]);
 
   async function signOut() {
     try {
@@ -60,7 +62,7 @@ export function AdminTopbar() {
         <button type="button" className="admin-topbar-bell" aria-label="Уведомления"><Bell size={18} /><i>3</i></button>
         <div className="admin-topbar-user">
           <span><UserRound size={18} /></span>
-          <div><b>Администратор</b><small>{email}</small></div>
+          <div><b>{roleLabel}</b><small>{email}</small></div>
         </div>
         <button type="button" className="admin-topbar-logout" onClick={signOut} aria-label="Выйти"><LogOut size={18} /></button>
       </div>
