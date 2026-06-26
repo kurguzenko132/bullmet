@@ -5,6 +5,7 @@ import { getCatalogControlSettings, visibleCatalogCategories } from './catalogCo
 import { getAdminCatalogProducts } from './products';
 import { getHomepageControlSettings } from './homepageControl';
 import { getSiteControlSettings, visibleDirections } from './siteControl';
+import { getAdminSitePages } from './sitePages';
 import { isSupabaseConfigured, serverSupabase } from './serverSupabase';
 
 export type BackupOverview = {
@@ -16,6 +17,7 @@ export type BackupOverview = {
   users: number;
   activity: number;
   settings: number;
+  pages: number;
   visibleCategories: number;
   visibleDirections: number;
   generatedAt: string;
@@ -45,7 +47,8 @@ export type ExportType =
   | 'activity'
   | 'settings'
   | 'categories'
-  | 'banners';
+  | 'banners'
+  | 'pages';
 
 function safeArray<T>(value: T[] | undefined | null): T[] {
   return Array.isArray(value) ? value : [];
@@ -60,7 +63,7 @@ export async function getSettingsCount() {
 }
 
 export async function getBackupOverview(): Promise<BackupOverview> {
-  const [products, orders, requests, reviews, users, activity, site, catalog, settings] = await Promise.all([
+  const [products, orders, requests, reviews, users, activity, site, catalog, settings, pages] = await Promise.all([
     getAdminCatalogProducts(),
     getAdminOrders(),
     getAdminRequests(),
@@ -69,7 +72,8 @@ export async function getBackupOverview(): Promise<BackupOverview> {
     getAdminActivityLog(),
     getSiteControlSettings(),
     getCatalogControlSettings(),
-    getSettingsCount()
+    getSettingsCount(),
+    getAdminSitePages()
   ]);
 
   return {
@@ -81,6 +85,7 @@ export async function getBackupOverview(): Promise<BackupOverview> {
     users: users.length,
     activity: activity.length,
     settings,
+    pages: pages.length,
     visibleCategories: visibleCatalogCategories(catalog).length,
     visibleDirections: visibleDirections(site).length,
     generatedAt: new Date().toISOString()
@@ -88,7 +93,7 @@ export async function getBackupOverview(): Promise<BackupOverview> {
 }
 
 export async function getAuditReport(): Promise<AuditReport> {
-  const [products, orders, requests, reviews, users, activity, site, catalog, banners] = await Promise.all([
+  const [products, orders, requests, reviews, users, activity, site, catalog, banners, pages] = await Promise.all([
     getAdminCatalogProducts(),
     getAdminOrders(),
     getAdminRequests(),
@@ -97,7 +102,8 @@ export async function getAuditReport(): Promise<AuditReport> {
     getAdminActivityLog(),
     getSiteControlSettings(),
     getCatalogControlSettings(),
-    getBannerControlSettings()
+    getBannerControlSettings(),
+    getAdminSitePages()
   ]);
 
   const visibleCats = visibleCatalogCategories(catalog);
@@ -141,6 +147,13 @@ export async function getAuditReport(): Promise<AuditReport> {
       status: visibleCats.length ? 'ok' : 'bad',
       message: `Видимых категорий: ${visibleCats.length}.`,
       href: '/admin/categories'
+    },
+    {
+      id: 'pages',
+      title: 'CMS-страницы',
+      status: pages.length ? 'ok' : 'warn',
+      message: pages.length ? `Создано страниц: ${pages.length}.` : 'Пользовательских страниц пока нет. Создайте страницы в супер-админке.',
+      href: '/admin/pages'
     },
     {
       id: 'products',
@@ -237,7 +250,8 @@ export async function getExportData(type: ExportType) {
     site,
     homepage,
     catalog,
-    banners
+    banners,
+    pages
   ] = await Promise.all([
     getAdminCatalogProducts(),
     getAdminOrders(),
@@ -248,7 +262,8 @@ export async function getExportData(type: ExportType) {
     getSiteControlSettings(),
     getHomepageControlSettings(),
     getCatalogControlSettings(),
-    getBannerControlSettings()
+    getBannerControlSettings(),
+    getAdminSitePages()
   ]);
 
   const settings = { site, homepage, catalog, banners };
@@ -262,6 +277,7 @@ export async function getExportData(type: ExportType) {
   if (type === 'settings') return settings;
   if (type === 'categories') return catalog.categories;
   if (type === 'banners') return banners.banners;
+  if (type === 'pages') return pages;
 
   return {
     generatedAt: new Date().toISOString(),
@@ -271,6 +287,7 @@ export async function getExportData(type: ExportType) {
     reviews,
     users,
     activity,
+    pages,
     settings
   };
 }

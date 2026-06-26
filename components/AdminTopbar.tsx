@@ -141,8 +141,9 @@ export function AdminTopbar() {
   }
 
   const notifications = useMemo(() => [
-    { title: 'Новые заказы', text: notificationCount ? `${notificationCount} новых событий требуют проверки` : 'Новых событий пока нет', href: '/admin/orders' },
+    { title: 'Заказы и заявки', text: notificationCount ? `${notificationCount} новых событий требуют проверки` : 'Новых событий пока нет', href: '/admin/orders' },
     { title: 'Боевой тест запуска', text: 'Пройди чек-лист перед публикацией сайта', href: '/admin/launch-test' },
+    { title: 'Товары и каталог', text: 'Проверь цены, фото, статусы и категории', href: '/admin/products' },
     { title: 'Резервная копия', text: 'Перед изменениями скачай полный JSON', href: '/admin/backup' }
   ], [notificationCount]);
 
@@ -169,7 +170,7 @@ export function AdminTopbar() {
       <div className="admin-topbar-actions">
         <Link href="/" target="_blank">Перейти на сайт <ExternalLink size={15} /></Link>
         <div className="admin-topbar-notification-wrap" ref={notificationRef}>
-          <button type="button" className="admin-topbar-bell" aria-label="Уведомления" onClick={() => setNotificationsOpen((value) => !value)}>
+          <button type="button" className={`admin-topbar-bell ${notificationsOpen ? 'is-open' : ''}`} aria-label="Уведомления" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((value) => !value)}>
             <Bell size={18} />
             {!!notificationCount && <i>{notificationCount}</i>}
           </button>
@@ -185,6 +186,10 @@ export function AdminTopbar() {
                   <ChevronRight size={16} />
                 </Link>
               ))}
+              <div className="admin-topbar-notifications-footer">
+                <Link href="/admin/activity" onClick={() => setNotificationsOpen(false)}>Журнал действий</Link>
+                <Link href="/admin/backup" onClick={() => setNotificationsOpen(false)}>Аудит</Link>
+              </div>
             </div>
           )}
         </div>

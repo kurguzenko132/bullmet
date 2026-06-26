@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardCheck, Package, Rocket, ShoppingBag, Star, Users } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowRight, CheckCircle2, ClipboardCheck, DatabaseBackup, FileText, Image, MessageSquare, Package, Rocket, Settings, ShoppingBag, Star, Tags, Users } from 'lucide-react';
 import { getAuditReport, getBackupOverview } from '@/lib/adminBackup';
 import { formatDate, getAdminOrders, getAdminRequests, money, statusClass } from '@/lib/adminCommerce';
 import { getAdminCatalogProducts } from '@/lib/products';
@@ -42,6 +42,10 @@ export default async function AdminPage() {
   const warnAudit = audit.items.filter((item) => item.status === 'warn');
   const latestOrders = orders.slice(0, 5);
   const latestRequests = requests.slice(0, 5);
+  const weakAudit = [...criticalAudit, ...warnAudit].slice(0, 4);
+  const withoutPhoto = products.filter((item) => !item.image && !item.images?.length).length;
+  const withoutPrice = products.filter((item) => !Number(item.price)).length;
+  const visibleProducts = products.filter((item) => item.status !== 'hidden' && item.status !== 'draft').length;
 
   const launchSteps = [
     { title: 'Боевой тест', text: 'Пройти путь клиента и чек-лист запуска', href: '/admin/launch-test', icon: Rocket, tone: 'orange' },
@@ -49,6 +53,22 @@ export default async function AdminPage() {
     { title: 'Заказы', text: `${newOrders.length} новых, ${activeOrders.length} активных`, href: '/admin/orders', icon: ShoppingBag, tone: 'green' },
     { title: 'Резервная копия', text: 'Скачать JSON перед изменениями', href: '/admin/backup', icon: ClipboardCheck, tone: 'violet' }
   ] as const;
+
+  const fastModules = [
+    { title: 'Категории', text: `${overview.visibleCategories} видно клиенту`, href: '/admin/categories', icon: Tags },
+    { title: 'Отзывы', text: 'Скрыть, вернуть, проверить фото', href: '/admin/reviews', icon: Star },
+    { title: 'Баннеры', text: 'Акции и промо на главной', href: '/admin/banners', icon: Image },
+    { title: 'Заявки', text: `${newRequests.length} новых обращений`, href: '/admin/requests', icon: MessageSquare },
+    { title: 'Настройки', text: 'SEO, контакты, видимость', href: '/admin/settings', icon: Settings },
+    { title: 'Отчёты', text: 'Статистика и итоги', href: '/admin/reports', icon: Activity }
+  ] as const;
+
+  const todayFocus = [
+    { label: 'Активные заказы', value: activeOrders.length, href: '/admin/orders' },
+    { label: 'Новые заявки', value: newRequests.length, href: '/admin/requests' },
+    { label: 'Проблемы аудита', value: criticalAudit.length + warnAudit.length, href: '/admin/backup' },
+    { label: 'Товары на витрине', value: visibleProducts, href: '/admin/products' }
+  ];
 
   return (
     <div className="admin-dashboard-clean">
@@ -68,6 +88,53 @@ export default async function AdminPage() {
           <p>Оценка готовности</p>
           <small>{criticalAudit.length} критично · {warnAudit.length} проверить</small>
         </div>
+      </section>
+
+      <section className="admin-clean-workbench">
+        <article className="admin-clean-workbench-card admin-clean-workbench-card--today">
+          <div className="admin-clean-panel-head">
+            <div><p>Оперативно</p><h2>Сегодня в работе</h2></div>
+            <Link href="/admin/launch-test">Запуск</Link>
+          </div>
+          <div className="admin-clean-today-list">
+            {todayFocus.map((item) => (
+              <Link href={item.href} key={item.label}>
+                <span>{item.label}</span>
+                <b>{item.value}</b>
+              </Link>
+            ))}
+          </div>
+        </article>
+
+        <article className="admin-clean-workbench-card">
+          <div className="admin-clean-panel-head">
+            <div><p>Витрина</p><h2>Контент и товары</h2></div>
+            <Link href="/admin/products">Исправить</Link>
+          </div>
+          <div className="admin-clean-health-grid">
+            <div><b>{products.length}</b><span>товаров всего</span></div>
+            <div><b>{withoutPhoto}</b><span>без фото</span></div>
+            <div><b>{withoutPrice}</b><span>без цены</span></div>
+            <div><b>{overview.visibleCategories}</b><span>категорий</span></div>
+          </div>
+        </article>
+
+        <article className="admin-clean-workbench-card">
+          <div className="admin-clean-panel-head">
+            <div><p>Быстрые разделы</p><h2>Управление</h2></div>
+          </div>
+          <div className="admin-clean-mini-links">
+            {fastModules.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link href={item.href} key={item.title}>
+                  <Icon size={17} />
+                  <div><b>{item.title}</b><span>{item.text}</span></div>
+                </Link>
+              );
+            })}
+          </div>
+        </article>
       </section>
 
       <section className="admin-clean-metrics">

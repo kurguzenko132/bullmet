@@ -3,7 +3,7 @@ import { getExportData, toCsv, type ExportType } from '@/lib/adminBackup';
 
 export const dynamic = 'force-dynamic';
 
-const exportTypes: ExportType[] = ['all', 'products', 'orders', 'requests', 'reviews', 'users', 'activity', 'settings', 'categories', 'banners'];
+const exportTypes: ExportType[] = ['all', 'products', 'orders', 'requests', 'reviews', 'users', 'activity', 'settings', 'categories', 'banners', 'pages'];
 
 function safeType(value: string | null): ExportType {
   return exportTypes.includes(value as ExportType) ? value as ExportType : 'all';

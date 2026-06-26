@@ -97,6 +97,9 @@ export function actionLabel(action?: string | null) {
     catalog_categories_update: 'Категории обновлены',
     user_update: 'Пользователь обновлён',
     backup_export: 'Экспорт данных',
+    site_page_create: 'Страница создана',
+    site_page_update: 'Страница обновлена',
+    site_page_delete: 'Страница удалена',
     launch_test_update: 'Боевой тест запуска'
   };
 

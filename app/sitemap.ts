@@ -2,13 +2,15 @@ import type { MetadataRoute } from 'next';
 import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catalogControl';
 import { getCatalogProducts, isPublicClockProduct } from '@/lib/products';
 import { getSiteControlSettings, visibleDirections } from '@/lib/siteControl';
+import { getPublishedSitePages } from '@/lib/sitePages';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bullmet.by';
-  const [site, catalog, products] = await Promise.all([
+  const [site, catalog, products, cmsPages] = await Promise.all([
     getSiteControlSettings(),
     getCatalogControlSettings(),
-    getCatalogProducts()
+    getCatalogProducts(),
+    getPublishedSitePages()
   ]);
 
   if (!site.seo.robotsIndex) return [];
@@ -35,6 +37,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.65
   }));
 
+  const cmsPageUrls = cmsPages.map((page) => ({
+    url: `${siteUrl}/${page.slug}`,
+    lastModified: page.updated_at ? new Date(page.updated_at) : new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6
+  }));
+
   const productPages = products
     .filter(isPublicClockProduct)
     .filter((product) => !catalog.enabled || !visibleCategoryValues.size || visibleCategoryValues.has(product.category || '') || visibleCategoryValues.has(product.clockTheme || ''))
@@ -45,5 +54,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7
     }));
 
-  return [...staticPages, ...categoryPages, ...productPages];
+  return [...staticPages, ...categoryPages, ...cmsPageUrls, ...productPages];
 }

@@ -18,6 +18,7 @@ const exportItems: Array<{ type: ExportType; title: string; description: string;
   { type: 'reviews', title: 'Отзывы', description: 'Отзывы, рейтинги, фото и статусы.', csv: true },
   { type: 'users', title: 'Пользователи', description: 'Профили, роли, телефоны и статусы.', csv: true },
   { type: 'settings', title: 'Настройки сайта', description: 'Главная, SEO, категории, баннеры и общие настройки.', csv: false },
+  { type: 'pages', title: 'CMS-страницы', description: 'Страницы, созданные через супер-админку.', csv: true },
   { type: 'activity', title: 'Журнал действий', description: 'История изменений в админке.', csv: true }
 ];
 
@@ -91,6 +92,7 @@ export function AdminBackupClient({ initialOverview, initialAudit }: Props) {
         <article><b>{overview.reviews}</b><span>отзывов</span></article>
         <article><b>{overview.users}</b><span>пользователей</span></article>
         <article><b>{overview.settings}</b><span>настроек</span></article>
+        <article><b>{overview.pages}</b><span>CMS-страниц</span></article>
       </section>
 
       <section className="admin-backup-main-grid">
