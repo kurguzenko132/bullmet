@@ -31,6 +31,7 @@ function iconForNavItem(id: string, href: string) {
   if (href.startsWith('/cart')) return 'cart' as const;
   if (href.startsWith('/account') || href.startsWith('/login')) return 'user' as const;
   if (href.startsWith('/contacts')) return 'phone' as const;
+  if (href.startsWith('/services')) return 'tools' as const;
   return 'shield' as const;
 }
 
@@ -89,14 +90,23 @@ export function Header() {
 
   const nav = useMemo(() => {
     const fromSettings = siteControl?.navigation
-      ?.filter((item) => item.location === 'header' && item.visible)
+      ?.filter((item) => item.location === 'header' && item.visible && item.href !== '/about')
       .sort((a, b) => a.order - b.order)
-      .map((item) => ({ href: item.href, label: item.label }));
+      .map((item) => ({ href: item.href, label: item.label })) || [];
 
-    return fromSettings?.length ? fromSettings : [
+    const hasServices = fromSettings.some((item) => item.href === '/services');
+    const normalized = hasServices
+      ? fromSettings
+      : [
+          ...fromSettings.filter((item) => item.href !== '/contacts'),
+          { href: '/services', label: 'Услуги' },
+          ...fromSettings.filter((item) => item.href === '/contacts')
+        ];
+
+    return normalized.length ? normalized : [
       { href: '/catalog', label: 'Каталог' },
       { href: '/production', label: 'Производство' },
-      { href: '/about', label: 'О компании' },
+      { href: '/services', label: 'Услуги' },
       { href: '/contacts', label: 'Контакты' }
     ];
   }, [siteControl]);
@@ -106,7 +116,7 @@ export function Header() {
 
   const bottomNav = useMemo(() => {
     const fromSettings = siteControl?.navigation
-      ?.filter((item) => item.location === 'mobile' && item.visible)
+      ?.filter((item) => item.location === 'mobile' && item.visible && item.href !== '/about')
       .sort((a, b) => a.order - b.order)
       .map((item) => {
         const href = item.id === 'profile_mobile' ? accountHref : item.href;
@@ -115,12 +125,21 @@ export function Header() {
           label: item.id === 'profile_mobile' ? (accountEmail ? 'Кабинет' : 'Войти') : item.label,
           icon: iconForNavItem(item.id, href)
         };
-      });
+      }) || [];
 
-    return fromSettings?.length ? fromSettings : [
+    const hasServices = fromSettings.some((item) => item.href === '/services');
+    const normalized = hasServices
+      ? fromSettings
+      : [
+          ...fromSettings.filter((item) => item.href !== '/cart' && item.href !== accountHref),
+          { href: '/services', label: 'Услуги', icon: 'tools' as const },
+          ...fromSettings.filter((item) => item.href === '/cart' || item.href === accountHref)
+        ];
+
+    return normalized.length ? normalized : [
       { href: '/', label: 'Главная', icon: 'factory' as const },
       { href: '/catalog', label: 'Каталог', icon: 'search' as const },
-      { href: '/about', label: 'О нас', icon: 'shield' as const },
+      { href: '/services', label: 'Услуги', icon: 'tools' as const },
       { href: '/cart', label: 'Корзина', icon: 'cart' as const },
       { href: accountHref, label: accountEmail ? 'Кабинет' : 'Войти', icon: 'user' as const }
     ];

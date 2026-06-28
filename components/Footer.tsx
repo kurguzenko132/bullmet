@@ -7,7 +7,7 @@ export async function Footer() {
   const directions = visibleDirections(settings);
   const footerLinks = visibleNavigation(settings, 'footer');
   const companyLinks = [
-    { href: '/about', label: 'О компании' },
+    { href: '/services', label: 'Услуги' },
     { href: '/production', label: 'Производство' },
     { href: '/contacts', label: 'Контакты' }
   ];

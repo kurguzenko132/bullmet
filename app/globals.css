@@ -22057,3 +22057,155 @@ body:not(.admin-body) li {
     background: transparent !important;
   }
 }
+
+
+/* ===== Public navigation and inner page surface fix ===== */
+/*
+  Финальная доводка:
+  - убираем чисто белые блоки на внутренних публичных страницах;
+  - фильтры каталога приводим к тому же мягкому цвету;
+  - админку не трогаем.
+*/
+body:not(.admin-body) {
+  --public-page-bg: #f6f1e9;
+  --public-surface: #f5f3ee;
+  --public-surface-soft: #f1eee8;
+  --public-surface-strong: #ebe7df;
+  --public-border-soft: #ded8cf;
+}
+
+/* Production page: left hero, image note, stats, process, gallery, directions */
+body:not(.admin-body) .production-page--rich,
+body:not(.admin-body) .production-hero-rich,
+body:not(.admin-body) .production-hero-content,
+body:not(.admin-body) .production-hero-note,
+body:not(.admin-body) .production-stats-rich,
+body:not(.admin-body) .production-process-rich,
+body:not(.admin-body) .production-process-grid article,
+body:not(.admin-body) .production-showcase-rich,
+body:not(.admin-body) .production-showcase-gallery article,
+body:not(.admin-body) .production-directions-rich,
+body:not(.admin-body) .production-directions-grid article {
+  background: var(--public-surface) !important;
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Catalog page: filters/sidebar/search/sort/cards */
+body:not(.admin-body) .catalog-page--improved,
+body:not(.admin-body) .catalog-container,
+body:not(.admin-body) .catalog-breadcrumbs,
+body:not(.admin-body) .catalog-toolbar,
+body:not(.admin-body) .catalog-filters,
+body:not(.admin-body) .catalog-filter-panel,
+body:not(.admin-body) .catalog-results-head,
+body:not(.admin-body) .catalog-empty,
+body:not(.admin-body) .catalog-sidebar,
+body:not(.admin-body) .catalog-sort-panel,
+body:not(.admin-body) .catalog-search-panel,
+body:not(.admin-body) .filters-card,
+body:not(.admin-body) .filter-card,
+body:not(.admin-body) .filter-section,
+body:not(.admin-body) .catalog-filter-mobile,
+body:not(.admin-body) aside[class*="filter"],
+body:not(.admin-body) div[class*="filter"],
+body:not(.admin-body) section[class*="filter"] {
+  background: var(--public-surface) !important;
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+body:not(.admin-body) .catalog-card-market,
+body:not(.admin-body) .catalog-card-body-market,
+body:not(.admin-body) .home-catalog-card-market,
+body:not(.admin-body) .product-card-exact {
+  background: var(--public-surface) !important;
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+body:not(.admin-body) .catalog-card-image-market,
+body:not(.admin-body) .product-img-wrap {
+  background: var(--public-surface-soft) !important;
+  background-color: var(--public-surface-soft) !important;
+}
+
+/* About/contact/services pages if opened directly */
+body:not(.admin-body) .about-page--rich,
+body:not(.admin-body) .about-hero-rich,
+body:not(.admin-body) .about-story-rich,
+body:not(.admin-body) .about-values-rich,
+body:not(.admin-body) .about-principles-rich,
+body:not(.admin-body) .about-facts-rich,
+body:not(.admin-body) .about-directions-rich,
+body:not(.admin-body) .about-directions-card,
+body:not(.admin-body) .about-cta-rich,
+body:not(.admin-body) .contacts-page--rich,
+body:not(.admin-body) .contacts-hero-rich,
+body:not(.admin-body) .contacts-hero-card,
+body:not(.admin-body) .contacts-main-rich,
+body:not(.admin-body) .contacts-side-rich,
+body:not(.admin-body) .contacts-form-card-rich,
+body:not(.admin-body) .contacts-cards-rich,
+body:not(.admin-body) .contacts-map-rich,
+body:not(.admin-body) .contacts-help-rich,
+body:not(.admin-body) .contacts-steps-rich,
+body:not(.admin-body) .contacts-cta-rich,
+body:not(.admin-body) .services-page-v2,
+body:not(.admin-body) .services-hero-v2,
+body:not(.admin-body) .services-quick-v2,
+body:not(.admin-body) .services-list-v2,
+body:not(.admin-body) .services-list-v2 article,
+body:not(.admin-body) .services-examples-v2,
+body:not(.admin-body) .services-process-v2,
+body:not(.admin-body) .services-process-grid-v2 article,
+body:not(.admin-body) .services-request-v2 {
+  background: var(--public-surface) !important;
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Product/cart/auth/CMS pages */
+body:not(.admin-body) .product-page-restored,
+body:not(.admin-body) .product-page-restored article,
+body:not(.admin-body) .product-page-restored section,
+body:not(.admin-body) .cart-page-stage2,
+body:not(.admin-body) .cart-page-stage2 article,
+body:not(.admin-body) .cart-page-stage2 section,
+body:not(.admin-body) .order-success-page-stage2,
+body:not(.admin-body) .auth-page,
+body:not(.admin-body) .auth-card,
+body:not(.admin-body) .auth-info,
+body:not(.admin-body) .account-page,
+body:not(.admin-body) .account-page article,
+body:not(.admin-body) .site-page-image-text,
+body:not(.admin-body) .site-page-text,
+body:not(.admin-body) .site-page-cards,
+body:not(.admin-body) .site-page-faq,
+body:not(.admin-body) .site-page-cards article,
+body:not(.admin-body) .site-page-faq details {
+  background: var(--public-surface) !important;
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Inputs remain slightly lighter inside soft gray panels */
+body:not(.admin-body) input,
+body:not(.admin-body) textarea,
+body:not(.admin-body) select {
+  background: #fbfaf7 !important;
+  background-color: #fbfaf7 !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Keep header/footer consistent */
+body:not(.admin-body) .site-header-exact {
+  background: rgba(250, 249, 246, .96) !important;
+  border-bottom-color: var(--public-border-soft) !important;
+}
+
+body:not(.admin-body) .footer-exact {
+  background: var(--public-surface) !important;
+  background-color: var(--public-surface) !important;
+  border-top-color: var(--public-border-soft) !important;
+}

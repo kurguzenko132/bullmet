@@ -81,12 +81,13 @@ export const defaultSiteControl: SiteControlSettings = {
   navigation: [
     { id: 'catalog', label: 'Каталог', href: '/catalog', location: 'header', visible: true, order: 1 },
     { id: 'production', label: 'Производство', href: '/production', location: 'header', visible: true, order: 2 },
-    { id: 'about', label: 'О компании', href: '/about', location: 'header', visible: true, order: 3 },
+    { id: 'services', label: 'Услуги', href: '/services', location: 'header', visible: true, order: 3 },
     { id: 'contacts', label: 'Контакты', href: '/contacts', location: 'header', visible: true, order: 4 },
-    { id: 'services', label: 'Услуги', href: '/services', location: 'header', visible: false, order: 5 },
+    { id: 'about', label: 'О компании', href: '/about', location: 'header', visible: false, order: 5 },
     { id: 'home_mobile', label: 'Главная', href: '/', location: 'mobile', visible: true, order: 1 },
     { id: 'catalog_mobile', label: 'Каталог', href: '/catalog', location: 'mobile', visible: true, order: 2 },
-    { id: 'about_mobile', label: 'О нас', href: '/about', location: 'mobile', visible: true, order: 3 },
+    { id: 'services_mobile', label: 'Услуги', href: '/services', location: 'mobile', visible: true, order: 3 },
+    { id: 'about_mobile', label: 'О нас', href: '/about', location: 'mobile', visible: false, order: 6 },
     { id: 'cart_mobile', label: 'Корзина', href: '/cart', location: 'mobile', visible: true, order: 4 },
     { id: 'profile_mobile', label: 'Профиль', href: '/login', location: 'mobile', visible: true, order: 5 }
   ],
@@ -117,7 +118,20 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
   const incomingNavigation = Array.isArray(incoming.navigation) ? incoming.navigation : [];
   const navigation = defaultSiteControl.navigation.map((item) => {
     const match = incomingNavigation.find((nav: any) => nav?.id === item.id);
-    return { ...item, ...asObject(match) } as SiteNavigationItem;
+    const merged = { ...item, ...asObject(match) } as SiteNavigationItem;
+
+    // Public launch navigation decision:
+    // "О компании" is removed from the visible navigation, while "Услуги" is shown instead.
+    // This also protects the header from older saved Supabase settings.
+    if (merged.href === '/about' || merged.id === 'about' || merged.id === 'about_mobile') {
+      return { ...merged, visible: false };
+    }
+
+    if (merged.href === '/services' || merged.id === 'services' || merged.id === 'services_mobile') {
+      return { ...merged, visible: true, order: merged.location === 'header' ? 3 : 3 };
+    }
+
+    return merged;
   }).sort((a, b) => a.order - b.order);
 
   return { general, contacts, directions, navigation, seo };
