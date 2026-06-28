@@ -21907,3 +21907,73 @@ body:has(.admin-shell-redesign) {
     font-size: 21px !important;
   }
 }
+
+
+/* ===== Clean gray background without extra section panels ===== */
+/* Убираем большие дополнительные фоны секций: остаётся единый спокойный серый фон. */
+.home-shop-final,
+.steps-section-final,
+.production-simple-final,
+.home-final-cta {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.home-shop-final {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.home-shop-final .home-section-title-row,
+.home-shop-final .products-services-final {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.steps-section-final {
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.production-simple-final {
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+/* CTA оставляем белым блоком, как в исходном стиле, но без лишней серой внешней подложки. */
+.home-final-cta {
+  background: #ffffff !important;
+  border: 1px solid #e1ded7 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 12px 28px rgba(35, 38, 40, .06) !important;
+}
+
+/* Шаги остаются карточками, но без общей большой серой коробки вокруг. */
+.steps-grid-final article,
+.work-benefits-final article {
+  background: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(35, 38, 40, .055);
+}
+
+/* Производственные карточки также без большой общей подложки. */
+.production-simple-card {
+  box-shadow: 0 10px 24px rgba(35, 38, 40, .065);
+}
+
+/* Чуть ровнее вертикальные отступы после удаления подложек. */
+.home-shop-final,
+.steps-section-final,
+.production-simple-final,
+.home-final-cta {
+  margin-top: 58px !important;
+}
+
+@media (max-width: 760px) {
+  .home-shop-final,
+  .steps-section-final,
+  .production-simple-final,
+  .home-final-cta {
+    margin-top: 42px !important;
+  }
+}
