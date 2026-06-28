@@ -21773,73 +21773,71 @@ body:has(.admin-shell-redesign) {
 
 
 
-/* ===== Public soft gray surface system ===== */
+
+/* ===== Unified public color system across pages ===== */
 /*
-  Мягкая замена чисто белых публичных блоков.
-  Админку не трогаем: все правила ниже относятся к публичному сайту.
+  Единая цветовая система для всех публичных страниц.
+  Главная, каталог, товар, корзина, контакты, о компании, производство, услуги,
+  авторизация и CMS-страницы теперь используют один мягкий серо-молочный фон.
+  Админка не затрагивается.
 */
 :root {
+  --public-page-bg: #f6f1e9;
   --public-surface: #f5f3ee;
   --public-surface-soft: #f1eee8;
   --public-surface-strong: #ebe7df;
-  --public-border-soft: #ddd8cf;
+  --public-border-soft: #ded8cf;
+  --public-text-main: #1f1f1d;
+  --public-text-muted: #67625b;
 }
 
-/* Базовые публичные поверхности */
+/* Общая публичная база */
+body:not(.admin-body) {
+  background: var(--public-page-bg) !important;
+}
+
+/* Основные публичные страницы получают тот же фон, что и главная */
+.exact-home,
+.home-final-page,
+.catalog-page,
+.catalog-page--improved,
+.product-page-restored,
+.cart-page-stage2,
+.order-success-page-stage2,
+.account-page,
+.auth-page,
+.about-page,
+.about-page--rich,
+.contacts-page,
+.contacts-page--rich,
+.production-page,
+.production-page--rich,
+.services-page-v2,
+.site-page-builder {
+  background: var(--public-page-bg) !important;
+}
+
+/* Header везде одинаковый: светлый, но не стерильно белый */
+.site-header-exact {
+  background: rgba(250, 249, 246, .96) !important;
+  border-bottom-color: var(--public-border-soft) !important;
+}
+
+/* Единый цвет больших секций и карточек */
 .home-final-page .feature-item,
 .home-final-page .production-section,
-.home-final-page .product-card-exact,
+.home-final-page .production-text,
+.home-final-page .production-list,
 .home-final-page .popular-block,
 .home-final-page .service-card-exact,
 .home-final-page .steps-grid article,
 .home-final-page .work-benefits-v2 article,
 .home-final-page .production-simple-card,
 .home-final-page .home-final-cta,
-.home-final-page .category-tile .tile-arrow,
-.home-final-page .small-card,
-.home-final-page .catalog-card-market,
-.home-final-page .home-catalog-card-market {
-  background-color: var(--public-surface) !important;
-  border-color: var(--public-border-soft) !important;
-}
-
-/* Главная: производственный блок без чистого белого */
-.home-final-page .production-text,
-.home-final-page .production-list {
-  background-color: var(--public-surface) !important;
-}
-
-.home-final-page .production-section {
-  box-shadow: 0 16px 36px rgba(34, 37, 39, .055);
-}
-
-.home-final-page .home-final-cta {
-  box-shadow: 0 14px 32px rgba(34, 37, 39, .055);
-}
-
-/* Карточки товара на главной и в каталоге */
 .catalog-card-market,
+.home-catalog-card-market,
 .product-card-exact,
-.home-catalog-card-market {
-  background: var(--public-surface) !important;
-  border-color: var(--public-border-soft) !important;
-}
-
-.catalog-card-body-market,
-.product-card-exact > div,
-.product-info-exact {
-  background-color: var(--public-surface) !important;
-}
-
-.catalog-card-image-market,
-.product-img-wrap {
-  background-color: var(--public-surface-soft) !important;
-}
-
-/* Каталог, фильтры и списки */
-.catalog-page,
-.catalog-main,
-.catalog-content,
+.catalog-container,
 .catalog-toolbar,
 .catalog-filters,
 .catalog-filter-panel,
@@ -21851,13 +21849,7 @@ body:has(.admin-shell-redesign) {
 .catalog-filter-mobile,
 .catalog-sidebar,
 .catalog-sort-panel,
-.catalog-search-panel {
-  background-color: var(--public-surface) !important;
-  border-color: var(--public-border-soft) !important;
-}
-
-/* Карточка товара */
-.product-page,
+.catalog-search-panel,
 .product-shell,
 .product-main-card,
 .product-gallery,
@@ -21873,71 +21865,60 @@ body:has(.admin-shell-redesign) {
 .product-accordion,
 .review-card,
 .review-form,
-.review-form-card {
-  background-color: var(--public-surface) !important;
-  border-color: var(--public-border-soft) !important;
-}
-
-/* Корзина, оформление, личный кабинет */
-.cart-page,
+.review-form-card,
+.cart-page-hero-stage2,
 .cart-card,
 .cart-summary,
 .cart-item,
-.checkout-page,
 .checkout-card,
 .checkout-summary,
 .checkout-form,
 .order-success-card,
-.account-page,
 .account-card,
 .account-panel,
 .favorite-card,
 .profile-card,
 .auth-card,
-.login-card,
-.register-card {
-  background-color: var(--public-surface) !important;
-  border-color: var(--public-border-soft) !important;
-}
-
-/* Страницы компании, производства, контактов, услуг */
-.about-card,
-.about-section,
-.production-card,
-.production-panel,
-.service-card,
-.services-card,
-.contacts-card,
-.contacts-panel,
-.contact-form-card,
-.info-card,
-.page-card,
-.page-section-card {
-  background-color: var(--public-surface) !important;
-  border-color: var(--public-border-soft) !important;
-}
-
-/* CMS-страницы, созданные через супер-админку */
+.auth-info,
+.about-hero-rich,
+.about-story-rich,
+.about-values-rich,
+.about-principles-rich,
+.about-facts-rich,
+.about-directions-rich,
+.about-directions-card,
+.about-cta-rich,
+.contacts-hero-rich,
+.contacts-hero-card,
+.contacts-main-rich,
+.contacts-side-rich,
+.contacts-form-card-rich,
+.contacts-cards-rich,
+.contacts-map-rich,
+.contacts-help-rich,
+.contacts-steps-rich,
+.contacts-cta-rich,
+.production-hero-rich,
+.production-hero-note,
+.production-stats-rich,
+.production-process-rich,
+.production-showcase-rich,
+.production-directions-rich,
+.services-hero-v2,
+.services-quick-v2,
+.services-list-v2,
+.services-examples-v2,
+.services-process-v2,
+.services-request-v2,
 .site-page-image-text,
 .site-page-text,
 .site-page-cards,
 .site-page-faq,
 .site-page-cards article,
-.site-page-faq details {
-  background-color: var(--public-surface) !important;
-  border-color: var(--public-border-soft) !important;
-}
-
-.site-page-cards,
-.site-page-faq {
-  background-color: var(--public-surface-soft) !important;
-}
-
-/* Поиск и модальные публичные карточки */
+.site-page-faq details,
 .site-search-card,
 .site-search-card--polished,
 .site-search-results a,
-.quick-order-modal,
 .quick-order-card,
 .modal-card,
 .drawer-card {
@@ -21945,27 +21926,97 @@ body:has(.admin-shell-redesign) {
   border-color: var(--public-border-soft) !important;
 }
 
-/* Формы и поля оставляем чуть светлее, чтобы они читались внутри серых блоков */
+/* Внутренние фото/медиа-зоны чуть отличаются от карточек */
+.catalog-card-image-market,
+.product-img-wrap,
+.product-gallery,
+.product-main-card .product-media,
+.about-hero-photo,
+.production-hero-media,
+.services-hero-media-v2,
+.service-image-v2,
+.site-page-cards,
+.site-page-faq {
+  background-color: var(--public-surface-soft) !important;
+}
+
+/* Главная: не делаем дополнительные большие подложки, только единый фон */
+.home-shop-final,
+.steps-section-final,
+.production-simple-final {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.home-shop-final {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.home-shop-final .home-section-title-row,
+.home-shop-final .products-services-final {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* CTA на главной и на внутренних страницах в том же стиле */
+.home-final-cta,
+.about-cta-rich,
+.contacts-cta-rich,
+.services-request-v2 {
+  background-color: var(--public-surface) !important;
+  border: 1px solid var(--public-border-soft) !important;
+  box-shadow: 0 14px 32px rgba(34, 37, 39, .055) !important;
+}
+
+/* Карточки и блоки получают одинаковую мягкую тень */
+.catalog-card-market,
+.home-catalog-card-market,
+.product-card-exact,
+.home-final-page .production-section,
+.home-final-page .steps-grid article,
+.home-final-page .work-benefits-v2 article,
+.home-final-page .production-simple-card,
+.product-buy-card,
+.product-description-card,
+.cart-card,
+.cart-summary,
+.auth-card,
+.about-hero-rich,
+.contacts-hero-rich,
+.production-hero-rich,
+.services-hero-v2,
+.site-page-image-text,
+.site-page-text,
+.site-page-cards,
+.site-page-faq {
+  box-shadow: 0 12px 30px rgba(34, 37, 39, .055) !important;
+}
+
+/* Поля внутри серых блоков должны быть чуть светлее */
 body:not(.admin-body) input,
 body:not(.admin-body) textarea,
 body:not(.admin-body) select {
-  background-color: #fbfaf7;
+  background-color: #fbfaf7 !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Текстовая система на всех страницах */
+body:not(.admin-body) h1,
+body:not(.admin-body) h2,
+body:not(.admin-body) h3,
+body:not(.admin-body) h4 {
+  color: var(--public-text-main);
+}
+
+body:not(.admin-body) p,
+body:not(.admin-body) span,
+body:not(.admin-body) li {
   border-color: var(--public-border-soft);
 }
 
-/* Header оставляем почти белым, но убираем стерильный белый */
-.site-header-exact {
-  background: rgba(250, 249, 246, .96) !important;
-  border-bottom-color: var(--public-border-soft) !important;
-}
-
-/* Footer: мягкий светлый фон вместо чистого белого */
-.footer-exact {
-  background-color: var(--public-surface) !important;
-  border-top-color: var(--public-border-soft) !important;
-}
-
-/* Маленькие белые кнопки/подложки */
+/* Кнопки-обводки и маленькие элементы */
 .btn-outline,
 .home-section-title-row > a,
 .production-simple-link,
@@ -21974,30 +22025,35 @@ body:not(.admin-body) select {
 .quantity-control,
 .size-chip,
 .color-chip,
-.tab-button {
+.tab-button,
+.about-hero-actions a,
+.contacts-hero-actions a,
+.production-hero-actions a,
+.services-hero-actions-v2 a {
   border-color: var(--public-border-soft) !important;
 }
 
-/* Для блоков, где текст должен остаться контрастным */
-.home-final-page h1,
-.home-final-page h2,
-.home-final-page h3,
-.home-final-page h4,
-.catalog-card-market h3,
-.product-card-exact h3,
-.site-page-builder h1,
-.site-page-builder h2,
-.site-page-builder h3 {
-  color: #1f1f1d;
+/* Footer тоже в едином мягком фоне */
+.footer-exact {
+  background-color: var(--public-surface) !important;
+  border-top-color: var(--public-border-soft) !important;
 }
 
+/* Нижняя мобильная навигация */
+.mobile-bottom-nav {
+  background-color: rgba(250, 249, 246, .98) !important;
+  border-top-color: var(--public-border-soft) !important;
+}
+
+/* Мобильная версия: сохраняем единый цвет */
 @media (max-width: 760px) {
   .site-header-exact {
     background: rgba(250, 249, 246, .98) !important;
   }
 
-  .mobile-bottom-nav {
-    background-color: var(--public-surface) !important;
-    border-top-color: var(--public-border-soft) !important;
+  .home-shop-final,
+  .steps-section-final,
+  .production-simple-final {
+    background: transparent !important;
   }
 }
