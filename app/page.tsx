@@ -66,6 +66,18 @@ export default async function HomePage() {
           </section>
         )}
 
+        <section className="home-container home-graphite-identity" aria-label="Отличия Bullmet">
+          <div>
+            <p className="eyebrow">новый визуальный акцент</p>
+            <h2>Графитовый металл, тёплое дерево и оранжевый знак производства</h2>
+          </div>
+          <div className="home-graphite-identity-grid">
+            <article><b>01</b><span>Не магазин инструмента</span><p>Фокус на изделиях собственного производства и настенных часах.</p></article>
+            <article><b>02</b><span>Графитовый фон</span><p>Более тёмная серо-металлическая основа отличает Bullmet от похожих сайтов.</p></article>
+            <article><b>03</b><span>Оранжевый остаётся</span><p>Акцент используется точечно: кнопки, линии, иконки и важные действия.</p></article>
+          </div>
+        </section>
+
         <HomePromoBanners placement="home_top" />
 
         {home.directionsSection.enabled && !!categories.length && (
