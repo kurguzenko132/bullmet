@@ -21771,3 +21771,233 @@ body:has(.admin-shell-redesign) {
 }
 
 
+
+
+/* ===== Public soft gray surface system ===== */
+/*
+  Мягкая замена чисто белых публичных блоков.
+  Админку не трогаем: все правила ниже относятся к публичному сайту.
+*/
+:root {
+  --public-surface: #f5f3ee;
+  --public-surface-soft: #f1eee8;
+  --public-surface-strong: #ebe7df;
+  --public-border-soft: #ddd8cf;
+}
+
+/* Базовые публичные поверхности */
+.home-final-page .feature-item,
+.home-final-page .production-section,
+.home-final-page .product-card-exact,
+.home-final-page .popular-block,
+.home-final-page .service-card-exact,
+.home-final-page .steps-grid article,
+.home-final-page .work-benefits-v2 article,
+.home-final-page .production-simple-card,
+.home-final-page .home-final-cta,
+.home-final-page .category-tile .tile-arrow,
+.home-final-page .small-card,
+.home-final-page .catalog-card-market,
+.home-final-page .home-catalog-card-market {
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Главная: производственный блок без чистого белого */
+.home-final-page .production-text,
+.home-final-page .production-list {
+  background-color: var(--public-surface) !important;
+}
+
+.home-final-page .production-section {
+  box-shadow: 0 16px 36px rgba(34, 37, 39, .055);
+}
+
+.home-final-page .home-final-cta {
+  box-shadow: 0 14px 32px rgba(34, 37, 39, .055);
+}
+
+/* Карточки товара на главной и в каталоге */
+.catalog-card-market,
+.product-card-exact,
+.home-catalog-card-market {
+  background: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+.catalog-card-body-market,
+.product-card-exact > div,
+.product-info-exact {
+  background-color: var(--public-surface) !important;
+}
+
+.catalog-card-image-market,
+.product-img-wrap {
+  background-color: var(--public-surface-soft) !important;
+}
+
+/* Каталог, фильтры и списки */
+.catalog-page,
+.catalog-main,
+.catalog-content,
+.catalog-toolbar,
+.catalog-filters,
+.catalog-filter-panel,
+.catalog-results-head,
+.catalog-empty,
+.filters-card,
+.filter-card,
+.filter-section,
+.catalog-filter-mobile,
+.catalog-sidebar,
+.catalog-sort-panel,
+.catalog-search-panel {
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Карточка товара */
+.product-page,
+.product-shell,
+.product-main-card,
+.product-gallery,
+.product-info,
+.product-buy-card,
+.product-description-card,
+.product-reviews-card,
+.product-specs-card,
+.product-delivery-card,
+.product-related-card,
+.product-sticky-buy,
+.product-option,
+.product-accordion,
+.review-card,
+.review-form,
+.review-form-card {
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Корзина, оформление, личный кабинет */
+.cart-page,
+.cart-card,
+.cart-summary,
+.cart-item,
+.checkout-page,
+.checkout-card,
+.checkout-summary,
+.checkout-form,
+.order-success-card,
+.account-page,
+.account-card,
+.account-panel,
+.favorite-card,
+.profile-card,
+.auth-card,
+.login-card,
+.register-card {
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Страницы компании, производства, контактов, услуг */
+.about-card,
+.about-section,
+.production-card,
+.production-panel,
+.service-card,
+.services-card,
+.contacts-card,
+.contacts-panel,
+.contact-form-card,
+.info-card,
+.page-card,
+.page-section-card {
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* CMS-страницы, созданные через супер-админку */
+.site-page-image-text,
+.site-page-text,
+.site-page-cards,
+.site-page-faq,
+.site-page-cards article,
+.site-page-faq details {
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+.site-page-cards,
+.site-page-faq {
+  background-color: var(--public-surface-soft) !important;
+}
+
+/* Поиск и модальные публичные карточки */
+.site-search-card,
+.site-search-card--polished,
+.site-search-results a,
+.quick-order-modal,
+.quick-order-card,
+.modal-card,
+.drawer-card {
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Формы и поля оставляем чуть светлее, чтобы они читались внутри серых блоков */
+body:not(.admin-body) input,
+body:not(.admin-body) textarea,
+body:not(.admin-body) select {
+  background-color: #fbfaf7;
+  border-color: var(--public-border-soft);
+}
+
+/* Header оставляем почти белым, но убираем стерильный белый */
+.site-header-exact {
+  background: rgba(250, 249, 246, .96) !important;
+  border-bottom-color: var(--public-border-soft) !important;
+}
+
+/* Footer: мягкий светлый фон вместо чистого белого */
+.footer-exact {
+  background-color: var(--public-surface) !important;
+  border-top-color: var(--public-border-soft) !important;
+}
+
+/* Маленькие белые кнопки/подложки */
+.btn-outline,
+.home-section-title-row > a,
+.production-simple-link,
+.catalog-card-bottom-market button,
+.product-action-button,
+.quantity-control,
+.size-chip,
+.color-chip,
+.tab-button {
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Для блоков, где текст должен остаться контрастным */
+.home-final-page h1,
+.home-final-page h2,
+.home-final-page h3,
+.home-final-page h4,
+.catalog-card-market h3,
+.product-card-exact h3,
+.site-page-builder h1,
+.site-page-builder h2,
+.site-page-builder h3 {
+  color: #1f1f1d;
+}
+
+@media (max-width: 760px) {
+  .site-header-exact {
+    background: rgba(250, 249, 246, .98) !important;
+  }
+
+  .mobile-bottom-nav {
+    background-color: var(--public-surface) !important;
+    border-top-color: var(--public-border-soft) !important;
+  }
+}
