@@ -66,6 +66,41 @@ function normalizeImages(product: CatalogProduct) {
     });
 }
 
+
+function productSpecRows(product: CatalogProduct) {
+  const rows: Array<[string, string]> = [];
+
+  if (product.material) rows.push(['Материал', product.material]);
+  if (product.sizes?.length) rows.push(['Размеры', product.sizes.join(', ')]);
+  if (product.category) rows.push(['Категория', product.category]);
+  if (product.clockTheme) rows.push(['Тематика', product.clockTheme]);
+
+  (product.specs || []).forEach((raw, index) => {
+    const spec = String(raw || '').trim();
+    if (!spec) return;
+
+    const separator = spec.includes(':') ? ':' : spec.includes('—') ? '—' : '';
+    if (separator) {
+      const [name, ...rest] = spec.split(separator);
+      const value = rest.join(separator).trim();
+      if (name.trim() && value) {
+        rows.push([name.trim(), value]);
+        return;
+      }
+    }
+
+    rows.push([`Характеристика ${index + 1}`, spec]);
+  });
+
+  const seen = new Set<string>();
+  return rows.filter(([name, value]) => {
+    const key = `${name.toLowerCase()}-${value.toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function ProductDetailsClient({ product, related, colorVariants }: { product: CatalogProduct; related: CatalogProduct[]; colorVariants: CatalogProduct[] }) {
   const images = useMemo(() => normalizeImages(product), [product]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -101,6 +136,8 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       return (a.colorName || a.title).localeCompare(b.colorName || b.title, 'ru');
     });
   }, [colorVariants, product.slug]);
+
+  const specRows = useMemo(() => productSpecRows(product), [product]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -392,11 +429,19 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               )}
             </div>
 
-            <article className="product-about-under-photo">
+            <article className="product-about-under-photo product-about-under-photo--market">
               <p className="product-section-eyebrow">О товаре</p>
               <h2>{product.title}</h2>
-              <p>{product.description}</p>
-              <p>Изготовление выполняется на собственном производстве Bullmet. Размер, цвет, материал и оформление можно адаптировать под ваш проект.</p>
+              <p>{product.description || product.short || 'Настенные часы Bullmet собственного производства.'}</p>
+
+              <div className="product-about-specs-market" aria-label="Характеристики товара">
+                {specRows.map(([name, value]) => (
+                  <div key={`${name}-${value}`}>
+                    <span>{name}</span>
+                    <b>{value}</b>
+                  </div>
+                ))}
+              </div>
             </article>
           </div>
 
@@ -489,47 +534,13 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             <div className="product-actions-row">
               <button className="button-main" type="button" onClick={handleAddToCart}>В корзину</button>
               <button className="button-secondary" type="button" onClick={() => setQuickOrderOpen(true)}>Купить в 1 клик</button>
-              <Link className="button-outline-wide" href={`/contacts?product=${product.slug}`}>Заказать похожее</Link>
             </div>
 
             {cartMessage && <div className="product-cart-message">{cartMessage}</div>}
-
-            <ul className="product-specs-list">
-              {product.specs.slice(0, 5).map((spec, index) => <li key={`${spec}-${index}`}><span>✓</span>{spec}</li>)}
-            </ul>
           </aside>
         </div>
       </section>
-
-      <section className="product-service-strip-fixed">
-        <ServiceItem icon="factory" title="Собственное производство" text="Изготавливаем изделия сами и контролируем каждый этап" />
-        <ServiceItem icon="tools" title="Индивидуальные размеры" text="Подстроим изделие под ваш проект, интерьер или участок" />
-        <ServiceItem icon="shield" title="Гарантия качества" text="Проверяем металл, покрытие, крепления и сборку" />
-        <ServiceItem icon="truck" title="Доставка по Беларуси" text="Самовывоз или доставка в удобное для вас время" />
-      </section>
-
-      <section className="product-content-section">
-        <article className="product-content-card">
-          <p className="product-section-eyebrow">Характеристики</p>
-          <h2>Основные параметры</h2>
-          <div className="product-spec-table product-spec-table--simple">
-            {product.specs.map((spec, index) => <div key={`${spec}-${index}`}><b>Параметр {index + 1}</b><span>{spec}</span></div>)}
-            <div><b>Категория</b><span>{product.category || 'Каталог'}</span></div>
-            <div><b>Материал</b><span>{product.material}</span></div>
-            <div><b>Размеры</b><span>{product.sizes.join(', ') || 'Под заказ'}</span></div>
-          </div>
-        </article>
-
-        <article className="product-content-card">
-          <p className="product-section-eyebrow">Доставка и оплата</p>
-          <h2>Как получить заказ</h2>
-          <div className="delivery-list-simple">
-            <div><b>1. Уточняем детали</b><span>Согласовываем размер, материал, цвет, комплектацию и сроки.</span></div>
-            <div><b>2. Изготавливаем</b><span>Запускаем изделие в работу на собственном производстве.</span></div>
-            <div><b>3. Передаем заказ</b><span>Самовывоз или доставка по Беларуси в удобное время.</span></div>
-          </div>
-        </article>
-
+      <section className="product-content-section product-content-section--reviews-only">
         <article className="product-content-card product-content-card--wide product-reviews-redesign">
           <div className="product-reviews-head product-reviews-head--redesign">
             <div>
@@ -694,6 +705,3 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   );
 }
 
-function ServiceItem({ icon, title, text }: { icon: 'factory' | 'tools' | 'shield' | 'truck'; title: string; text: string }) {
-  return <div><Icon name={icon} /><b>{title}</b><span>{text}</span></div>;
-}

@@ -220,9 +220,9 @@ export const defaultHomepageControl: HomeControlSettings = {
   gallerySection: {
     enabled: true,
     eyebrow: 'производство и детали',
-    title: 'Как выглядят изделия Bullmet',
-    buttonLabel: 'О компании',
-    buttonHref: '/about'
+    title: 'Изделия и детали Bullmet',
+    buttonLabel: 'Производство',
+    buttonHref: '/production'
   },
   gallery: [
     { id: 'ready-clocks', src: '/mockup/gallery-4.jpg', title: 'Готовые часы', note: 'Настенные часы из металла с элементами дерева', visible: true, order: 1 },
@@ -234,7 +234,7 @@ export const defaultHomepageControl: HomeControlSettings = {
     enabled: true,
     eyebrow: 'готовы выбрать часы?',
     title: 'Откройте каталог настенных часов',
-    text: 'Выберите модель, добавьте товар в корзину или свяжитесь с нами для уточнения деталей.',
+    text: 'Выберите модель в каталоге, добавьте товар в корзину или свяжитесь с нами для уточнения деталей.',
     primaryLabel: 'Перейти в каталог',
     primaryHref: '/catalog',
     secondaryLabel: 'Связаться',

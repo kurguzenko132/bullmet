@@ -5,7 +5,10 @@ import { Icon } from './Icon';
 export async function Footer() {
   const settings = await getSiteControlSettings();
   const directions = visibleDirections(settings);
-  const footerLinks = visibleNavigation(settings, 'footer');
+  const rawFooterLinks = visibleNavigation(settings, 'footer').filter((item) => item.href !== '/about');
+  const footerLinks = rawFooterLinks.some((item) => item.href === '/services')
+    ? rawFooterLinks
+    : [{ href: '/services', label: 'Услуги' }, ...rawFooterLinks];
   const companyLinks = [
     { href: '/services', label: 'Услуги' },
     { href: '/production', label: 'Производство' },
@@ -20,7 +23,7 @@ export async function Footer() {
             <img src="/logo-shield-check.svg" alt="" className="brand-mark" />
             <span className="brand-text"><b>{settings.general.logoText}</b><small>{settings.general.tagline}</small></span>
           </Link>
-          <p>{settings.general.positioning} Bullmet.<br/>Публичные направления можно включать в админке по мере готовности.</p>
+          <p>Настенные часы и изделия из металла с элементами дерева собственного производства Bullmet.</p>
           <div className="socials"><span><Icon name="instagram" /></span><span><Icon name="telegram" /></span><span><Icon name="mail" /></span></div>
         </div>
         <div>
@@ -31,7 +34,7 @@ export async function Footer() {
           <Link href="/cart">Корзина</Link>
         </div>
         <div>
-          <h4>КОМПАНИЯ</h4>
+          <h4>ИНФОРМАЦИЯ</h4>
           {(footerLinks.length ? footerLinks : companyLinks).slice(0, 6).map((item) => (
             <Link href={item.href} key={`${item.href}-${item.label}`}>{item.label}</Link>
           ))}

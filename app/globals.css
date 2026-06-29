@@ -22259,3 +22259,317 @@ body:not(.admin-body) .footer-exact {
 .services-request-v2 {
   display: none !important;
 }
+
+
+/* ===== Public production cleanup after full UI audit ===== */
+/*
+  Правки по полному визуальному аудиту:
+  - убраны клиенту невидимые/служебные формулировки;
+  - "О компании" не показывается как кнопка/переход;
+  - кнопки CTA крупнее;
+  - шапка/футер и блоки без стерильного белого;
+  - фильтр каталога и внутренние блоки в единой мягкой поверхности;
+  - карточка товара ближе к WB/Ozon: галерея слева, покупка справа, характеристики внутри "О товаре".
+*/
+body:not(.admin-body) {
+  --public-page-bg: #f6f1e9;
+  --public-surface: #f5f3ee;
+  --public-surface-soft: #f1eee8;
+  --public-surface-strong: #ebe7df;
+  --public-border-soft: #ded8cf;
+}
+
+/* Header/footer brand tagline readable */
+.site-header-exact .brand-text small {
+  font-size: 9px !important;
+  letter-spacing: .055em !important;
+  color: #54504a !important;
+}
+
+.footer-exact .brand-text small {
+  font-size: 10px !important;
+  letter-spacing: .055em !important;
+  color: #54504a !important;
+}
+
+/* CTA buttons should not look tiny */
+.home-final-cta-actions a,
+.home-final-cta .btn-orange,
+.home-final-cta .btn-outline,
+.production-hero-actions a,
+.services-hero-actions-v2 a,
+.about-hero-actions a,
+.contacts-hero-actions a,
+.hero-actions .btn-orange {
+  min-width: 210px !important;
+  min-height: 58px !important;
+  padding: 0 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  letter-spacing: .04em !important;
+}
+
+/* Hide old about links if old settings still return them */
+body:not(.admin-body) a[href="/about"].production-simple-link,
+body:not(.admin-body) .nav-exact a[href="/about"],
+body:not(.admin-body) .mobile-bottom-nav a[href="/about"],
+body:not(.admin-body) .footer-exact a[href="/about"] {
+  display: none !important;
+}
+
+/* Footer production copy and surfaces */
+.footer-exact,
+.footer-grid-exact,
+.footer-exact > div {
+  background: var(--public-surface) !important;
+}
+
+/* Catalog filter exact classes */
+.catalog-filter-market,
+.catalog-filter-market-head,
+.catalog-filter-market-section,
+.catalog-main-groups-market button,
+.catalog-category-pills-market button,
+.catalog-price-inputs-market input,
+.catalog-price-presets-market button,
+.catalog-radio-list-market button,
+.catalog-toolbar-market,
+.catalog-search-market,
+.catalog-results-row-market,
+.catalog-active-chips-market button,
+.catalog-mobile-filter-trigger button {
+  background-color: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+.catalog-main-groups-market button.is-active,
+.catalog-category-pills-market button.is-active,
+.catalog-price-presets-market button.is-active,
+.catalog-radio-list-market button.is-active {
+  background-color: #fff4eb !important;
+  border-color: var(--orange) !important;
+}
+
+/* Product page marketplace-like layout */
+.product-page-restored {
+  background: var(--public-page-bg) !important;
+}
+
+.product-detail-layout {
+  grid-template-columns: minmax(0, 1.05fr) minmax(420px, .82fr) !important;
+  gap: 32px !important;
+}
+
+.product-gallery-panel {
+  grid-template-columns: 92px minmax(0, 1fr) !important;
+  gap: 16px !important;
+  align-items: start !important;
+}
+
+.product-thumbs {
+  max-height: 650px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 4px !important;
+  scrollbar-width: thin;
+}
+
+.product-thumbs button {
+  width: 88px !important;
+  height: 88px !important;
+  background: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+.product-main-photo {
+  min-height: 650px !important;
+  height: 650px !important;
+  background: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+.product-main-photo > img {
+  min-height: 0 !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  background: var(--public-surface) !important;
+}
+
+.product-info-panel {
+  position: sticky !important;
+  top: 92px !important;
+  background: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+  padding: 28px !important;
+  box-shadow: 0 18px 42px rgba(34,37,39,.065) !important;
+}
+
+.product-info-panel h1 {
+  font-size: clamp(32px, 3.4vw, 50px) !important;
+}
+
+.favorite-circle,
+.color-variants a,
+.size-options button,
+.qty-control,
+.material-pill,
+.product-actions-row .button-secondary,
+.product-actions-row .button-outline-wide {
+  background: #fbfaf7 !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+.product-actions-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+
+.product-actions-row button,
+.product-actions-row a {
+  min-height: 58px !important;
+  font-size: 16px !important;
+}
+
+.product-description-full {
+  display: none !important;
+}
+
+/* "О товаре" now contains description + WB/Ozon-like characteristics */
+.product-about-under-photo--market {
+  grid-column: 1 / -1;
+  margin-top: 22px;
+  background: var(--public-surface) !important;
+  border: 1px solid var(--public-border-soft) !important;
+  padding: 32px 36px !important;
+  box-shadow: 0 12px 30px rgba(34,37,39,.045);
+}
+
+.product-about-under-photo--market h2 {
+  margin-bottom: 12px !important;
+}
+
+.product-about-specs-market {
+  display: grid;
+  gap: 0;
+  margin-top: 26px;
+  border-top: 1px solid var(--public-border-soft);
+}
+
+.product-about-specs-market div {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: minmax(190px, .34fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  border-bottom: 1px solid var(--public-border-soft);
+}
+
+.product-about-specs-market span {
+  color: #8a8177;
+  font-size: 15px;
+}
+
+.product-about-specs-market b {
+  color: #2b2926;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* Removed non-needed delivery/payment and service strip blocks */
+.product-service-strip-fixed,
+.delivery-list-simple {
+  display: none !important;
+}
+
+.product-content-section--reviews-only {
+  grid-template-columns: 1fr !important;
+}
+
+/* Production page client-safe copy layout */
+.production-page--clean .production-hero-note,
+.production-page--clean .production-stats-rich {
+  display: none !important;
+}
+
+.production-page--clean .production-hero-content,
+.production-page--clean .production-hero-rich,
+.production-page--clean .production-directions-rich,
+.production-page--clean .production-showcase-rich,
+.production-page--clean .production-process-rich,
+.production-page--clean .production-directions-grid article,
+.production-page--clean .production-process-grid article,
+.production-page--clean .production-showcase-gallery a {
+  background: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+/* Remove accidental white empty production grid cell look */
+.production-page--clean .production-process-grid {
+  background: transparent !important;
+  border: 1px solid var(--public-border-soft) !important;
+}
+
+/* Public "approach"/old internal text blocks are not needed */
+.production-page--clean .production-showcase-clean {
+  margin-top: 34px !important;
+}
+
+/* Unified surfaces for all public cards */
+body:not(.admin-body) .product-content-card,
+body:not(.admin-body) .review-form,
+body:not(.admin-body) .review-card,
+body:not(.admin-body) .related-card,
+body:not(.admin-body) .quick-order-card,
+body:not(.admin-body) .site-search-card,
+body:not(.admin-body) .cart-card,
+body:not(.admin-body) .cart-summary,
+body:not(.admin-body) .auth-card,
+body:not(.admin-body) .contacts-form-card-rich,
+body:not(.admin-body) .contacts-hero-card,
+body:not(.admin-body) .services-launch-notice-v2 {
+  background: var(--public-surface) !important;
+  border-color: var(--public-border-soft) !important;
+}
+
+@media (max-width: 1180px) {
+  .product-detail-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .product-info-panel {
+    position: static !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .product-gallery-panel {
+    grid-template-columns: 1fr !important;
+  }
+
+  .product-thumbs {
+    order: 2;
+    max-height: none !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+
+  .product-main-photo {
+    height: 420px !important;
+    min-height: 420px !important;
+  }
+
+  .product-about-specs-market div {
+    grid-template-columns: 1fr !important;
+    gap: 6px;
+    padding: 14px 0;
+  }
+
+  .product-actions-row {
+    grid-template-columns: 1fr !important;
+  }
+}

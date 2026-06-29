@@ -11,6 +11,14 @@ function Lines({ value }: { value: string }) {
   return <>{value.split('\n').map((line) => <span key={line}>{line}</span>)}</>;
 }
 
+function cleanPublicText(value: string) {
+  return String(value || '')
+    .replace('Публичные направления можно включать в админке по мере готовности.', '')
+    .replace('Основной запуск — настенные часы. Остальные направления подготовлены и будут включаться по мере готовности.', 'Основной акцент — настенные часы. Другие направления представлены как возможности производства Bullmet.')
+    .replace('Клиент выбирает модель, мы уточняем детали и передаём готовые часы удобным способом.', '')
+    .trim();
+}
+
 function isClockProduct(product: Awaited<ReturnType<typeof getCatalogProducts>>[number]) {
   return [product.title, product.category, product.clockTheme, product.slug]
     .join(' ')
@@ -74,7 +82,7 @@ export default async function HomePage() {
               <div>
                 <p className="eyebrow">{home.directionsSection.eyebrow}</p>
                 <h2>{home.directionsSection.title}</h2>
-                <span>{home.directionsSection.text}</span>
+                <span>{cleanPublicText(home.directionsSection.text)}</span>
               </div>
               <Link href={home.directionsSection.buttonHref}>{home.directionsSection.buttonLabel}</Link>
             </div>
@@ -97,7 +105,7 @@ export default async function HomePage() {
               <div>
                 <p className="eyebrow">{home.productsSection.eyebrow}</p>
                 <h2>{home.productsSection.title}</h2>
-                <span>{home.productsSection.text}</span>
+                <span>{cleanPublicText(home.productsSection.text)}</span>
               </div>
               <Link href={home.productsSection.buttonHref}>{home.productsSection.buttonLabel}</Link>
             </div>
@@ -115,7 +123,7 @@ export default async function HomePage() {
             <div className="production-text">
               <p className="eyebrow">{home.productionSection.eyebrow}</p>
               <h2>{home.productionSection.title}</h2>
-              <p className="body-text">{home.productionSection.text}</p>
+              <p className="body-text">{cleanPublicText(home.productionSection.text)}</p>
               <Link href={home.productionSection.buttonHref} className="small-orange">{home.productionSection.buttonLabel}</Link>
             </div>
             <div className="production-image"><img src={home.productionSection.image} alt={home.productionSection.title} /></div>
@@ -132,7 +140,7 @@ export default async function HomePage() {
             <div className="steps-head-v2">
               <p>{home.stepsSection.eyebrow}</p>
               <h3>{home.stepsSection.title}</h3>
-              <span>{home.stepsSection.text}</span>
+              <span>{cleanPublicText(home.stepsSection.text)}</span>
             </div>
 
             <div className="steps-grid steps-grid-v2 steps-grid-final">
@@ -170,7 +178,11 @@ export default async function HomePage() {
                 <p className="eyebrow">{home.gallerySection.eyebrow}</p>
                 <h3>{home.gallerySection.title}</h3>
               </div>
-              <Link href={home.gallerySection.buttonHref} className="production-simple-link">{home.gallerySection.buttonLabel}</Link>
+              {home.gallerySection.buttonHref !== '/about' && home.gallerySection.buttonLabel !== 'О компании' ? (
+                <Link href={home.gallerySection.buttonHref} className="production-simple-link">{home.gallerySection.buttonLabel}</Link>
+              ) : (
+                <Link href="/production" className="production-simple-link">Производство</Link>
+              )}
             </div>
 
             <div className="production-simple-grid">
@@ -192,7 +204,7 @@ export default async function HomePage() {
             <div>
               <p className="eyebrow">{home.cta.eyebrow}</p>
               <h2>{home.cta.title}</h2>
-              <span>{home.cta.text}</span>
+              <span>{cleanPublicText(home.cta.text)}</span>
             </div>
             <div className="home-final-cta-actions">
               <Link href={home.cta.primaryHref} className="btn-orange">{home.cta.primaryLabel}</Link>

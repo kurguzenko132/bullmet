@@ -5,22 +5,15 @@ import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
 
 export const metadata = {
-  title: 'Производство Bullmet — настенные часы из металла с элементами дерева',
-  description: 'Собственное производство Bullmet в Беларуси. Первый публичный запуск — настенные часы из металла с элементами дерева.'
+  title: 'Производство Bullmet — настенные часы и изделия из металла',
+  description: 'Собственное производство Bullmet. Настенные часы из металла с элементами дерева, аккуратная обработка и контроль качества.'
 };
-
-const stats = [
-  ['BY', 'производство в Беларуси'],
-  ['2017', 'опыт производства'],
-  ['100%', 'контроль качества'],
-  ['часы', 'первый публичный запуск']
-];
 
 const directions = [
   {
     icon: 'clock',
     title: 'Настенные часы',
-    text: 'Сейчас публичный каталог Bullmet сфокусирован на настенных часах из металла с элементами дерева.'
+    text: 'Металлические часы с элементами дерева для дома, офиса, кафе и подарка.'
   },
   {
     icon: 'materials',
@@ -29,49 +22,56 @@ const directions = [
   },
   {
     icon: 'tools',
-    title: 'Подбор размера и оформления',
-    text: 'Можно уточнить размер, цвет и оформление модели перед оформлением заказа.'
+    title: 'Индивидуальные детали',
+    text: 'Поможем подобрать размер, цвет и исполнение модели под интерьер.'
   },
   {
     icon: 'shield',
-    title: 'Контроль перед выдачей',
-    text: 'Проверяем внешний вид, сборку, крепление и комплектацию перед передачей клиенту.'
+    title: 'Контроль качества',
+    text: 'Проверяем внешний вид, сборку, крепление и комплектацию перед передачей.'
   }
 ];
 
 const stages = [
   ['01', 'Выбор модели', 'Вы выбираете часы в каталоге или пишете нам, если нужна консультация.'],
-  ['02', 'Уточнение деталей', 'Подтверждаем наличие, размер, цвет, срок изготовления и способ получения.'],
+  ['02', 'Уточнение деталей', 'Подтверждаем наличие, размер, цвет и способ получения.'],
   ['03', 'Изготовление', 'Готовим изделие на собственном производстве Bullmet.'],
   ['04', 'Контроль', 'Проверяем внешний вид, сборку и комплектацию.'],
   ['05', 'Передача заказа', 'Согласовываем самовывоз или доставку по Беларуси.']
 ];
 
-const quality = [
-  'проверяем внешний вид и комплектность',
-  'согласовываем размер и цвет при необходимости',
-  'подбираем аккуратное оформление под интерьер',
-  'перед выдачей проверяем качество сборки'
+const showcase = [
+  {
+    title: 'Готовые часы',
+    text: 'Настенные модели из металла с элементами дерева.',
+    image: '/assets/prod-clock-loft.jpg',
+    href: '/catalog'
+  },
+  {
+    title: 'Детали и обработка',
+    text: 'Аккуратная подготовка элементов перед сборкой.',
+    image: '/assets/hero-machine.jpg',
+    href: '/production'
+  }
 ];
 
 export default function ProductionPage() {
   return (
     <>
       <Header />
-      <main className="production-page production-page--rich">
-        <section className="production-hero-rich">
+      <main className="production-page production-page--rich production-page--clean">
+        <section className="production-hero-rich production-hero-clean">
           <div className="production-hero-content">
             <nav className="production-breadcrumbs" aria-label="Хлебные крошки">
               <Link href="/">Главная</Link>
               <span>›</span>
               <span>Производство</span>
             </nav>
-            <p className="section-kicker">Производство металлоизделий Bullmet</p>
-            <h1>Сейчас запускаем публичный каталог настенных часов</h1>
+            <p className="section-kicker">Производство Bullmet</p>
+            <h1>Изготавливаем настенные часы из металла с элементами дерева</h1>
             <p>
-              Bullmet — производство металлоизделий в Беларуси. На первом этапе мы
-              показываем клиентам только то направление, которое готовы стабильно продавать:
-              настенные часы из металла с элементами дерева.
+              Bullmet — собственное производство металлических изделий. На сайте представлены настенные часы,
+              которые можно выбрать в каталоге или уточнить по телефону.
             </p>
             <div className="production-hero-actions">
               <Link href="/catalog">Смотреть часы</Link>
@@ -80,27 +80,13 @@ export default function ProductionPage() {
           </div>
           <div className="production-hero-media">
             <Image src="/assets/production.jpg" alt="Производство Bullmet" width={980} height={640} priority />
-            <div className="production-hero-note">
-              <b>Честный запуск</b>
-              <span>сначала часы, затем постепенное расширение каталога</span>
-            </div>
           </div>
         </section>
 
-        <section className="production-stats-rich" aria-label="Показатели производства">
-          {stats.map(([value, label]) => (
-            <article key={label}>
-              <b>{value}</b>
-              <span>{label}</span>
-            </article>
-          ))}
-        </section>
-
-        <section className="production-directions-rich">
+        <section className="production-directions-rich production-directions-clean">
           <div className="production-section-head">
-            <p className="section-kicker">Что видно клиенту сейчас</p>
-            <h2>Публичный фокус — настенные часы</h2>
-            <span>Мы не перегружаем сайт направлениями, которые пока не готовы полноценно принимать в работу. Информация о других возможностях сохранена в проекте и будет включаться постепенно.</span>
+            <p className="section-kicker">Что производим</p>
+            <h2>Металл, дерево и аккуратная сборка</h2>
           </div>
           <div className="production-directions-grid">
             {directions.map((item) => (
@@ -113,37 +99,31 @@ export default function ProductionPage() {
           </div>
         </section>
 
-        <section className="production-showcase-rich">
+        <section className="production-showcase-rich production-showcase-clean">
           <div>
-            <p className="section-kicker">Подход</p>
-            <h2>Делаем меньше направлений, но аккуратнее</h2>
+            <p className="section-kicker">Изделия</p>
+            <h2>Готовые модели и детали производства</h2>
             <p>
-              Для первого запуска важно не вводить клиента в заблуждение. Поэтому сайт
-              продаёт часы, а остальные производственные направления будут открываться
-              по мере готовности ресурсов и процессов.
+              На странице показаны основные возможности производства Bullmet. Для покупки настенных часов
+              перейдите в каталог или свяжитесь с нами для уточнения деталей.
             </p>
-            <ul>
-              {quality.map((item) => <li key={item}>✓ {item}</li>)}
-            </ul>
-            <Link href="/catalog">Перейти в каталог часов</Link>
+            <Link href="/catalog">Перейти в каталог</Link>
           </div>
           <div className="production-showcase-gallery">
-            <Link href="/catalog">
-              <Image src="/assets/prod-clock-loft.jpg" alt="Настенные часы Bullmet" width={420} height={320} />
-              <span>Настенные часы</span>
-            </Link>
-            <Link href="/catalog?category=Кофе и кухня">
-              <Image src="/assets/cat-clock.jpg" alt="Часы Bullmet" width={420} height={320} />
-              <span>Модели для дома</span>
-            </Link>
+            {showcase.map((item) => (
+              <Link href={item.href} key={item.title}>
+                <Image src={item.image} alt={item.title} width={420} height={320} />
+                <span>{item.title}</span>
+                <small>{item.text}</small>
+              </Link>
+            ))}
           </div>
         </section>
 
-        <section className="production-process-rich">
+        <section className="production-process-rich production-process-clean">
           <div className="production-section-head">
-            <p className="section-kicker">Процесс</p>
-            <h2>Как проходит заказ часов</h2>
-            <span>Клиент выбирает модель, мы уточняем детали и передаём готовые часы удобным способом.</span>
+            <p className="section-kicker">Этапы</p>
+            <h2>Как проходит заказ</h2>
           </div>
           <div className="production-process-grid">
             {stages.map(([number, title, text]) => (
