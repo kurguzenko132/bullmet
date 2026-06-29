@@ -2,7 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 import { Icon } from '@/components/Icon';
 import { getSiteControlSettings } from '@/lib/siteControl';
 import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catalogControl';
@@ -14,7 +13,7 @@ export async function generateMetadata() {
     title: anyServiceVisible ? 'Услуги Bullmet — производство металлоизделий' : 'Раздел временно скрыт | Bullmet',
     description: anyServiceVisible
       ? 'Производственные услуги Bullmet: лазерная резка, гибка металла, металлопрокат и изделия под заказ.'
-      : 'Раздел услуг временно скрыт до готовности направления.',
+      : 'Информационная страница о производственных направлениях Bullmet.',
     robots: anyServiceVisible && site.seo.robotsIndex ? { index: true, follow: true } : { index: false, follow: false }
   };
 }
@@ -28,7 +27,7 @@ const services = [
     subtitle: 'Декор, таблички, вывески, панели и детали из листового металла.',
     image: '/assets/service-metal.jpg',
     items: ['по чертежу или эскизу', 'аккуратный рез', 'подготовка под покраску'],
-    href: '#request'
+    href: '/contacts'
   },
   {
     id: 'bending',
@@ -38,7 +37,7 @@ const services = [
     subtitle: 'Детали для мебели, навесов, каркасов и малых архитектурных форм.',
     image: '/assets/service-wood.jpg',
     items: ['индивидуальные размеры', 'разовые и серийные задачи', 'согласование до запуска'],
-    href: '#request'
+    href: '/contacts'
   },
   {
     id: 'custom',
@@ -48,7 +47,7 @@ const services = [
     subtitle: 'Изготовление по фото, ссылке на пример, чертежу или вашей идее.',
     image: '/assets/cat-custom.jpg',
     items: ['часы, качели, мебель', 'металл с элементами дерева', 'адаптация под задачу'],
-    href: '#request'
+    href: '/contacts'
   },
   {
     id: 'metal',
@@ -58,15 +57,15 @@ const services = [
     subtitle: 'Подбор и подготовка металла под производство, участок или ремонт.',
     image: '/assets/cat-metal.jpg',
     items: ['подбор материала', 'расчет количества', 'подготовка под задачу'],
-    href: '#request'
+    href: '/contacts'
   }
 ];
 
 const steps = [
-  ['01', 'Пришлите задачу', 'Фото, чертеж, ссылку на пример или описание простыми словами.'],
-  ['02', 'Уточним детали', 'Размеры, материал, покрытие, количество, сроки и назначение изделия.'],
-  ['03', 'Рассчитаем стоимость', 'Предложим понятный вариант по цене, срокам и исполнению.'],
-  ['04', 'Изготовим и передадим', 'Запустим в работу, проверим качество и передадим заказ.']
+  ['01', 'Знакомство с задачей', 'Понимаем, какое изделие нужно и где оно будет использоваться.'],
+  ['02', 'Уточнение деталей', 'Размеры, материал, покрытие, количество, сроки и назначение изделия.'],
+  ['03', 'Подготовка решения', 'Подбираем оптимальный вариант изготовления и согласуем детали.'],
+  ['04', 'Производство', 'Запускаем работу, проверяем качество и передаём готовое изделие.']
 ];
 
 const examples = [
@@ -100,21 +99,20 @@ export default async function ServicesPage() {
               <Link href="/">Главная</Link><span>›</span><span>Услуги</span>
             </nav>
             <p className="page-kicker">Услуги производства</p>
-            <h1>Резка, гибка и изготовление изделий под заказ</h1>
+            <h1>Производственные возможности Bullmet</h1>
             <p>
-              Рассчитаем стоимость по чертежу, фото, ссылке на пример или короткому описанию.
-              Работаем с металлом, элементами дерева и индивидуальными проектами.
+              Работаем с металлом, элементами дерева и индивидуальными проектами. Здесь собраны направления, которые можно развивать и подключать по мере готовности.
             </p>
             <div className="services-hero-actions-v2">
-              <Link href="#request">Отправить на расчет</Link>
-              <Link href="/production">Как производим</Link>
+              <Link href="/contacts">Связаться</Link>
+              <Link href="/catalog">Смотреть каталог</Link>
             </div>
           </div>
           <div className="services-hero-media-v2">
             <Image src="/assets/hero-machine.jpg" alt="Лазерная резка Bullmet" width={900} height={560} priority />
             <div>
-              <b>Можно без готового чертежа</b>
-              <span>достаточно фото, примера или описания задачи</span>
+              <b>Собственное производство</b>
+              <span>металл, дерево и изделия под задачу</span>
             </div>
           </div>
         </section>
@@ -124,7 +122,7 @@ export default async function ServicesPage() {
             <Icon name="clock" />
             <div>
               <b>Раздел услуг открыт как информационная страница</b>
-              <p>Сейчас основной публичный запуск — настенные часы. Услуги производства можно оставить в меню, чтобы клиент видел возможности Bullmet и мог отправить заявку на расчёт.</p>
+              <p>Сейчас основной публичный запуск — настенные часы. Услуги производства можно оставить в меню, чтобы клиент видел возможности Bullmet без отдельной формы расчёта.</p>
             </div>
           </section>
         )}
@@ -140,9 +138,9 @@ export default async function ServicesPage() {
 
         <section className="services-list-v2">
           <div className="services-section-head-v2">
-            <p className="page-kicker">Что можно заказать</p>
-            <h2>Основные направления услуг</h2>
-            <span>Выберите готовое направление или отправьте задачу в свободной форме — подскажем, как лучше изготовить.</span>
+            <p className="page-kicker">Производственные направления</p>
+            <h2>Что умеет производство Bullmet</h2>
+            <span>Страница показывает направления, которые можно подключать и развивать по мере готовности.</span>
           </div>
 
           <div className="services-grid-v2">
@@ -156,7 +154,7 @@ export default async function ServicesPage() {
                   <h3>{service.title}</h3>
                   <p>{service.subtitle}</p>
                   <ul>{service.items.map((item) => <li key={item}>{item}</li>)}</ul>
-                  <Link href="#request">Рассчитать</Link>
+                  <Link href="/contacts">Подробнее</Link>
                 </div>
               </article>
             ))}
@@ -165,9 +163,9 @@ export default async function ServicesPage() {
 
         <section className="services-examples-v2">
           <div>
-            <p className="page-kicker">Формат заявки</p>
-            <h2>Что можно прислать для расчета</h2>
-            <p>Не обязательно сразу готовить техническое задание. Для первого расчета подойдет любая отправная точка.</p>
+            <p className="page-kicker">Возможные задачи</p>
+            <h2>Какие изделия можно делать</h2>
+            <p>Эти примеры можно использовать как направления для будущего развития услуг и контента.</p>
           </div>
           <div className="services-example-tags-v2">
             {examples.map((example) => <span key={example}>{example}</span>)}
@@ -177,7 +175,7 @@ export default async function ServicesPage() {
         <section className="services-process-v2">
           <div className="services-section-head-v2">
             <p className="page-kicker">Процесс</p>
-            <h2>Как проходит расчет и заказ</h2>
+            <h2>Как обычно проходит работа</h2>
           </div>
           <div className="services-process-grid-v2">
             {steps.map(([number, title, text]) => (
@@ -190,22 +188,7 @@ export default async function ServicesPage() {
           </div>
         </section>
 
-        <section id="request" className="services-request-v2">
-          <div className="services-request-copy-v2">
-            <p className="page-kicker">Расчет проекта</p>
-            <h2>Отправьте задачу — мы рассчитаем стоимость</h2>
-            <p>
-              Укажите, что нужно изготовить, примерные размеры, материал, количество и прикрепите файл,
-              если он есть. После заявки мы свяжемся с вами и уточним детали.
-            </p>
-            <div className="services-request-points-v2">
-              <span><Icon name="shield" /> Без обязательств</span>
-              <span><Icon name="calculator" /> Расчет по задаче</span>
-              <span><Icon name="truck" /> Доставка по Беларуси</span>
-            </div>
-          </div>
-          <ServiceRequestForm />
-        </section>
+
       </main>
       <Footer />
     </>

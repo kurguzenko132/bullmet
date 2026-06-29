@@ -22252,3 +22252,10 @@ body:not(.admin-body) .footer-exact {
     padding: 18px;
   }
 }
+
+
+/* ===== Remove services calculation form ===== */
+/* На странице услуг больше нет формы/блока расчёта. */
+.services-request-v2 {
+  display: none !important;
+}
