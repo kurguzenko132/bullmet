@@ -48,7 +48,7 @@ export default async function AdminPage() {
   const visibleProducts = products.filter((item) => item.status !== 'hidden' && item.status !== 'draft').length;
 
   const launchSteps = [
-    { title: 'Боевой тест', text: 'Пройти путь клиента и чек-лист запуска', href: '/admin/launch-test', icon: Rocket, tone: 'orange' },
+    { title: 'Проверка сайта', text: 'Пройти путь клиента и чек-лист запуска', href: '/admin/backup', icon: Rocket, tone: 'orange' },
     { title: 'Товары', text: 'Проверить цены, фото, статусы и категории', href: '/admin/products', icon: Package, tone: 'blue' },
     { title: 'Заказы', text: `${newOrders.length} новых, ${activeOrders.length} активных`, href: '/admin/orders', icon: ShoppingBag, tone: 'green' },
     { title: 'Резервная копия', text: 'Скачать JSON перед изменениями', href: '/admin/backup', icon: ClipboardCheck, tone: 'violet' }
@@ -78,7 +78,7 @@ export default async function AdminPage() {
           <h1>{readinessLabel(audit.score)}</h1>
           <span>Сначала проверь запуск, затем обрабатывай заказы, товары, заявки и контент. Всё важное собрано на одном экране.</span>
           <div className="admin-clean-hero-actions">
-            <Link href="/admin/launch-test">Открыть боевой тест <ArrowRight size={16} /></Link>
+            <Link href="/admin/backup">Открыть аудит <ArrowRight size={16} /></Link>
             <Link href="/" target="_blank">Перейти на сайт</Link>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default async function AdminPage() {
         <article className="admin-clean-workbench-card admin-clean-workbench-card--today">
           <div className="admin-clean-panel-head">
             <div><p>Оперативно</p><h2>Сегодня в работе</h2></div>
-            <Link href="/admin/launch-test">Запуск</Link>
+            <Link href="/admin/backup">Запуск</Link>
           </div>
           <div className="admin-clean-today-list">
             {todayFocus.map((item) => (
@@ -148,7 +148,7 @@ export default async function AdminPage() {
         <article className="admin-clean-panel admin-clean-panel--wide">
           <div className="admin-clean-panel-head">
             <div><p>Следующие действия</p><h2>Что проверить сейчас</h2></div>
-            <Link href="/admin/launch-test">Весь чек-лист</Link>
+            <Link href="/admin/backup">Весь чек-лист</Link>
           </div>
           <div className="admin-clean-actions-grid">
             {launchSteps.map((item) => {
@@ -240,9 +240,8 @@ export default async function AdminPage() {
           </div>
           <ol className="admin-clean-checklist">
             <li>Скачать резервную копию в JSON.</li>
-            <li>Пройти боевой тест запуска.</li>
             <li>Проверить sitemap.xml и robots.txt.</li>
-            <li>Сделать тестовый заказ и заявку.</li>
+            <li>Сделать тестовый заказ и проверить заявки.</li>
             <li>Задеплоить и повторить проверку на Vercel.</li>
           </ol>
         </article>

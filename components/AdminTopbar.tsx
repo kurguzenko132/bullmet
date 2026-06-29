@@ -7,7 +7,6 @@ import { supabase } from '@/lib/supabase';
 import { useAdminAccess } from './AdminAccessContext';
 
 const pageTitles: Array<[string, string]> = [
-  ['/admin/launch-test', 'Боевой тест'],
   ['/admin/homepage', 'Главная страница'],
   ['/admin/pages', 'Страницы'],
   ['/admin/categories', 'Категории'],
@@ -142,7 +141,6 @@ export function AdminTopbar() {
 
   const notifications = useMemo(() => [
     { title: 'Заказы и заявки', text: notificationCount ? `${notificationCount} новых событий требуют проверки` : 'Новых событий пока нет', href: '/admin/orders' },
-    { title: 'Боевой тест запуска', text: 'Пройди чек-лист перед публикацией сайта', href: '/admin/launch-test' },
     { title: 'Товары и каталог', text: 'Проверь цены, фото, статусы и категории', href: '/admin/products' },
     { title: 'Резервная копия', text: 'Перед изменениями скачай полный JSON', href: '/admin/backup' }
   ], [notificationCount]);

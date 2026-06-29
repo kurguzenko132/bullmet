@@ -12,7 +12,7 @@ export const adminRoles: AdminRoleInfo[] = [
     value: 'admin',
     label: 'Администратор',
     description: 'Полный доступ ко всем разделам сайта и настройкам.',
-    access: ['Настройки сайта', 'Страницы', 'Категории', 'Товары', 'Услуги', 'Производство', 'Заказы', 'Покупатели', 'Купоны', 'Доставка', 'Оплата', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Отчеты', 'Пользователи', 'Роли', 'Журнал действий', 'Резервные копии', 'Боевой тест запуска']
+    access: ['Настройки сайта', 'Страницы', 'Категории', 'Товары', 'Услуги', 'Производство', 'Заказы', 'Покупатели', 'Купоны', 'Доставка', 'Оплата', 'Заявки', 'Отзывы', 'Медиа', 'Баннеры', 'Отчеты', 'Пользователи', 'Роли', 'Журнал действий', 'Резервные копии']
   },
   {
     value: 'manager',
@@ -79,7 +79,7 @@ export function defaultAdminPath(role?: string | null) {
   const normalized = normalizeAdminRole(role);
   if (normalized === 'manager') return '/admin/orders';
   if (normalized === 'content_manager') return '/admin/products';
-  if (normalized === 'admin') return '/admin/launch-test';
+  if (normalized === 'admin') return '/admin';
   return '/account';
 }
 
@@ -99,8 +99,7 @@ export function actionLabel(action?: string | null) {
     backup_export: 'Экспорт данных',
     site_page_create: 'Страница создана',
     site_page_update: 'Страница обновлена',
-    site_page_delete: 'Страница удалена',
-    launch_test_update: 'Боевой тест запуска'
+    site_page_delete: 'Страница удалена'
   };
 
   return map[String(action || '')] || String(action || 'Действие');

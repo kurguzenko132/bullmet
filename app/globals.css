@@ -22573,3 +22573,126 @@ body:not(.admin-body) .services-launch-notice-v2 {
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* ===== Remove launch test and fix admin collapsed sidebar ===== */
+/*
+  Админка:
+  - пункт “Боевой тест” удалён на уровне компонентов;
+  - в свернутом меню показываем только иконки;
+  - подписи, группы, бейджи, роль и нижняя кнопка скрываются;
+  - элементы больше не налезают друг на друга.
+*/
+.admin-shell-redesign.is-sidebar-collapsed {
+  grid-template-columns: 96px minmax(0, 1fr) !important;
+}
+
+.admin-shell-redesign.is-sidebar-collapsed .admin-sidebar-redesign {
+  width: 96px !important;
+  min-width: 96px !important;
+  max-width: 96px !important;
+  padding: 18px 12px !important;
+  overflow-x: hidden !important;
+}
+
+.admin-shell-redesign.is-sidebar-collapsed .admin-logo-redesign {
+  justify-content: center !important;
+  margin-bottom: 18px !important;
+}
+
+.admin-shell-redesign.is-sidebar-collapsed .admin-logo-redesign > div,
+.admin-shell-redesign.is-sidebar-collapsed .admin-nav-group p,
+.admin-shell-redesign.is-sidebar-collapsed .admin-nav-group a span,
+.admin-shell-redesign.is-sidebar-collapsed .admin-nav-group a b,
+.admin-shell-redesign.is-sidebar-collapsed .admin-sidebar-role,
+.admin-shell-redesign.is-sidebar-collapsed .admin-sidebar-bottom-redesign {
+  display: none !important;
+}
+
+.admin-shell-redesign.is-sidebar-collapsed .admin-logo-mark {
+  width: 46px !important;
+  height: 46px !important;
+  flex: 0 0 46px !important;
+}
+
+.admin-shell-redesign.is-sidebar-collapsed .admin-nav-redesign {
+  gap: 8px !important;
+  padding-bottom: 18px !important;
+}
+
+.admin-shell-redesign.is-sidebar-collapsed .admin-nav-group {
+  gap: 8px !important;
+}
+
+.admin-shell-redesign.is-sidebar-collapsed .admin-nav-group a {
+  width: 56px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  grid-template-columns: none !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  border-radius: 12px !important;
+}
+
+.admin-shell-redesign.is-sidebar-collapsed .admin-nav-group a svg {
+  width: 20px !important;
+  height: 20px !important;
+  flex: 0 0 20px !important;
+}
+
+/* Normal sidebar: prevent long text/badges from overlapping */
+.admin-sidebar-redesign {
+  overflow-x: hidden !important;
+}
+
+.admin-nav-group a {
+  min-width: 0 !important;
+}
+
+.admin-nav-group a span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.admin-nav-group a b {
+  flex: 0 0 auto !important;
+}
+
+/* Mobile sidebar must show labels when opened */
+@media (max-width: 1100px) {
+  .admin-shell-redesign.is-sidebar-collapsed {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-shell-redesign.is-sidebar-collapsed .admin-sidebar-redesign {
+    width: min(86vw, 292px) !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 22px 18px !important;
+  }
+
+  .admin-shell-redesign.is-sidebar-collapsed .admin-logo-redesign > div,
+  .admin-shell-redesign.is-sidebar-collapsed .admin-nav-group p,
+  .admin-shell-redesign.is-sidebar-collapsed .admin-nav-group a span,
+  .admin-shell-redesign.is-sidebar-collapsed .admin-nav-group a b,
+  .admin-shell-redesign.is-sidebar-collapsed .admin-sidebar-role,
+  .admin-shell-redesign.is-sidebar-collapsed .admin-sidebar-bottom-redesign {
+    display: initial !important;
+  }
+
+  .admin-shell-redesign.is-sidebar-collapsed .admin-nav-group a {
+    width: auto !important;
+    height: auto !important;
+    min-height: 42px !important;
+    display: grid !important;
+    grid-template-columns: 22px minmax(0, 1fr) auto !important;
+    justify-content: stretch !important;
+    padding: 0 12px !important;
+  }
+}
