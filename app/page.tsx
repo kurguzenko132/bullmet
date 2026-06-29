@@ -6,6 +6,16 @@ import { HomeProductsClient } from '@/components/HomeProductsClient';
 import { HomePromoBanners } from '@/components/HomePromoBanners';
 import { getHomepageControlSettings, visibleHomeItems } from '@/lib/homepageControl';
 import { getCatalogProducts } from '@/lib/products';
+import { getSiteControlSettings, type SiteDirectionKey } from '@/lib/siteControl';
+
+const homeDirectionToSiteDirection: Record<string, SiteDirectionKey> = {
+  clocks: 'clocks',
+  garden: 'garden_furniture',
+  loft: 'loft_furniture',
+  laser: 'laser_cutting',
+  wholesale: 'metal_wholesale',
+  bending: 'metal_bending'
+};
 
 function Lines({ value }: { value: string }) {
   return <>{value.split('\n').map((line) => <span key={line}>{line}</span>)}</>;
@@ -15,6 +25,8 @@ function cleanPublicText(value: string) {
   return String(value || '')
     .replace('Публичные направления можно включать в админке по мере готовности.', '')
     .replace('Основной запуск — настенные часы. Остальные направления подготовлены и будут включаться по мере готовности.', 'Основной акцент — настенные часы. Другие направления представлены как возможности производства Bullmet.')
+    .replace('ИЗГОТАВЛИВАЕМ: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.', 'Настенные часы из металла с элементами дерева собственного производства Bullmet.')
+    .replace('Выберите нужное направление: от настенных часов до резки, гибки и металлопроката.', 'Сейчас клиентам открыт каталог настенных часов Bullmet.')
     .replace('Клиент выбирает модель, мы уточняем детали и передаём готовые часы удобным способом.', '')
     .trim();
 }
@@ -27,16 +39,22 @@ function isClockProduct(product: Awaited<ReturnType<typeof getCatalogProducts>>[
 }
 
 export default async function HomePage() {
-  const [home, allProducts] = await Promise.all([
+  const [home, allProducts, site] = await Promise.all([
     getHomepageControlSettings(),
-    getCatalogProducts()
+    getCatalogProducts(),
+    getSiteControlSettings()
   ]);
 
   const products = (home.productsSection.onlyClocks ? allProducts.filter(isClockProduct) : allProducts)
     .slice(0, Number(home.productsSection.limit || 4));
 
   const featureItems = visibleHomeItems(home.features);
-  const categories = visibleHomeItems(home.directions);
+  const visibleDirectionKeys = new Set(site.directions.filter((direction) => direction.visible).map((direction) => direction.key));
+  const categories = visibleHomeItems(home.directions)
+    .filter((item) => {
+      const directionKey = homeDirectionToSiteDirection[item.id];
+      return Boolean(directionKey && visibleDirectionKeys.has(directionKey));
+    });
   const productionBenefits = visibleHomeItems(home.productionBenefits);
   const steps = visibleHomeItems(home.steps);
   const workBenefits = visibleHomeItems(home.workBenefits);

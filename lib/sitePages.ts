@@ -1,5 +1,5 @@
 import { serverSupabase } from './serverSupabase';
-import { getSiteControlSettings } from './siteControl';
+import { getSiteControlSettings, siteControlKey, type SiteNavigationItem } from './siteControl';
 
 export type SitePageStatus = 'published' | 'draft' | 'hidden';
 export type SitePageSectionType = 'hero' | 'text' | 'image_text' | 'cards' | 'faq' | 'cta';
@@ -16,6 +16,14 @@ export type SitePageSection = {
   items?: Array<{ title: string; text?: string; image?: string; href?: string }>;
 };
 
+export type SitePageMenuSettings = {
+  label: string;
+  header: boolean;
+  mobile: boolean;
+  footer: boolean;
+  order: number;
+};
+
 export type SitePage = {
   id: string;
   slug: string;
@@ -26,6 +34,7 @@ export type SitePage = {
   seo_description?: string | null;
   og_image?: string | null;
   sections: SitePageSection[];
+  menu?: SitePageMenuSettings;
   sort_order?: number | null;
   created_at?: string;
   updated_at?: string;
@@ -40,6 +49,7 @@ export type SitePageInput = {
   seo_description?: string;
   og_image?: string;
   sections: SitePageSection[];
+  menu?: SitePageMenuSettings;
   sort_order?: number;
 };
 
@@ -66,8 +76,8 @@ export function normalizePageSlug(value: string) {
     .trim()
     .toLowerCase()
     .replace(/^\/+|\/+$/g, '')
-    .replace(/[^a-z0-9а-яё\-_/]+/gi, '-')
-    .replace(/\/+/g, '/')
+    .replace(/[^a-z0-9а-яё\-_]+/gi, '-')
+    .replace(/_+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
 }
@@ -75,6 +85,7 @@ export function normalizePageSlug(value: string) {
 export function validateSitePageInput(input: Partial<SitePageInput>) {
   const slug = normalizePageSlug(String(input.slug || ''));
   if (!slug) return 'Укажите slug страницы.';
+  if (slug.includes('/')) return 'Slug страницы должен быть одним словом без символа “/”.';
   if (reservedSlugs.has(slug.split('/')[0])) return `Slug “${slug}” зарезервирован системной страницей.`;
   if (!String(input.title || '').trim()) return 'Укажите название страницы.';
   if (!['published', 'draft', 'hidden'].includes(String(input.status || ''))) return 'Некорректный статус страницы.';
@@ -101,8 +112,32 @@ function normalizeSections(value: unknown): SitePageSection[] {
   }));
 }
 
-export function normalizeSitePage(row: any): SitePage {
+export function sitePageHref(slug: string) {
+  const cleanSlug = normalizePageSlug(slug);
+  return cleanSlug ? `/${cleanSlug}` : '/';
+}
+
+export function sitePageNavigationId(slug: string, location: SiteNavigationItem['location']) {
+  const key = normalizePageSlug(slug).replace(/[^a-z0-9а-яё]+/gi, '_') || 'page';
+  return `page_${location}_${key}`;
+}
+
+export function deriveSitePageMenu(page: Pick<SitePage, 'slug' | 'title' | 'sort_order'>, navigation: SiteNavigationItem[] = []): SitePageMenuSettings {
+  const href = sitePageHref(page.slug);
+  const matches = navigation.filter((item) => item.href === href || item.id === sitePageNavigationId(page.slug, item.location));
+  const firstMatch = matches[0];
+
   return {
+    label: firstMatch?.label || page.title,
+    header: matches.some((item) => item.location === 'header' && item.visible),
+    mobile: matches.some((item) => item.location === 'mobile' && item.visible),
+    footer: matches.some((item) => item.location === 'footer' && item.visible),
+    order: Number(firstMatch?.order || page.sort_order || 100)
+  };
+}
+
+export function normalizeSitePage(row: any, navigation?: SiteNavigationItem[]): SitePage {
+  const page = {
     id: String(row.id),
     slug: String(row.slug || ''),
     title: String(row.title || ''),
@@ -115,6 +150,11 @@ export function normalizeSitePage(row: any): SitePage {
     sort_order: Number(row.sort_order || 100),
     created_at: row.created_at,
     updated_at: row.updated_at
+  };
+
+  return {
+    ...page,
+    menu: deriveSitePageMenu(page, navigation)
   };
 }
 
@@ -133,7 +173,8 @@ export async function getAdminSitePages(): Promise<SitePage[]> {
     return [];
   }
 
-  return (data || []).map(normalizeSitePage);
+  const settings = await getSiteControlSettings();
+  return (data || []).map((row) => normalizeSitePage(row, settings.navigation));
 }
 
 export async function getPublishedSitePages(): Promise<SitePage[]> {
@@ -148,7 +189,7 @@ export async function getPublishedSitePages(): Promise<SitePage[]> {
     .limit(300);
 
   if (error) return [];
-  return (data || []).map(normalizeSitePage);
+  return (data || []).map((row) => normalizeSitePage(row));
 }
 
 export async function getPublishedSitePageBySlug(slug: string): Promise<SitePage | null> {
@@ -164,6 +205,58 @@ export async function getPublishedSitePageBySlug(slug: string): Promise<SitePage
 
   if (error || !data) return null;
   return normalizeSitePage(data);
+}
+
+export async function syncSitePageNavigation(page: SitePage, menu?: Partial<SitePageMenuSettings>, previousSlug?: string) {
+  if (!serverSupabase || !menu) return;
+
+  const settings = await getSiteControlSettings();
+  const currentHref = sitePageHref(page.slug);
+  const previousHref = previousSlug ? sitePageHref(previousSlug) : '';
+  const knownIds = new Set([
+    sitePageNavigationId(page.slug, 'header'),
+    sitePageNavigationId(page.slug, 'mobile'),
+    sitePageNavigationId(page.slug, 'footer'),
+    previousSlug ? sitePageNavigationId(previousSlug, 'header') : '',
+    previousSlug ? sitePageNavigationId(previousSlug, 'mobile') : '',
+    previousSlug ? sitePageNavigationId(previousSlug, 'footer') : ''
+  ].filter(Boolean));
+
+  const navigation = settings.navigation.filter((item) => {
+    if (knownIds.has(item.id)) return false;
+    if (item.href === currentHref) return false;
+    if (previousHref && item.href === previousHref) return false;
+    return true;
+  });
+
+  const label = String(menu.label || page.title || '').trim() || page.title;
+  const order = Number(menu.order || page.sort_order || 100);
+
+  if (page.status === 'published') {
+    const locations: Array<SiteNavigationItem['location']> = [];
+    if (menu.header) locations.push('header');
+    if (menu.mobile) locations.push('mobile');
+    if (menu.footer) locations.push('footer');
+
+    locations.forEach((location) => {
+      navigation.push({
+        id: sitePageNavigationId(page.slug, location),
+        label,
+        href: currentHref,
+        location,
+        visible: true,
+        order
+      });
+    });
+  }
+
+  await serverSupabase
+    .from('site_settings')
+    .upsert({
+      key: siteControlKey,
+      value: { ...settings, navigation },
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'key' });
 }
 
 export async function getPageMetadata(slug: string) {

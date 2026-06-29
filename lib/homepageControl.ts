@@ -146,7 +146,7 @@ export const defaultHomepageControl: HomeControlSettings = {
     enabled: true,
     kicker: 'Производство металлоизделий Bullmet',
     title: 'Изделия из металла с элементами дерева',
-    text: 'ИЗГОТАВЛИВАЕМ: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.',
+    text: 'Настенные часы из металла с элементами дерева собственного производства Bullmet. Подберем размер, цвет и оформление под интерьер.',
     image: '/mockup/hero-right.jpg',
     imageAlt: 'Станок режет металл',
     primaryLabel: 'Перейти в каталог',
@@ -162,17 +162,17 @@ export const defaultHomepageControl: HomeControlSettings = {
     enabled: true,
     eyebrow: 'главные переходы',
     title: 'Направления Bullmet',
-    text: 'Выберите нужное направление: от настенных часов до резки, гибки и металлопроката.',
+    text: 'Сейчас клиентам открыт каталог настенных часов Bullmet.',
     buttonLabel: 'Смотреть каталог',
     buttonHref: '/catalog'
   },
   directions: [
     { id: 'clocks', title: 'Настенные\nчасы', img: '/mockup/cat-clock.jpg', href: '/catalog?category=Настенные часы', visible: true, order: 1 },
-    { id: 'garden', title: 'Садовая\nмебель', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: true, order: 2 },
-    { id: 'loft', title: 'Мебель для дома\nв стиле лофт', img: '/mockup/cat-custom.jpg', href: '/catalog?category=Мебель для дома в стиле лофт', visible: true, order: 3 },
-    { id: 'laser', title: 'Лазерная\nрезка', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: true, order: 4 },
-    { id: 'wholesale', title: 'Мелкий опт\nметаллопроката', img: '/mockup/cat-wood.jpg', href: '/services#metal', visible: true, order: 5 },
-    { id: 'bending', title: 'Гибка\nметалла', img: '/mockup/service-metal.jpg', href: '/services#bending', visible: true, order: 6 }
+    { id: 'garden', title: 'Садовая\nмебель', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: false, order: 2 },
+    { id: 'loft', title: 'Мебель для дома\nв стиле лофт', img: '/mockup/cat-custom.jpg', href: '/catalog?category=Мебель для дома в стиле лофт', visible: false, order: 3 },
+    { id: 'laser', title: 'Лазерная\nрезка', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: false, order: 4 },
+    { id: 'wholesale', title: 'Мелкий опт\nметаллопроката', img: '/mockup/cat-wood.jpg', href: '/services#metal', visible: false, order: 5 },
+    { id: 'bending', title: 'Гибка\nметалла', img: '/mockup/service-metal.jpg', href: '/services#bending', visible: false, order: 6 }
   ],
   productsSection: {
     enabled: true,
@@ -188,7 +188,7 @@ export const defaultHomepageControl: HomeControlSettings = {
     enabled: true,
     eyebrow: 'производство металлоизделий',
     title: 'Собственное производство Bullmet',
-    text: 'ИЗГОТАВЛИВАЕМ: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.',
+    text: 'Делаем настенные часы Bullmet на собственном производстве: металл, элементы дерева, порошковая покраска и контроль качества перед выдачей.',
     image: '/mockup/prod-workshop.jpg',
     buttonLabel: 'О производстве',
     buttonHref: '/production'

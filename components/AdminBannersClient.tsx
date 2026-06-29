@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, Plus, RotateCcw, Save, Trash2 } from 'lucide-react';
+import { AdminImagePicker } from '@/components/AdminImagePicker';
 import { defaultBannerControl, type BannerControlSettings, type BannerItem } from '@/lib/adminContent';
 
 function emptyBanner(): BannerItem {
@@ -126,7 +127,9 @@ export function AdminBannersClient({ initialSettings, supabaseConfigured }: { in
               <label>ID<input value={active.id} onChange={(event) => setBanner(active.id, { id: event.target.value })} /></label>
               <label>Заголовок<input value={active.title} onChange={(event) => setBanner(active.id, { title: event.target.value })} /></label>
               <label className="span-2">Текст<textarea rows={3} value={active.text} onChange={(event) => setBanner(active.id, { text: event.target.value })} /></label>
-              <label className="span-2">Изображение<input value={active.image} onChange={(event) => setBanner(active.id, { image: event.target.value })} /></label>
+              <div className="span-2">
+                <AdminImagePicker label="Изображение баннера" value={active.image} onChange={(value) => setBanner(active.id, { image: value })} />
+              </div>
               <label>Ссылка<input value={active.href} onChange={(event) => setBanner(active.id, { href: event.target.value })} /></label>
               <label>Кнопка<input value={active.buttonLabel} onChange={(event) => setBanner(active.id, { buttonLabel: event.target.value })} /></label>
               <label>Место показа

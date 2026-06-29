@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Copy, Eye, EyeOff, FileText, Plus, Save, Trash2 } from 'lucide-react';
+import { AdminImagePicker } from '@/components/AdminImagePicker';
 import type { SitePage, SitePageInput, SitePageSection, SitePageSectionType, SitePageStatus } from '@/lib/sitePages';
 import { formatDate } from '@/lib/adminCommerce';
 
@@ -29,13 +30,107 @@ function statusClass(status?: string) {
   return 'is-draft';
 }
 
+function PreviewLines({ value }: { value?: string }) {
+  return <>{String(value || '').split('\n').map((line, index) => <span key={`${line}-${index}`}>{line}<br /></span>)}</>;
+}
+
+function PageSectionPreview({ section }: { section: SitePageSection }) {
+  if (section.type === 'hero') {
+    return (
+      <section className="site-page-hero">
+        {section.image && <img src={section.image} alt="" />}
+        <div>
+          {section.subtitle && <p>{section.subtitle}</p>}
+          <h1>{section.title}</h1>
+          {section.text && <span><PreviewLines value={section.text} /></span>}
+          {section.buttonLabel && section.buttonHref && <a href={section.buttonHref}>{section.buttonLabel}</a>}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === 'image_text') {
+    return (
+      <section className="site-page-image-text">
+        <div>
+          {section.subtitle && <p>{section.subtitle}</p>}
+          <h2>{section.title}</h2>
+          {section.text && <span><PreviewLines value={section.text} /></span>}
+          {section.buttonLabel && section.buttonHref && <a href={section.buttonHref}>{section.buttonLabel}</a>}
+        </div>
+        {section.image && <img src={section.image} alt="" />}
+      </section>
+    );
+  }
+
+  if (section.type === 'cards') {
+    return (
+      <section className="site-page-cards">
+        <div className="site-page-section-head">
+          {section.subtitle && <p>{section.subtitle}</p>}
+          <h2>{section.title}</h2>
+          {section.text && <span>{section.text}</span>}
+        </div>
+        <div>
+          {(section.items || []).map((item, index) => (
+            <article key={`${item.title}-${index}`}>
+              {item.image && <img src={item.image} alt="" />}
+              <h3>{item.title}</h3>
+              {item.text && <p>{item.text}</p>}
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === 'faq') {
+    return (
+      <section className="site-page-faq">
+        <div className="site-page-section-head">
+          {section.subtitle && <p>{section.subtitle}</p>}
+          <h2>{section.title}</h2>
+          {section.text && <span>{section.text}</span>}
+        </div>
+        <div>
+          {(section.items || []).map((item, index) => (
+            <details key={`${item.title}-${index}`} open={index === 0}>
+              <summary>{item.title}</summary>
+              <p>{item.text}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === 'cta') {
+    return (
+      <section className="site-page-cta">
+        {section.subtitle && <p>{section.subtitle}</p>}
+        <h2>{section.title}</h2>
+        {section.text && <span><PreviewLines value={section.text} /></span>}
+        {section.buttonLabel && section.buttonHref && <a href={section.buttonHref}>{section.buttonLabel}</a>}
+      </section>
+    );
+  }
+
+  return (
+    <section className="site-page-text">
+      {section.subtitle && <p>{section.subtitle}</p>}
+      <h2>{section.title}</h2>
+      {section.text && <span><PreviewLines value={section.text} /></span>}
+    </section>
+  );
+}
+
 function slugify(value: string) {
   return value
     .trim()
     .toLowerCase()
     .replace(/^\/+|\/+$/g, '')
-    .replace(/[^a-z0-9а-яё\-_/]+/gi, '-')
-    .replace(/\/+/g, '/')
+    .replace(/[^a-z0-9а-яё\-_]+/gi, '-')
+    .replace(/_+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
 }
@@ -115,6 +210,16 @@ function emptySection(type: SitePageSectionType = 'text'): SitePageSection {
   };
 }
 
+function emptyMenu(label = 'Новая страница') {
+  return {
+    label,
+    header: false,
+    mobile: false,
+    footer: false,
+    order: 100
+  };
+}
+
 function emptyPage(): SitePageInput & { id?: string; created_at?: string; updated_at?: string } {
   return {
     slug: `new-page-${Date.now()}`,
@@ -125,6 +230,7 @@ function emptyPage(): SitePageInput & { id?: string; created_at?: string; update
     seo_description: '',
     og_image: '',
     sections: [emptySection('hero'), emptySection('text')],
+    menu: emptyMenu(),
     sort_order: 100
   };
 }
@@ -140,6 +246,7 @@ function pageToForm(page: SitePage): SitePageInput & { id?: string; created_at?:
     seo_description: page.seo_description || '',
     og_image: page.og_image || '',
     sections: page.sections?.length ? page.sections : [emptySection('text')],
+    menu: page.menu || emptyMenu(page.title),
     sort_order: Number(page.sort_order || 100),
     created_at: page.created_at,
     updated_at: page.updated_at
@@ -154,6 +261,7 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState(form.sections[0]?.id || '');
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const clean = query.trim().toLowerCase();
@@ -171,6 +279,10 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
 
   function updateForm(patch: Partial<typeof form>) {
     setForm((current) => ({ ...current, ...patch }));
+  }
+
+  function updateMenu(patch: Partial<NonNullable<typeof form.menu>>) {
+    setForm((current) => ({ ...current, menu: { ...emptyMenu(current.title), ...(current.menu || {}), ...patch } }));
   }
 
   function selectPage(page: SitePage) {
@@ -375,6 +487,7 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
               <span>/{slugify(form.slug || '')}</span>
             </div>
             <div>
+              <button type="button" onClick={() => setPreviewOpen(true)}>Предпросмотр</button>
               {form.status === 'published' && <Link href={`/${slugify(form.slug)}`} target="_blank">Открыть ↗</Link>}
               <button type="button" onClick={() => updateForm({ status: form.status === 'published' ? 'hidden' : 'published' })}>
                 {form.status === 'published' ? 'Скрыть' : 'Опубликовать'}
@@ -400,15 +513,32 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
             <label>Порядок
               <input type="number" value={form.sort_order} onChange={(event) => updateForm({ sort_order: Number(event.target.value) || 100 })} />
             </label>
+            <div className="admin-page-menu-card span-2">
+              <div>
+                <b>Добавить страницу в меню</b>
+                <span>{form.status === 'published' ? 'Опубликованная страница появится в выбранных местах.' : 'Сначала сохраните страницу как опубликованную.'}</span>
+              </div>
+              <label>Подпись в меню
+                <input value={form.menu?.label || form.title} onChange={(event) => updateMenu({ label: event.target.value })} />
+              </label>
+              <label>Порядок
+                <input type="number" value={form.menu?.order || form.sort_order || 100} onChange={(event) => updateMenu({ order: Number(event.target.value) || 100 })} />
+              </label>
+              <div className="admin-page-menu-toggles">
+                <label><input type="checkbox" checked={Boolean(form.menu?.header)} onChange={(event) => updateMenu({ header: event.target.checked })} /> Шапка</label>
+                <label><input type="checkbox" checked={Boolean(form.menu?.mobile)} onChange={(event) => updateMenu({ mobile: event.target.checked })} /> Мобильное меню</label>
+                <label><input type="checkbox" checked={Boolean(form.menu?.footer)} onChange={(event) => updateMenu({ footer: event.target.checked })} /> Футер</label>
+              </div>
+            </div>
             <label className="span-2">Краткое описание
               <textarea rows={3} value={form.excerpt || ''} onChange={(event) => updateForm({ excerpt: event.target.value })} />
             </label>
             <label>SEO title
               <input value={form.seo_title || ''} onChange={(event) => updateForm({ seo_title: event.target.value })} />
             </label>
-            <label>OG image
-              <input value={form.og_image || ''} onChange={(event) => updateForm({ og_image: event.target.value })} />
-            </label>
+            <div>
+              <AdminImagePicker label="SEO-изображение" value={form.og_image || ''} onChange={(value) => updateForm({ og_image: value })} />
+            </div>
             <label className="span-2">SEO description
               <textarea rows={3} value={form.seo_description || ''} onChange={(event) => updateForm({ seo_description: event.target.value })} />
             </label>
@@ -456,9 +586,7 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
                     <label className="span-2">Текст
                       <textarea rows={5} value={activeSection.text || ''} onChange={(event) => updateSection(activeSection.id, { text: event.target.value })} />
                     </label>
-                    <label>Изображение
-                      <input value={activeSection.image || ''} onChange={(event) => updateSection(activeSection.id, { image: event.target.value })} />
-                    </label>
+                    <AdminImagePicker label="Изображение блока" value={activeSection.image || ''} onChange={(value) => updateSection(activeSection.id, { image: value })} />
                     <label>Кнопка
                       <input value={activeSection.buttonLabel || ''} onChange={(event) => updateSection(activeSection.id, { buttonLabel: event.target.value })} />
                     </label>
@@ -477,7 +605,7 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
                         <article key={`${activeSection.id}-${index}`}>
                           <label>Заголовок<input value={item.title || ''} onChange={(event) => updateSectionItem(activeSection.id, index, { title: event.target.value })} /></label>
                           <label>Текст<textarea rows={3} value={item.text || ''} onChange={(event) => updateSectionItem(activeSection.id, index, { text: event.target.value })} /></label>
-                          <label>Изображение<input value={item.image || ''} onChange={(event) => updateSectionItem(activeSection.id, index, { image: event.target.value })} /></label>
+                          <AdminImagePicker label="Изображение пункта" value={item.image || ''} onChange={(value) => updateSectionItem(activeSection.id, index, { image: value })} />
                           <label>Ссылка<input value={item.href || ''} onChange={(event) => updateSectionItem(activeSection.id, index, { href: event.target.value })} /></label>
                           <button type="button" onClick={() => removeSectionItem(activeSection.id, index)}>Удалить пункт</button>
                         </article>
@@ -490,6 +618,27 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
           </section>
         </article>
       </section>
+
+      {previewOpen && (
+        <div className="admin-page-preview-modal" role="dialog" aria-modal="true">
+          <button type="button" className="admin-page-preview-backdrop" aria-label="Закрыть предпросмотр" onClick={() => setPreviewOpen(false)} />
+          <section className="admin-page-preview-dialog">
+            <div className="admin-page-preview-head">
+              <div>
+                <p>Предпросмотр</p>
+                <h2>{form.title || 'Без названия'}</h2>
+                <span>/{slugify(form.slug || '')}</span>
+              </div>
+              <button type="button" onClick={() => setPreviewOpen(false)}>Закрыть</button>
+            </div>
+            <main className="site-page-builder admin-page-preview-surface">
+              {(form.sections?.length ? form.sections : [emptySection('text')]).map((section) => (
+                <PageSectionPreview key={section.id} section={section} />
+              ))}
+            </main>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

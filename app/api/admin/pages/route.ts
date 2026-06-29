@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminSitePages, normalizePageSlug, validateSitePageInput } from '@/lib/sitePages';
+import { getAdminSitePages, normalizePageSlug, normalizeSitePage, syncSitePageNavigation, validateSitePageInput } from '@/lib/sitePages';
 import { serverSupabase } from '@/lib/serverSupabase';
 
 export const dynamic = 'force-dynamic';
@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
 
     if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
+    const page = normalizeSitePage(data);
+    await syncSitePageNavigation(page, body.menu);
+
     await serverSupabase.from('admin_activity_log').insert({
       action: 'site_page_create',
       entity: 'site_pages',
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
       payload: { slug: data.slug, title: data.title, status: data.status }
     }).then(() => null);
 
-    return NextResponse.json({ ok: true, page: data });
+    return NextResponse.json({ ok: true, page: { ...page, menu: body.menu || page.menu } });
   } catch (error) {
     return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : 'Не удалось создать страницу.' }, { status: 500 });
   }

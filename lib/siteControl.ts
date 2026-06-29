@@ -117,7 +117,7 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
   const hasVisibleServices = directions.some((direction) => direction.key !== 'clocks' && direction.visible);
 
   const incomingNavigation = Array.isArray(incoming.navigation) ? incoming.navigation : [];
-  const navigation = defaultSiteControl.navigation.map((item) => {
+  const defaultNavigation = defaultSiteControl.navigation.map((item) => {
     const match = incomingNavigation.find((nav: any) => nav?.id === item.id);
     const merged = { ...item, ...asObject(match) } as SiteNavigationItem;
 
@@ -130,7 +130,31 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
     }
 
     return merged;
-  }).sort((a, b) => a.order - b.order);
+  });
+
+  const customNavigation = incomingNavigation
+    .filter((item: any) => item?.id && !defaultNavigation.some((nav) => nav.id === item.id))
+    .map((item: any, index) => {
+      const location = ['header', 'mobile', 'footer'].includes(item.location) ? item.location : 'header';
+      const href = String(item.href || '').trim();
+      const label = String(item.label || '').trim();
+      return {
+        id: String(item.id),
+        label,
+        href,
+        location,
+        visible: typeof item.visible === 'boolean' ? item.visible : true,
+        order: Number(item.order || 100 + index)
+      } as SiteNavigationItem;
+    })
+    .filter((item) => item.label && item.href)
+    .map((item) => {
+      if (item.href === '/services') return { ...item, visible: Boolean(item.visible && hasVisibleServices) };
+      if (item.href === '/about') return { ...item, visible: false };
+      return item;
+    });
+
+  const navigation = [...defaultNavigation, ...customNavigation].sort((a, b) => a.order - b.order);
 
   return { general, contacts, directions, navigation, seo };
 }

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Eye, EyeOff, Globe2, Menu, Phone, RotateCcw, Save, Search, Settings2, ToggleLeft } from 'lucide-react';
+import { AdminImagePicker } from '@/components/AdminImagePicker';
 import { defaultSiteControl, type SiteControlSettings } from '@/lib/siteControl';
 
 type Props = {
@@ -72,7 +73,7 @@ export function AdminSiteSettingsClient({ initialSettings, diagnostics }: Props)
       }
 
       setSettings(result.settings || settings);
-      setMessage('Настройки сохранены. Публичный сайт может использовать эти данные через /api/site-control.');
+      setMessage('Настройки сохранены. Публичный сайт использует эти данные в меню, футере, контактах и SEO.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось сохранить настройки.');
     } finally {
@@ -217,21 +218,24 @@ export function AdminSiteSettingsClient({ initialSettings, diagnostics }: Props)
             <div className="admin-form-grid-two">
               <label className="span-2">Title<input value={settings.seo.defaultTitle} onChange={(e) => patchSeo({ defaultTitle: e.target.value })} /></label>
               <label className="span-2">Description<textarea rows={4} value={settings.seo.defaultDescription} onChange={(e) => patchSeo({ defaultDescription: e.target.value })} /></label>
-              <label>OG image<input value={settings.seo.ogImage} onChange={(e) => patchSeo({ ogImage: e.target.value })} /></label>
+              <div>
+                <AdminImagePicker label="OG image" value={settings.seo.ogImage} onChange={(value) => patchSeo({ ogImage: value })} />
+              </div>
               <label className="admin-checkbox-label"><input type="checkbox" checked={settings.seo.robotsIndex} onChange={(e) => patchSeo({ robotsIndex: e.target.checked })} /> Индексировать сайт</label>
             </div>
           </div>
 
           <div className="admin-site-control-card admin-launch-preview">
             <div className="admin-site-control-card-head">
-              <h2>Как это будет работать дальше</h2>
-              <span>Логика взаимодействия админки с сайтом</span>
+              <h2>Где применяется</h2>
+              <span>Эти данные уже используются публичным сайтом</span>
             </div>
             <ul>
               <li>Админка сохраняет данные в Supabase `site_settings`.</li>
-              <li>Сайт читает настройки через `/api/site-control`.</li>
+              <li>Шапка, футер и мобильное меню читают активные пункты меню.</li>
+              <li>Контакты попадают в футер, контактную страницу и формы заявок.</li>
+              <li>SEO по умолчанию используется в layout, sitemap и CMS-страницах.</li>
               <li>Если данных нет, включаются безопасные значения по умолчанию.</li>
-              <li>Следующий этап — подключить эти настройки к главной, футеру и SEO страницам.</li>
             </ul>
           </div>
         </section>

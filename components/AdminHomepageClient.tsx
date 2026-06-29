@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, Image, LayoutTemplate, ListChecks, Package, RotateCcw, Save, Sparkles } from 'lucide-react';
+import { AdminImagePicker } from '@/components/AdminImagePicker';
 import { defaultHomepageControl, type HomeControlSettings, type HomeIcon } from '@/lib/homepageControl';
 
 const iconOptions: HomeIcon[] = ['factory', 'clock', 'materials', 'truck', 'shield', 'tools', 'search', 'request', 'hammer', 'package', 'spark', 'custom', 'ruler', 'calculator'];
@@ -149,8 +150,13 @@ export function AdminHomepageClient({ initialSettings }: { initialSettings: Home
               <TextField label="Надзаголовок" value={settings.hero.kicker} onChange={(value) => patchHero({ kicker: value })} />
               <TextField label="Заголовок" value={settings.hero.title} onChange={(value) => patchHero({ title: value })} />
               <TextField label="Основной текст" value={settings.hero.text} onChange={(value) => patchHero({ text: value })} textarea rows={5} />
-              <TextField label="Главное изображение URL" value={settings.hero.image} onChange={(value) => patchHero({ image: value })} />
-              <TextField label="Alt изображения" value={settings.hero.imageAlt} onChange={(value) => patchHero({ imageAlt: value })} />
+              <AdminImagePicker
+                label="Главное изображение"
+                value={settings.hero.image}
+                onChange={(value) => patchHero({ image: value })}
+                altValue={settings.hero.imageAlt}
+                onAltChange={(value) => patchHero({ imageAlt: value })}
+              />
               <TextField label="Текст кнопки" value={settings.hero.primaryLabel} onChange={(value) => patchHero({ primaryLabel: value })} />
               <TextField label="Ссылка кнопки" value={settings.hero.primaryHref} onChange={(value) => patchHero({ primaryHref: value })} />
             </div>
@@ -192,7 +198,7 @@ export function AdminHomepageClient({ initialSettings }: { initialSettings: Home
               <article key={item.id}>
                 <ToggleButton active={item.visible} onClick={() => setSettings((current) => ({ ...current, directions: patchArrayItem(current.directions, item.id, { visible: !item.visible }) }))} />
                 <input value={item.title} onChange={(event) => setSettings((current) => ({ ...current, directions: patchArrayItem(current.directions, item.id, { title: event.target.value }) }))} />
-                <input value={item.img} onChange={(event) => setSettings((current) => ({ ...current, directions: patchArrayItem(current.directions, item.id, { img: event.target.value }) }))} />
+                <AdminImagePicker label="Изображение карточки" value={item.img} onChange={(value) => setSettings((current) => ({ ...current, directions: patchArrayItem(current.directions, item.id, { img: value }) }))} />
                 <input value={item.href} onChange={(event) => setSettings((current) => ({ ...current, directions: patchArrayItem(current.directions, item.id, { href: event.target.value }) }))} />
                 <input type="number" value={item.order} onChange={(event) => setSettings((current) => ({ ...current, directions: patchArrayItem(current.directions, item.id, { order: Number(event.target.value) || item.order }) }))} />
               </article>
@@ -242,7 +248,7 @@ export function AdminHomepageClient({ initialSettings }: { initialSettings: Home
               <TextField label="Eyebrow" value={settings.productionSection.eyebrow} onChange={(value) => patchProductionSection({ eyebrow: value })} />
               <TextField label="Заголовок" value={settings.productionSection.title} onChange={(value) => patchProductionSection({ title: value })} />
               <TextField label="Текст" value={settings.productionSection.text} onChange={(value) => patchProductionSection({ text: value })} textarea rows={5} />
-              <TextField label="Фото URL" value={settings.productionSection.image} onChange={(value) => patchProductionSection({ image: value })} />
+              <AdminImagePicker label="Фото производства" value={settings.productionSection.image} onChange={(value) => patchProductionSection({ image: value })} />
               <TextField label="Кнопка" value={settings.productionSection.buttonLabel} onChange={(value) => patchProductionSection({ buttonLabel: value })} />
               <TextField label="Ссылка" value={settings.productionSection.buttonHref} onChange={(value) => patchProductionSection({ buttonHref: value })} />
             </div>
@@ -302,7 +308,7 @@ export function AdminHomepageClient({ initialSettings }: { initialSettings: Home
                 <article key={item.id}>
                   <img src={item.src} alt="" />
                   <ToggleButton active={item.visible} onClick={() => setSettings((current) => ({ ...current, gallery: patchArrayItem(current.gallery, item.id, { visible: !item.visible }) }))} />
-                  <input value={item.src} onChange={(event) => setSettings((current) => ({ ...current, gallery: patchArrayItem(current.gallery, item.id, { src: event.target.value }) }))} />
+                  <AdminImagePicker label="Фото галереи" value={item.src} onChange={(value) => setSettings((current) => ({ ...current, gallery: patchArrayItem(current.gallery, item.id, { src: value }) }))} />
                   <input value={item.title} onChange={(event) => setSettings((current) => ({ ...current, gallery: patchArrayItem(current.gallery, item.id, { title: event.target.value }) }))} />
                   <input value={item.note} onChange={(event) => setSettings((current) => ({ ...current, gallery: patchArrayItem(current.gallery, item.id, { note: event.target.value }) }))} />
                 </article>

@@ -3,6 +3,7 @@
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, PackageCheck, PackageX, Search, Star, Wand2 } from 'lucide-react';
+import { AdminImagePicker } from '@/components/AdminImagePicker';
 import { supabase } from '@/lib/supabase';
 import type { CatalogProduct, ImageDisplayContext, ImageDisplaySettings, ImageFit } from '@/lib/products';
 
@@ -555,7 +556,12 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
             <div className="admin-card-title"><h2>Фотографии товара</h2><span>Перетаскивайте фото мышкой. Первое фото — главное.</span></div>
             <input type="file" multiple accept="image/*" onChange={uploadImages} />
             {uploading && <p>Загружаю фото...</p>}
-            <textarea value={form.images.join('\n')} onChange={(e) => patchImages(e.target.value.split('\n').map((x) => x.trim()).filter(Boolean))} rows={4} placeholder="Можно вставить ссылки вручную, каждая с новой строки" />
+            <AdminImagePicker
+              label="Добавить фото из медиатеки"
+              value=""
+              onChange={(value) => value && !form.images.includes(value) ? patchImages([...form.images, value]) : undefined}
+              hint="Фото добавится в конец списка, затем его можно перетащить на нужное место."
+            />
             <div className="admin-image-grid admin-image-grid--sortable">
               {form.images.map((image, index) => {
                 const settings = normalizeSetting(form.image_settings[image]);

@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
@@ -86,8 +87,9 @@ export default async function ServicesPage() {
   const visibleDirectionKeys = new Set<string>(site.directions.filter((direction) => direction.visible).map((direction) => direction.key));
   const visibleServiceCategories = new Set(visibleCatalogCategories(catalog, 'service').map((category) => category.slug));
   const enabledServices = services.filter((service) => visibleDirectionKeys.has(service.directionKey) || visibleServiceCategories.has(service.directionKey));
-  const visibleServices = enabledServices.length ? enabledServices : services;
-  const isPreviewMode = !enabledServices.length;
+  if (!enabledServices.length) notFound();
+
+  const visibleServices = enabledServices;
 
   return (
     <>
@@ -116,16 +118,6 @@ export default async function ServicesPage() {
             </div>
           </div>
         </section>
-
-        {isPreviewMode && (
-          <section className="services-launch-notice-v2">
-            <Icon name="clock" />
-            <div>
-              <b>Раздел услуг открыт как информационная страница</b>
-              <p>Bullmet производит настенные часы и металлические изделия с элементами дерева. Для уточнения деталей можно связаться с нами через контакты.</p>
-            </div>
-          </section>
-        )}
 
         <section className="services-quick-v2" aria-label="Основные услуги">
           {visibleServices.map((service) => (
