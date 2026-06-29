@@ -6,11 +6,7 @@ export async function Footer() {
   const settings = await getSiteControlSettings();
   const directions = visibleDirections(settings);
   const rawFooterLinks = visibleNavigation(settings, 'footer').filter((item) => item.href !== '/about');
-  const footerLinks = rawFooterLinks.some((item) => item.href === '/services')
-    ? rawFooterLinks
-    : [{ href: '/services', label: 'Услуги' }, ...rawFooterLinks];
   const companyLinks = [
-    { href: '/services', label: 'Услуги' },
     { href: '/production', label: 'Производство' },
     { href: '/contacts', label: 'Контакты' }
   ];
@@ -35,7 +31,7 @@ export async function Footer() {
         </div>
         <div>
           <h4>ИНФОРМАЦИЯ</h4>
-          {(footerLinks.length ? footerLinks : companyLinks).slice(0, 6).map((item) => (
+          {(rawFooterLinks.length ? rawFooterLinks : companyLinks).slice(0, 6).map((item) => (
             <Link href={item.href} key={`${item.href}-${item.label}`}>{item.label}</Link>
           ))}
         </div>

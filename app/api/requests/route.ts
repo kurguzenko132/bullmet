@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
         savedToSupabase = true;
       }
     } else {
-      supabaseWarning = 'Supabase не подключен, заявка отправлена только в Telegram.';
+      supabaseWarning = 'Supabase не подключен, заявка не сохранена в базе. Проверьте уведомления в настройках.';
     }
 
     const telegramResult = await notifyTelegram({

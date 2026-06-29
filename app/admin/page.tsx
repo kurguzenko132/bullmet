@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { Activity, AlertTriangle, ArrowRight, CheckCircle2, ClipboardCheck, DatabaseBackup, FileText, Image, MessageSquare, Package, Rocket, Settings, ShoppingBag, Star, Tags, Users } from 'lucide-react';
-import { getAuditReport, getBackupOverview } from '@/lib/adminBackup';
+import { Activity, ArrowRight, CheckCircle2, ClipboardCheck, FileText, Image, MessageSquare, Package, Settings, ShoppingBag, Star, Tags, Users } from 'lucide-react';
+import { getBackupOverview } from '@/lib/adminBackup';
 import { formatDate, getAdminOrders, getAdminRequests, money, statusClass } from '@/lib/adminCommerce';
 import { getAdminCatalogProducts } from '@/lib/products';
 
@@ -11,25 +11,12 @@ function shortId(value?: string) {
   return value?.startsWith('local-') ? value.slice(0, 12) : value?.slice(0, 8) || '—';
 }
 
-function readinessLabel(score: number) {
-  if (score >= 85) return 'Сайт почти готов к запуску';
-  if (score >= 60) return 'Есть пункты для проверки';
-  return 'Нужна техническая проверка';
-}
-
-function auditTone(score: number) {
-  if (score >= 85) return 'is-good';
-  if (score >= 60) return 'is-warn';
-  return 'is-bad';
-}
-
 export default async function AdminPage() {
-  const [products, orders, requests, overview, audit] = await Promise.all([
+  const [products, orders, requests, overview] = await Promise.all([
     getAdminCatalogProducts(),
     getAdminOrders(),
     getAdminRequests(),
-    getBackupOverview(),
-    getAuditReport()
+    getBackupOverview()
   ]);
 
   const activeOrders = orders.filter((item) => !['Выполнен', 'Отменён'].includes(String(item.status || '')));
@@ -38,20 +25,17 @@ export default async function AdminPage() {
   const revenue = orders.filter((item) => item.status !== 'Отменён').reduce((sum, item) => sum + Number(item.total || 0), 0);
   const buyers = new Set(orders.map((item) => item.customer?.email || item.customer?.phone || item.customer?.name).filter(Boolean)).size;
   const popular = products.filter((item) => item.isPopular).slice(0, 4);
-  const criticalAudit = audit.items.filter((item) => item.status === 'bad');
-  const warnAudit = audit.items.filter((item) => item.status === 'warn');
   const latestOrders = orders.slice(0, 5);
   const latestRequests = requests.slice(0, 5);
-  const weakAudit = [...criticalAudit, ...warnAudit].slice(0, 4);
   const withoutPhoto = products.filter((item) => !item.image && !item.images?.length).length;
   const withoutPrice = products.filter((item) => !Number(item.price)).length;
   const visibleProducts = products.filter((item) => item.status !== 'hidden' && item.status !== 'draft').length;
 
-  const launchSteps = [
-    { title: 'Проверка сайта', text: 'Пройти путь клиента и чек-лист запуска', href: '/admin/backup', icon: Rocket, tone: 'orange' },
+  const managementSteps = [
     { title: 'Товары', text: 'Проверить цены, фото, статусы и категории', href: '/admin/products', icon: Package, tone: 'blue' },
+    { title: 'Страницы', text: 'Создавать и редактировать CMS-страницы', href: '/admin/pages', icon: FileText, tone: 'orange' },
     { title: 'Заказы', text: `${newOrders.length} новых, ${activeOrders.length} активных`, href: '/admin/orders', icon: ShoppingBag, tone: 'green' },
-    { title: 'Резервная копия', text: 'Скачать JSON перед изменениями', href: '/admin/backup', icon: ClipboardCheck, tone: 'violet' }
+    { title: 'Экспорт данных', text: 'Скачать JSON или CSV перед изменениями', href: '/admin/backup', icon: ClipboardCheck, tone: 'violet' }
   ] as const;
 
   const fastModules = [
@@ -66,8 +50,15 @@ export default async function AdminPage() {
   const todayFocus = [
     { label: 'Активные заказы', value: activeOrders.length, href: '/admin/orders' },
     { label: 'Новые заявки', value: newRequests.length, href: '/admin/requests' },
-    { label: 'Проблемы аудита', value: criticalAudit.length + warnAudit.length, href: '/admin/backup' },
+    { label: 'Товары без фото', value: withoutPhoto, href: '/admin/products' },
     { label: 'Товары на витрине', value: visibleProducts, href: '/admin/products' }
+  ];
+
+  const storefrontNeeds = [
+    { label: 'Без фото', value: withoutPhoto, text: 'добавьте изображения в карточки товаров', href: '/admin/products' },
+    { label: 'Без цены', value: withoutPrice, text: 'заполните цену или оставьте понятный статус под заказ', href: '/admin/products' },
+    { label: 'CMS-страницы', value: overview.pages, text: 'страницы можно создавать и менять без кода', href: '/admin/pages' },
+    { label: 'Категории', value: overview.visibleCategories, text: 'видимые категории управляются из админки', href: '/admin/categories' }
   ];
 
   return (
@@ -75,18 +66,18 @@ export default async function AdminPage() {
       <section className="admin-clean-hero">
         <div className="admin-clean-hero-copy">
           <p>Центр управления Bullmet</p>
-          <h1>{readinessLabel(audit.score)}</h1>
-          <span>Сначала проверь запуск, затем обрабатывай заказы, товары, заявки и контент. Всё важное собрано на одном экране.</span>
+          <h1>Управление сайтом без кода</h1>
+          <span>Редактируйте товары, страницы, категории, заявки, заказы, отзывы, баннеры и настройки из одной панели.</span>
           <div className="admin-clean-hero-actions">
-            <Link href="/admin/backup">Открыть аудит <ArrowRight size={16} /></Link>
+            <Link href="/admin/products">Управлять каталогом <ArrowRight size={16} /></Link>
             <Link href="/" target="_blank">Перейти на сайт</Link>
           </div>
         </div>
 
-        <div className={`admin-clean-readiness ${auditTone(audit.score)}`}>
-          <div><b>{audit.score}</b><span>/100</span></div>
-          <p>Оценка готовности</p>
-          <small>{criticalAudit.length} критично · {warnAudit.length} проверить</small>
+        <div className="admin-clean-readiness is-good">
+          <div><b>{visibleProducts}</b><span>тов.</span></div>
+          <p>На витрине</p>
+          <small>{overview.pages} CMS-страниц · {overview.visibleCategories} категорий</small>
         </div>
       </section>
 
@@ -94,7 +85,7 @@ export default async function AdminPage() {
         <article className="admin-clean-workbench-card admin-clean-workbench-card--today">
           <div className="admin-clean-panel-head">
             <div><p>Оперативно</p><h2>Сегодня в работе</h2></div>
-            <Link href="/admin/backup">Запуск</Link>
+            <Link href="/admin/orders">Заказы</Link>
           </div>
           <div className="admin-clean-today-list">
             {todayFocus.map((item) => (
@@ -148,10 +139,10 @@ export default async function AdminPage() {
         <article className="admin-clean-panel admin-clean-panel--wide">
           <div className="admin-clean-panel-head">
             <div><p>Следующие действия</p><h2>Что проверить сейчас</h2></div>
-            <Link href="/admin/backup">Весь чек-лист</Link>
+            <Link href="/admin/products">Каталог</Link>
           </div>
           <div className="admin-clean-actions-grid">
-            {launchSteps.map((item) => {
+            {managementSteps.map((item) => {
               const Icon = item.icon;
               return (
                 <Link href={item.href} key={item.title} className={`is-${item.tone}`}>
@@ -166,17 +157,16 @@ export default async function AdminPage() {
 
         <article className="admin-clean-panel">
           <div className="admin-clean-panel-head">
-            <div><p>Аудит</p><h2>Проблемы</h2></div>
-            <Link href="/admin/backup">Аудит</Link>
+            <div><p>Витрина</p><h2>Контроль данных</h2></div>
+            <Link href="/admin/products">Товары</Link>
           </div>
-          <div className="admin-clean-audit-list">
-            {(criticalAudit.length ? criticalAudit : warnAudit).slice(0, 5).map((item) => (
-              <Link href={item.href || '/admin/backup'} key={item.id} className={`is-${item.status}`}>
-                <AlertTriangle size={17} />
-                <div><b>{item.title}</b><span>{item.message}</span></div>
+          <div className="admin-clean-control-list">
+            {storefrontNeeds.map((item) => (
+              <Link href={item.href} key={item.label} className={item.value ? 'is-warn' : 'is-ok'}>
+                <CheckCircle2 size={17} />
+                <div><b>{item.label}: {item.value}</b><span>{item.text}</span></div>
               </Link>
             ))}
-            {!criticalAudit.length && !warnAudit.length && <p className="admin-clean-empty">Критичных проблем не найдено.</p>}
           </div>
         </article>
       </section>
@@ -236,13 +226,13 @@ export default async function AdminPage() {
       <section className="admin-clean-bottom">
         <article className="admin-clean-panel">
           <div className="admin-clean-panel-head">
-            <div><p>Запуск</p><h2>Финальный порядок</h2></div>
+            <div><p>Рабочий порядок</p><h2>Перед крупными изменениями</h2></div>
           </div>
           <ol className="admin-clean-checklist">
-            <li>Скачать резервную копию в JSON.</li>
-            <li>Проверить sitemap.xml и robots.txt.</li>
-            <li>Сделать тестовый заказ и проверить заявки.</li>
-            <li>Задеплоить и повторить проверку на Vercel.</li>
+            <li>Скачать полный JSON в разделе экспорта данных.</li>
+            <li>Обновить товары, категории, страницы и баннеры через админку.</li>
+            <li>Проверить заказы и заявки перед передачей менеджеру.</li>
+            <li>Открыть публичный сайт и убедиться, что нужные разделы видны клиенту.</li>
           </ol>
         </article>
       </section>

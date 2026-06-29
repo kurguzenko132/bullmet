@@ -17,7 +17,7 @@ export default function AdminPaymentPage() {
       actions={[
         { label: 'Заказы', href: '/admin/orders', primary: true },
         { label: 'Настройки сайта', href: '/admin/settings' },
-        { label: 'Резервные копии', href: '/admin/backup' }
+        { label: 'Экспорт данных', href: '/admin/backup' }
       ]}
       checklist={[
         'Проверить статусы “Ожидает оплаты” и “Оплачен”.',

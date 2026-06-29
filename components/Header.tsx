@@ -94,19 +94,9 @@ export function Header() {
       .sort((a, b) => a.order - b.order)
       .map((item) => ({ href: item.href, label: item.label })) || [];
 
-    const hasServices = fromSettings.some((item) => item.href === '/services');
-    const normalized = hasServices
-      ? fromSettings
-      : [
-          ...fromSettings.filter((item) => item.href !== '/contacts'),
-          { href: '/services', label: 'Услуги' },
-          ...fromSettings.filter((item) => item.href === '/contacts')
-        ];
-
-    return normalized.length ? normalized : [
+    return fromSettings.length ? fromSettings : [
       { href: '/catalog', label: 'Каталог' },
       { href: '/production', label: 'Производство' },
-      { href: '/services', label: 'Услуги' },
       { href: '/contacts', label: 'Контакты' }
     ];
   }, [siteControl]);
@@ -127,19 +117,9 @@ export function Header() {
         };
       }) || [];
 
-    const hasServices = fromSettings.some((item) => item.href === '/services');
-    const normalized = hasServices
-      ? fromSettings
-      : [
-          ...fromSettings.filter((item) => item.href !== '/cart' && item.href !== accountHref),
-          { href: '/services', label: 'Услуги', icon: 'tools' as const },
-          ...fromSettings.filter((item) => item.href === '/cart' || item.href === accountHref)
-        ];
-
-    return normalized.length ? normalized : [
+    return fromSettings.length ? fromSettings : [
       { href: '/', label: 'Главная', icon: 'factory' as const },
       { href: '/catalog', label: 'Каталог', icon: 'search' as const },
-      { href: '/services', label: 'Услуги', icon: 'tools' as const },
       { href: '/cart', label: 'Корзина', icon: 'cart' as const },
       { href: accountHref, label: accountEmail ? 'Кабинет' : 'Войти', icon: 'user' as const }
     ];
@@ -339,7 +319,7 @@ export function Header() {
             </div>
             <form onSubmit={submitSearch} className="site-search-form-polished">
               <Icon name="search" />
-              <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: римские, кофе, классика, кухня" />
+              <input aria-label="Поиск по каталогу" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: римские, кофе, классика, кухня" />
               <button type="submit">Найти</button>
             </form>
             <div className="site-search-quick">
@@ -352,7 +332,7 @@ export function Header() {
               {hasResults && results.map((product) => (
                 <Link href={`/product/${product.slug}`} key={product.slug} onClick={() => setSearchOpen(false)}>
                   <img src={product.image} alt="" />
-                  <div><b>{product.title}</b><span>{product.category || product.short || 'Каталог'}</span></div>
+                  <div><b>{product.title}</b><span>{product.short || product.category || 'Каталог'}</span></div>
                   <strong>от {money(product.price)} BYN</strong>
                 </Link>
               ))}

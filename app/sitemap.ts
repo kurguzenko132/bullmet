@@ -1,11 +1,12 @@
 import type { MetadataRoute } from 'next';
 import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catalogControl';
 import { getCatalogProducts, isPublicClockProduct } from '@/lib/products';
+import { getSiteUrl } from '@/lib/siteUrl';
 import { getSiteControlSettings, visibleDirections } from '@/lib/siteControl';
 import { getPublishedSitePages } from '@/lib/sitePages';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bullmet.by';
+  const siteUrl = getSiteUrl();
   const [site, catalog, products, cmsPages] = await Promise.all([
     getSiteControlSettings(),
     getCatalogControlSettings(),

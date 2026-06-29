@@ -70,7 +70,7 @@ const groups: Array<{ label: string; links: Array<[string, string, any, string?]
       ['Настройки сайта', '/admin/settings', Settings],
       ['Пользователи', '/admin/users', UserCog],
       ['Роли и права', '/admin/roles', ShieldCheck],
-      ['Резервное копирование', '/admin/backup', DatabaseBackup]
+      ['Экспорт данных', '/admin/backup', DatabaseBackup]
     ]
   }
 ];

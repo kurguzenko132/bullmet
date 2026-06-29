@@ -139,7 +139,7 @@ export function AdminOrdersClient({ initialOrders, supabaseConfigured }: { initi
       <section className="admin-sync-panel">
         <div>
           <b>{supabaseConfigured ? 'Supabase подключен' : 'Supabase не подключен'}</b>
-          <span>{supabaseConfigured ? `Последняя синхронизация: ${lastSync}. Новые заказы появятся после нажатия “Обновить” или перезагрузки страницы.` : 'Добавьте NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY / anon key, иначе заказы будут уходить только в Telegram и не появятся в админке.'}</span>
+          <span>{supabaseConfigured ? `Последняя синхронизация: ${lastSync}. Новые заказы появятся после нажатия “Обновить” или перезагрузки страницы.` : 'Добавьте NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY / anon key, иначе заказы не будут сохраняться в админке.'}</span>
         </div>
         <button type="button" onClick={refreshOrders} disabled={refreshing}>{refreshing ? 'Ждём...' : 'Проверить новые заказы'}</button>
       </section>

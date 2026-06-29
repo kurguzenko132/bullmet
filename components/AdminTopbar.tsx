@@ -19,7 +19,7 @@ const pageTitles: Array<[string, string]> = [
   ['/admin/users', 'Пользователи'],
   ['/admin/roles', 'Роли и права'],
   ['/admin/activity', 'Журнал действий'],
-  ['/admin/backup', 'Резервные копии'],
+  ['/admin/backup', 'Экспорт данных'],
   ['/admin/stats', 'Статистика'],
   ['/admin/reports', 'Отчеты'],
   ['/admin/settings', 'Настройки сайта']
@@ -142,7 +142,7 @@ export function AdminTopbar() {
   const notifications = useMemo(() => [
     { title: 'Заказы и заявки', text: notificationCount ? `${notificationCount} новых событий требуют проверки` : 'Новых событий пока нет', href: '/admin/orders' },
     { title: 'Товары и каталог', text: 'Проверь цены, фото, статусы и категории', href: '/admin/products' },
-    { title: 'Резервная копия', text: 'Перед изменениями скачай полный JSON', href: '/admin/backup' }
+    { title: 'Экспорт данных', text: 'Перед изменениями скачай полный JSON', href: '/admin/backup' }
   ], [notificationCount]);
 
   return (
@@ -186,7 +186,7 @@ export function AdminTopbar() {
               ))}
               <div className="admin-topbar-notifications-footer">
                 <Link href="/admin/activity" onClick={() => setNotificationsOpen(false)}>Журнал действий</Link>
-                <Link href="/admin/backup" onClick={() => setNotificationsOpen(false)}>Аудит</Link>
+                <Link href="/admin/backup" onClick={() => setNotificationsOpen(false)}>Экспорт</Link>
               </div>
             </div>
           )}

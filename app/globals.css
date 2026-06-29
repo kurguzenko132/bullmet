@@ -19349,7 +19349,7 @@ body:has(.admin-shell-redesign) {
 }
 
 
-/* ===== Admin backup/export/audit stage ===== */
+/* ===== Admin backup/export stage ===== */
 .admin-backup-page {
   display: grid;
   gap: 18px;
@@ -19363,11 +19363,8 @@ body:has(.admin-shell-redesign) {
 }
 
 .admin-backup-overview article,
-.admin-audit-score-card,
 .admin-backup-rules,
-.admin-export-section,
-.admin-audit-section,
-.admin-launch-checklist {
+.admin-export-section {
   background: #fff;
   border: 1px solid #e6e9ef;
   border-radius: 8px;
@@ -19400,54 +19397,8 @@ body:has(.admin-shell-redesign) {
   gap: 18px;
 }
 
-.admin-audit-score-card {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  gap: 22px;
-  align-items: center;
-  padding: 24px;
-}
-
-.admin-audit-score {
-  width: 142px;
-  height: 142px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  border: 10px solid #22c55e;
-  background: #f0fdf4;
-  color: #15803d;
-}
-
-.admin-audit-score.is-warn {
-  border-color: #f59e0b;
-  background: #fffbeb;
-  color: #b45309;
-}
-
-.admin-audit-score.is-bad {
-  border-color: #ef4444;
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.admin-audit-score b {
-  font-size: 44px;
-  line-height: 1;
-  font-weight: 950;
-}
-
-.admin-audit-score span {
-  margin-top: -8px;
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.admin-audit-score-card h2,
 .admin-backup-rules h2,
-.admin-section-inline-head h2,
-.admin-launch-checklist h2 {
+.admin-section-inline-head h2 {
   margin: 0;
   color: #111827;
   font-size: 22px;
@@ -19455,20 +19406,11 @@ body:has(.admin-shell-redesign) {
   font-weight: 950;
 }
 
-.admin-audit-score-card p,
 .admin-backup-rules li,
 .admin-section-inline-head span,
-.admin-audit-list p,
 .admin-export-grid p {
   color: #6b7280;
   line-height: 1.5;
-}
-
-.admin-audit-score-card small {
-  display: block;
-  margin-top: 10px;
-  color: #9ca3af;
-  font-size: 12px;
 }
 
 .admin-backup-rules {
@@ -19484,9 +19426,7 @@ body:has(.admin-shell-redesign) {
   margin-top: 8px;
 }
 
-.admin-export-section,
-.admin-audit-section,
-.admin-launch-checklist {
+.admin-export-section {
   padding: 22px;
 }
 
@@ -19559,133 +19499,6 @@ body:has(.admin-shell-redesign) {
   color: #fff;
 }
 
-.admin-audit-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.admin-audit-filters button {
-  min-height: 34px;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  background: #fff;
-  padding: 0 12px;
-  color: #4b5563;
-  font-size: 12px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.admin-audit-filters button.is-active {
-  border-color: #f97316;
-  background: #fff7ed;
-  color: #c2410c;
-}
-
-.admin-audit-list {
-  display: grid;
-  gap: 10px;
-}
-
-.admin-audit-list article {
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  border: 1px solid #e5e7eb;
-  border-left-width: 4px;
-  border-radius: 8px;
-  background: #fff;
-  padding: 14px;
-}
-
-.admin-audit-list article.is-ok {
-  border-left-color: #22c55e;
-}
-
-.admin-audit-list article.is-warn {
-  border-left-color: #f59e0b;
-}
-
-.admin-audit-list article.is-bad {
-  border-left-color: #ef4444;
-}
-
-.admin-audit-list article > div:first-child {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: #f3f4f6;
-  color: #4b5563;
-}
-
-.admin-audit-list article.is-ok > div:first-child {
-  background: #ecfdf5;
-  color: #15803d;
-}
-
-.admin-audit-list article.is-warn > div:first-child {
-  background: #fffbeb;
-  color: #b45309;
-}
-
-.admin-audit-list article.is-bad > div:first-child {
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.admin-audit-list b {
-  display: block;
-  color: #111827;
-  font-size: 14px;
-  font-weight: 950;
-}
-
-.admin-audit-list p {
-  margin: 4px 0 0;
-  font-size: 13px;
-}
-
-.admin-audit-list a {
-  min-height: 34px;
-  border: 1px solid #e5ded4;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 12px;
-  color: #111827;
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.admin-launch-checklist h2 {
-  margin-bottom: 16px;
-}
-
-.admin-launch-checklist div {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 18px;
-}
-
-.admin-launch-checklist label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #374151;
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.admin-launch-checklist input {
-  width: 18px;
-  height: 18px;
-  accent-color: #f97316;
-}
-
 @media (max-width: 1400px) {
   .admin-backup-overview,
   .admin-export-grid {
@@ -19699,23 +19512,12 @@ body:has(.admin-shell-redesign) {
 
 @media (max-width: 760px) {
   .admin-backup-overview,
-  .admin-export-grid,
-  .admin-launch-checklist div,
-  .admin-audit-score-card {
+  .admin-export-grid {
     grid-template-columns: 1fr;
   }
 
   .admin-section-inline-head {
     display: grid;
-  }
-
-  .admin-audit-list article {
-    grid-template-columns: 42px minmax(0, 1fr);
-  }
-
-  .admin-audit-list a {
-    grid-column: 1 / -1;
-    width: fit-content;
   }
 }
 
@@ -20532,7 +20334,7 @@ body:has(.admin-shell-redesign) {
 .admin-clean-orders a:hover,
 .admin-clean-requests a:hover,
 .admin-clean-products a:hover,
-.admin-clean-audit-list a:hover {
+.admin-clean-control-list a:hover {
   border-color: #f97316;
   background: #fff7ed;
 }
@@ -20555,7 +20357,7 @@ body:has(.admin-shell-redesign) {
 .admin-clean-orders b,
 .admin-clean-requests b,
 .admin-clean-products b,
-.admin-clean-audit-list b {
+.admin-clean-control-list b {
   display: block;
   color: #111827;
   font-size: 14px;
@@ -20566,7 +20368,7 @@ body:has(.admin-shell-redesign) {
 .admin-clean-orders span,
 .admin-clean-requests span,
 .admin-clean-products span,
-.admin-clean-audit-list span {
+.admin-clean-control-list span {
   display: block;
   margin-top: 5px;
   color: #6b7280;
@@ -20577,7 +20379,7 @@ body:has(.admin-shell-redesign) {
 .admin-clean-orders,
 .admin-clean-requests,
 .admin-clean-products,
-.admin-clean-audit-list {
+.admin-clean-control-list {
   display: grid;
   gap: 10px;
 }
@@ -20585,7 +20387,7 @@ body:has(.admin-shell-redesign) {
 .admin-clean-orders a,
 .admin-clean-requests a,
 .admin-clean-products a,
-.admin-clean-audit-list a {
+.admin-clean-control-list a {
   min-width: 0;
   border: 1px solid #eef0f4;
   border-radius: 12px;
@@ -20612,13 +20414,13 @@ body:has(.admin-shell-redesign) {
   padding: 10px;
 }
 
-.admin-clean-audit-list a {
+.admin-clean-control-list a {
   grid-template-columns: 28px minmax(0, 1fr);
   padding: 13px;
 }
 
-.admin-clean-audit-list a.is-bad svg { color: #dc2626; }
-.admin-clean-audit-list a.is-warn svg { color: #d97706; }
+.admin-clean-control-list a.is-bad svg { color: #dc2626; }
+.admin-clean-control-list a.is-warn svg { color: #d97706; }
 
 .admin-clean-orders em,
 .admin-clean-requests em {
@@ -22261,9 +22063,9 @@ body:not(.admin-body) .footer-exact {
 }
 
 
-/* ===== Public production cleanup after full UI audit ===== */
+/* ===== Public production cleanup after full UI review ===== */
 /*
-  Правки по полному визуальному аудиту:
+  Правки по полному визуальному обзору:
   - убраны клиенту невидимые/служебные формулировки;
   - "О компании" не показывается как кнопка/переход;
   - кнопки CTA крупнее;
@@ -22575,10 +22377,9 @@ body:not(.admin-body) .services-launch-notice-v2 {
 }
 
 
-/* ===== Remove launch test and fix admin collapsed sidebar ===== */
+/* ===== Admin collapsed sidebar cleanup ===== */
 /*
   Админка:
-  - пункт “Боевой тест” удалён на уровне компонентов;
   - в свернутом меню показываем только иконки;
   - подписи, группы, бейджи, роль и нижняя кнопка скрываются;
   - элементы больше не налезают друг на друга.
@@ -22694,5 +22495,68 @@ body:not(.admin-body) .services-launch-notice-v2 {
     grid-template-columns: 22px minmax(0, 1fr) auto !important;
     justify-content: stretch !important;
     padding: 0 12px !important;
+  }
+}
+
+/* Admin sidebar launch hardening */
+.admin-sidebar-redesign {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+}
+
+.admin-nav-redesign {
+  flex: 1 1 auto !important;
+  padding-bottom: 18px !important;
+}
+
+.admin-sidebar-role,
+.admin-sidebar-bottom-redesign {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  flex: 0 0 auto !important;
+}
+
+.admin-sidebar-role {
+  margin: auto 0 12px !important;
+}
+
+.admin-sidebar-bottom-redesign {
+  margin: 0 !important;
+}
+
+.admin-nav-group a {
+  min-height: 44px !important;
+  line-height: 1.18 !important;
+}
+
+.admin-nav-group a svg {
+  flex: 0 0 18px !important;
+}
+
+.admin-nav-group a span {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.admin-backup-main-grid--export {
+  grid-template-columns: 1fr !important;
+}
+
+@media (max-width: 1100px) {
+  .admin-sidebar-redesign {
+    height: 100vh !important;
+  }
+
+  .admin-sidebar-role {
+    margin-top: 12px !important;
   }
 }

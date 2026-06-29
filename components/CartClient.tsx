@@ -281,7 +281,7 @@ export function CartClient() {
           </form>
 
           <div className="checkout-safe-stage2">
-            <span>После отправки заказ попадёт в админку и Telegram-уведомления.</span>
+            <span>После отправки заказ попадёт в админку, менеджер свяжется с вами для подтверждения.</span>
             <span>Оплата и доставка подтверждаются менеджером.</span>
           </div>
         </div>

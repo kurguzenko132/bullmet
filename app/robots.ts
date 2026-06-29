@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next';
+import { getSiteUrl } from '@/lib/siteUrl';
 import { getSiteControlSettings, visibleDirections } from '@/lib/siteControl';
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bullmet.by';
+  const siteUrl = getSiteUrl();
   const site = await getSiteControlSettings();
   const hasServices = visibleDirections(site).some((direction) => direction.key !== 'clocks');
 

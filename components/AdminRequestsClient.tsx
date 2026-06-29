@@ -140,7 +140,7 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
         </div>
         <div className="admin-head-actions">
           <button type="button" onClick={refreshRequests} disabled={refreshing}>{refreshing ? 'Обновляем...' : 'Обновить'}</button>
-          <a href="/services#request" target="_blank">Тест заявки ↗</a>
+          <a href="/contacts" target="_blank">Тест заявки ↗</a>
           <a href="/admin/orders">Заказы</a>
         </div>
       </div>
@@ -148,7 +148,7 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
       <section className="admin-sync-panel">
         <div>
           <b>{supabaseConfigured ? 'Supabase подключен' : 'Supabase не подключен'}</b>
-          <span>{supabaseConfigured ? `Последняя синхронизация: ${lastSync}. Новые заявки появятся после нажатия “Обновить” или перезагрузки страницы.` : 'Добавьте NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY / anon key, иначе заявки будут уходить только в Telegram и не появятся в админке.'}</span>
+          <span>{supabaseConfigured ? `Последняя синхронизация: ${lastSync}. Новые заявки появятся после нажатия “Обновить” или перезагрузки страницы.` : 'Добавьте NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY / anon key, иначе заявки не будут сохраняться в админке.'}</span>
         </div>
         <button type="button" onClick={refreshRequests} disabled={refreshing}>{refreshing ? 'Ждём...' : 'Проверить новые заявки'}</button>
       </section>
@@ -178,9 +178,9 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
       {!requests.length ? (
         <section className="admin-empty-commerce">
           <h2>Заявок пока нет</h2>
-          <p>{supabaseConfigured ? 'Отправьте тестовую заявку через форму услуг, затем нажмите “Проверить новые заявки”.' : 'Supabase не подключен, поэтому админка не может получить заявки из базы.'}</p>
+          <p>{supabaseConfigured ? 'Отправьте тестовую заявку через страницу контактов, затем нажмите “Проверить новые заявки”.' : 'Supabase не подключен, поэтому админка не может получить заявки из базы.'}</p>
           <div className="admin-empty-actions">
-            <a href="/services#request" target="_blank">Проверить форму</a>
+            <a href="/contacts" target="_blank">Проверить форму</a>
             <button type="button" onClick={refreshRequests} disabled={refreshing}>Обновить список</button>
           </div>
         </section>

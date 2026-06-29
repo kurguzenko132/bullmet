@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
           order.comment && `Комментарий: ${order.comment}`
         ]
       });
-      return NextResponse.json({ ok: true, id: order.id, warning: 'Supabase не подключен, заказ отправлен только в Telegram.' });
+      return NextResponse.json({ ok: true, id: order.id, warning: 'Supabase не подключен, заказ не сохранен в базе. Проверьте уведомления в настройках.' });
     }
 
     const { error } = await serverSupabase.from('orders').insert(order);
