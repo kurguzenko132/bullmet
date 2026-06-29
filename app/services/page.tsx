@@ -6,7 +6,6 @@ import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 import { Icon } from '@/components/Icon';
 import { getSiteControlSettings } from '@/lib/siteControl';
 import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catalogControl';
-import { notFound } from 'next/navigation';
 
 export async function generateMetadata() {
   const site = await getSiteControlSettings();
@@ -87,9 +86,9 @@ export default async function ServicesPage() {
 
   const visibleDirectionKeys = new Set<string>(site.directions.filter((direction) => direction.visible).map((direction) => direction.key));
   const visibleServiceCategories = new Set(visibleCatalogCategories(catalog, 'service').map((category) => category.slug));
-  const visibleServices = services.filter((service) => visibleDirectionKeys.has(service.directionKey) || visibleServiceCategories.has(service.directionKey));
-
-  if (!visibleServices.length) notFound();
+  const enabledServices = services.filter((service) => visibleDirectionKeys.has(service.directionKey) || visibleServiceCategories.has(service.directionKey));
+  const visibleServices = enabledServices.length ? enabledServices : services;
+  const isPreviewMode = !enabledServices.length;
 
   return (
     <>
@@ -119,6 +118,16 @@ export default async function ServicesPage() {
             </div>
           </div>
         </section>
+
+        {isPreviewMode && (
+          <section className="services-launch-notice-v2">
+            <Icon name="clock" />
+            <div>
+              <b>Раздел услуг открыт как информационная страница</b>
+              <p>Сейчас основной публичный запуск — настенные часы. Услуги производства можно оставить в меню, чтобы клиент видел возможности Bullmet и мог отправить заявку на расчёт.</p>
+            </div>
+          </section>
+        )}
 
         <section className="services-quick-v2" aria-label="Основные услуги">
           {visibleServices.map((service) => (

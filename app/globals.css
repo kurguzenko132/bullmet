@@ -22209,3 +22209,46 @@ body:not(.admin-body) .footer-exact {
   background-color: var(--public-surface) !important;
   border-top-color: var(--public-border-soft) !important;
 }
+
+
+/* ===== Services 404 availability fix ===== */
+.services-launch-notice-v2 {
+  width: min(100% - 48px, 1400px);
+  margin: 26px auto 0;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  background: var(--public-surface, #f5f3ee);
+  border: 1px solid var(--public-border-soft, #ded8cf);
+  padding: 20px 24px;
+}
+
+.services-launch-notice-v2 svg {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  padding: 15px;
+  background: #fff7ed;
+  color: var(--orange);
+}
+
+.services-launch-notice-v2 b {
+  color: #1f1f1d;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.services-launch-notice-v2 p {
+  margin: 6px 0 0;
+  color: #67625b;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .services-launch-notice-v2 {
+    width: min(100% - 28px, 1400px);
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+}
