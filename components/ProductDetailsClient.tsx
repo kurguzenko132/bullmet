@@ -455,7 +455,17 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                 <p className="product-category-label">{product.category || 'Товар Bullmet'}</p>
                 <h1>{product.title}</h1>
               </div>
-              <button className={favorite ? 'favorite-circle is-active' : 'favorite-circle'} type="button" onClick={toggleFavorite} aria-label="Добавить в избранное">{favorite ? '♥' : '♡'}</button>
+              <button
+                className={favorite ? 'favorite-circle is-active' : 'favorite-circle'}
+                type="button"
+                onClick={toggleFavorite}
+                aria-label={favorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+                aria-pressed={favorite}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20.8 4.8a5.5 5.5 0 0 0-7.8 0L12 5.9l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.9-8.4a5.5 5.5 0 0 0-.1-7.8Z" />
+                </svg>
+              </button>
             </div>
 
             <div className="product-stock-row">

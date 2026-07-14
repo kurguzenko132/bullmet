@@ -24903,3 +24903,172 @@ body:not(.admin-body) .review-form--redesign button[type="submit"] {
     grid-column: auto;
   }
 }
+
+/* Keep the product controls within the visual height of the gallery. */
+@media (min-width: 1024px) {
+  body:not(.admin-body) .product-detail-layout {
+    align-items: start !important;
+  }
+
+  body:not(.admin-body) .product-gallery-panel {
+    align-self: start;
+  }
+
+  body:not(.admin-body) .product-info-panel {
+    min-height: 0 !important;
+    max-height: 650px;
+    padding-top: 4px !important;
+  }
+
+  body:not(.admin-body) .product-info-panel h1 {
+    font-size: 32px !important;
+    line-height: 38px !important;
+  }
+
+  body:not(.admin-body) .product-price-row {
+    margin-top: 10px;
+  }
+
+  body:not(.admin-body) .product-description-full {
+    display: -webkit-box !important;
+    max-width: 540px;
+    margin: 10px 0 12px;
+    overflow: hidden;
+    color: #4e4a45;
+    font-size: 12px;
+    line-height: 17px;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+
+  body:not(.admin-body) .product-detail-specs {
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  body:not(.admin-body) .product-detail-specs p {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  body:not(.admin-body) .product-detail-specs p:nth-child(n + 6) {
+    display: none;
+  }
+
+  body:not(.admin-body) .product-choice-block {
+    margin-top: 10px;
+  }
+
+  body:not(.admin-body) .product-choice-block > p,
+  body:not(.admin-body) .choice-headline p {
+    margin-bottom: 6px;
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  body:not(.admin-body) .color-variants--photos .variant-photo {
+    width: 52px;
+    height: 52px;
+  }
+
+  body:not(.admin-body) .color-variants--photos a {
+    width: 62px;
+  }
+
+  body:not(.admin-body) .color-variants--photos .variant-text {
+    display: none;
+  }
+
+  body:not(.admin-body) .size-options button,
+  body:not(.admin-body) .qty-control,
+  body:not(.admin-body) .qty-control button {
+    height: 38px;
+  }
+
+  body:not(.admin-body) .qty-control button {
+    width: 38px;
+  }
+
+  body:not(.admin-body) .product-actions-row {
+    margin-top: 14px;
+  }
+
+  body:not(.admin-body) .product-actions-row button {
+    min-height: 42px !important;
+    height: 42px;
+  }
+}
+
+/* Clear favorite state with an accessible, consistent heart icon. */
+body:not(.admin-body) .favorite-circle {
+  display: grid;
+  place-items: center;
+  border-color: #ded8cf;
+  border-radius: 50%;
+  background: #fbfaf7;
+  color: #e86f0a;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+body:not(.admin-body) .favorite-circle svg {
+  width: 19px;
+  height: 19px;
+  fill: transparent;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+}
+
+body:not(.admin-body) .favorite-circle:hover {
+  border-color: #e86f0a;
+  background: #fff4eb;
+  transform: translateY(-1px);
+}
+
+body:not(.admin-body) .favorite-circle.is-active {
+  border-color: #e86f0a;
+  background: #fff0e5;
+  color: #df5f00;
+}
+
+body:not(.admin-body) .favorite-circle.is-active svg {
+  fill: currentColor;
+}
+
+body:not(.admin-body) .favorite-circle:focus-visible {
+  outline: 3px solid rgba(232, 111, 10, .24);
+  outline-offset: 3px;
+}
+
+/* Compact empty review state: the section ends with its form, not a blank canvas. */
+body:not(.admin-body) .reviews-list--redesign,
+body:not(.admin-body) .empty-reviews--redesign {
+  min-height: 0;
+}
+
+body:not(.admin-body) .empty-reviews--redesign {
+  align-content: start;
+  padding-top: 18px;
+}
+
+body:not(.admin-body) .review-form--redesign {
+  padding: 16px;
+}
+
+body:not(.admin-body) .review-form--redesign h3 {
+  margin-bottom: 12px;
+}
+
+body:not(.admin-body) .review-form--redesign textarea {
+  min-height: 72px;
+}
+
+body:not(.admin-body) .review-form--redesign .review-photo-field input[type="file"] {
+  min-height: 34px;
+  padding: 6px;
+}
+
+body:not(.admin-body) .review-form--redesign .review-photo-field small {
+  font-size: 10px;
+  line-height: 14px;
+}
