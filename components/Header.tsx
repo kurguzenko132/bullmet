@@ -102,7 +102,7 @@ export function Header() {
   }, [siteControl]);
 
   const accountHref = accountEmail ? '/account' : '/login?next=/account';
-  const accountLabel = accountEmail ? 'Кабинет' : 'Войти';
+  const accountLabel = accountEmail ? 'Личный кабинет' : 'Войти';
 
   const bottomNav = useMemo(() => {
     const fromSettings = siteControl?.navigation
@@ -112,7 +112,7 @@ export function Header() {
         const href = item.id === 'profile_mobile' ? accountHref : item.href;
         return {
           href,
-          label: item.id === 'profile_mobile' ? (accountEmail ? 'Кабинет' : 'Войти') : item.label,
+          label: item.id === 'profile_mobile' ? (accountEmail ? 'Личный кабинет' : 'Войти') : item.label,
           icon: iconForNavItem(item.id, href)
         };
       }) || [];
@@ -121,7 +121,7 @@ export function Header() {
       { href: '/', label: 'Главная', icon: 'factory' as const },
       { href: '/catalog', label: 'Каталог', icon: 'search' as const },
       { href: '/cart', label: 'Корзина', icon: 'cart' as const },
-      { href: accountHref, label: accountEmail ? 'Кабинет' : 'Войти', icon: 'user' as const }
+      { href: accountHref, label: accountEmail ? 'Личный кабинет' : 'Войти', icon: 'user' as const }
     ];
   }, [accountEmail, accountHref, siteControl]);
 
