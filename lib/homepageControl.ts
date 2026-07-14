@@ -145,8 +145,8 @@ export const defaultHomepageControl: HomeControlSettings = {
   hero: {
     enabled: true,
     kicker: 'Производство металлоизделий Bullmet',
-    title: 'Изделия из металла с элементами дерева',
-    text: 'Настенные часы из металла с элементами дерева собственного производства Bullmet. Подберем размер, цвет и оформление под интерьер.',
+    title: 'BULLMET — СОБСТВЕННОЕ\nПРОИЗВОДСТВО ИЗДЕЛИЙ\nИЗ МЕТАЛЛА И ДЕРЕВА',
+    text: 'Изготавливаем изделия из металла и дерева на собственном производстве. Подберём размер, цвет и оформление под вашу задачу.',
     image: '/mockup/hero-right.jpg',
     imageAlt: 'Станок режет металл',
     primaryLabel: 'Перейти в каталог',
@@ -168,10 +168,10 @@ export const defaultHomepageControl: HomeControlSettings = {
   },
   directions: [
     { id: 'clocks', title: 'Настенные\nчасы', img: '/mockup/cat-clock.jpg', href: '/catalog?category=Настенные часы', visible: true, order: 1 },
-    { id: 'garden', title: 'Садовая\nмебель', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: false, order: 2 },
-    { id: 'loft', title: 'Мебель для дома\nв стиле лофт', img: '/mockup/cat-custom.jpg', href: '/catalog?category=Мебель для дома в стиле лофт', visible: false, order: 3 },
-    { id: 'laser', title: 'Лазерная\nрезка', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: false, order: 4 },
-    { id: 'wholesale', title: 'Мелкий опт\nметаллопроката', img: '/mockup/cat-wood.jpg', href: '/services#metal', visible: false, order: 5 },
+    { id: 'garden', title: 'Садовая\nмебель', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: true, order: 2 },
+    { id: 'loft', title: 'Мебель для дома\nв стиле лофт', img: '/mockup/cat-custom.jpg', href: '/catalog?category=Мебель для дома в стиле лофт', visible: true, order: 3 },
+    { id: 'laser', title: 'Лазерная\nрезка', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: true, order: 4 },
+    { id: 'wholesale', title: 'Мелкий опт\nметаллопроката', img: '/mockup/cat-wood.jpg', href: '/services#metal', visible: true, order: 5 },
     { id: 'bending', title: 'Гибка\nметалла', img: '/mockup/service-metal.jpg', href: '/services#bending', visible: false, order: 6 }
   ],
   productsSection: {
@@ -228,7 +228,9 @@ export const defaultHomepageControl: HomeControlSettings = {
     { id: 'ready-clocks', src: '/mockup/gallery-4.jpg', title: 'Готовые часы', note: 'Настенные часы из металла с элементами дерева', visible: true, order: 1 },
     { id: 'details', src: '/mockup/gallery-1.jpg', title: 'Работа с деталями', note: 'Подготовка металлических элементов на производстве', visible: true, order: 2 },
     { id: 'production', src: '/mockup/gallery-3.jpg', title: 'Производство', note: 'Собственное производство Bullmet в Беларуси', visible: true, order: 3 },
-    { id: 'quality', src: '/mockup/gallery-5.jpg', title: 'Контроль качества', note: 'Проверяем внешний вид и сборку перед передачей', visible: true, order: 4 }
+    { id: 'quality', src: '/mockup/gallery-5.jpg', title: 'Контроль качества', note: 'Проверяем внешний вид и сборку перед передачей', visible: true, order: 4 },
+    { id: 'materials', src: '/mockup/gallery-2.jpg', title: 'Материалы', note: 'Металл и дерево для изделий Bullmet', visible: true, order: 5 },
+    { id: 'workshop', src: '/mockup/gallery-6.jpg', title: 'Мастерская', note: 'Рабочие процессы собственного производства', visible: true, order: 6 }
   ],
   cta: {
     enabled: true,

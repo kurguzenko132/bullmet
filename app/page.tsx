@@ -6,16 +6,6 @@ import { HomeProductsClient } from '@/components/HomeProductsClient';
 import { HomePromoBanners } from '@/components/HomePromoBanners';
 import { getHomepageControlSettings, visibleHomeItems } from '@/lib/homepageControl';
 import { getCatalogProducts } from '@/lib/products';
-import { getSiteControlSettings, type SiteDirectionKey } from '@/lib/siteControl';
-
-const homeDirectionToSiteDirection: Record<string, SiteDirectionKey> = {
-  clocks: 'clocks',
-  garden: 'garden_furniture',
-  loft: 'loft_furniture',
-  laser: 'laser_cutting',
-  wholesale: 'metal_wholesale',
-  bending: 'metal_bending'
-};
 
 function Lines({ value }: { value: string }) {
   return <>{value.split('\n').map((line) => <span key={line}>{line}</span>)}</>;
@@ -39,22 +29,16 @@ function isClockProduct(product: Awaited<ReturnType<typeof getCatalogProducts>>[
 }
 
 export default async function HomePage() {
-  const [home, allProducts, site] = await Promise.all([
+  const [home, allProducts] = await Promise.all([
     getHomepageControlSettings(),
-    getCatalogProducts(),
-    getSiteControlSettings()
+    getCatalogProducts()
   ]);
 
   const products = (home.productsSection.onlyClocks ? allProducts.filter(isClockProduct) : allProducts)
     .slice(0, Number(home.productsSection.limit || 4));
 
   const featureItems = visibleHomeItems(home.features);
-  const visibleDirectionKeys = new Set(site.directions.filter((direction) => direction.visible).map((direction) => direction.key));
-  const categories = visibleHomeItems(home.directions)
-    .filter((item) => {
-      const directionKey = homeDirectionToSiteDirection[item.id];
-      return Boolean(directionKey && visibleDirectionKeys.has(directionKey));
-    });
+  const categories = visibleHomeItems(home.directions).slice(0, 5);
   const productionBenefits = visibleHomeItems(home.productionBenefits);
   const steps = visibleHomeItems(home.steps);
   const workBenefits = visibleHomeItems(home.workBenefits);
@@ -71,24 +55,24 @@ export default async function HomePage() {
             <div className="home-container hero-inner">
               <div className="hero-copy">
                 <span className="home-hero-kicker">{home.hero.kicker}</span>
-                <h1>{home.hero.title}</h1>
+                <h1><Lines value={home.hero.title} /></h1>
                 <p>{home.hero.text}</p>
                 <div className="hero-actions">
                   <Link href={home.hero.primaryHref} className="btn-orange">{home.hero.primaryLabel}</Link>
+                  <Link href="/contacts" className="btn-outline">Заказать расчёт</Link>
                 </div>
               </div>
+              {!!featureItems.length && (
+                <div className="hero-features" aria-label="Преимущества Bullmet">
+                  {featureItems.map((item) => (
+                    <div className="feature-item" key={item.id}>
+                      <Icon name={item.icon as any} />
+                      <p><Lines value={item.text} /></p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </section>
-        )}
-
-        {!!featureItems.length && (
-          <section className="home-container features-row home-trust-row">
-            {featureItems.map((item) => (
-              <div className="feature-item" key={item.id}>
-                <Icon name={item.icon as any} />
-                <p><Lines value={item.text} /></p>
-              </div>
-            ))}
           </section>
         )}
 
@@ -117,25 +101,6 @@ export default async function HomePage() {
           </section>
         )}
 
-        {home.productsSection.enabled && (
-          <section className="home-container home-shop-final">
-            <div className="home-section-title-row">
-              <div>
-                <p className="eyebrow">{home.productsSection.eyebrow}</p>
-                <h2>{home.productsSection.title}</h2>
-                <span>{cleanPublicText(home.productsSection.text)}</span>
-              </div>
-              <Link href={home.productsSection.buttonHref}>{home.productsSection.buttonLabel}</Link>
-            </div>
-
-            <div className="products-services products-services-final products-services-final--clocks">
-              <div className="popular-block">
-                <HomeProductsClient products={products} />
-              </div>
-            </div>
-          </section>
-        )}
-
         {home.productionSection.enabled && (
           <section className="home-container production-section production-section-final" id="production">
             <div className="production-text">
@@ -149,6 +114,39 @@ export default async function HomePage() {
               {productionBenefits.map((item) => (
                 <div key={item.id}><Icon name={item.icon as any} /><p><Lines value={item.text} /></p></div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {home.productsSection.enabled && (
+          <section className="home-container home-shop-final">
+            <div className="products-services products-services-final">
+              <div className="popular-block">
+                <div className="home-section-title-row">
+                  <div>
+                    <p className="eyebrow">{home.productsSection.eyebrow}</p>
+                    <h2>{home.productsSection.title}</h2>
+                  </div>
+                  <Link href={home.productsSection.buttonHref}>{home.productsSection.buttonLabel}</Link>
+                </div>
+                <HomeProductsClient products={products} />
+              </div>
+              <aside className="services-block services-block-final">
+                <div className="services-block-head-final">
+                  <p className="eyebrow">услуги</p>
+                  <h3>Услуги резки</h3>
+                </div>
+                <div className="service-row-exact service-row-final">
+                  <article>
+                    <img src="/mockup/service-metal.jpg" alt="Лазерная резка металла" />
+                    <div><h4>Лазерная резка металла</h4><p>Точная обработка листового металла по вашему проекту.</p><Link href="/services#laser">Подробнее</Link></div>
+                  </article>
+                  <article>
+                    <img src="/mockup/service-wood.jpg" alt="Работа с деревом" />
+                    <div><h4>Изделия под заказ</h4><p>Подберём размер, материал и оформление для вашей задачи.</p><Link href="/contacts">Оставить заявку</Link></div>
+                  </article>
+                </div>
+              </aside>
             </div>
           </section>
         )}
@@ -204,7 +202,7 @@ export default async function HomePage() {
             </div>
 
             <div className="production-simple-grid">
-              {productionGallery.slice(0, 4).map((item) => (
+              {productionGallery.slice(0, 6).map((item) => (
                 <article className="production-simple-card" key={item.id}>
                   <img src={item.src} alt={item.title} />
                   <div className="production-simple-card-copy">
