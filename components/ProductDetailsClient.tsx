@@ -129,6 +129,10 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length : 0;
   const roundedRating = reviews.length ? Math.round(averageRating) : 0;
   const reviewsLabel = reviews.length ? `${reviews.length} ${reviewWord(reviews.length)}` : 'Нет отзывов';
+  const ratingDistribution = useMemo(() => [5, 4, 3, 2, 1].map((rating) => ({
+    rating,
+    count: reviews.filter((review) => Number(review.rating) === rating).length
+  })), [reviews]);
   const sortedColorVariants = useMemo(() => {
     return [...colorVariants].sort((a, b) => {
       if (a.slug === product.slug) return -1;
@@ -546,19 +550,24 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       <section className="product-content-section product-content-section--reviews-only">
         <article className="product-content-card product-content-card--wide product-reviews-redesign">
           <div className="product-reviews-head product-reviews-head--redesign">
-            <div>
-              <p className="product-section-eyebrow">Отзывы</p>
-              <h2>Отзывы покупателей</h2>
-              <span>{reviews.length ? `Средняя оценка ${averageRating.toFixed(1)} из 5 · ${reviewsLabel}` : 'Пока оценок нет'}</span>
-            </div>
-            <div className="reviews-summary-card">
-              <strong>{reviews.length ? averageRating.toFixed(1) : 'Нет оценок'}</strong>
-              <RatingStars value={roundedRating} readOnly />
-              <small>{reviewsLabel}</small>
-            </div>
+            <h2>Отзывы и оценки</h2>
           </div>
 
           <div className="product-reviews-grid product-reviews-grid--redesign">
+            <aside className="reviews-summary-card">
+              <strong>{reviews.length ? averageRating.toFixed(1) : '—'}</strong>
+              <RatingStars value={roundedRating} readOnly />
+              <small>{reviews.length ? `На основе ${reviewsLabel}` : 'Пока нет отзывов'}</small>
+              <div className="review-rating-bars" aria-label="Распределение оценок">
+                {ratingDistribution.map(({ rating, count }) => (
+                  <div key={rating}>
+                    <span>{rating}</span>
+                    <i><b style={{ width: reviews.length ? `${(count / reviews.length) * 100}%` : '0%' }} /></i>
+                    <em>{count}</em>
+                  </div>
+                ))}
+              </div>
+            </aside>
             <div className="reviews-list reviews-list--redesign">
               {reviews.length ? reviews.map((review) => (
                 <article key={review.id} className="review-card review-card--redesign">

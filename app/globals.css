@@ -24410,7 +24410,7 @@ body:not(.admin-body) .footer-exact .footer-container { padding-bottom: 38px; }
 body:not(.admin-body) .catalog-page--improved {
   min-height: 0;
   padding: 24px 0 40px !important;
-  background: #fff !important;
+  background: var(--public-page-bg) !important;
 }
 body:not(.admin-body) .catalog-page--improved .catalog-container {
   width: min(1400px, calc(100% - 70px)) !important;
@@ -24647,4 +24647,259 @@ body:not(.admin-body) .related-card-body { padding: 12px; }
   body:not(.admin-body) .product-main-photo { aspect-ratio: 1; }
   body:not(.admin-body) .product-actions-row { grid-template-columns: 1fr !important; }
   body:not(.admin-body) .related-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Final public-page background and product-review layout. */
+html,
+body:not(.admin-body) {
+  background: var(--public-page-bg) !important;
+}
+
+body:not(.admin-body) > main,
+body:not(.admin-body) .catalog-page,
+body:not(.admin-body) .catalog-page--improved,
+body:not(.admin-body) .product-page-restored,
+body:not(.admin-body) .cart-page-stage2,
+body:not(.admin-body) .order-success-page-stage2,
+body:not(.admin-body) .account-page,
+body:not(.admin-body) .auth-page,
+body:not(.admin-body) .about-page,
+body:not(.admin-body) .contacts-page,
+body:not(.admin-body) .production-page,
+body:not(.admin-body) .services-page-v2,
+body:not(.admin-body) .site-page-builder {
+  background: var(--public-page-bg) !important;
+}
+
+body:not(.admin-body) .product-content-section--reviews-only {
+  margin-top: 44px !important;
+  padding-top: 0;
+  border-top: 0;
+}
+
+body:not(.admin-body) .product-reviews-redesign {
+  overflow: visible;
+}
+
+body:not(.admin-body) .product-reviews-head--redesign {
+  display: block;
+  padding: 0 0 18px;
+  border: 0;
+  background: transparent;
+}
+
+body:not(.admin-body) .product-reviews-head--redesign h2 {
+  margin: 0;
+  color: #171717;
+  font-size: 24px !important;
+  line-height: 30px !important;
+  font-weight: 800;
+}
+
+body:not(.admin-body) .product-reviews-grid--redesign {
+  grid-template-columns: 268px minmax(0, 1fr) 304px;
+  gap: 20px;
+  align-items: start;
+}
+
+body:not(.admin-body) .reviews-summary-card {
+  min-width: 0;
+  min-height: 246px;
+  padding: 20px;
+  border: 1px solid #e5e0da !important;
+  border-radius: 6px;
+  background: #fbfaf7 !important;
+  box-shadow: none !important;
+  text-align: center;
+}
+
+body:not(.admin-body) .reviews-summary-card strong {
+  margin: 0 0 6px;
+  color: #171717;
+  font-size: 36px;
+  line-height: 40px;
+  font-weight: 800;
+}
+
+body:not(.admin-body) .reviews-summary-card .rating-stars {
+  gap: 1px;
+}
+
+body:not(.admin-body) .reviews-summary-card .rating-stars button {
+  width: 20px;
+  height: 22px;
+  font-size: 20px;
+}
+
+body:not(.admin-body) .reviews-summary-card small {
+  margin-top: 5px;
+  color: #77736e;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+body:not(.admin-body) .review-rating-bars {
+  display: grid;
+  gap: 7px;
+  margin-top: 17px;
+  text-align: left;
+}
+
+body:not(.admin-body) .review-rating-bars > div {
+  display: grid;
+  grid-template-columns: 11px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 7px;
+  color: #4a4743;
+  font-size: 11px;
+  line-height: 12px;
+}
+
+body:not(.admin-body) .review-rating-bars i {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e6e1da;
+}
+
+body:not(.admin-body) .review-rating-bars i b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #ef6d0a;
+}
+
+body:not(.admin-body) .review-rating-bars em {
+  color: #77736e;
+  font-style: normal;
+  text-align: right;
+}
+
+body:not(.admin-body) .reviews-list--redesign {
+  display: grid;
+  min-height: 246px;
+  padding: 0;
+  border: 0;
+}
+
+body:not(.admin-body) .review-card--redesign {
+  margin: 0;
+  padding: 0 0 16px;
+  border: 0 !important;
+  border-bottom: 1px solid #e5e0da !important;
+  background: transparent !important;
+}
+
+body:not(.admin-body) .review-card--redesign + .review-card--redesign {
+  padding-top: 16px;
+}
+
+body:not(.admin-body) .review-card-top {
+  margin-bottom: 7px;
+}
+
+body:not(.admin-body) .review-card-top b {
+  font-size: 13px;
+}
+
+body:not(.admin-body) .review-card--redesign p {
+  color: #5c5751;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body:not(.admin-body) .empty-reviews--redesign {
+  min-height: 246px;
+  place-content: center start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+body:not(.admin-body) .empty-reviews--redesign b {
+  font-size: 17px;
+}
+
+body:not(.admin-body) .empty-reviews--redesign span {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body:not(.admin-body) .review-form--redesign {
+  padding: 18px;
+  border: 1px solid #e5e0da !important;
+  border-radius: 6px;
+  background: #fbfaf7 !important;
+}
+
+body:not(.admin-body) .review-form--redesign h3 {
+  font-size: 16px;
+  line-height: 21px;
+  font-weight: 800;
+}
+
+body:not(.admin-body) .review-form--redesign > p {
+  display: none;
+}
+
+body:not(.admin-body) .review-form--redesign label {
+  gap: 6px;
+  margin-bottom: 11px;
+}
+
+body:not(.admin-body) .review-form--redesign label > span {
+  font-size: 10px;
+  letter-spacing: .04em;
+}
+
+body:not(.admin-body) .review-form--redesign .rating-stars button {
+  width: 25px;
+  height: 26px;
+  font-size: 22px;
+}
+
+body:not(.admin-body) .review-form--redesign textarea {
+  min-height: 86px;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+body:not(.admin-body) .review-form--redesign input[type="file"] {
+  padding: 8px;
+  font-size: 11px;
+}
+
+body:not(.admin-body) .review-form--redesign button[type="submit"] {
+  min-height: 40px;
+  font-size: 11px;
+}
+
+@media (max-width: 1023px) {
+  body:not(.admin-body) .product-reviews-grid--redesign {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+
+  body:not(.admin-body) .review-form--redesign {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  body:not(.admin-body) .product-reviews-grid--redesign {
+    grid-template-columns: 1fr;
+  }
+
+  body:not(.admin-body) .reviews-summary-card,
+  body:not(.admin-body) .reviews-list--redesign,
+  body:not(.admin-body) .empty-reviews--redesign {
+    min-height: 0;
+  }
+
+  body:not(.admin-body) .review-form--redesign {
+    grid-column: auto;
+  }
 }
