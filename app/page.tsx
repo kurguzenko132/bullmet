@@ -50,7 +50,9 @@ export default async function HomePage() {
       <main className="exact-home home-final-page">
         {home.hero.enabled && (
           <section className="hero-exact home-final-hero">
-            <img src={home.hero.image} alt={home.hero.imageAlt} className="hero-photo" />
+            <picture className="hero-background" aria-hidden="true">
+              <img src={home.hero.image} alt="" className="hero-photo" />
+            </picture>
             <div className="hero-fade" />
             <div className="home-container hero-inner">
               <div className="hero-copy">
@@ -59,7 +61,6 @@ export default async function HomePage() {
                 <p>{home.hero.text}</p>
                 <div className="hero-actions">
                   <Link href={home.hero.primaryHref} className="btn-orange">{home.hero.primaryLabel}</Link>
-                  <Link href="/contacts" className="btn-outline">Заказать расчёт</Link>
                 </div>
               </div>
               {!!featureItems.length && (

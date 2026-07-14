@@ -146,16 +146,16 @@ export const defaultHomepageControl: HomeControlSettings = {
     enabled: true,
     kicker: 'Производство металлоизделий Bullmet',
     title: 'BULLMET — СОБСТВЕННОЕ\nПРОИЗВОДСТВО ИЗДЕЛИЙ\nИЗ МЕТАЛЛА И ДЕРЕВА',
-    text: 'Изготавливаем изделия из металла и дерева на собственном производстве. Подберём размер, цвет и оформление под вашу задачу.',
-    image: '/mockup/hero-right.jpg',
+    text: 'Изготавливаем: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.',
+    image: '/assets/hero-bullmet.png',
     imageAlt: 'Станок режет металл',
     primaryLabel: 'Перейти в каталог',
     primaryHref: '/catalog'
   },
   features: [
     { id: 'production', icon: 'factory', text: 'Собственное\nпроизводство', visible: true, order: 1 },
-    { id: 'clocks', icon: 'clock', text: 'Настенные\nчасы', visible: true, order: 2 },
-    { id: 'materials', icon: 'materials', text: 'Металл\nс элементами дерева', visible: true, order: 3 },
+    { id: 'clocks', icon: 'custom', text: 'Индивидуальные\nзаказы', visible: true, order: 2 },
+    { id: 'materials', icon: 'materials', text: 'Металл\nи дерево', visible: true, order: 3 },
     { id: 'delivery', icon: 'truck', text: 'Доставка по\nБеларуси', visible: true, order: 4 }
   ],
   directionsSection: {
