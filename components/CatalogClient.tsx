@@ -262,7 +262,7 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
                   </div>
                   <h3>{product.title}</h3>
                   <p>{product.material || product.short}</p>
-                  <p className="catalog-card-color-market"><i style={{ background: product.colorHex || '#d6d2cd' }} />Цвет: <span>{product.colorName || 'не указан'}</span></p>
+                  <p className="catalog-card-color-market">Цвет: <span>{product.colorName || 'не указан'}</span></p>
                   <div className="catalog-card-bottom-market">
                     <div>
                       <b>от {money(product.price)} BYN</b>

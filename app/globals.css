@@ -24554,7 +24554,7 @@ body:not(.admin-body) .footer-exact { height: auto !important; overflow: visible
 body:not(.admin-body) .catalog-card-market { height: 350px; min-height: 350px; }
 body:not(.admin-body) .catalog-card-image-market { height: 210px; flex-basis: 210px; }
 
-body:not(.admin-body) .product-page-restored { padding: 0 0 42px; background: #fff !important; }
+body:not(.admin-body) .product-page-restored { padding: 0 0 42px; background: var(--public-page-bg) !important; }
 body:not(.admin-body) .product-page-shell,
 body:not(.admin-body) .product-content-section,
 body:not(.admin-body) .related-products-section { width: min(1400px, calc(100% - 70px)) !important; }
@@ -24613,8 +24613,9 @@ body:not(.admin-body) .review-form { border-color: #e8e4df !important; border-ra
 body:not(.admin-body) .reviews-summary-card strong { font-size: 20px; }
 body:not(.admin-body) .related-products-section { margin-top: 42px !important; padding-top: 28px; border-top: 1px solid #eeeae5; }
 body:not(.admin-body) .related-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 16px !important; }
-body:not(.admin-body) .related-card { height: 370px; border: 1px solid #e8e4df !important; border-radius: 4px; box-shadow: none !important; }
-body:not(.admin-body) .related-image { height: 230px; }
+body:not(.admin-body) .related-card { display: flex !important; height: 370px; border: 1px solid #e8e4df !important; border-radius: 4px; background: #fff !important; box-shadow: none !important; overflow: hidden; }
+body:not(.admin-body) .related-image { display: block !important; height: 230px !important; min-height: 230px; overflow: hidden; background: #f3f1ed; }
+body:not(.admin-body) .related-image img { width: 100% !important; height: 100% !important; padding: 0 !important; object-fit: cover !important; object-position: center !important; }
 body:not(.admin-body) .related-card-body { padding: 12px; }
 
 @media (max-width: 1469px) {
