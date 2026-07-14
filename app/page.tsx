@@ -199,15 +199,14 @@ export default async function HomePage() {
         )}
 
         {home.cta.enabled && (
-          <section className="home-container home-final-cta">
-            <div>
-              <p className="eyebrow">{home.cta.eyebrow}</p>
-              <h2>{home.cta.title}</h2>
-              <span>{cleanPublicText(home.cta.text)}</span>
-            </div>
-            <div className="home-final-cta-actions">
-              <Link href={home.cta.primaryHref} className="btn-orange">{home.cta.primaryLabel}</Link>
-              <Link href={home.cta.secondaryHref} className="btn-outline">{home.cta.secondaryLabel}</Link>
+          <section className="home-container custom-order">
+            <div className="custom-order__banner">
+              <img className="custom-order__background" src="/mockup/cta-bg.jpg" alt="Чертёж и готовая металлическая деталь индивидуального изготовления" />
+              <div className="custom-order__content">
+                <h2 className="custom-order__title">Нужно изделие по вашим размерам?</h2>
+                <p className="custom-order__description">Изготовим часы, качели, металлические элементы, декор или детали по вашему эскизу или чертежу.</p>
+                <Link href="/contacts" className="custom-order__button">Обсудить проект</Link>
+              </div>
             </div>
           </section>
         )}
