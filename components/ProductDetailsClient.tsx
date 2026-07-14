@@ -128,7 +128,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const discount = discountPercent(product.price, product.oldPrice);
   const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length : 0;
   const roundedRating = reviews.length ? Math.round(averageRating) : 0;
-  const reviewsLabel = reviews.length ? `${reviews.length} ${reviewWord(reviews.length)}` : 'нет отзывов';
+  const reviewsLabel = reviews.length ? `${reviews.length} ${reviewWord(reviews.length)}` : 'Нет отзывов';
   const sortedColorVariants = useMemo(() => {
     return [...colorVariants].sort((a, b) => {
       if (a.slug === product.slug) return -1;
@@ -459,7 +459,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               <b>{product.inStock ? 'В наличии / под заказ' : 'Под заказ'}</b>
               {product.isNew && <em>Новинка</em>}
               {product.isPopular && <em>Популярное</em>}
-              {reviews.length > 0 && <em>★ {averageRating.toFixed(1)} · {reviewsLabel}</em>}
+              <em className="product-review-link">{reviews.length ? `★ ${averageRating.toFixed(1)} · ${reviewsLabel}` : 'Нет отзывов'}</em>
             </div>
 
             <div className="product-price-row product-price-row--fixed">
@@ -472,6 +472,9 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             </div>
 
             <p className="product-description-full">{product.description}</p>
+            <div className="product-detail-specs" aria-label="Характеристики товара">
+              {specRows.slice(0, 5).map(([name, value]) => <p key={`${name}-${value}`}><b>{name}:</b> {value}</p>)}
+            </div>
 
             {sortedColorVariants.length > 1 && (
               <div className="product-choice-block">
@@ -549,7 +552,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               <span>{reviews.length ? `Средняя оценка ${averageRating.toFixed(1)} из 5 · ${reviewsLabel}` : 'Пока оценок нет'}</span>
             </div>
             <div className="reviews-summary-card">
-              <strong>{reviews.length ? averageRating.toFixed(1) : '0.0'}</strong>
+              <strong>{reviews.length ? averageRating.toFixed(1) : 'Нет оценок'}</strong>
               <RatingStars value={roundedRating} readOnly />
               <small>{reviewsLabel}</small>
             </div>
@@ -580,7 +583,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               )) : (
                 <div className="empty-reviews empty-reviews--redesign">
                   <b>Отзывов пока нет</b>
-                  <span>Когда покупатели оставят отзывы, здесь появится средняя оценка и реальные комментарии. Сейчас рейтинг товара — 0.0.</span>
+                  <span>Станьте первым, кто поделится впечатлением о товаре.</span>
                 </div>
               )}
             </div>
@@ -704,4 +707,3 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     </>
   );
 }
-
