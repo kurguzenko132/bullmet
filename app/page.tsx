@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
@@ -38,7 +39,7 @@ export default async function HomePage() {
     .slice(0, Number(home.productsSection.limit || 4));
 
   const featureItems = visibleHomeItems(home.features);
-  const categories = visibleHomeItems(home.directions);
+  const categories = visibleHomeItems(home.directions).filter((item) => item.id !== 'bending');
   const productionBenefits = visibleHomeItems(home.productionBenefits);
   const steps = visibleHomeItems(home.steps);
   const workBenefits = visibleHomeItems(home.workBenefits);
@@ -92,7 +93,7 @@ export default async function HomePage() {
               <Link href={home.directionsSection.buttonHref}>{home.directionsSection.buttonLabel}</Link>
             </div>
 
-            <div className="category-grid-exact category-grid-final">
+            <div className="category-grid-exact category-grid-final" style={{ '--directions-count': categories.length } as CSSProperties}>
               {categories.map((item) => (
                 <Link href={item.href} className="category-tile" key={item.id}>
                   <img src={item.img} alt={item.title.replace(/\n/g, ' ')} />

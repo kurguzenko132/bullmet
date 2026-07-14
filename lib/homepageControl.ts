@@ -171,8 +171,7 @@ export const defaultHomepageControl: HomeControlSettings = {
     { id: 'garden', title: 'Садовые\nкачели', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: true, order: 2 },
     { id: 'laser', title: 'Резка\nметалла', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: true, order: 3 },
     { id: 'wholesale', title: 'Резка\nдерева', img: '/mockup/service-wood.jpg', href: '/services#wood', visible: true, order: 4 },
-    { id: 'loft', title: 'Изделия\nна заказ', img: '/mockup/cat-custom.jpg', href: '/contacts', visible: true, order: 5 },
-    { id: 'bending', title: 'Гибка\nметалла', img: '/mockup/service-metal.jpg', href: '/services#bending', visible: false, order: 6 }
+    { id: 'loft', title: 'Изделия\nна заказ', img: '/mockup/cat-custom.jpg', href: '/contacts', visible: true, order: 5 }
   ],
   productsSection: {
     enabled: true,
