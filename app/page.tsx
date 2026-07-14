@@ -43,6 +43,8 @@ export default async function HomePage() {
   const steps = visibleHomeItems(home.steps);
   const workBenefits = visibleHomeItems(home.workBenefits);
   const productionGallery = visibleHomeItems(home.gallery);
+  const heroTitle = `BULLMET — ${home.hero.title.replace(/^bullmet\s*[—-]\s*/i, '')}`;
+  const heroDescription = 'Изготавливаем: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.';
 
   return (
     <>
@@ -51,14 +53,14 @@ export default async function HomePage() {
         {home.hero.enabled && (
           <section className="hero-exact home-final-hero">
             <picture className="hero-background" aria-hidden="true">
-              <img src={home.hero.image} alt="" className="hero-photo" />
+              <img src="/assets/hero-bullmet.png" alt="" className="hero-photo" />
             </picture>
             <div className="hero-fade" />
             <div className="home-container hero-inner">
               <div className="hero-copy">
                 <span className="home-hero-kicker">{home.hero.kicker}</span>
-                <h1><Lines value={home.hero.title} /></h1>
-                <p>{home.hero.text}</p>
+                <h1>{heroTitle}</h1>
+                <p>{heroDescription}</p>
                 <div className="hero-actions">
                   <Link href={home.hero.primaryHref} className="btn-orange">{home.hero.primaryLabel}</Link>
                 </div>
