@@ -22,21 +22,13 @@ function cleanPublicText(value: string) {
     .trim();
 }
 
-function isClockProduct(product: Awaited<ReturnType<typeof getCatalogProducts>>[number]) {
-  return [product.title, product.category, product.clockTheme, product.slug]
-    .join(' ')
-    .toLowerCase()
-    .includes('час') || Boolean(product.clockTheme);
-}
-
 export default async function HomePage() {
   const [home, allProducts] = await Promise.all([
     getHomepageControlSettings(),
     getCatalogProducts()
   ]);
 
-  const products = (home.productsSection.onlyClocks ? allProducts.filter(isClockProduct) : allProducts)
-    .slice(0, Number(home.productsSection.limit || 4));
+  const products = allProducts.slice(0, 4);
 
   const featureItems = visibleHomeItems(home.features);
   const categories = visibleHomeItems(home.directions).filter((item) => item.id !== 'bending');
@@ -126,28 +118,19 @@ export default async function HomePage() {
           <section className="home-container home-shop-final">
             <div className="products-services products-services-final">
               <div className="popular-block">
-                <div className="home-section-title-row">
-                  <div>
-                    <p className="eyebrow">{home.productsSection.eyebrow}</p>
-                    <h2>{home.productsSection.title}</h2>
-                  </div>
-                  <Link href={home.productsSection.buttonHref}>{home.productsSection.buttonLabel}</Link>
-                </div>
+                <h2 className="products-services-title">Популярные товары</h2>
                 <HomeProductsClient products={products} />
               </div>
               <aside className="services-block services-block-final">
-                <div className="services-block-head-final">
-                  <p className="eyebrow">услуги</p>
-                  <h3>Услуги резки</h3>
-                </div>
+                <h2 className="products-services-title">Услуги резки</h2>
                 <div className="service-row-exact service-row-final">
                   <article>
-                    <img src="/mockup/service-metal.jpg" alt="Лазерная резка металла" />
-                    <div><h4>Лазерная резка металла</h4><p>Точная обработка листового металла по вашему проекту.</p><Link href="/services#laser">Подробнее</Link></div>
+                    <img src="/mockup/service-metal.jpg" alt="Резка металла" />
+                    <div><h4>Резка металла</h4><p>Для декора, деталей, табличек, конструкций и других изделий.</p><Link href="/contacts">Заказать расчёт</Link></div>
                   </article>
                   <article>
-                    <img src="/mockup/service-wood.jpg" alt="Работа с деревом" />
-                    <div><h4>Изделия под заказ</h4><p>Подберём размер, материал и оформление для вашей задачи.</p><Link href="/contacts">Оставить заявку</Link></div>
+                    <img src="/mockup/service-wood.jpg" alt="Резка дерева" />
+                    <div><h4>Резка дерева</h4><p>Для интерьерных элементов, вывесок, подарков, мебели и других изделий.</p><Link href="/contacts">Заказать расчёт</Link></div>
                   </article>
                 </div>
               </aside>
