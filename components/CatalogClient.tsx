@@ -4,10 +4,7 @@ import { KeyboardEvent, MouseEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from './Icon';
 import type { CatalogProduct, ProductReviewStats } from '@/lib/products';
-import { clockCatalogCategories } from '@/lib/products';
 import { getImagePreset } from '@/lib/imageDisplay';
-
-type MainCatalogGroup = 'clocks';
 
 function money(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
@@ -24,19 +21,6 @@ function reviewWord(count: number) {
   if (mod10 === 1 && mod100 !== 11) return 'отзыв';
   if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'отзыва';
   return 'отзывов';
-}
-
-function isClockProduct(product: CatalogProduct) {
-  const text = [product.title, product.slug, product.category, product.clockTheme].join(' ').toLowerCase();
-  return text.includes('час') || Boolean(product.clockTheme);
-}
-
-function getInitialGroup(_initialCategory: string): MainCatalogGroup {
-  return 'clocks';
-}
-
-function getInitialClockTheme(initialCategory: string) {
-  return clockCatalogCategories.includes(initialCategory) ? initialCategory : '';
 }
 
 function addToCart(product: CatalogProduct) {
@@ -71,12 +55,12 @@ type CatalogProps = {
   initialCategory?: string;
 };
 
-export function CatalogClient({ products, reviewStats, initialQuery = '', initialCategory = '' }: CatalogProps) {
+export function CatalogClient({ products, reviewStats, categories, initialQuery = '', initialCategory = '' }: CatalogProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
-  const [mainGroup, setMainGroup] = useState<MainCatalogGroup>(getInitialGroup(initialCategory));
-  const [clockTheme, setClockTheme] = useState(getInitialClockTheme(initialCategory));
+  const [category, setCategory] = useState(initialCategory);
   const [material, setMaterial] = useState('');
+  const [color, setColor] = useState('');
   const [pricePreset, setPricePreset] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -85,36 +69,23 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
   const [notice, setNotice] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const clockProducts = useMemo(() => products.filter(isClockProduct), [products]);
-  const productsByMainGroup = useMemo(() => clockProducts, [clockProducts]);
-
-  const materials = useMemo(() => Array.from(new Set(productsByMainGroup.map((product) => product.material).filter(Boolean))), [productsByMainGroup]);
-
-  const clockThemeCounts = useMemo(() => {
-    return clockProducts.reduce<Record<string, number>>((acc, product) => {
-      const theme = product.clockTheme || product.category;
-      if (theme && clockCatalogCategories.includes(theme)) acc[theme] = (acc[theme] || 0) + 1;
-      return acc;
-    }, {});
-  }, [clockProducts]);
-
-  const visibleClockThemes = useMemo(() => {
-    return clockCatalogCategories.filter((item) => (clockThemeCounts[item] || 0) > 0 || item === clockTheme);
-  }, [clockTheme, clockThemeCounts]);
+  const materials = useMemo(() => Array.from(new Set(products.map((product) => product.material).filter(Boolean))), [products]);
+  const colors = useMemo(() => Array.from(new Set(products.map((product) => product.colorName).filter((item): item is string => Boolean(item)))), [products]);
 
   const filteredProducts = useMemo(() => {
     const q = query.toLowerCase().trim();
     const min = Number(minPrice || 0);
     const max = Number(maxPrice || Infinity);
 
-    return productsByMainGroup
+    return products
       .filter((product) => {
         const text = [product.title, product.slug, product.category, product.clockTheme, product.short, product.material, product.description].join(' ').toLowerCase();
         const matchesQuery = !q || text.includes(q);
-        const matchesClockTheme = mainGroup !== 'clocks' || !clockTheme || product.clockTheme === clockTheme || product.category === clockTheme || text.includes(clockTheme.toLowerCase());
+        const matchesCategory = !category || product.category === category || product.clockTheme === category || text.includes(category.toLowerCase());
         const matchesMaterial = !material || product.material === material;
+        const matchesColor = !color || product.colorName === color;
         const matchesPrice = product.price >= min && product.price <= max;
-        return matchesQuery && matchesClockTheme && matchesMaterial && matchesPrice;
+        return matchesQuery && matchesCategory && matchesMaterial && matchesColor && matchesPrice;
       })
       .sort((a, b) => {
         if (sort === 'price-asc') return a.price - b.price;
@@ -123,25 +94,19 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
         if (sort === 'discount') return Number(Boolean(b.oldPrice && b.oldPrice > b.price)) - Number(Boolean(a.oldPrice && a.oldPrice > a.price));
         return Number(b.isPopular) - Number(a.isPopular) || a.title.localeCompare(b.title, 'ru');
       });
-  }, [productsByMainGroup, query, mainGroup, clockTheme, material, minPrice, maxPrice, sort]);
+  }, [products, query, category, material, color, minPrice, maxPrice, sort]);
 
-  const selectedFiltersCount = [query.trim(), clockTheme, material, minPrice, maxPrice].filter(Boolean).length;
+  const selectedFiltersCount = [query.trim(), category, material, color, minPrice, maxPrice].filter(Boolean).length;
 
   function reset() {
     setQuery('');
-    setMainGroup('clocks');
-    setClockTheme('');
+    setCategory('');
     setMaterial('');
+    setColor('');
     setMinPrice('');
     setMaxPrice('');
     setPricePreset('');
     setSort('popular');
-  }
-
-  function chooseMainGroup(value: MainCatalogGroup) {
-    setMainGroup(value);
-    setClockTheme('');
-    setMaterial('');
   }
 
   function choosePricePreset(value: string) {
@@ -185,25 +150,16 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
         </div>
 
         <section className="catalog-filter-market-section catalog-filter-market-section--main">
-          <h3>Раздел</h3>
-          <div className="catalog-main-groups-market">
-            <button className="is-active" type="button" onClick={() => chooseMainGroup('clocks')}><span>Настенные часы</span><b>{clockProducts.length}</b></button>
+          <h3>Категории</h3>
+          <div className="catalog-category-pills-market catalog-category-pills-market--nested">
+            <button className={!category ? 'is-active' : ''} type="button" onClick={() => setCategory('')}><span>Все товары</span><b>{products.length}</b></button>
+            {categories.map((item) => (
+              <button key={item} className={category === item ? 'is-active' : ''} type="button" onClick={() => setCategory(item)}>
+                <span>{item}</span><b>{products.filter((product) => product.category === item || product.clockTheme === item).length}</b>
+              </button>
+            ))}
           </div>
         </section>
-
-        {mainGroup === 'clocks' && (
-          <section className="catalog-filter-market-section catalog-filter-market-section--themes">
-            <h3>Тематика часов</h3>
-            <div className="catalog-category-pills-market catalog-category-pills-market--nested">
-              <button className={!clockTheme ? 'is-active' : ''} type="button" onClick={() => setClockTheme('')}><span>Все часы</span><b>{clockProducts.length}</b></button>
-              {visibleClockThemes.map((item) => (
-                <button key={item} className={clockTheme === item ? 'is-active' : ''} type="button" onClick={() => setClockTheme(item)}>
-                  <span>{item}</span><b>{clockThemeCounts[item] || 0}</b>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
 
         <details className="catalog-filter-market-section" open>
           <summary>Цена</summary>
@@ -225,6 +181,19 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
             {materials.map((item) => <button className={material === item ? 'is-active' : ''} type="button" onClick={() => setMaterial(item)} key={item}>{item}</button>)}
           </div>
         </details>
+
+        <details className="catalog-filter-market-section" open>
+          <summary>Цвет</summary>
+          <div className="catalog-radio-list-market catalog-color-list-market">
+            <button className={!color ? 'is-active' : ''} type="button" onClick={() => setColor('')}>Все цвета</button>
+            {colors.map((item) => <button className={color === item ? 'is-active' : ''} type="button" onClick={() => setColor(item)} key={item}>{item}</button>)}
+          </div>
+        </details>
+
+        <div className="catalog-filter-actions-market">
+          <button type="button" onClick={() => setFiltersOpen(false)}>Применить</button>
+          <button type="button" onClick={reset}>Сбросить</button>
+        </div>
       </aside>
 
       <section className="catalog-content-market" aria-label="Список товаров">
@@ -249,11 +218,12 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
         </div>
 
         <div className="catalog-results-row-market">
-          <b>{filteredProducts.length} товаров</b>
+          <b>Показано {filteredProducts.length ? `1–${filteredProducts.length}` : '0'} из {filteredProducts.length}</b>
           <div className="catalog-active-chips-market">
             {query.trim() && <button type="button" onClick={() => setQuery('')}>Поиск: {query} ×</button>}
-            {clockTheme && <button type="button" onClick={() => setClockTheme('')}>{clockTheme} ×</button>}
+            {category && <button type="button" onClick={() => setCategory('')}>{category} ×</button>}
             {material && <button type="button" onClick={() => setMaterial('')}>{material} ×</button>}
+            {color && <button type="button" onClick={() => setColor('')}>{color} ×</button>}
             {(minPrice || maxPrice) && <button type="button" onClick={() => { setMinPrice(''); setMaxPrice(''); setPricePreset(''); }}>Цена ×</button>}
           </div>
         </div>
@@ -264,9 +234,13 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
           {filteredProducts.map((product) => {
             const imageSettings = getImagePreset(product, product.image, 'catalog');
             const discount = discountPercent(product.price, product.oldPrice);
-            const stats = reviewStats[product.slug] || { average: 0, count: 0 };
-            const ratingLabel = stats.count ? stats.average.toFixed(1) : '0.0';
-            const reviewsLabel = stats.count ? `${stats.count} ${reviewWord(stats.count)}` : 'нет отзывов';
+            const storedStats = reviewStats[product.slug] || { average: 0, count: 0 };
+            const stats = {
+              count: storedStats.count || product.reviewsCount || 0,
+              average: storedStats.count ? storedStats.average : (product.rating || 0)
+            };
+            const ratingLabel = stats.average.toFixed(1);
+            const reviewsLabel = stats.count ? `${stats.count} ${reviewWord(stats.count)}` : 'Нет отзывов';
 
             return (
               <article
@@ -284,15 +258,11 @@ export function CatalogClient({ products, reviewStats, initialQuery = '', initia
                 </div>
                 <div className="catalog-card-body-market">
                   <div className="catalog-card-rating-market">
-                    <span>★ {ratingLabel}</span>
-                    <small>{reviewsLabel}</small>
+                    {stats.count ? <><span>★ {ratingLabel}</span><small>· {reviewsLabel}</small></> : <small>{reviewsLabel}</small>}
                   </div>
                   <h3>{product.title}</h3>
-                  <p>{product.short || product.material}</p>
-                  <div className="catalog-card-status-market">
-                    <span className={product.inStock ? 'is-available' : 'is-order'}>{product.inStock ? 'В наличии' : 'Под заказ'}</span>
-                    {product.category && <small>{product.category}</small>}
-                  </div>
+                  <p>{product.material || product.short}</p>
+                  <p className="catalog-card-color-market"><i style={{ background: product.colorHex || '#d6d2cd' }} />Цвет: <span>{product.colorName || 'не указан'}</span></p>
                   <div className="catalog-card-bottom-market">
                     <div>
                       <b>от {money(product.price)} BYN</b>

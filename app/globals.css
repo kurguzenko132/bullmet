@@ -24404,3 +24404,147 @@ body:not(.admin-body) .footer-exact .footer-contacts svg { flex: 0 0 auto; width
 @media (max-width: 1279px) and (min-width: 1024px) {
   body:not(.admin-body) .custom-order__content { width: 540px; padding-top: 15px; padding-bottom: 15px; }
 }
+
+/* Catalog: compact desktop grid with category, material, price and color filters. */
+body:not(.admin-body) .footer-exact .footer-container { padding-bottom: 38px; }
+body:not(.admin-body) .catalog-page--improved {
+  min-height: 0;
+  padding: 24px 0 40px !important;
+  background: #fff !important;
+}
+body:not(.admin-body) .catalog-page--improved .catalog-container {
+  width: min(1400px, calc(100% - 70px)) !important;
+  margin-inline: auto;
+}
+body:not(.admin-body) .catalog-page--improved .catalog-breadcrumbs {
+  gap: 8px;
+  margin: 0 0 16px !important;
+  color: #77736e !important;
+  font-size: 12px !important;
+  line-height: 16px !important;
+  font-weight: 400 !important;
+}
+body:not(.admin-body) .catalog-page--improved .catalog-title {
+  margin: 0 0 30px !important;
+  color: #111 !important;
+  font-size: 40px !important;
+  line-height: 46px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.8px !important;
+}
+body:not(.admin-body) .catalog-layout-market { grid-template-columns: 250px minmax(0, 1fr) !important; gap: 36px !important; }
+body:not(.admin-body) .catalog-filter-market {
+  border: 1px solid #e8e4df !important;
+  border-radius: 4px;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+body:not(.admin-body) .catalog-filter-market-head { min-height: 0; padding: 20px 20px 14px; border: 0; }
+body:not(.admin-body) .catalog-filter-market-head b,
+body:not(.admin-body) .catalog-filter-market-section h3,
+body:not(.admin-body) .catalog-filter-market-section summary { color: #111 !important; font-size: 14px !important; line-height: 18px !important; font-weight: 700 !important; }
+body:not(.admin-body) .catalog-filter-market-section { padding: 14px 20px; border-color: #e8e4df; }
+body:not(.admin-body) .catalog-filter-market-section--main { padding-top: 0; }
+body:not(.admin-body) .catalog-category-pills-market { max-height: 300px; gap: 0; }
+body:not(.admin-body) .catalog-category-pills-market button,
+body:not(.admin-body) .catalog-radio-list-market button {
+  min-height: 38px;
+  padding: 7px 0;
+  border-radius: 0;
+  color: #262626 !important;
+  font-size: 12px !important;
+  line-height: 17px !important;
+  font-weight: 500 !important;
+}
+body:not(.admin-body) .catalog-category-pills-market button span,
+body:not(.admin-body) .catalog-radio-list-market button { font-size: 12px !important; font-weight: 500 !important; }
+body:not(.admin-body) .catalog-category-pills-market button b { min-width: auto; height: auto; background: transparent !important; color: #77736e !important; font-size: 10px !important; }
+body:not(.admin-body) .catalog-category-pills-market button.is-active,
+body:not(.admin-body) .catalog-radio-list-market button.is-active { background: transparent !important; color: #e86f0a !important; font-weight: 700 !important; }
+body:not(.admin-body) .catalog-category-pills-market button.is-active span { color: #e86f0a !important; font-weight: 700 !important; }
+body:not(.admin-body) .catalog-price-inputs-market input { height: 38px; border-color: #ddd8d2; border-radius: 4px; font-size: 11px; font-weight: 500; }
+body:not(.admin-body) .catalog-price-presets-market { display: none; }
+body:not(.admin-body) .catalog-filter-actions-market { padding: 20px; }
+body:not(.admin-body) .catalog-filter-actions-market button:first-child {
+  width: 100%; height: 44px; border: 0; border-radius: 4px; background: #e86f0a; color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase;
+}
+body:not(.admin-body) .catalog-filter-actions-market button:last-child { width: 100%; height: 38px; border: 0; background: transparent; color: #77736e; font-size: 10px; text-transform: uppercase; }
+body:not(.admin-body) .catalog-toolbar-market {
+  grid-template-columns: minmax(220px, 1fr) 260px auto;
+  min-height: 48px;
+  margin-bottom: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body:not(.admin-body) .catalog-search-market,
+body:not(.admin-body) .catalog-toolbar-market select { height: 42px; border-color: #dedad5; border-radius: 4px; background: #fff !important; font-size: 12px; font-weight: 500; }
+body:not(.admin-body) .view-switcher--market { gap: 8px; }
+body:not(.admin-body) .view-switcher--market button { width: 36px; height: 36px; border: 0; border-radius: 0; background: transparent !important; }
+body:not(.admin-body) .view-switcher--market button:not(.is-active) { opacity: .42; }
+body:not(.admin-body) .catalog-results-row-market { min-height: 16px; margin: 0 0 18px; }
+body:not(.admin-body) .catalog-results-row-market > b { color: #77736e; font-size: 11px; line-height: 16px; font-weight: 400; }
+body:not(.admin-body) .catalog-grid-market { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 16px 12px !important; margin-top: 0; }
+body:not(.admin-body) .catalog-grid-market--list { grid-template-columns: 1fr !important; }
+body:not(.admin-body) .catalog-grid-market--list .catalog-card-market { display: grid; grid-template-columns: 250px minmax(0, 1fr); height: 220px; min-height: 220px; }
+body:not(.admin-body) .catalog-grid-market--list .catalog-card-image-market { height: 100%; min-height: 220px; }
+body:not(.admin-body) .catalog-card-market {
+  height: 324px;
+  min-height: 324px;
+  border: 1px solid #e8e4df !important;
+  border-radius: 4px;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+body:not(.admin-body) .catalog-card-market:hover { border-color: #d8d2cb !important; box-shadow: none !important; }
+body:not(.admin-body) .catalog-card-image-market { height: 184px; flex: 0 0 184px; background: #f5f2ee !important; }
+body:not(.admin-body) .catalog-card-image-market img { padding: 8px; object-fit: contain; object-position: center; }
+body:not(.admin-body) .catalog-sale-market { top: 8px; left: 8px; min-height: 22px; padding: 0 7px; border-radius: 3px; font-size: 10px; }
+body:not(.admin-body) .catalog-card-body-market { min-height: 140px; padding: 12px 12px 10px; }
+body:not(.admin-body) .catalog-card-rating-market { justify-content: flex-start; min-height: 16px; margin-bottom: 4px; font-size: 11px; line-height: 16px; }
+body:not(.admin-body) .catalog-card-rating-market span { color: #f5a623 !important; }
+body:not(.admin-body) .catalog-card-rating-market small { color: #77736e !important; font-size: 11px; line-height: 16px; font-weight: 400; }
+body:not(.admin-body) .catalog-card-body-market h3 { min-height: 0; margin: 0 0 5px; color: #171717; font-size: 13px; line-height: 17px; font-weight: 700; }
+body:not(.admin-body) .catalog-card-body-market > p { min-height: 0; margin: 0; color: #77736e; font-size: 10px; line-height: 14px; }
+body:not(.admin-body) .catalog-card-color-market { display: flex; align-items: center; gap: 5px; margin-top: 2px !important; white-space: nowrap; }
+body:not(.admin-body) .catalog-card-color-market i { width: 9px; height: 9px; flex: 0 0 9px; border: 1px solid #d6d2cd; border-radius: 50%; }
+body:not(.admin-body) .catalog-card-color-market span { color: #77736e; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+body:not(.admin-body) .catalog-card-bottom-market { min-height: 38px; margin-top: auto; border: 0; padding: 0; align-items: flex-end; }
+body:not(.admin-body) .catalog-card-bottom-market b { font-size: 13px; line-height: 17px; font-weight: 700; }
+body:not(.admin-body) .catalog-card-bottom-market del { margin-top: 2px; font-size: 10px; }
+body:not(.admin-body) .catalog-card-bottom-market button { width: 38px; height: 38px; flex-basis: 38px; border-color: #e86f0a; border-radius: 4px; }
+body:not(.admin-body) .catalog-card-bottom-market button:hover { background: #fff3e9; color: #d7650b; transform: none; }
+
+@media (max-width: 1469px) {
+  body:not(.admin-body) .catalog-page--improved .catalog-container { width: calc(100% - 48px) !important; }
+  body:not(.admin-body) .catalog-layout-market { grid-template-columns: 230px minmax(0, 1fr) !important; gap: 28px !important; }
+  body:not(.admin-body) .catalog-card-market { height: 314px; min-height: 314px; }
+  body:not(.admin-body) .catalog-card-image-market { height: 174px; flex-basis: 174px; }
+}
+@media (max-width: 1279px) {
+  body:not(.admin-body) .catalog-page--improved .catalog-container { width: calc(100% - 40px) !important; }
+  body:not(.admin-body) .catalog-layout-market { grid-template-columns: 220px minmax(0, 1fr) !important; gap: 24px !important; }
+  body:not(.admin-body) .catalog-grid-market { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  body:not(.admin-body) .catalog-card-market { height: 322px; min-height: 322px; }
+  body:not(.admin-body) .catalog-card-image-market { height: 180px; flex-basis: 180px; }
+}
+@media (max-width: 1023px) {
+  body:not(.admin-body) .catalog-page--improved .catalog-container { width: calc(100% - 48px) !important; }
+  body:not(.admin-body) .catalog-layout-market { grid-template-columns: 1fr !important; }
+  body:not(.admin-body) .catalog-grid-market { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 767px) {
+  body:not(.admin-body) .footer-exact .footer-container { padding-bottom: 40px; }
+  body:not(.admin-body) .catalog-page--improved .catalog-container { width: calc(100% - 32px) !important; }
+  body:not(.admin-body) .catalog-page--improved { padding-top: 20px !important; }
+  body:not(.admin-body) .catalog-page--improved .catalog-title { margin-bottom: 20px !important; font-size: 30px !important; line-height: 36px !important; }
+  body:not(.admin-body) .catalog-toolbar-market { grid-template-columns: 1fr auto !important; gap: 8px; }
+  body:not(.admin-body) .catalog-search-market { grid-column: 1 / -1; }
+  body:not(.admin-body) .catalog-toolbar-market select { width: 100%; }
+  body:not(.admin-body) .catalog-card-market { height: auto; min-height: 310px; }
+}
+@media (max-width: 479px) {
+  body:not(.admin-body) .catalog-grid-market { grid-template-columns: 1fr !important; }
+  body:not(.admin-body) .catalog-card-image-market { height: 220px; flex-basis: 220px; }
+}

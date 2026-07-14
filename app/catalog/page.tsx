@@ -30,19 +30,13 @@ export default async function CatalogPage({ searchParams }: { searchParams?: { q
   ]);
 
   const visibleClockCategories = visibleCatalogCategories(categorySettings, 'clock');
-  const visibleCategoryValues = new Set(visibleClockCategories.map((category) => category.slug));
-
-  const products = allProducts.filter((product) => {
-    const text = [product.title, product.category, product.clockTheme, product.slug].join(' ').toLowerCase();
-    const isClock = text.includes('час') || Boolean(product.clockTheme);
-    const categoryAllowed = !categorySettings.enabled || !visibleCategoryValues.size || visibleCategoryValues.has(product.category || '') || visibleCategoryValues.has(product.clockTheme || '');
-    return isClock && categoryAllowed;
-  });
+  const products = allProducts.filter((product) => product.status !== 'hidden');
 
   const reviewStats = await getProductReviewStats(products.map((product) => product.slug));
-  const categories = categorySettings.enabled && visibleClockCategories.length
-    ? visibleClockCategories.map((category) => category.slug)
-    : Array.from(new Set(products.map((product) => product.category).filter((item): item is string => Boolean(item))));
+  const categories = Array.from(new Set([
+    ...products.map((product) => product.category),
+    ...(categorySettings.enabled ? visibleClockCategories.map((category) => category.slug) : [])
+  ].filter((item): item is string => Boolean(item))));
 
   return (
     <>
@@ -55,7 +49,7 @@ export default async function CatalogPage({ searchParams }: { searchParams?: { q
             <span>Каталог</span>
           </nav>
 
-          <h1 className="catalog-title">Каталог настенных часов</h1>
+          <h1 className="catalog-title">Каталог товаров</h1>
           <CatalogClient products={products} reviewStats={reviewStats} categories={categories} initialQuery={searchParams?.q || ''} initialCategory={searchParams?.category || ''} />
         </div>
       </main>
