@@ -23719,8 +23719,8 @@ body:not(.admin-body) .products-services-final .catalog-card-image-market {
 body:not(.admin-body) .products-services-final .catalog-card-image-market img {
   width: 100% !important;
   height: 100% !important;
-  padding: 8px !important;
-  object-fit: contain !important;
+  padding: 0 !important;
+  object-fit: cover !important;
   object-position: center !important;
   transition: transform 280ms ease;
 }
