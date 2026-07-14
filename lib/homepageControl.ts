@@ -167,11 +167,11 @@ export const defaultHomepageControl: HomeControlSettings = {
     buttonHref: '/catalog'
   },
   directions: [
-    { id: 'clocks', title: 'Настенные\nчасы', img: '/mockup/cat-clock.jpg', href: '/catalog?category=Настенные часы', visible: true, order: 1 },
-    { id: 'garden', title: 'Садовая\nмебель', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: true, order: 2 },
-    { id: 'loft', title: 'Мебель для дома\nв стиле лофт', img: '/mockup/cat-custom.jpg', href: '/catalog?category=Мебель для дома в стиле лофт', visible: true, order: 3 },
-    { id: 'laser', title: 'Лазерная\nрезка', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: true, order: 4 },
-    { id: 'wholesale', title: 'Мелкий опт\nметаллопроката', img: '/mockup/cat-wood.jpg', href: '/services#metal', visible: true, order: 5 },
+    { id: 'clocks', title: 'Часы собственного\nпроизводства', img: '/mockup/cat-clock.jpg', href: '/catalog?category=Настенные часы', visible: true, order: 1 },
+    { id: 'garden', title: 'Садовые\nкачели', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: true, order: 2 },
+    { id: 'laser', title: 'Резка\nметалла', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: true, order: 3 },
+    { id: 'wholesale', title: 'Резка\nдерева', img: '/mockup/service-wood.jpg', href: '/services#wood', visible: true, order: 4 },
+    { id: 'loft', title: 'Изделия\nна заказ', img: '/mockup/cat-custom.jpg', href: '/contacts', visible: true, order: 5 },
     { id: 'bending', title: 'Гибка\nметалла', img: '/mockup/service-metal.jpg', href: '/services#bending', visible: false, order: 6 }
   ],
   productsSection: {
@@ -250,10 +250,15 @@ function asObject(value: unknown) {
 
 function mergeArray<T extends { id: string; order: number }>(defaults: T[], incoming: unknown): T[] {
   const list = Array.isArray(incoming) ? incoming : [];
-  return defaults.map((item) => {
+  const configured = defaults.map((item) => {
     const match = list.find((candidate: any) => candidate?.id === item.id);
     return { ...item, ...asObject(match) } as T;
-  }).sort((a, b) => a.order - b.order);
+  });
+  const additions = list
+    .filter((candidate: any) => candidate?.id && !defaults.some((item) => item.id === candidate.id))
+    .map((candidate) => asObject(candidate) as T);
+
+  return [...configured, ...additions].sort((a, b) => a.order - b.order);
 }
 
 export function mergeHomepageControl(value: unknown): HomeControlSettings {
