@@ -8,6 +8,22 @@ import { HomePromoBanners } from '@/components/HomePromoBanners';
 import { getHomepageControlSettings, visibleHomeItems } from '@/lib/homepageControl';
 import { getCatalogProducts } from '@/lib/products';
 
+const workProcessSteps = [
+  { id: 'request', icon: 'request', num: '01', title: 'Вы оставляете заявку', desc: 'Через форму на сайте или по телефону' },
+  { id: 'details', icon: 'ruler', num: '02', title: 'Мы уточняем детали', desc: 'Размеры, материал, пожелания' },
+  { id: 'calculation', icon: 'calculator', num: '03', title: 'Рассчитываем стоимость', desc: 'Согласовываем цену и сроки' },
+  { id: 'manufacturing', icon: 'hammer', num: '04', title: 'Изготавливаем изделие', desc: 'Контроль качества на каждом этапе' },
+  { id: 'delivery', icon: 'package', num: '05', title: 'Передаём или доставляем заказ', desc: 'Самовывоз или доставка по Беларуси' }
+] as const;
+
+function ProcessArrow() {
+  return (
+    <span className="process-arrow" aria-hidden="true">
+      <svg viewBox="0 0 24 40"><path d="M4 3 20 20 4 37" /></svg>
+    </span>
+  );
+}
+
 function Lines({ value }: { value: string }) {
   return <>{value.split('\n').map((line) => <span key={line}>{line}</span>)}</>;
 }
@@ -33,8 +49,6 @@ export default async function HomePage() {
   const featureItems = visibleHomeItems(home.features);
   const categories = visibleHomeItems(home.directions).filter((item) => item.id !== 'bending');
   const productionBenefits = visibleHomeItems(home.productionBenefits);
-  const steps = visibleHomeItems(home.steps);
-  const workBenefits = visibleHomeItems(home.workBenefits);
   const productionGallery = visibleHomeItems(home.gallery);
   const heroTitle = `BULLMET — ${home.hero.title.replace(/^bullmet\s*[—-]\s*/i, '')}`;
   const heroDescription = 'Изготавливаем: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.';
@@ -138,54 +152,36 @@ export default async function HomePage() {
           </section>
         )}
 
-        {home.stepsSection.enabled && !!steps.length && (
-          <section className="home-container steps-section steps-section-v2 steps-section-final">
-            <div className="steps-head-v2">
-              <p>{home.stepsSection.eyebrow}</p>
-              <h3>{home.stepsSection.title}</h3>
-              <span>{cleanPublicText(home.stepsSection.text)}</span>
-            </div>
-
-            <div className="steps-grid steps-grid-v2 steps-grid-final">
-              {steps.map((step, index) => (
-                <article key={step.id}>
-                  <span className="step-num">{step.num}</span>
-                  <div className="step-icon-circle"><Icon name={step.icon as any} className="step-icon" /></div>
-                  <h4>{step.title}</h4>
-                  <p>{step.desc}</p>
-                  {index < steps.length - 1 && <span className="step-arrow-v2" aria-hidden="true">›</span>}
-                </article>
-              ))}
-            </div>
-
-            {!!workBenefits.length && (
-              <div className="work-benefits-v2 work-benefits-final">
-                {workBenefits.map((item) => (
-                  <article key={item.id}>
-                    <Icon name={item.icon as any} />
-                    <div>
-                      <h4>{item.title}</h4>
-                      <p>{item.desc}</p>
-                    </div>
-                  </article>
+        {home.stepsSection.enabled && (
+          <section className="home-container work-process">
+            <h2 className="work-process__title">Как мы работаем</h2>
+            <div className="work-process__panel">
+              <div className="work-process__steps">
+                {workProcessSteps.map((step, index) => (
+                  <div className="work-process__item" key={step.id}>
+                    <article className="process-step">
+                      <div className="process-step__visual">
+                        <Icon name={step.icon} className="process-step__icon" />
+                        <span className="process-step__number">{step.num}</span>
+                      </div>
+                      <div className="process-step__copy">
+                        <h3 className="process-step__title">{step.title}</h3>
+                        <p className="process-step__description">{step.desc}</p>
+                      </div>
+                    </article>
+                    {index < workProcessSteps.length - 1 && <ProcessArrow />}
+                  </div>
                 ))}
               </div>
-            )}
+            </div>
           </section>
         )}
 
         {home.gallerySection.enabled && !!productionGallery.length && (
           <section className="home-container production-simple production-simple-final">
             <div className="production-simple-head">
-              <div>
-                <p className="eyebrow">{home.gallerySection.eyebrow}</p>
-                <h3>{home.gallerySection.title}</h3>
-              </div>
-              {home.gallerySection.buttonHref !== '/about' && home.gallerySection.buttonLabel !== 'О компании' ? (
-                <Link href={home.gallerySection.buttonHref} className="production-simple-link">{home.gallerySection.buttonLabel}</Link>
-              ) : (
-                <Link href="/production" className="production-simple-link">Производство</Link>
-              )}
+              <h2>Производство Bullmet</h2>
+              <Link href="/production" className="production-simple-link">Смотреть все фото</Link>
             </div>
 
             <div className="production-simple-grid">

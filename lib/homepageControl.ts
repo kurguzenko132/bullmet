@@ -201,14 +201,15 @@ export const defaultHomepageControl: HomeControlSettings = {
   stepsSection: {
     enabled: true,
     eyebrow: 'Как мы работаем',
-    title: 'Как заказать часы Bullmet',
-    text: 'Простой путь: выбрали модель, уточнили детали, получили готовые часы.'
+    title: 'Как мы работаем',
+    text: 'Пять понятных этапов от заявки до передачи готового заказа.'
   },
   steps: [
-    { id: 'choose', icon: 'search', num: '01', title: 'Выбор часов', desc: 'Вы выбираете модель в каталоге или пишете нам, если нужен другой размер или цвет', visible: true, order: 1 },
-    { id: 'details', icon: 'request', num: '02', title: 'Уточнение деталей', desc: 'Мы подтверждаем наличие, стоимость, сроки изготовления и способ получения', visible: true, order: 2 },
-    { id: 'production', icon: 'hammer', num: '03', title: 'Изготовление', desc: 'Готовим часы на собственном производстве и контролируем качество изделия', visible: true, order: 3 },
-    { id: 'handover', icon: 'package', num: '04', title: 'Передача заказа', desc: 'Передаём заказ самовывозом или согласуем доставку по Беларуси', visible: true, order: 4 }
+    { id: 'request', icon: 'request', num: '01', title: 'Вы оставляете заявку', desc: 'Через форму на сайте или по телефону', visible: true, order: 1 },
+    { id: 'details', icon: 'ruler', num: '02', title: 'Мы уточняем детали', desc: 'Размеры, материал, пожелания', visible: true, order: 2 },
+    { id: 'calculation', icon: 'calculator', num: '03', title: 'Рассчитываем стоимость', desc: 'Согласовываем цену и сроки', visible: true, order: 3 },
+    { id: 'manufacturing', icon: 'hammer', num: '04', title: 'Изготавливаем изделие', desc: 'Контроль качества на каждом этапе', visible: true, order: 4 },
+    { id: 'delivery', icon: 'package', num: '05', title: 'Передаём или доставляем заказ', desc: 'Самовывоз или доставка по Беларуси', visible: true, order: 5 }
   ],
   workBenefits: [
     { id: 'quality', icon: 'shield', title: 'Гарантия качества', desc: 'Проверяем часы перед передачей клиенту', visible: true, order: 1 },
