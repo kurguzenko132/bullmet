@@ -25949,6 +25949,8 @@ body:not(.admin-body) .catalog-toolbar-market select {
 
 .production-clock-image {
   position: relative;
+  width: 78%;
+  margin-inline: auto;
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border-radius: 6px;
