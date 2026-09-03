@@ -1,138 +1,168 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import {
+  Box,
+  CheckCircle2,
+  Clock3,
+  Layers3,
+  Paintbrush,
+  ShieldCheck,
+  Sparkles,
+  Wrench
+} from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { Icon } from '@/components/Icon';
 
 export const metadata = {
-  title: 'Производство Bullmet — настенные часы и изделия из металла',
-  description: 'Собственное производство Bullmet. Настенные часы из металла с элементами дерева, аккуратная обработка и контроль качества.'
+  title: 'Производство Bullmet — настенные часы из металла и дерева',
+  description: 'Как создаются настенные часы Bullmet: металл, дерево, резка, обработка, покраска, сборка и контроль качества.'
 };
 
-const directions = [
-  {
-    icon: 'clock',
-    title: 'Настенные часы',
-    text: 'Металлические часы с элементами дерева для дома, офиса, кафе и подарка.'
-  },
-  {
-    icon: 'materials',
-    title: 'Металл с элементами дерева',
-    text: 'Сочетаем металлическую основу, декоративные элементы и аккуратную финишную обработку.'
-  },
-  {
-    icon: 'tools',
-    title: 'Индивидуальные детали',
-    text: 'Поможем подобрать размер, цвет и исполнение модели под интерьер.'
-  },
-  {
-    icon: 'shield',
-    title: 'Контроль качества',
-    text: 'Проверяем внешний вид, сборку, крепление и комплектацию перед передачей.'
-  }
+const facts = [
+  { icon: ShieldCheck, title: 'Собственное производство', text: 'Полный цикл работ без лишних посредников.' },
+  { icon: Layers3, title: 'Металл + дерево', text: 'Сочетание прочности и тёплой фактуры.' },
+  { icon: CheckCircle2, title: 'Контроль перед передачей', text: 'Проверяем внешний вид и сборку каждого изделия.' }
 ];
 
-const stages = [
-  ['01', 'Выбор модели', 'Вы выбираете часы в каталоге или пишете нам, если нужна консультация.'],
-  ['02', 'Уточнение деталей', 'Подтверждаем наличие, размер, цвет и способ получения.'],
-  ['03', 'Изготовление', 'Готовим изделие на собственном производстве Bullmet.'],
-  ['04', 'Контроль', 'Проверяем внешний вид, сборку и комплектацию.'],
-  ['05', 'Передача заказа', 'Согласовываем самовывоз или доставку по Беларуси.']
+const clockParts = {
+  left: [
+    { icon: Layers3, title: 'Металлическая основа', text: 'Прочный металл обеспечивает форму, жёсткость и долговечность.' },
+    { icon: Paintbrush, title: 'Покраска', text: 'Порошковое покрытие защищает металл и сохраняет аккуратный внешний вид.' }
+  ],
+  right: [
+    { icon: Box, title: 'Деревянный элемент', text: 'Добавляет теплоту, фактуру и делает изделие ближе к интерьеру.' },
+    { icon: Clock3, title: 'Механизм и стрелки', text: 'Тихий кварцевый механизм и стрелки под выбранный стиль.' },
+    { icon: Wrench, title: 'Крепление', text: 'Продуманное крепление для простой установки на стену.' }
+  ]
+};
+
+const processSteps = [
+  { number: '01', title: 'Металл', text: 'Подбираем металл нужной толщины и качества.', image: '/assets/cat-metal.jpg' },
+  { number: '02', title: 'Резка', text: 'Вырезаем элементы на современном оборудовании.', image: '/assets/hero-machine.jpg' },
+  { number: '03', title: 'Обработка', text: 'Шлифуем края, убираем заусенцы и готовим поверхность.', image: '/assets/production.jpg' },
+  { number: '04', title: 'Покраска', text: 'Наносим покрытие для ровного цвета и защиты.', image: '/assets/service-metal.jpg' },
+  { number: '05', title: 'Сборка', text: 'Соединяем металл, дерево, механизм и стрелки.', image: '/assets/gallery-5.jpg' },
+  { number: '06', title: 'Проверка', text: 'Проверяем ход часов, внешний вид и комплектацию.', image: '/assets/prod-clock-classic.jpg' }
 ];
 
-const showcase = [
-  {
-    title: 'Готовые часы',
-    text: 'Настенные модели из металла с элементами дерева.',
-    image: '/assets/prod-clock-loft.jpg',
-    href: '/catalog'
-  },
-  {
-    title: 'Детали и обработка',
-    text: 'Аккуратная подготовка элементов перед сборкой.',
-    image: '/assets/hero-machine.jpg',
-    href: '/production'
-  }
+const results = [
+  { title: 'Для дома', text: 'Уютный акцент для гостиной, кухни или спальни.', image: '/assets/gallery-1.jpg' },
+  { title: 'Для офиса', text: 'Строгий элемент интерьера для кабинета или переговорной.', image: '/assets/gallery-2.jpg' },
+  { title: 'Для кафе и ресторанов', text: 'Декор, который поддерживает атмосферу заведения.', image: '/assets/gallery-3.jpg' },
+  { title: 'В подарок', text: 'Практичный и запоминающийся подарок.', image: '/assets/gallery-4.jpg' }
 ];
+
+function ClockPoint({ item, side }: { item: { icon: typeof Layers3; title: string; text: string }; side: 'left' | 'right' }) {
+  const Icon = item.icon;
+  return (
+    <article className={`production-clock-point production-clock-point--${side}`}>
+      <Icon aria-hidden="true" />
+      <div>
+        <h3>{item.title}</h3>
+        <p>{item.text}</p>
+      </div>
+    </article>
+  );
+}
 
 export default function ProductionPage() {
   return (
     <>
       <Header />
-      <main className="production-page production-page--rich production-page--clean">
-        <section className="production-hero-rich production-hero-clean">
-          <div className="production-hero-content">
-            <nav className="production-breadcrumbs" aria-label="Хлебные крошки">
-              <Link href="/">Главная</Link>
-              <span>›</span>
-              <span>Производство</span>
+      <main className="production-story-page">
+        <section className="production-story-hero">
+          <div className="production-story-hero-copy">
+            <nav className="production-story-breadcrumbs" aria-label="Хлебные крошки">
+              <Link href="/">Главная</Link><span>›</span><span>Производство</span>
             </nav>
-            <p className="section-kicker">Производство Bullmet</p>
-            <h1>Изготавливаем настенные часы из металла с элементами дерева</h1>
-            <p>
-              Bullmet — собственное производство металлических изделий. На сайте представлены настенные часы,
-              которые можно выбрать в каталоге или уточнить по телефону.
+            <p className="production-story-kicker">Производство Bullmet</p>
+            <h1>От металла до готовых настенных часов</h1>
+            <p className="production-story-lead">
+              Мы сами изготавливаем, окрашиваем, собираем и проверяем изделия, чтобы вы получали часы,
+              которые будут выглядеть аккуратно и служить долго.
             </p>
-            <div className="production-hero-actions">
-              <Link href="/catalog">Смотреть часы</Link>
-              <Link href="/contacts">Связаться</Link>
+            <div className="production-story-actions">
+              <Link className="production-story-button production-story-button--accent" href="/catalog">Смотреть каталог</Link>
+              <Link className="production-story-button production-story-button--light" href="/contacts">Связаться</Link>
             </div>
           </div>
-          <div className="production-hero-media">
-            <Image src="/assets/production.jpg" alt="Производство Bullmet" width={980} height={640} priority />
+          <div className="production-story-hero-media">
+            <Image src="/assets/hero-bullmet.png" alt="Лазерная резка на производстве Bullmet" fill priority sizes="(max-width: 767px) 100vw, 57vw" />
           </div>
-        </section>
-
-        <section className="production-directions-rich production-directions-clean">
-          <div className="production-section-head">
-            <p className="section-kicker">Что производим</p>
-            <h2>Металл, дерево и аккуратная сборка</h2>
-          </div>
-          <div className="production-directions-grid">
-            {directions.map((item) => (
-              <article key={item.title}>
-                <Icon name={item.icon as any} />
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
+          <div className="production-story-facts">
+            {facts.map(({ icon: FactIcon, title, text }) => (
+              <article key={title}>
+                <FactIcon aria-hidden="true" />
+                <div><h2>{title}</h2><p>{text}</p></div>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="production-showcase-rich production-showcase-clean">
-          <div>
-            <p className="section-kicker">Изделия</p>
-            <h2>Готовые модели и детали производства</h2>
-            <p>
-              На странице показаны основные возможности производства Bullmet. Для покупки настенных часов
-              перейдите в каталог или свяжитесь с нами для уточнения деталей.
-            </p>
-            <Link href="/catalog">Перейти в каталог</Link>
+        <section className="production-clock-structure">
+          <div className="production-story-section-head">
+            <p className="production-story-kicker">Детали</p>
+            <h2>Из чего состоят наши часы</h2>
           </div>
-          <div className="production-showcase-gallery">
-            {showcase.map((item) => (
-              <Link href={item.href} key={item.title}>
-                <Image src={item.image} alt={item.title} width={420} height={320} />
-                <span>{item.title}</span>
-                <small>{item.text}</small>
-              </Link>
+          <div className="production-clock-diagram">
+            <div className="production-clock-points production-clock-points--left">
+              {clockParts.left.map((item) => <ClockPoint item={item} side="left" key={item.title} />)}
+            </div>
+            <div className="production-clock-image">
+              <Image src="/assets/prod-clock-loft.jpg" alt="Настенные часы Bullmet из металла и дерева" fill sizes="(max-width: 767px) 80vw, 500px" />
+            </div>
+            <div className="production-clock-points production-clock-points--right">
+              {clockParts.right.map((item) => <ClockPoint item={item} side="right" key={item.title} />)}
+            </div>
+          </div>
+        </section>
+
+        <section className="production-process-dark">
+          <div className="production-process-head">
+            <p className="production-story-kicker">Процесс</p>
+            <h2>Как создаются наши часы</h2>
+          </div>
+          <div className="production-process-timeline">
+            {processSteps.map((step) => (
+              <article className="production-process-step" key={step.number}>
+                <span>{step.number}</span>
+                <h3>{step.title}</h3>
+                <div className="production-process-step-image"><Image src={step.image} alt="" fill sizes="(max-width: 767px) 100vw, 16vw" /></div>
+                <p>{step.text}</p>
+              </article>
             ))}
           </div>
         </section>
 
-        <section className="production-process-rich production-process-clean">
-          <div className="production-section-head">
-            <p className="section-kicker">Этапы</p>
-            <h2>Как проходит заказ</h2>
+        <section className="production-result-section">
+          <div className="production-story-section-head">
+            <p className="production-story-kicker">Применение</p>
+            <h2>Готовый результат</h2>
+            <p>Создаём часы для разных интерьеров, задач и подарков.</p>
           </div>
-          <div className="production-process-grid">
-            {stages.map(([number, title, text]) => (
-              <article key={number}>
-                <b>{number}</b>
-                <h3>{title}</h3>
-                <p>{text}</p>
+          <div className="production-result-grid">
+            {results.map((item) => (
+              <article className="production-result-card" key={item.title}>
+                <div><Image src={item.image} alt={item.title} fill sizes="(max-width: 767px) 100vw, 21vw" /></div>
+                <h3>{item.title}</h3><p>{item.text}</p>
               </article>
             ))}
+            <aside className="production-result-cta">
+              <Sparkles aria-hidden="true" />
+              <h2>Выберите свои часы</h2>
+              <p>Перейдите в каталог и найдите модель под ваш интерьер.</p>
+              <Link className="production-story-button production-story-button--accent" href="/catalog">Смотреть каталог</Link>
+            </aside>
+          </div>
+        </section>
+
+        <section className="production-brand-strip">
+          <div className="production-brand-intro"><ShieldCheck aria-hidden="true" /><p><strong>Bullmet</strong> — это сочетание металла, дерева и внимательного отношения к деталям.</p></div>
+          <div className="production-brand-features">
+            <span><Layers3 aria-hidden="true" />Качественные материалы</span>
+            <span><Wrench aria-hidden="true" />Современное оборудование</span>
+            <span><Paintbrush aria-hidden="true" />Аккуратная сборка</span>
+            <span><CheckCircle2 aria-hidden="true" />Контроль качества</span>
           </div>
         </section>
       </main>
