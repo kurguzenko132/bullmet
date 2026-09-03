@@ -25957,10 +25957,10 @@ body:not(.admin-body) .catalog-toolbar-market select {
   background: transparent;
 }
 .production-clock-image img {
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   mix-blend-mode: multiply;
-  transform: scale(1.025) translateX(-.5%);
+  clip-path: inset(0 3px 0 0);
 }
 
 .production-process-dark { padding: 52px max(35px, calc((100% - 1400px) / 2)); background: #191919; color: #fff; }
