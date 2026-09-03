@@ -25816,7 +25816,7 @@ body:not(.admin-body) .catalog-toolbar-market select {
   position: relative;
   display: grid;
   grid-template-columns: .9fr 1.1fr;
-  min-height: 535px;
+  min-height: 476px;
   overflow: hidden;
   border-bottom: 1px solid var(--production-border);
 }
@@ -25824,13 +25824,13 @@ body:not(.admin-body) .catalog-toolbar-market select {
 .production-story-hero-copy {
   position: relative;
   z-index: 2;
-  padding: 40px 20px 150px 4px;
+  padding: 28px 20px 18px 4px;
 }
 
 .production-story-breadcrumbs {
   display: flex;
   gap: 9px;
-  margin-bottom: 43px;
+  margin-bottom: 25px;
   color: #777067;
   font-size: 12px;
   line-height: 16px;
@@ -25899,7 +25899,7 @@ body:not(.admin-body) .catalog-toolbar-market select {
 .production-story-facts {
   position: absolute;
   z-index: 3;
-  bottom: 34px;
+  bottom: 22px;
   left: 4px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -25910,8 +25910,8 @@ body:not(.admin-body) .catalog-toolbar-market select {
 .production-story-facts article {
   display: flex;
   gap: 12px;
-  min-height: 98px;
-  padding: 16px;
+  min-height: 88px;
+  padding: 13px;
   border: 1px solid rgba(217, 208, 195, .95);
   border-radius: 7px;
   background: rgba(255, 250, 244, .84);
