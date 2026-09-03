@@ -25952,9 +25952,14 @@ body:not(.admin-body) .catalog-toolbar-market select {
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border-radius: 6px;
-  background: #fff;
+  background: transparent;
 }
-.production-clock-image img { object-fit: contain; }
+.production-clock-image img {
+  object-fit: cover;
+  object-position: center;
+  mix-blend-mode: multiply;
+  transform: scale(1.025) translateX(-.5%);
+}
 
 .production-process-dark { padding: 52px max(35px, calc((100% - 1400px) / 2)); background: #191919; color: #fff; }
 .production-process-head .production-story-kicker { color: #f27b21; }
