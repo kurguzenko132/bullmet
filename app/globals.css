@@ -25768,3 +25768,15 @@ body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .cata
     flex-basis: 230px;
   }
 }
+
+/* Keep the catalog search field as one continuous surface. */
+body:not(.admin-body) .catalog-search-market {
+  overflow: hidden;
+  background: #fffdf9 !important;
+}
+
+body:not(.admin-body) .catalog-search-market input {
+  width: 100%;
+  background: transparent !important;
+  box-shadow: none !important;
+}
