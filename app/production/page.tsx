@@ -109,7 +109,7 @@ export default function ProductionPage() {
               {clockParts.left.map((item) => <ClockPoint item={item} side="left" key={item.title} />)}
             </div>
             <div className="production-clock-image">
-              <Image src="/assets/prod-clock-loft.jpg" alt="Настенные часы Bullmet из металла и дерева" fill sizes="(max-width: 767px) 80vw, 500px" />
+              <Image src="/assets/production-clock-numeral.png" alt="Настенные часы Bullmet с крупными цифрами" fill sizes="(max-width: 767px) 80vw, 500px" />
             </div>
             <div className="production-clock-points production-clock-points--right">
               {clockParts.right.map((item) => <ClockPoint item={item} side="right" key={item.title} />)}

@@ -25949,13 +25949,12 @@ body:not(.admin-body) .catalog-toolbar-market select {
 
 .production-clock-image {
   position: relative;
-  aspect-ratio: 1 / .82;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  border-radius: 50%;
-  box-shadow: 0 16px 34px rgba(47, 37, 25, .13);
-  background: #e4d9ca;
+  border-radius: 6px;
+  background: #fff;
 }
-.production-clock-image img { object-fit: cover; }
+.production-clock-image img { object-fit: contain; }
 
 .production-process-dark { padding: 52px max(35px, calc((100% - 1400px) / 2)); background: #191919; color: #fff; }
 .production-process-head .production-story-kicker { color: #f27b21; }
