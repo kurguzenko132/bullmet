@@ -25780,3 +25780,7 @@ body:not(.admin-body) .catalog-search-market input {
   background: transparent !important;
   box-shadow: none !important;
 }
+
+body:not(.admin-body) .catalog-toolbar-market select {
+  background: #fffdf9 !important;
+}
