@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   BriefcaseBusiness,
   ChevronDown,
@@ -105,22 +105,7 @@ export function CatalogFilterSidebar({
   onPriceApply,
   onReset
 }: CatalogFilterSidebarProps) {
-  const [draftPriceFrom, setDraftPriceFrom] = useState(priceFrom);
-  const [draftPriceTo, setDraftPriceTo] = useState(priceTo);
-
-  useEffect(() => {
-    setDraftPriceFrom(priceFrom);
-    setDraftPriceTo(priceTo);
-  }, [priceFrom, priceTo]);
-
-  function applyPrice() {
-    onPriceApply(draftPriceFrom, draftPriceTo);
-    onClose();
-  }
-
   function reset() {
-    setDraftPriceFrom('');
-    setDraftPriceTo('');
     onReset();
   }
 
@@ -165,11 +150,10 @@ export function CatalogFilterSidebar({
 
           <FilterSection icon={Tag} title="Цена">
             <div className="catalog-price-row">
-              <input className="catalog-price-input" type="number" min="0" value={draftPriceFrom} onChange={(event) => setDraftPriceFrom(event.target.value)} placeholder="от" aria-label="Цена от" />
+              <input className="catalog-price-input" type="number" min="0" value={priceFrom} onChange={(event) => onPriceApply(event.target.value, priceTo)} placeholder="от" aria-label="Цена от" />
               <span>—</span>
-              <input className="catalog-price-input" type="number" min="0" value={draftPriceTo} onChange={(event) => setDraftPriceTo(event.target.value)} placeholder="до" aria-label="Цена до" />
+              <input className="catalog-price-input" type="number" min="0" value={priceTo} onChange={(event) => onPriceApply(priceFrom, event.target.value)} placeholder="до" aria-label="Цена до" />
             </div>
-            <button className="catalog-filter-apply" type="button" onClick={applyPrice}>Применить <span>→</span></button>
           </FilterSection>
 
           <FilterSection icon={Layers3} title="Материал">
