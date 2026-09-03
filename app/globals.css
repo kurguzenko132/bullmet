@@ -25814,8 +25814,8 @@ body:not(.admin-body) .catalog-toolbar-market select {
 
 .production-story-hero {
   position: relative;
-  display: grid;
-  grid-template-columns: .9fr 1.1fr;
+  display: block;
+  width: 100%;
   min-height: 476px;
   overflow: hidden;
   border-bottom: 1px solid var(--production-border);
@@ -25824,13 +25824,15 @@ body:not(.admin-body) .catalog-toolbar-market select {
 .production-story-hero-copy {
   position: relative;
   z-index: 2;
-  padding: 28px 20px 18px 4px;
+  width: min(1400px, calc(100% - 70px));
+  margin-inline: auto;
+  padding: 50px 0 18px 30px;
 }
 
 .production-story-breadcrumbs {
   display: flex;
   gap: 9px;
-  margin-bottom: 25px;
+  margin-bottom: 22px;
   color: #777067;
   font-size: 12px;
   line-height: 16px;
@@ -25840,29 +25842,29 @@ body:not(.admin-body) .catalog-toolbar-market select {
 .production-story-kicker { color: var(--production-accent); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 
 .production-story-hero h1 {
-  max-width: 570px;
-  margin-top: 13px;
-  font-size: clamp(38px, 3.15vw, 58px);
-  line-height: .99;
-  letter-spacing: -.055em;
+  max-width: 530px;
+  margin-top: 10px;
+  font-size: 40px;
+  line-height: 44px;
+  letter-spacing: -.035em;
   font-weight: 800;
 }
 
 .production-story-lead {
-  max-width: 480px;
-  margin-top: 22px !important;
+  max-width: 500px;
+  margin-top: 20px !important;
   color: #49443e;
   font-size: 16px;
   line-height: 24px;
 }
 
-.production-story-actions { display: flex; gap: 12px; margin-top: 28px; }
+.production-story-actions { display: flex; gap: 14px; margin-top: 24px; }
 
 .production-story-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 56px;
+  min-height: 48px;
   padding: 0 26px;
   border: 1px solid transparent;
   border-radius: 4px;
@@ -25881,7 +25883,7 @@ body:not(.admin-body) .catalog-toolbar-market select {
 
 .production-story-hero-media {
   position: absolute;
-  inset: 0 0 0 39%;
+  inset: 0;
   overflow: hidden;
   background: #222;
 }
@@ -25890,36 +25892,35 @@ body:not(.admin-body) .catalog-toolbar-market select {
   position: absolute;
   inset: 0;
   content: '';
-  background: linear-gradient(90deg, var(--production-bg) 0%, rgba(238,232,220,.96) 8%, rgba(238,232,220,.2) 38%, transparent 61%);
+  background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,.98) 30%, rgba(255,255,255,.78) 43%, rgba(255,255,255,.18) 59%, rgba(255,255,255,0) 70%);
   pointer-events: none;
 }
 
-.production-story-hero-media img { object-fit: cover; object-position: 69% center; }
+.production-story-hero-media img { object-fit: cover; object-position: 72% center; }
 
 .production-story-facts {
   position: absolute;
   z-index: 3;
-  bottom: 22px;
-  left: 4px;
+  bottom: 27px;
+  left: max(35px, calc((100% - 1400px) / 2 + 30px));
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: min(690px, 57%);
-  gap: 11px;
+  width: min(660px, calc(100% - 100px));
+  gap: 22px;
 }
 
 .production-story-facts article {
   display: flex;
   gap: 12px;
-  min-height: 88px;
-  padding: 13px;
-  border: 1px solid rgba(217, 208, 195, .95);
-  border-radius: 7px;
-  background: rgba(255, 250, 244, .84);
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .production-story-facts svg { width: 28px; height: 28px; flex: 0 0 auto; color: var(--production-accent); }
 .production-story-facts h2 { font-size: 12px; line-height: 16px; font-weight: 800; }
-.production-story-facts p { margin-top: 7px; color: var(--production-muted); font-size: 11px; line-height: 15px; }
+.production-story-facts p { margin-top: 2px; color: #4d4943; font-size: 11px; line-height: 15px; }
 
 .production-clock-structure { padding: 58px 0 66px; }
 .production-story-section-head h2,
@@ -25989,13 +25990,12 @@ body:not(.admin-body) .catalog-toolbar-market select {
 .production-brand-features svg { flex: 0 0 auto; width: 25px; height: 25px; color: var(--production-accent); }
 
 @media (max-width: 1199px) {
-  .production-story-hero,
   .production-clock-structure,
   .production-result-section,
   .production-brand-strip { width: min(100% - 48px, 1100px); }
   .production-story-hero { min-height: 558px; }
-  .production-story-hero-copy { padding-left: 0; }
-  .production-story-facts { left: 0; width: min(720px, 67%); }
+  .production-story-hero-copy { width: calc(100% - 48px); padding-left: 20px; }
+  .production-story-facts { left: 44px; width: min(660px, calc(100% - 88px)); }
   .production-clock-diagram { grid-template-columns: minmax(190px, 1fr) minmax(320px, 420px) minmax(190px, 1fr); gap: 24px; }
   .production-clock-point::after, .production-clock-point::before { display: none; }
   .production-process-dark { padding-inline: 24px; }
@@ -26009,21 +26009,20 @@ body:not(.admin-body) .catalog-toolbar-market select {
 }
 
 @media (max-width: 767px) {
-  .production-story-hero,
   .production-clock-structure,
   .production-result-section,
   .production-brand-strip { width: calc(100% - 32px); }
-  .production-story-hero { display: flex; min-height: 750px; }
-  .production-story-hero-copy { width: 100%; padding: 30px 0 0; }
+  .production-story-hero { display: flex; width: 100%; min-height: 680px; }
+  .production-story-hero-copy { width: calc(100% - 32px); padding: 30px 0 0; }
   .production-story-breadcrumbs { margin-bottom: 28px; }
-  .production-story-hero h1 { max-width: 360px; font-size: 37px; }
+  .production-story-hero h1 { max-width: 360px; font-size: 30px; line-height: 35px; }
   .production-story-lead { max-width: 360px; font-size: 14px; line-height: 21px; }
   .production-story-actions { flex-direction: column; width: min(100%, 290px); }
   .production-story-button { min-height: 50px; }
-  .production-story-hero-media { top: 320px; left: -16px; right: -16px; }
+  .production-story-hero-media { top: 285px; left: 0; right: 0; }
   .production-story-hero-media::after { background: linear-gradient(180deg, var(--production-bg) 0%, rgba(238,232,220,.9) 12%, rgba(238,232,220,.1) 38%, transparent 70%); }
   .production-story-hero-media img { object-position: 72% center; }
-  .production-story-facts { right: 0; bottom: 22px; left: 0; width: 100%; grid-template-columns: 1fr; gap: 7px; }
+  .production-story-facts { right: 16px; bottom: 22px; left: 16px; width: auto; grid-template-columns: 1fr; gap: 9px; }
   .production-story-facts article { min-height: 0; padding: 10px 12px; }
   .production-story-facts h2 { font-size: 11px; line-height: 14px; }
   .production-story-facts p { margin-top: 2px; font-size: 10px; line-height: 14px; }
