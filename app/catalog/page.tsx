@@ -23,7 +23,17 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function CatalogPage({ searchParams }: { searchParams?: { q?: string; category?: string } }) {
+export default async function CatalogPage({ searchParams }: {
+  searchParams?: {
+    q?: string;
+    search?: string;
+    category?: string;
+    priceFrom?: string;
+    priceTo?: string;
+    material?: string;
+    sort?: string;
+  };
+}) {
   const [allProducts, categorySettings] = await Promise.all([
     getCatalogProducts(),
     getCatalogControlSettings()
@@ -50,7 +60,17 @@ export default async function CatalogPage({ searchParams }: { searchParams?: { q
           </nav>
 
           <h1 className="catalog-title">Каталог товаров</h1>
-          <CatalogClient products={products} reviewStats={reviewStats} categories={categories} initialQuery={searchParams?.q || ''} initialCategory={searchParams?.category || ''} />
+          <CatalogClient
+            products={products}
+            reviewStats={reviewStats}
+            categories={categories}
+            initialQuery={searchParams?.search || searchParams?.q || ''}
+            initialCategory={searchParams?.category || ''}
+            initialMaterial={searchParams?.material || ''}
+            initialPriceFrom={searchParams?.priceFrom || ''}
+            initialPriceTo={searchParams?.priceTo || ''}
+            initialSort={searchParams?.sort || 'popular'}
+          />
         </div>
       </main>
       <Footer />

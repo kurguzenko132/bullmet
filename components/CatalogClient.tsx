@@ -1,8 +1,9 @@
 'use client';
 
-import { KeyboardEvent, MouseEvent, useMemo, useState } from 'react';
+import { KeyboardEvent, MouseEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from './Icon';
+import { CatalogFilterSidebar } from './CatalogFilterSidebar';
 import type { CatalogProduct, ProductReviewStats } from '@/lib/products';
 import { getImagePreset } from '@/lib/imageDisplay';
 
@@ -53,24 +54,40 @@ type CatalogProps = {
   categories: string[];
   initialQuery?: string;
   initialCategory?: string;
+  initialMaterial?: string;
+  initialPriceFrom?: string;
+  initialPriceTo?: string;
+  initialSort?: string;
 };
 
-export function CatalogClient({ products, reviewStats, categories, initialQuery = '', initialCategory = '' }: CatalogProps) {
+export function CatalogClient({
+  products,
+  reviewStats,
+  categories,
+  initialQuery = '',
+  initialCategory = '',
+  initialMaterial = '',
+  initialPriceFrom = '',
+  initialPriceTo = '',
+  initialSort = 'popular'
+}: CatalogProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
-  const [material, setMaterial] = useState('');
-  const [color, setColor] = useState('');
-  const [pricePreset, setPricePreset] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [sort, setSort] = useState('popular');
+  const [material, setMaterial] = useState(initialMaterial);
+  const [minPrice, setMinPrice] = useState(initialPriceFrom);
+  const [maxPrice, setMaxPrice] = useState(initialPriceTo);
+  const [sort, setSort] = useState(initialSort);
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [notice, setNotice] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const materials = useMemo(() => Array.from(new Set(products.map((product) => product.material).filter(Boolean))), [products]);
-  const colors = useMemo(() => Array.from(new Set(products.map((product) => product.colorName).filter((item): item is string => Boolean(item)))), [products]);
+  const categoryOptions = useMemo(() => categories.map((item) => ({
+    id: item,
+    label: item,
+    count: products.filter((product) => product.category === item || product.clockTheme === item).length
+  })), [categories, products]);
 
   const filteredProducts = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -83,9 +100,8 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
         const matchesQuery = !q || text.includes(q);
         const matchesCategory = !category || product.category === category || product.clockTheme === category || text.includes(category.toLowerCase());
         const matchesMaterial = !material || product.material === material;
-        const matchesColor = !color || product.colorName === color;
         const matchesPrice = product.price >= min && product.price <= max;
-        return matchesQuery && matchesCategory && matchesMaterial && matchesColor && matchesPrice;
+        return matchesQuery && matchesCategory && matchesMaterial && matchesPrice;
       })
       .sort((a, b) => {
         if (sort === 'price-asc') return a.price - b.price;
@@ -94,26 +110,28 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
         if (sort === 'discount') return Number(Boolean(b.oldPrice && b.oldPrice > b.price)) - Number(Boolean(a.oldPrice && a.oldPrice > a.price));
         return Number(b.isPopular) - Number(a.isPopular) || a.title.localeCompare(b.title, 'ru');
       });
-  }, [products, query, category, material, color, minPrice, maxPrice, sort]);
+  }, [products, query, category, material, minPrice, maxPrice, sort]);
 
-  const selectedFiltersCount = [query.trim(), category, material, color, minPrice, maxPrice].filter(Boolean).length;
+  const selectedFiltersCount = [query.trim(), category, material, minPrice, maxPrice].filter(Boolean).length;
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (query.trim()) params.set('search', query.trim());
+    if (category) params.set('category', category);
+    if (minPrice) params.set('priceFrom', minPrice);
+    if (maxPrice) params.set('priceTo', maxPrice);
+    if (material) params.set('material', material);
+    if (sort !== 'popular') params.set('sort', sort);
+    const nextUrl = `/catalog${params.size ? `?${params.toString()}` : ''}`;
+    if (window.location.pathname + window.location.search !== nextUrl) window.history.replaceState(null, '', nextUrl);
+  }, [category, material, maxPrice, minPrice, query, sort]);
 
   function reset() {
     setQuery('');
     setCategory('');
     setMaterial('');
-    setColor('');
     setMinPrice('');
     setMaxPrice('');
-    setPricePreset('');
-    setSort('popular');
-  }
-
-  function choosePricePreset(value: string) {
-    setPricePreset(value);
-    if (value === 'cheap') { setMinPrice(''); setMaxPrice('200'); }
-    if (value === 'middle') { setMinPrice('200'); setMaxPrice('700'); }
-    if (value === 'premium') { setMinPrice('700'); setMaxPrice(''); }
   }
 
   function openProduct(slug: string) {
@@ -142,59 +160,23 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
         {selectedFiltersCount > 0 && <button type="button" onClick={reset}>Сбросить</button>}
       </div>
 
-      <aside className={filtersOpen ? 'catalog-filter-market is-open' : 'catalog-filter-market'} aria-label="Фильтры каталога">
-        <div className="catalog-filter-market-head">
-          <b>Фильтры</b>
-          {selectedFiltersCount > 0 && <button type="button" onClick={reset}>Сбросить</button>}
-          <button className="catalog-filter-close" type="button" onClick={() => setFiltersOpen(false)} aria-label="Закрыть фильтр">×</button>
-        </div>
-
-        <section className="catalog-filter-market-section catalog-filter-market-section--main">
-          <h3>Категории</h3>
-          <div className="catalog-category-pills-market catalog-category-pills-market--nested">
-            <button className={!category ? 'is-active' : ''} type="button" onClick={() => setCategory('')}><span>Все товары</span><b>{products.length}</b></button>
-            {categories.map((item) => (
-              <button key={item} className={category === item ? 'is-active' : ''} type="button" onClick={() => setCategory(item)}>
-                <span>{item}</span><b>{products.filter((product) => product.category === item || product.clockTheme === item).length}</b>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <details className="catalog-filter-market-section" open>
-          <summary>Цена</summary>
-          <div className="catalog-price-inputs-market">
-            <input type="number" value={minPrice} onChange={(event) => { setMinPrice(event.target.value); setPricePreset(''); }} placeholder="от" aria-label="Цена от" />
-            <input type="number" value={maxPrice} onChange={(event) => { setMaxPrice(event.target.value); setPricePreset(''); }} placeholder="до" aria-label="Цена до" />
-          </div>
-          <div className="catalog-price-presets-market">
-            <button className={pricePreset === 'cheap' ? 'is-active' : ''} type="button" onClick={() => choosePricePreset('cheap')}>до 200</button>
-            <button className={pricePreset === 'middle' ? 'is-active' : ''} type="button" onClick={() => choosePricePreset('middle')}>200–700</button>
-            <button className={pricePreset === 'premium' ? 'is-active' : ''} type="button" onClick={() => choosePricePreset('premium')}>от 700</button>
-          </div>
-        </details>
-
-        <details className="catalog-filter-market-section" open>
-          <summary>Материал</summary>
-          <div className="catalog-radio-list-market">
-            <button className={!material ? 'is-active' : ''} type="button" onClick={() => setMaterial('')}>Все материалы</button>
-            {materials.map((item) => <button className={material === item ? 'is-active' : ''} type="button" onClick={() => setMaterial(item)} key={item}>{item}</button>)}
-          </div>
-        </details>
-
-        <details className="catalog-filter-market-section" open>
-          <summary>Цвет</summary>
-          <div className="catalog-radio-list-market catalog-color-list-market">
-            <button className={!color ? 'is-active' : ''} type="button" onClick={() => setColor('')}>Все цвета</button>
-            {colors.map((item) => <button className={color === item ? 'is-active' : ''} type="button" onClick={() => setColor(item)} key={item}>{item}</button>)}
-          </div>
-        </details>
-
-        <div className="catalog-filter-actions-market">
-          <button type="button" onClick={() => setFiltersOpen(false)}>Применить</button>
-          <button type="button" onClick={reset}>Сбросить</button>
-        </div>
-      </aside>
+      <CatalogFilterSidebar
+        categories={categoryOptions}
+        materials={materials.map((item) => ({ id: item, label: item }))}
+        productsCount={products.length}
+        selectedCategory={category}
+        selectedMaterial={material}
+        priceFrom={minPrice}
+        priceTo={maxPrice}
+        activeFiltersCount={selectedFiltersCount}
+        resultsCount={filteredProducts.length}
+        isOpen={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        onCategoryChange={setCategory}
+        onMaterialChange={setMaterial}
+        onPriceApply={(from, to) => { setMinPrice(from); setMaxPrice(to); }}
+        onReset={reset}
+      />
 
       <section className="catalog-content-market" aria-label="Список товаров">
         <div className="catalog-toolbar-market">
@@ -223,8 +205,7 @@ export function CatalogClient({ products, reviewStats, categories, initialQuery 
             {query.trim() && <button type="button" onClick={() => setQuery('')}>Поиск: {query} ×</button>}
             {category && <button type="button" onClick={() => setCategory('')}>{category} ×</button>}
             {material && <button type="button" onClick={() => setMaterial('')}>{material} ×</button>}
-            {color && <button type="button" onClick={() => setColor('')}>{color} ×</button>}
-            {(minPrice || maxPrice) && <button type="button" onClick={() => { setMinPrice(''); setMaxPrice(''); setPricePreset(''); }}>Цена ×</button>}
+            {(minPrice || maxPrice) && <button type="button" onClick={() => { setMinPrice(''); setMaxPrice(''); }}>Цена ×</button>}
           </div>
         </div>
 
