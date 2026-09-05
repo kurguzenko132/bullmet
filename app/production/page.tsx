@@ -119,7 +119,6 @@ export default function ProductionPage() {
 
         <section className="production-process-dark">
           <div className="production-process-head">
-            <p className="production-story-kicker">Процесс</p>
             <h2>Как создаются наши часы</h2>
           </div>
           <div className="production-process-timeline">
