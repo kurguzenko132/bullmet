@@ -41,8 +41,8 @@ export default function ContactsPage() {
           </div>
           <div className="contacts-story-hero-image">
             <Image src="/assets/contacts-hero-reception.jpg" alt="Ресепшен Bullmet" fill priority sizes="(max-width: 767px) 100vw, 52vw" />
-            <span className="contacts-story-hero-words" aria-hidden="true">Идеи<br />Металл<br />Дерево<br />Детали<br />Результат</span>
           </div>
+          <span className="contacts-story-hero-words" aria-hidden="true">Идеи<br />Металл<br />Дерево<br />Детали<br />Результат</span>
         </section>
 
         <section className="contacts-story-cards" aria-label="Способы связи">
