@@ -25973,18 +25973,20 @@ body:not(.admin-body) .catalog-toolbar-market select {
 .production-process-step-image img { object-fit: cover; }
 .production-process-step p { margin-top: 11px; color: #e1ded9; font-size: 12px; line-height: 17px; }
 
-.production-result-section { padding: 58px 0 62px; }
-.production-result-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(190px, .9fr); gap: 16px; margin-top: 28px; }
+.production-result-section { padding: 38px 0 44px; }
+.production-result-section .production-story-section-head h2 { margin-top: 0; font-size: 26px; line-height: 32px; font-weight: 800; }
+.production-result-section .production-story-section-head > p:last-child { margin-top: 5px; font-size: 12px; line-height: 17px; }
+.production-result-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(176px, .85fr); gap: 12px; margin-top: 17px; }
 .production-result-card > div { position: relative; aspect-ratio: 1.08 / 1; overflow: hidden; border-radius: 6px; background: #ded6ca; }
 .production-result-card img { object-fit: cover; transition: transform 250ms ease; }
 .production-result-card:hover img { transform: scale(1.04); }
-.production-result-card h3 { margin-top: 12px; font-size: 14px; line-height: 19px; font-weight: 800; }
-.production-result-card p { margin-top: 5px; color: var(--production-muted); font-size: 12px; line-height: 17px; }
-.production-result-cta { display: flex; flex-direction: column; align-items: flex-start; padding: 23px; border: 1px solid var(--production-border); border-radius: 7px; background: var(--production-surface); }
-.production-result-cta > svg { width: 33px; height: 33px; color: var(--production-accent); }
-.production-result-cta h2 { margin-top: 18px; font-size: 21px; line-height: 24px; letter-spacing: -.025em; }
-.production-result-cta p { margin-top: 11px; color: var(--production-muted); font-size: 13px; line-height: 19px; }
-.production-result-cta .production-story-button { width: 100%; min-height: 46px; margin-top: auto; padding-inline: 12px; font-size: 10px; }
+.production-result-card h3 { margin-top: 9px; font-size: 13px; line-height: 17px; font-weight: 800; }
+.production-result-card p { margin-top: 3px; color: var(--production-muted); font-size: 11px; line-height: 15px; }
+.production-result-cta { display: flex; flex-direction: column; align-items: flex-start; padding: 18px; border: 1px solid var(--production-border); border-radius: 7px; background: var(--production-surface); }
+.production-result-cta > svg { width: 29px; height: 29px; color: var(--production-accent); }
+.production-result-cta h2 { margin-top: 14px; font-size: 19px; line-height: 22px; letter-spacing: -.025em; }
+.production-result-cta p { margin-top: 8px; color: var(--production-muted); font-size: 12px; line-height: 17px; }
+.production-result-cta .production-story-button { width: 100%; min-height: 38px; margin-top: auto; padding-inline: 10px; font-size: 10px; }
 
 .production-brand-strip { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 26px 0 31px; border-top: 1px solid var(--production-border); }
 .production-brand-intro { display: flex; align-items: center; max-width: 370px; gap: 13px; }

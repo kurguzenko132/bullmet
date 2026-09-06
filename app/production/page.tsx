@@ -7,7 +7,7 @@ import {
   Layers3,
   Paintbrush,
   ShieldCheck,
-  Sparkles,
+  ShoppingBag,
   Wrench
 } from 'lucide-react';
 import { Header } from '@/components/Header';
@@ -46,10 +46,10 @@ const processSteps = [
 ];
 
 const results = [
-  { title: 'Для дома', text: 'Уютный акцент для гостиной, кухни или спальни.', image: '/assets/gallery-1.jpg' },
-  { title: 'Для офиса', text: 'Строгий элемент интерьера для кабинета или переговорной.', image: '/assets/gallery-2.jpg' },
-  { title: 'Для кафе и ресторанов', text: 'Декор, который поддерживает атмосферу заведения.', image: '/assets/gallery-3.jpg' },
-  { title: 'В подарок', text: 'Практичный и запоминающийся подарок.', image: '/assets/gallery-4.jpg' }
+  { title: 'Для дома', text: 'Уютный акцент для гостиной, кухни или спальни.', image: '/assets/result-home.jpg' },
+  { title: 'Для офиса', text: 'Строгий элемент интерьера для кабинета или переговорной.', image: '/assets/result-office.jpg' },
+  { title: 'Для кафе и ресторанов', text: 'Декор, который поддерживает атмосферу заведения.', image: '/assets/result-cafe.jpg' },
+  { title: 'В подарок', text: 'Практичный и запоминающийся подарок.', image: '/assets/result-gift.jpg' }
 ];
 
 function ClockPoint({ item, side }: { item: { icon: typeof Layers3; title: string; text: string }; side: 'left' | 'right' }) {
@@ -135,7 +135,6 @@ export default function ProductionPage() {
 
         <section className="production-result-section">
           <div className="production-story-section-head">
-            <p className="production-story-kicker">Применение</p>
             <h2>Готовый результат</h2>
             <p>Создаём часы для разных интерьеров, задач и подарков.</p>
           </div>
@@ -147,7 +146,7 @@ export default function ProductionPage() {
               </article>
             ))}
             <aside className="production-result-cta">
-              <Sparkles aria-hidden="true" />
+              <ShoppingBag aria-hidden="true" />
               <h2>Выберите свои часы</h2>
               <p>Перейдите в каталог и найдите модель под ваш интерьер.</p>
               <Link className="production-story-button production-story-button--accent" href="/catalog">Смотреть каталог</Link>
