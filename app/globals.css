@@ -26002,7 +26002,7 @@ body:not(.admin-body) .catalog-toolbar-market select {
 .contacts-story-page a { text-decoration: none; }
 .contacts-story-hero, .contacts-story-cards, .contacts-story-main, .contacts-story-faq, .contacts-story-cta { width: min(1400px, calc(100% - 70px)); margin-inline: auto; }
 .contacts-story-hero { position: relative; min-height: 350px; overflow: hidden; background: var(--contacts-bg); }
-.contacts-story-hero::after { position: absolute; z-index: 1; inset: 0; content: ''; pointer-events: none; background: linear-gradient(90deg, var(--contacts-bg) 0%, rgba(238,232,220,.98) 31%, rgba(238,232,220,.78) 45%, rgba(238,232,220,.22) 61%, rgba(238,232,220,0) 73%); }
+.contacts-story-hero::after { position: absolute; z-index: 1; inset: 0; content: ''; pointer-events: none; background: linear-gradient(90deg, var(--contacts-bg) 0%, var(--contacts-bg) 38%, rgba(238,232,220,.98) 45%, rgba(238,232,220,.78) 54%, rgba(238,232,220,.38) 65%, rgba(238,232,220,.1) 74%, rgba(238,232,220,0) 82%); }
 .contacts-story-copy { position: relative; z-index: 2; width: min(48%, 500px); padding: 26px 24px 18px 4px; }
 .contacts-story-breadcrumbs { display: flex; gap: 8px; margin-bottom: 18px; color: #79726a; font-size: 10px; line-height: 14px; }
 .contacts-story-breadcrumbs a { color: inherit; }
