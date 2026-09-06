@@ -1,127 +1,66 @@
+import Image from 'next/image';
 import Link from 'next/link';
+import { CheckCircle2, Mail, MapPin, MessageCircle, Phone, Send, ShieldCheck, Wrench } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ContactForm } from '@/components/ContactForm';
-import { Icon } from '@/components/Icon';
+import { ContactsFaq } from '@/components/ContactsFaq';
 
 export const metadata = {
   title: 'Контакты Bullmet — настенные часы собственного производства',
-  description: 'Контакты Bullmet: телефон, адрес, режим работы и консультация по настенным часам собственного производства.'
+  description: 'Контакты Bullmet: телефон, адрес производства, режим работы и консультация по настенным часам.'
 };
 
 const contacts = [
-  { icon: 'phone', label: 'Телефон', value: '+375 29 802 70 61', href: 'tel:+375298027061', note: 'для звонков и консультаций' },
-  { icon: 'pin', label: 'Адрес', value: 'Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А', href: 'https://maps.google.com/?q=Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А', note: 'самовывоз по согласованию' },
-  { icon: 'clock', label: 'Режим работы', value: 'ПН–ПТ: 9:00–18:00', href: null, note: 'заявки с сайта принимаются круглосуточно' }
+  { icon: Phone, title: 'Телефон', value: '+375 29 802 70 61', note: 'Связь по вопросам заказа и наличия', href: 'tel:+375298027061' },
+  { icon: Send, title: 'Telegram', value: '@bullmet_by', note: 'Быстрые вопросы и консультации', href: 'https://t.me/bullmet_by' },
+  { icon: Mail, title: 'Email', value: 'info@bullmet.by', note: 'Для сообщений, файлов и уточнений', href: 'mailto:info@bullmet.by' },
+  { icon: MapPin, title: 'Адрес', value: 'Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А', note: 'Производство Bullmet', href: 'https://maps.google.com/?q=Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А' }
 ];
 
-const quickReasons = [
-  'уточнить наличие модели часов',
-  'обсудить размер и цвет',
-  'узнать сроки изготовления',
-  'согласовать самовывоз или доставку'
-];
-
-const requestSteps = [
-  ['01', 'Вы пишете нам', 'Укажите модель часов или вопрос, который хотите уточнить.'],
-  ['02', 'Мы связываемся', 'Подскажем по наличию, размеру, цвету, срокам и способу получения.'],
-  ['03', 'Оформляем заказ', 'После согласования вы сможете оформить заказ или забрать готовое изделие.']
+const benefits = [
+  { icon: MessageCircle, title: 'Быстро отвечаем', text: 'В рабочее время' },
+  { icon: ShieldCheck, title: 'Помогаем с выбором', text: 'Подскажем подходящую модель' },
+  { icon: Wrench, title: 'Индивидуальные вопросы', text: 'Уточним детали по изделию' }
 ];
 
 export default function ContactsPage() {
   return (
     <>
       <Header />
-      <main className="contacts-page contacts-page--rich">
-        <section className="contacts-hero-rich">
-          <div className="contacts-hero-content">
-            <nav className="contacts-breadcrumbs" aria-label="Хлебные крошки">
-              <Link href="/">Главная</Link>
-              <span>›</span>
-              <span>Контакты</span>
-            </nav>
-            <p className="section-kicker">Контакты Bullmet</p>
-            <h1>Свяжитесь с нами по настенным часам</h1>
-            <p>
-              Подскажем по моделям настенных часов, наличию, срокам изготовления,
-              самовывозу и доставке по Беларуси.
-            </p>
-            <div className="contacts-hero-actions">
-              <a href="tel:+375298027061">Позвонить</a>
-              <Link href="/catalog">Смотреть часы</Link>
+      <main className="contacts-story-page">
+        <section className="contacts-story-hero">
+          <div className="contacts-story-copy">
+            <nav className="contacts-story-breadcrumbs" aria-label="Хлебные крошки"><Link href="/">Главная</Link><span>›</span><span>Контакты</span></nav>
+            <p className="contacts-story-kicker">Контакты</p>
+            <h1>Будем рады вашему обращению</h1>
+            <p className="contacts-story-lead">Ответим на вопросы, поможем с выбором настенных часов и подскажем детали по изделиям Bullmet. Свяжитесь с нами удобным способом.</p>
+            <div className="contacts-story-benefits">
+              {benefits.map(({ icon: Icon, title, text }) => <article key={title}><Icon aria-hidden="true" /><div><h2>{title}</h2><p>{text}</p></div></article>)}
             </div>
           </div>
-
-          <div className="contacts-hero-card">
-            <b>Быстрая консультация</b>
-            <span>Напишите, какая модель часов интересует, или уточните размер, цвет и сроки.</span>
-            <ul>
-              {quickReasons.map((item) => <li key={item}>✓ {item}</li>)}
-            </ul>
-          </div>
+          <div className="contacts-story-hero-image"><Image src="/assets/hero-machine.jpg" alt="Производство Bullmet" fill priority sizes="(max-width: 767px) 100vw, 55vw" /></div>
         </section>
 
-        <section className="contacts-cards-rich" aria-label="Контактная информация">
-          {contacts.map((item) => (
-            <article key={item.label}>
-              <Icon name={item.icon as any} />
-              <span>{item.label}</span>
-              {item.href ? <a href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} rel={item.href.startsWith('http') ? 'noreferrer' : undefined}>{item.value}</a> : <b>{item.value}</b>}
-              <small>{item.note}</small>
-            </article>
-          ))}
+        <section className="contacts-story-cards" aria-label="Способы связи">
+          {contacts.map(({ icon: Icon, title, value, note, href }) => <article key={title}><Icon aria-hidden="true" /><h2>{title}</h2><a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined}>{value}</a><p>{note}</p></article>)}
         </section>
 
-        <section className="contacts-main-rich">
-          <div className="contacts-form-card-rich">
-            <div className="contacts-section-head">
-              <p className="section-kicker">Обратная связь</p>
-              <h2>Оставьте сообщение</h2>
-              <span>Заполните форму — мы свяжемся с вами, уточним детали и подскажем следующий шаг.</span>
-            </div>
-            <ContactForm />
-          </div>
-
-          <aside className="contacts-side-rich">
-            <div className="contacts-map-rich">
-              <div>
-                <p className="section-kicker">Адрес</p>
-                <h3>Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А</h3>
-                <span>Точную точку самовывоза и время приезда лучше согласовать заранее.</span>
-                <a href="https://maps.google.com/?q=Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А" target="_blank" rel="noreferrer">Открыть маршрут</a>
-              </div>
-            </div>
-
-            <div className="contacts-help-rich">
-              <h3>Что написать в заявке?</h3>
-              <ul>
-                <li>какая модель часов интересует;</li>
-                <li>желаемый размер;</li>
-                <li>цвет или оформление, если уже знаете;</li>
-                <li>ссылку на товар или фото примера;</li>
-                <li>город и удобный способ получения.</li>
-              </ul>
-            </div>
+        <section className="contacts-story-main">
+          <aside className="contacts-story-map">
+            <div className="contacts-story-map-card"><MapPin aria-hidden="true" /><div><b>Наш адрес</b><p>Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А</p><span>ПН–ПТ: 9:00–18:00</span></div></div>
+            <div className="contacts-story-map-pin"><span>⌖</span><b>BULLMET</b></div>
+            <a href="https://maps.google.com/?q=Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А" target="_blank" rel="noreferrer">Открыть в картах</a>
           </aside>
+          <div className="contacts-story-form"><h2>Напишите нам</h2><p>Оставьте контакты и вопрос — мы свяжемся с вами и подскажем детали.</p><ContactForm /></div>
         </section>
 
-        <section className="contacts-steps-rich">
-          {requestSteps.map(([number, title, text]) => (
-            <article key={number}>
-              <b>{number}</b>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
-          ))}
-        </section>
+        <section className="contacts-story-faq"><p className="contacts-story-kicker">Частые вопросы</p><h2>Возможно, здесь уже есть ответ</h2><ContactsFaq /></section>
 
-        <section className="contacts-cta-rich">
-          <div>
-            <p className="section-kicker">Нужна консультация?</p>
-            <h2>Самый быстрый путь — написать нам по часам</h2>
-            <span>Подскажем по наличию, срокам, размеру и доставке.</span>
-          </div>
-          <Link href="/catalog">Перейти в каталог часов</Link>
+        <section className="contacts-story-cta">
+          <Image src="/assets/hero-machine.jpg" alt="Детали производства Bullmet" fill sizes="100vw" />
+          <div className="contacts-story-cta-content"><p className="contacts-story-kicker">Остались вопросы?</p><h2>Мы всегда на связи</h2><p>Напишите нам или позвоните — поможем с выбором, подскажем по наличию и ответим на вопросы.</p><div><a href="https://t.me/bullmet_by" target="_blank" rel="noreferrer"><Send aria-hidden="true" />Написать в Telegram</a><a href="tel:+375298027061"><Phone aria-hidden="true" />Позвонить</a></div></div>
+          <ul className="contacts-story-cta-list"><li><CheckCircle2 />Консультация по моделям</li><li><CheckCircle2 />Помощь в подборе</li><li><CheckCircle2 />Ответ в кратчайшие сроки</li></ul>
         </section>
       </main>
       <Footer />
