@@ -39,7 +39,10 @@ export default function ContactsPage() {
               {benefits.map(({ icon: Icon, title, text }) => <article key={title}><Icon aria-hidden="true" /><div><h2>{title}</h2><p>{text}</p></div></article>)}
             </div>
           </div>
-          <div className="contacts-story-hero-image"><Image src="/assets/hero-machine.jpg" alt="Производство Bullmet" fill priority sizes="(max-width: 767px) 100vw, 55vw" /></div>
+          <div className="contacts-story-hero-image">
+            <Image src="/assets/contacts-hero-reception.jpg" alt="Ресепшен Bullmet" fill priority sizes="(max-width: 767px) 100vw, 52vw" />
+            <span className="contacts-story-hero-words" aria-hidden="true">Идеи<br />Металл<br />Дерево<br />Детали<br />Результат</span>
+          </div>
         </section>
 
         <section className="contacts-story-cards" aria-label="Способы связи">
