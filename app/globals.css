@@ -25997,7 +25997,8 @@ body:not(.admin-body) .catalog-toolbar-market select {
 .production-brand-features svg { flex: 0 0 auto; width: 25px; height: 25px; color: var(--production-accent); }
 
 /* Contacts story page. */
-.contacts-story-page { --contacts-bg: #eee8dc; --contacts-surface: #fffaf4; --contacts-border: #d9d0c3; --contacts-text: #1f1f1d; --contacts-muted: #6b655d; --contacts-accent: #ed6b0a; background: var(--contacts-bg); color: var(--contacts-text); padding-bottom: 44px; }
+body:has(.contacts-story-page) { background: #eee8dc !important; }
+.contacts-story-page { --contacts-bg: #eee8dc; --contacts-surface: #fffaf4; --contacts-border: #d9d0c3; --contacts-text: #1f1f1d; --contacts-muted: #6b655d; --contacts-accent: #ed6b0a; min-height: 100vh; background: var(--contacts-bg); color: var(--contacts-text); padding-bottom: 44px; }
 .contacts-story-page h1, .contacts-story-page h2, .contacts-story-page h3, .contacts-story-page p { margin: 0; }
 .contacts-story-page a { text-decoration: none; }
 .contacts-story-hero, .contacts-story-cards, .contacts-story-main, .contacts-story-faq, .contacts-story-cta { width: min(1400px, calc(100% - 70px)); margin-inline: auto; }
