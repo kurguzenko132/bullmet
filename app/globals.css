@@ -26005,16 +26005,16 @@ body:has(.contacts-story-page) { background: #f5f1ea !important; }
 .contacts-story-hero { position: relative; min-height: 350px; overflow: hidden; background: var(--contacts-bg); }
 .contacts-story-hero::after { position: absolute; z-index: 1; inset: 0; content: ''; pointer-events: none; background: linear-gradient(90deg, var(--contacts-bg) 0%, var(--contacts-bg) 38%, rgba(245,241,234,.98) 45%, rgba(245,241,234,.78) 54%, rgba(245,241,234,.38) 65%, rgba(245,241,234,.1) 74%, rgba(245,241,234,0) 82%); }
 .contacts-story-copy { position: relative; z-index: 2; width: min(48%, 500px); padding: 26px 24px 18px 4px; }
-.contacts-story-breadcrumbs { display: flex; gap: 8px; margin-bottom: 18px; color: #79726a; font-size: 10px; line-height: 14px; }
+.contacts-story-breadcrumbs { display: flex; gap: 9px; margin-bottom: 22px; color: #79726a; font-size: 12px; line-height: 16px; }
 .contacts-story-breadcrumbs a { color: inherit; }
 .contacts-story-kicker { color: var(--contacts-accent); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
-.contacts-story-copy h1 { max-width: 475px; margin-top: 8px; font-size: clamp(30px, 2.4vw, 39px); line-height: 1.04; letter-spacing: -.045em; font-weight: 800; }
-.contacts-story-lead { max-width: 455px; margin-top: 12px !important; color: #514b44; font-size: 14px; line-height: 20px; }
+.contacts-story-copy h1 { max-width: 530px; margin-top: 10px; font-size: 40px; line-height: 44px; letter-spacing: -.035em; font-weight: 800; }
+.contacts-story-lead { max-width: 500px; margin-top: 20px !important; color: #49443e; font-size: 16px; line-height: 24px; }
 .contacts-story-benefits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 23px; }
-.contacts-story-benefits article { display: flex; gap: 8px; align-items: flex-start; }
-.contacts-story-benefits svg { flex: 0 0 auto; width: 23px; height: 23px; color: var(--contacts-accent); }
-.contacts-story-benefits h2 { font-size: 10px; line-height: 13px; font-weight: 800; }
-.contacts-story-benefits p { margin-top: 2px; color: var(--contacts-muted); font-size: 9px; line-height: 12px; }
+.contacts-story-benefits article { display: flex; gap: 12px; align-items: flex-start; }
+.contacts-story-benefits svg { flex: 0 0 auto; width: 28px; height: 28px; color: var(--contacts-accent); }
+.contacts-story-benefits h2 { font-size: 12px; line-height: 16px; font-weight: 800; }
+.contacts-story-benefits p { margin-top: 2px; color: #4d4943; font-size: 11px; line-height: 15px; }
 .contacts-story-hero-image { position: absolute; z-index: 0; inset: 0 0 0 auto; width: 67%; min-height: 350px; overflow: hidden; background: #2b2926; }
 .contacts-story-hero-image::after { display: none; }
 .contacts-story-hero-image img { object-fit: cover; object-position: center; }
@@ -26084,7 +26084,9 @@ body:has(.contacts-story-page) { background: #f5f1ea !important; }
 @media (max-width: 767px) {
   .contacts-story-hero, .contacts-story-cards, .contacts-story-main, .contacts-story-faq, .contacts-story-cta { width: calc(100% - 32px); }
   .contacts-story-copy { padding: 28px 0 26px; }
-  .contacts-story-copy h1 { font-size: 34px; line-height: 38px; }
+  .contacts-story-breadcrumbs { margin-bottom: 28px; }
+  .contacts-story-copy h1 { max-width: 360px; font-size: 30px; line-height: 35px; }
+  .contacts-story-lead { max-width: 360px; font-size: 14px; line-height: 21px; }
   .contacts-story-hero-words { display: none; }
   .contacts-story-benefits { grid-template-columns: 1fr; gap: 14px; }
   .contacts-story-cards, .contacts-faq-list { grid-template-columns: 1fr; }
