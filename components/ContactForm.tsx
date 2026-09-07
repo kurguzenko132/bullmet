@@ -1,11 +1,12 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 
 export function ContactForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [form, setForm] = useState({ name: '', phone: '', email: '', text: '' });
+  const [form, setForm] = useState({ name: '', phone: '', text: '' });
 
   function patch(key: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -19,12 +20,12 @@ export function ContactForm() {
       const response = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: 'contact', source: 'contacts', type: 'Заявка с контактов', name: form.name, phone: form.phone, email: form.email, message: form.text })
+        body: JSON.stringify({ kind: 'contact', source: 'contacts', type: 'Заявка с контактов', name: form.name, phone: form.phone, message: form.text })
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось отправить сообщение.');
       setMessage('Спасибо! Мы получили сообщение и скоро свяжемся с вами.');
-      setForm({ name: '', phone: '', email: '', text: '' });
+      setForm({ name: '', phone: '', text: '' });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось отправить сообщение.');
     } finally {
@@ -45,15 +46,12 @@ export function ContactForm() {
         </label>
       </div>
       <label>
-        <span>Email</span>
-        <input value={form.email} onChange={(event) => patch('email', event.target.value)} placeholder="mail@example.com" />
-      </label>
-      <label>
         <span>Сообщение</span>
         <textarea value={form.text} onChange={(event) => patch('text', event.target.value)} rows={5} placeholder="Напишите ваш вопрос..." />
       </label>
       {message && <p className="contact-form-message">{message}</p>}
-      <button disabled={loading}>{loading ? 'Отправляем...' : 'Отправить'}</button>
+      <button disabled={loading}><span>{loading ? 'Отправляем...' : 'Отправить'}</span><ArrowRight aria-hidden="true" /></button>
+      <p className="contact-form-consent">Нажимая «Отправить», вы соглашаетесь с <a href="/privacy">политикой конфиденциальности</a>.</p>
     </form>
   );
 }
