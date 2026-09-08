@@ -51,7 +51,7 @@ export default function ContactsPage() {
 
         <section className="contacts-story-main">
           <aside className="contacts-story-map">
-            <iframe className="contacts-story-map-frame" title="Карта производства Bullmet" src="https://www.openstreetmap.org/export/embed.html?bbox=24.728%2C52.641%2C26.128%2C52.941&amp;layer=mapnik" />
+            <iframe className="contacts-story-map-frame" title="Карта производства Bullmet" src="https://yandex.ru/map-widget/v1/?ll=25.344%2C52.684&amp;z=11&amp;pt=25.344%2C52.684%2Cpm2rdm" allowFullScreen />
             <div className="contacts-story-map-card"><MapPin aria-hidden="true" /><div><b>Наш адрес</b><p>Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А</p><span>ПН–ПТ: 9:00–18:00<br />СБ: 10:00–16:00</span></div></div>
             <div className="contacts-story-map-pin"><span>⌖</span><b>BULLMET</b></div>
             <div className="contacts-story-map-controls" aria-hidden="true"><span>+</span><span>−</span></div>
