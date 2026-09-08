@@ -26051,7 +26051,7 @@ body:has(.contacts-story-page) { background: #f5f1ea !important; }
 
 .contacts-story-faq { margin-top: 34px; }
 .contacts-story-faq h2 { margin-top: 7px; font-size: 27px; line-height: 32px; letter-spacing: -.035em; }
-.contacts-faq-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.contacts-faq-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 12px; margin-top: 18px; }
 .contacts-faq-list article { border: 1px solid var(--contacts-border); border-radius: 6px; background: var(--contacts-surface); }
 .contacts-faq-list button { display: flex; width: 100%; min-height: 58px; align-items: center; justify-content: space-between; gap: 12px; border: 0; padding: 14px 16px; background: transparent; color: var(--contacts-text); text-align: left; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .contacts-faq-list button svg { flex: 0 0 auto; width: 18px; height: 18px; color: var(--contacts-accent); }
