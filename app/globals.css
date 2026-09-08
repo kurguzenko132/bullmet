@@ -26037,9 +26037,6 @@ body:has(.contacts-story-page) { background: #f5f1ea !important; }
 .contacts-story-map-card b { display: block; font-size: 12px; line-height: 16px; }
 .contacts-story-map-card p { margin-top: 4px; font-size: 11px; line-height: 15px; }
 .contacts-story-map-card span { display: block; margin-top: 7px; color: var(--contacts-muted); font-size: 11px; }
-.contacts-story-map-controls { position: absolute; z-index: 1; right: 18px; bottom: 18px; display: grid; overflow: hidden; border-radius: 5px; background: #fff; box-shadow: 0 4px 16px rgba(30,25,20,.12); }
-.contacts-story-map-controls span { display: grid; width: 42px; height: 42px; place-items: center; color: #38332d; font-size: 28px; font-weight: 500; }
-.contacts-story-map-controls span + span { border-top: 1px solid #e5dfd6; }
 .contacts-story-form { padding: 28px; }
 .contacts-story-form > h2 { font-size: 28px; line-height: 33px; letter-spacing: -.035em; }
 .contacts-story-form > p { margin-top: 7px; color: var(--contacts-muted); font-size: 14px; line-height: 20px; }
