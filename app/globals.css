@@ -26062,7 +26062,7 @@ body:has(.contacts-story-page) { background: #f5f1ea !important; }
 .contacts-story-cta::after { position: absolute; inset: 0; content: ''; background: linear-gradient(90deg, rgba(8,8,7,.88) 0%, rgba(10,10,9,.66) 37%, rgba(10,10,9,.36) 66%, rgba(10,10,9,.2) 100%); }
 .contacts-story-cta-content, .contacts-story-cta-list { position: relative; z-index: 1; }
 .contacts-story-cta-content { padding: 42px 35px; }
-.contacts-story-cta-content h2 { margin-top: 8px; color: #fff; font-size: 40px; line-height: 44px; letter-spacing: -.045em; }
+.contacts-story-cta-content h2 { margin-top: 8px; color: #fff !important; font-size: 40px; line-height: 44px; font-weight: 800; letter-spacing: -.045em; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
 .contacts-story-cta-content > p:last-of-type { max-width: 550px; margin-top: 13px; color: rgba(255,255,255,.84); font-size: 15px; line-height: 22px; }
 .contacts-story-cta-content > div { display: flex; gap: 14px; margin-top: 26px; }
 .contacts-story-cta-content a { display: inline-flex; min-height: 50px; align-items: center; gap: 10px; padding: 0 19px; border: 1px solid rgba(255,255,255,.8); border-radius: 4px; color: #fff; font-size: 12px; font-weight: 800; }
