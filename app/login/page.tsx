@@ -1,13 +1,17 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { Clock3, Heart, ShoppingCart } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { Icon } from '@/components/Icon';
 import { AuthForm } from '@/components/AuthForm';
 
 export const metadata = {
   title: 'Вход в аккаунт | Bullmet',
-  description: 'Войти в личный кабинет или админ-панель Bullmet.'
+  description: 'Вход и регистрация в личном кабинете Bullmet: заказы, избранное и удобное оформление.',
+  robots: {
+    index: false,
+    follow: false
+  }
 };
 
 export default function LoginPage() {
@@ -20,13 +24,14 @@ export default function LoginPage() {
             <p className="auth-eyebrow">Аккаунт Bullmet</p>
             <h1>Войти в аккаунт</h1>
             <p>
-              Для клиента откроется личный кабинет, для администратора — панель управления сайтом.
+              Личный кабинет для заказов, избранного и быстрого оформления. Всё необходимое для работы с Bullmet в одном месте.
             </p>
             <div className="auth-benefits">
-              <div><Icon name="cart" /><span>Быстрое оформление</span></div>
-              <div><Icon name="clock" /><span>Заказы часов</span></div>
-              <div><Icon name="shield" /><span>Доступ к админке</span></div>
+              <article><ShoppingCart aria-hidden="true" /><b>Быстрое оформление</b><span>Сохраняйте данные и оформляйте заказы в несколько кликов.</span></article>
+              <article><Clock3 aria-hidden="true" /><b>История заказов</b><span>Следите за статусом и возвращайтесь к прошлым заказам.</span></article>
+              <article><Heart aria-hidden="true" /><b>Избранное и кабинет</b><span>Сохраняйте товары и управляйте своими данными.</span></article>
             </div>
+            <p className="auth-signature" aria-hidden="true">Bullmet — металл с элементами дерева</p>
           </div>
 
           <Suspense fallback={<div className="auth-card">Загрузка формы...</div>}>

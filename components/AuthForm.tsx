@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { defaultAdminPath, isStaffRole, normalizeAdminRole } from '@/lib/adminAccess';
 
@@ -50,7 +51,7 @@ function getReadableAuthError(error: unknown, mode: Mode, adminLogin: boolean) {
 
   if (lower.includes('invalid login credentials')) {
     return adminLogin
-      ? 'Неверный email или пароль. Для входа в админку пользователь должен быть создан в Supabase Auth и его email должен совпадать с NEXT_PUBLIC_ADMIN_EMAIL / NEXT_PUBLIC_ADMIN_EMAILS.'
+      ? 'Неверный email или пароль. Проверьте введённые данные и попробуйте ещё раз.'
       : 'Неверный email или пароль. Если аккаунта ещё нет, сначала нажмите «Регистрация» и создайте личный кабинет.';
   }
 
@@ -68,7 +69,7 @@ function getReadableAuthError(error: unknown, mode: Mode, adminLogin: boolean) {
       : 'Проверьте пароль и попробуйте ещё раз.';
   }
 
-  return raw || (mode === 'login' ? 'Не удалось выполнить вход.' : 'Не удалось создать аккаунт.');
+  return mode === 'login' ? 'Не удалось выполнить вход. Проверьте данные и попробуйте ещё раз.' : 'Не удалось создать аккаунт. Попробуйте ещё раз немного позже.';
 }
 
 function isInvalidCredentialsError(error: unknown) {
@@ -86,7 +87,10 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '', confirmPassword: '' });
   const [showCreateHint, setShowCreateHint] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const hasExplicitNext = searchParams.has('next');
 
@@ -114,22 +118,23 @@ export function AuthForm() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
+    setFieldErrors({ email: '', password: '', confirmPassword: '' });
     setMessage('');
     setShowCreateHint(false);
 
     if (!supabase) {
-      setError('Supabase не подключен. Проверь NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY.');
+      setError('Сервис авторизации временно недоступен. Попробуйте ещё раз немного позже.');
       return;
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !password) {
-      setError('Введите email и пароль.');
-      return;
-    }
-
-    if (mode === 'register' && password !== confirmPassword) {
-      setError('Пароли не совпадают.');
+    const nextFieldErrors = {
+      email: !/^\S+@\S+\.\S+$/.test(cleanEmail) ? 'Введите корректный email' : '',
+      password: password.length < 6 ? 'Пароль должен содержать минимум 6 символов' : '',
+      confirmPassword: mode === 'register' && password !== confirmPassword ? 'Пароли не совпадают' : ''
+    };
+    if (nextFieldErrors.email || nextFieldErrors.password || nextFieldErrors.confirmPassword) {
+      setFieldErrors(nextFieldErrors);
       return;
     }
 
@@ -137,7 +142,7 @@ export function AuthForm() {
 
     try {
       if (mode === 'register') {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: cleanEmail,
           password,
           options: {
@@ -146,6 +151,10 @@ export function AuthForm() {
         });
 
         if (signUpError) throw signUpError;
+
+        if (signUpData.user) {
+          await supabase.from('profiles').upsert({ id: signUpData.user.id, email: cleanEmail, full_name: '' });
+        }
 
         setMessage('Аккаунт создан. Если включено подтверждение email, подтвердите почту и затем войдите. Если подтверждение отключено — можно сразу попробовать войти.');
         setMode('login');
@@ -172,7 +181,7 @@ export function AuthForm() {
 
       if (nextUrl.startsWith('/admin') && !hasAdminAccess) {
         await supabase.auth.signOut();
-        setError('У этого пользователя нет роли для входа в админку. Попросите администратора назначить manager, content_manager или admin.');
+        setError('У этой учётной записи нет доступа к запрошенной странице.');
         setLoading(false);
         return;
       }
@@ -197,55 +206,35 @@ export function AuthForm() {
   return (
     <section className="auth-card auth-card--polished" aria-label="Форма входа и регистрации">
       <div className="auth-mode-cards">
-        <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => { setMode('login'); setError(''); setMessage(''); setShowCreateHint(false); }}>
-          <b>Вход</b><span>Войти по email и паролю</span>
+        <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => { setMode('login'); setError(''); setMessage(''); setFieldErrors({ email: '', password: '', confirmPassword: '' }); setShowCreateHint(false); }}>
+          <b>Вход</b>
         </button>
-        <button className={mode === 'register' ? 'active' : ''} type="button" onClick={() => { setMode('register'); setError(''); setMessage(''); setShowCreateHint(false); }}>
-          <b>Регистрация</b><span>Создать личный аккаунт</span>
+        <button className={mode === 'register' ? 'active' : ''} type="button" onClick={() => { setMode('register'); setError(''); setMessage(''); setFieldErrors({ email: '', password: '', confirmPassword: '' }); setShowCreateHint(false); }}>
+          <b>Регистрация</b>
         </button>
       </div>
 
       <div className="auth-form-head">
-        <h2>{mode === 'login' ? 'С возвращением' : 'Создать аккаунт'}</h2>
-        <p>{mode === 'login' ? 'Введите email и пароль, чтобы продолжить оформление заказа или посмотреть сохраненные товары.' : 'Аккаунт пригодится для заказов, избранного и быстрого оформления.'}</p>
+        <h2>{mode === 'login' ? 'Войти в аккаунт' : 'Создать аккаунт'}</h2>
+        <p>{mode === 'login' ? 'Введите email и пароль, указанные при регистрации.' : 'Аккаунт пригодится для заказов, избранного и быстрого оформления.'}</p>
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input
-            type="email"
-            placeholder="example@mail.com"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
+        <label className="auth-field">
+          <span>Email</span>
+          <div className="auth-input-wrap"><Mail aria-hidden="true" /><input type="email" placeholder="example@email.com" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} aria-invalid={!!fieldErrors.email} required /></div>
+          {fieldErrors.email && <small>{fieldErrors.email}</small>}
         </label>
-        <label>
-          Пароль
-          <input
-            type="password"
-            placeholder={mode === 'login' ? 'Ваш пароль' : 'Минимум 6 символов'}
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            minLength={6}
-            required
-          />
+        <label className="auth-field">
+          <span className="auth-field-label">Пароль{mode === 'login' && <Link href="/forgot-password">Забыли пароль?</Link>}</span>
+          <div className="auth-input-wrap"><LockKeyhole aria-hidden="true" /><input type={showPassword ? 'text' : 'password'} placeholder={mode === 'login' ? 'Введите пароль' : 'Минимум 6 символов'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={(event) => setPassword(event.target.value)} aria-invalid={!!fieldErrors.password} minLength={6} required /><button type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
+          {fieldErrors.password && <small>{fieldErrors.password}</small>}
         </label>
         {mode === 'register' && (
-          <label>
-            Повторите пароль
-            <input
-              type="password"
-              placeholder="Повторите пароль"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              minLength={6}
-              required
-            />
+          <label className="auth-field">
+            <span>Повторите пароль</span>
+            <div className="auth-input-wrap"><LockKeyhole aria-hidden="true" /><input type={showConfirmPassword ? 'text' : 'password'} placeholder="Повторите пароль" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} aria-invalid={!!fieldErrors.confirmPassword} minLength={6} required /><button type="button" onClick={() => setShowConfirmPassword((current) => !current)} aria-label={showConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'}>{showConfirmPassword ? <EyeOff /> : <Eye />}</button></div>
+            {fieldErrors.confirmPassword && <small>{fieldErrors.confirmPassword}</small>}
           </label>
         )}
 
@@ -262,7 +251,7 @@ export function AuthForm() {
         {message && <p className="auth-message auth-message-success">{message}</p>}
 
         <button type="submit" className="auth-submit" disabled={loading}>
-          {loading ? 'ПОДОЖДИТЕ...' : mode === 'login' ? 'ВОЙТИ' : 'СОЗДАТЬ АККАУНТ'}
+          <span>{loading ? (mode === 'login' ? 'Входим...' : 'Создаём аккаунт...') : mode === 'login' ? 'Войти' : 'Создать аккаунт'}</span><ArrowRight aria-hidden="true" />
         </button>
 
         <div className="auth-links">

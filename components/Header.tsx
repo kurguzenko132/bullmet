@@ -102,7 +102,7 @@ export function Header() {
   }, [siteControl]);
 
   const accountHref = accountEmail ? '/account' : '/login?next=/account';
-  const accountLabel = accountEmail ? 'Личный кабинет' : 'Войти';
+  const accountLabel = accountEmail ? 'Личный кабинет' : 'Войти в аккаунт';
 
   const bottomNav = useMemo(() => {
     const fromSettings = siteControl?.navigation
