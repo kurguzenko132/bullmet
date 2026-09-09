@@ -38,7 +38,9 @@ export function AdminTopbar() {
   const [pageTitle, setPageTitle] = useState('Главная');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [profileOpen, setProfileOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement | null>(null);
+  const profileRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setPageTitle(getPageTitle());
@@ -92,10 +94,14 @@ export function AdminTopbar() {
   useEffect(() => {
     function closeOnOutsideClick(event: MouseEvent) {
       if (!notificationRef.current?.contains(event.target as Node)) setNotificationsOpen(false);
+      if (!profileRef.current?.contains(event.target as Node)) setProfileOpen(false);
     }
 
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setNotificationsOpen(false);
+      if (event.key === 'Escape') {
+        setNotificationsOpen(false);
+        setProfileOpen(false);
+      }
     }
 
     document.addEventListener('mousedown', closeOnOutsideClick);
@@ -191,9 +197,16 @@ export function AdminTopbar() {
             </div>
           )}
         </div>
-        <div className="admin-topbar-user">
-          <span><UserRound size={18} /></span>
-          <div><b>{roleLabel}</b><small>{email}</small></div>
+        <div className="admin-topbar-profile-wrap" ref={profileRef}>
+          <button type="button" className="admin-topbar-user" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen}>
+            <span><UserRound size={18} /></span>
+            <div><b>{roleLabel}</b><small>{email}</small></div>
+          </button>
+          {profileOpen && <div className="admin-topbar-profile-menu">
+            <b>{roleLabel}</b><span>{email}</span>
+            <Link href="/admin/settings" onClick={() => setProfileOpen(false)}>Настройки профиля</Link>
+            <button type="button" onClick={signOut}>Выйти из аккаунта</button>
+          </div>}
         </div>
         <button type="button" className="admin-topbar-logout" onClick={signOut} aria-label="Выйти"><LogOut size={18} /></button>
       </div>
