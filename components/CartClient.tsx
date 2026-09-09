@@ -158,7 +158,6 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
       </aside>
     </div>
     <CartRecommendations products={recommendationItems} onAdd={addRecommendation} />
-    <section className="cart-contact-v3"><div><p>Нужна другая модель?</p><h2>Подскажем по размеру и исполнению</h2><span>Свяжитесь с нами — поможем выбрать часы для вашего интерьера.</span><Link href="/contacts">Связаться <span>→</span></Link></div></section>
     <div className="cart-mobile-checkout-v3"><span>Итого: <b>{money(total)} BYN</b></span><Link href={selected.size ? '/checkout' : '#'} className={!selected.size ? 'is-disabled' : ''}>Оформить</Link></div>
   </>;
 }
@@ -166,27 +165,31 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
 function CartRecommendations({ products, onAdd }: { products: CatalogProduct[]; onAdd: (product: CatalogProduct) => void }) {
   if (!products.length) return null;
   return <section className="cart-recommendations-v3">
-    <div className="cart-section-title-v3">
-      <div><h2>Возможно, вам понравится</h2></div>
-      <Link href="/catalog">Перейти в каталог <span>→</span></Link>
-    </div>
-    <div className="catalog-grid-market cart-recommendation-grid-v3">
-      {products.map((product) => <article className="catalog-card-market" key={product.slug}>
-        <button className="cart-heart-v3" type="button" aria-label={`Добавить ${product.title} в избранное`}><Heart /></button>
-        <Link href={`/product/${product.slug}`} className="catalog-card-image-market" aria-label={`Открыть товар: ${product.title}`}>
-          <img src={product.image} alt={product.title} />
-        </Link>
-        <div className="catalog-card-body-market">
-          <div className="catalog-card-rating-market"><small>Нет отзывов</small></div>
-          <h3>{product.title}</h3>
-          <p>{product.material || product.short}</p>
-          <p className="catalog-card-color-market">Цвет: <span>{product.colorName || 'не указан'}</span></p>
-          <div className="catalog-card-bottom-market">
-            <b>от {money(product.price)} BYN</b>
-            <button type="button" aria-label={`Добавить в корзину: ${product.title}`} onClick={() => onAdd(product)}><Icon name="cart" /></button>
-          </div>
+    <div className="cart-recommendations-content-v3">
+      <div>
+        <div className="cart-section-title-v3">
+          <div><h2>Возможно, вам понравится</h2></div>
+          <Link href="/catalog">Перейти в каталог <span>→</span></Link>
         </div>
-      </article>)}
+        <div className="catalog-grid-market cart-recommendation-grid-v3">
+          {products.map((product) => <article className="catalog-card-market" key={product.slug}>
+            <button className="cart-heart-v3" type="button" aria-label={`Добавить ${product.title} в избранное`}><Heart /></button>
+            <Link href={`/product/${product.slug}`} className="catalog-card-image-market" aria-label={`Открыть товар: ${product.title}`}>
+              <img src={product.image} alt={product.title} />
+            </Link>
+            <div className="catalog-card-body-market">
+              <h3>{product.title}</h3>
+              <div className="catalog-card-bottom-market">
+                <b>{money(product.price)} BYN</b>
+                <button type="button" aria-label={`Добавить в корзину: ${product.title}`} onClick={() => onAdd(product)}>В корзину</button>
+              </div>
+            </div>
+          </article>)}
+        </div>
+      </div>
+      <aside className="cart-custom-promo-v3">
+        <div><h3>Индивидуальные<br />часы под ваш<br />интерьер</h3><p>Реализуем ваши идеи<br />из металла и дерева.</p><Link href="/contacts">Оставить заявку <span>→</span></Link></div>
+      </aside>
     </div>
   </section>;
 }
