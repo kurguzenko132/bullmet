@@ -26360,14 +26360,16 @@ body:not(.admin-body) .auth-input-wrap input { background: #fffdf9 !important; b
 /* Keep the login header focused and keep decoration out of the form column. */
 body:not(.admin-body):has(.auth-page) .header-actions-exact .calc-btn { display: none !important; }
 body:not(.admin-body) .auth-page::before {
+  top: 0;
   right: 0;
+  bottom: 0;
   left: 0;
   width: auto;
-  height: 31%;
-  background: linear-gradient(90deg, #eee8dc 0%, rgba(238,232,220,.84) 38%, rgba(238,232,220,.72) 52%, rgba(238,232,220,.96) 76%, #eee8dc 100%), url('/assets/result-home.jpg') center bottom / cover no-repeat;
-  opacity: .5;
+  height: auto;
+  background: linear-gradient(90deg, #eee8dc 0%, rgba(238,232,220,.98) 31%, rgba(238,232,220,.85) 47%, rgba(238,232,220,.5) 65%, rgba(238,232,220,.14) 82%, rgba(238,232,220,.04) 100%), url('/assets/result-home.jpg') right center / cover no-repeat;
+  opacity: .95;
 }
 body:not(.admin-body):has(.auth-page) .header-actions-exact .login-btn { text-transform: none; }
 @media (max-width: 1023px) {
-  body:not(.admin-body) .auth-page::before { width: 100%; height: 24%; opacity: .24; }
+  body:not(.admin-body) .auth-page::before { background-position: 70% center; opacity: .4; }
 }
