@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowRight, Bell, ChevronRight, Edit3, Heart, Home, LogOut, MapPin, Package, Plus, UserRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Icon } from './Icon';
 
@@ -90,6 +91,25 @@ function statusClass(status?: string) {
   if (text.includes('работ') || text.includes('ожида')) return 'is-progress';
   if (text.includes('отмен')) return 'is-cancel';
   return 'is-new';
+}
+
+function friendlyStatus(status?: string) {
+  const text = String(status || '').toLowerCase();
+  if (text.includes('отмен')) return 'Отменён';
+  if (text.includes('достав')) return 'Передан в доставку';
+  if (text.includes('выполн') || text.includes('закры')) return 'Выполнен';
+  if (text.includes('оплач')) return 'Оплачен';
+  if (text.includes('работ') || text.includes('ожида')) return 'В обработке';
+  return status || 'Принят';
+}
+
+function pluralize(value: number, one: string, few: string, many: string) {
+  const remainder = Math.abs(value) % 100;
+  const last = remainder % 10;
+  if (remainder > 10 && remainder < 20) return many;
+  if (last > 1 && last < 5) return few;
+  if (last === 1) return one;
+  return many;
 }
 
 function readJsonList<T>(key: string) {
@@ -198,12 +218,24 @@ export function AccountClient() {
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [dataMessage, setDataMessage] = useState('');
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [addresses, setAddresses] = useState<string[]>([]);
+  const [addressDraft, setAddressDraft] = useState('');
+  const [addingAddress, setAddingAddress] = useState(false);
 
-  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [cart]);
-  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [cart]);
   const adminEmails = useMemo(() => getAdminEmails(), []);
   const isAdmin = !!user?.email && adminEmails.includes(user.email.toLowerCase());
   const displayName = profile.full_name || profileDraft.fullName || user?.email?.split('@')[0] || 'клиент';
+
+  useEffect(() => {
+    try {
+      const storedNotifications = window.localStorage.getItem('bullmet_account_notifications');
+      const storedAddresses = readJsonList<string>('bullmet_account_addresses');
+      setNotificationsEnabled(storedNotifications !== 'false');
+      setAddresses(storedAddresses.filter(Boolean));
+    } catch {}
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -431,6 +463,25 @@ export function AccountClient() {
     setCart(current);
   }
 
+  function toggleNotifications() {
+    setNotificationsEnabled((current) => {
+      const next = !current;
+      try { window.localStorage.setItem('bullmet_account_notifications', String(next)); } catch {}
+      return next;
+    });
+  }
+
+  function addAddress(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextAddress = addressDraft.trim();
+    if (!nextAddress) return;
+    const next = [...addresses, nextAddress];
+    setAddresses(next);
+    setAddressDraft('');
+    setAddingAddress(false);
+    try { window.localStorage.setItem('bullmet_account_addresses', JSON.stringify(next)); } catch {}
+  }
+
   if (status === 'loading') {
     return (
       <section className="account-state-card account-state-card--rich">
@@ -451,97 +502,95 @@ export function AccountClient() {
     );
   }
 
+  const initials = displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'B';
+  const quickLinks = [
+    { href: '#orders', icon: Package, label: 'Мои заказы', value: `${orders.length} ${pluralize(orders.length, 'заказ', 'заказа', 'заказов')}` },
+    { href: '#favorites', icon: Heart, label: 'Избранное', value: `${favorites.length} ${pluralize(favorites.length, 'товар', 'товара', 'товаров')}` },
+    { href: '#profile', icon: UserRound, label: 'Мои данные', value: profile.full_name || profile.phone ? 'Заполнено' : 'Не заполнено' },
+    { href: '#addresses', icon: MapPin, label: 'Адреса', value: `${addresses.length} ${pluralize(addresses.length, 'адрес', 'адреса', 'адресов')}` }
+  ];
+  const menuItems = [
+    { href: '#dashboard', icon: Home, label: 'Главная' },
+    { href: '#orders', icon: Package, label: 'Мои заказы' },
+    { href: '#favorites', icon: Heart, label: 'Избранное' },
+    { href: '#profile', icon: UserRound, label: 'Личные данные' },
+    { href: '#addresses', icon: MapPin, label: 'Адреса доставки' },
+    { href: '#notifications', icon: Bell, label: 'Уведомления' }
+  ];
+
   return (
-    <section className="account-stable-shell">
-      <div className="account-stable-hero">
-        <div>
-          <p className="section-kicker">Личный кабинет</p>
-          <h1>Здравствуйте, {displayName}</h1>
-          <span>{user?.email}</span>
-          {dataMessage && <small>{dataMessage}</small>}
-        </div>
-        <div className="account-stable-hero-actions">
-          {isAdmin && <Link href="/admin">Админка</Link>}
-          <button type="button" onClick={signOut} disabled={signingOut}>{signingOut ? 'Выходим...' : 'Выйти'}</button>
-        </div>
-      </div>
-
-      <div className="account-stable-stats">
-        <StatCard icon="cart" label="Корзина" value={String(cartCount)} hint={`${money(cartTotal)} BYN`} />
-        <StatCard icon="package" label="Заказы" value={String(orders.length)} hint={orders[0] ? dateLabel(orders[0].created_at) : 'пока нет'} />
-        <StatCard icon="clock" label="Консультации" value={String(requests.length)} hint={requests[0] ? dateLabel(requests[0].created_at) : 'пока нет'} />
-        <StatCard icon="shield" label="Избранное" value={String(favorites.length)} hint={loadingData ? 'обновляем...' : 'сохранено'} />
-      </div>
-
-      <div className="account-stable-layout">
-        <div className="account-stable-main">
-          <section className="account-stable-card">
-            <div className="account-stable-card-head">
-              <div>
-                <p className="section-kicker">Быстрые действия</p>
-                <h2>Что можно сделать</h2>
-              </div>
-            </div>
-            <div className="account-stable-actions">
-              <ActionCard icon="cart" title="Открыть корзину" text={cartCount ? `В корзине ${cartCount} товар(ов).` : 'Корзина пока пустая.'} href="/cart" label={cartCount ? 'Оформить' : 'Перейти'} />
-              <ActionCard icon="search" title="Каталог часов" text="Вернитесь к настенным часам и выберите модель." href="/catalog" label="Смотреть" />
-              <ActionCard icon="shield" title="Контакты" text="Уточните размер, цвет, наличие или доставку." href="/contacts" label="Связаться" />
-            </div>
-          </section>
-
-          <section className="account-stable-card">
-            <div className="account-stable-card-head">
-              <div>
-                <p className="section-kicker">Заказы и обращения</p>
-                <h2>Последняя активность</h2>
-              </div>
-              <Link href="/cart">Новый заказ</Link>
-            </div>
-            <div className="account-stable-feed">
-              <OrdersPreview orders={orders} />
-              <RequestsPreview requests={requests} />
-            </div>
-          </section>
-        </div>
-
-        <aside className="account-stable-side">
-          <section className="account-stable-card">
-            <div className="account-stable-card-head">
-              <div>
-                <p className="section-kicker">Профиль</p>
-                <h2>Контакты</h2>
-              </div>
-            </div>
-            <form className="account-stable-profile-form" onSubmit={saveProfile}>
-              <label>
-                <span>Имя</span>
-                <input value={profileDraft.fullName} onChange={(event) => setProfileDraft((current) => ({ ...current, fullName: event.target.value }))} placeholder="Как к вам обращаться" />
-              </label>
-              <label>
-                <span>Телефон</span>
-                <input value={profileDraft.phone} onChange={(event) => setProfileDraft((current) => ({ ...current, phone: event.target.value }))} placeholder="+375 29 000-00-00" />
-              </label>
-              <label>
-                <span>Email</span>
-                <input value={user?.email || ''} disabled />
-              </label>
-              {profileMessage && <p>{profileMessage}</p>}
-              <button disabled={savingProfile}>{savingProfile ? 'Сохраняем...' : 'Сохранить'}</button>
-            </form>
-          </section>
-
-          <section className="account-stable-card">
-            <div className="account-stable-card-head">
-              <div>
-                <p className="section-kicker">Избранное</p>
-                <h2>Сохраненные товары</h2>
-              </div>
-              <Link href="/catalog">Добавить</Link>
-            </div>
-            <FavoritesPreview favorites={favorites} onAdd={addFavoriteToCart} onRemove={removeFavorite} />
-          </section>
+    <section className="account-dashboard" id="dashboard">
+      <div className="account-dashboard-layout">
+        <aside className="account-dashboard-sidebar">
+          <div className="account-dashboard-person">
+            <div className="account-dashboard-avatar" aria-hidden="true">{initials}</div>
+            <div><b>{displayName}</b><span>{user?.email}</span></div>
+            <button type="button" aria-label="Редактировать профиль" onClick={() => document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' })}><Edit3 /></button>
+          </div>
+          <nav className="account-dashboard-menu" aria-label="Разделы личного кабинета">
+            {menuItems.map(({ href, icon: MenuIcon, label }, index) => <a className={index === 0 ? 'is-active' : ''} href={href} key={href}><MenuIcon /><span>{label}</span></a>)}
+          </nav>
+          <div className="account-dashboard-sidebar-bottom">
+            {isAdmin && <Link href="/admin">Открыть админку <ArrowRight /></Link>}
+            <button type="button" onClick={signOut} disabled={signingOut}><LogOut />{signingOut ? 'Выходим...' : 'Выйти'}</button>
+          </div>
         </aside>
+
+        <div className="account-dashboard-content">
+          <section className="account-dashboard-welcome">
+            <div className="account-dashboard-welcome-copy">
+              <nav className="account-dashboard-breadcrumbs" aria-label="Хлебные крошки"><Link href="/">Главная</Link><ChevronRight /><span>Личный кабинет</span></nav>
+              <h1>Добро пожаловать, {displayName}!</h1>
+              <p>Здесь вы можете управлять своими заказами, сохранять понравившиеся товары и редактировать личные данные.</p>
+              {dataMessage && <small>{dataMessage}</small>}
+            </div>
+            <div className="account-dashboard-welcome-image" aria-hidden="true"><span>Время<br />вдохновляет</span></div>
+          </section>
+
+          <nav className="account-dashboard-quick-links" aria-label="Быстрые разделы">
+            {quickLinks.map(({ href, icon: QuickIcon, label, value }) => <a href={href} key={href}><QuickIcon /><span><b>{label}</b><small>{loadingData && label !== 'Мои данные' ? 'Обновляем...' : value}</small></span><ArrowRight /></a>)}
+          </nav>
+
+          <div className="account-dashboard-main-grid">
+            <section className="account-dashboard-card account-dashboard-orders" id="orders">
+              <div className="account-dashboard-card-head"><h2>Последние заказы</h2><Link href="/account/orders">Все заказы <ArrowRight /></Link></div>
+              {orders.length ? <div className="account-dashboard-order-list">{orders.slice(0, 3).map((order) => {
+                const item = order.items?.[0];
+                return <Link className="account-dashboard-order" href={`/account/orders/${order.id}`} key={order.id}>
+                  <span className="account-dashboard-order-image">{item?.image ? <img src={item.image} alt="" /> : <Package />}</span>
+                  <span className="account-dashboard-order-info"><b>Заказ №{String(order.id).replace(/^#/, '')}</b><small>{dateLabel(order.created_at)}</small></span>
+                  <em className={`account-status ${statusClass(order.status)}`}>{friendlyStatus(order.status)}</em>
+                  <strong>{money(Number(order.total || 0))} BYN</strong><ArrowRight />
+                </Link>;
+              })}</div> : <div className="account-dashboard-empty"><Package /><p>Заказов пока нет. Перейдите в каталог, чтобы выбрать часы.</p><Link href="/catalog">Перейти в каталог</Link></div>}
+            </section>
+
+            <section className="account-dashboard-card account-dashboard-profile" id="profile">
+              <div className="account-dashboard-card-head"><h2>Мои данные</h2><button type="button" onClick={() => setEditingProfile((current) => !current)}><Edit3 />{editingProfile ? 'Закрыть' : 'Редактировать'}</button></div>
+              {!editingProfile ? <dl className="account-dashboard-data"><div><dt>Имя</dt><dd>{displayName}</dd></div><div><dt>Email</dt><dd>{user?.email || 'Не указан'}</dd></div><div><dt>Телефон</dt><dd>{profile.phone || 'Не указан'}</dd></div></dl> : <form className="account-dashboard-profile-form" onSubmit={saveProfile}><label><span>Имя</span><input value={profileDraft.fullName} onChange={(event) => setProfileDraft((current) => ({ ...current, fullName: event.target.value }))} placeholder="Как к вам обращаться" /></label><label><span>Телефон</span><input value={profileDraft.phone} onChange={(event) => setProfileDraft((current) => ({ ...current, phone: event.target.value }))} placeholder="+375 29 000-00-00" /></label><label><span>Email</span><input value={user?.email || ''} disabled /></label>{profileMessage && <p>{profileMessage}</p>}<button disabled={savingProfile}>{savingProfile ? 'Сохраняем...' : 'Сохранить изменения'}</button></form>}
+              <div className="account-dashboard-notifications" id="notifications"><Bell /><div><b>Уведомления</b><span>Получать обновления о статусе заказов</span></div><button type="button" className={notificationsEnabled ? 'is-on' : ''} aria-pressed={notificationsEnabled} aria-label="Переключить уведомления" onClick={toggleNotifications}><i /></button></div>
+            </section>
+          </div>
+
+          <div className="account-dashboard-lower-grid">
+            <section className="account-dashboard-card account-dashboard-favorites" id="favorites">
+              <div className="account-dashboard-card-head"><h2>Избранные товары</h2><Link href="/catalog">Все избранные <ArrowRight /></Link></div>
+              {favorites.length ? <div className="account-dashboard-favorite-grid">{favorites.slice(0, 4).map((item) => <article key={item.slug}><Link href={`/product/${item.slug}`} className="account-dashboard-favorite-image">{item.image ? <img src={item.image} alt="" /> : <Heart />}</Link><button type="button" aria-label="Убрать из избранного" onClick={() => removeFavorite(item.slug)}><Heart fill="currentColor" /></button><div><Link href={`/product/${item.slug}`}>{item.title}</Link><b>{money(item.price)} BYN</b><button type="button" onClick={() => addFavoriteToCart(item)}>В корзину</button></div></article>)}</div> : <div className="account-dashboard-empty account-dashboard-empty--compact"><Heart /><p>Сохраните понравившиеся товары, чтобы вернуться к ним позже.</p><Link href="/catalog">Открыть каталог</Link></div>}
+            </section>
+
+            <aside className="account-dashboard-card account-dashboard-addresses" id="addresses">
+              <div className="account-dashboard-card-head"><h2>Адреса доставки</h2><a href="#addresses" onClick={() => setAddingAddress(true)}>Все адреса <ArrowRight /></a></div>
+              {addresses.length ? <div className="account-dashboard-address"><MapPin /><p>{addresses[0]}</p><span>Основной</span></div> : <div className="account-dashboard-address account-dashboard-address--empty"><MapPin /><p>Адреса доставки пока нет</p></div>}
+              {addingAddress ? <form className="account-dashboard-address-form" onSubmit={addAddress}><input autoFocus value={addressDraft} onChange={(event) => setAddressDraft(event.target.value)} placeholder="Город, улица, дом, квартира" /><button>Сохранить адрес</button></form> : <button type="button" className="account-dashboard-add-address" onClick={() => setAddingAddress(true)}><Plus />Добавить адрес</button>}
+            </aside>
+          </div>
+        </div>
       </div>
+
+      <section className="account-dashboard-help">
+        <div><p>Нужна помощь?</p><h2>Мы всегда на связи</h2><span>Напишите нам или позвоните — поможем с выбором и подскажем по заказу.</span><Link href="/contacts">Связаться с нами <ArrowRight /></Link></div>
+        <ul><li><Package />+375 29 802 70 61<small>ПН–ПТ: 9:00–18:00</small></li><li><Heart />@bullmet_by<small>Быстрые ответы в Telegram</small></li><li><Bell />info@bullmet.by<small>Письменно, с деталями</small></li></ul>
+      </section>
     </section>
   );
 }
