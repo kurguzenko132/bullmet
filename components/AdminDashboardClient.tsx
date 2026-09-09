@@ -116,26 +116,28 @@ export function AdminDashboardClient({ products, orders, requests, reviews, acti
         </div>
       </article>
 
-      <section className="admin-kpi-grid-v2">
-        <Kpi title="Заказы" value={String(orders.length)} hint={`${activeOrders.length} активных`} color="#f97316" series={monthSeries.map((item) => item.value)} />
-        <Kpi title="Выручка" value={`${money(revenue)} BYN`} hint="без отменённых" color="#22a06b" series={monthSeries.map((item) => item.revenue)} />
-        <Kpi title="Покупатели" value={String(buyers)} hint="уникальные контакты" color="#3578e5" series={monthSeries.map((item) => item.value)} />
-        <Kpi title="Товары" value={String(products.length)} hint={`${products.filter((item) => item.isPopular).length} популярных`} color="#8464d8" series={products.map((_, index) => index + 1)} />
-      </section>
+      <div className="admin-dashboard-side-v2">
+        <section className="admin-kpi-grid-v2">
+          <Kpi title="Заказы" value={String(orders.length)} hint={`${activeOrders.length} активных`} color="#f97316" series={monthSeries.map((item) => item.value)} />
+          <Kpi title="Выручка" value={`${money(revenue)} BYN`} hint="без отменённых" color="#22a06b" series={monthSeries.map((item) => item.revenue)} />
+          <Kpi title="Покупатели" value={String(buyers)} hint="уникальные контакты" color="#3578e5" series={monthSeries.map((item) => item.value)} />
+          <Kpi title="Товары" value={String(products.length)} hint={`${products.filter((item) => item.isPopular).length} популярных`} color="#8464d8" series={products.map((_, index) => index + 1)} />
+        </section>
+
+        <section className="admin-dashboard-grid-v2 admin-dashboard-grid-v2--analytics">
+          <article className="admin-card-v2 admin-orders-chart-v2">
+            <div className="admin-card-head-v2"><div><h2>Динамика заказов</h2><span>Фактические заказы за выбранный период</span></div><select value={range} onChange={(event) => setRange(Number(event.target.value) as (typeof ranges)[number])}>{ranges.map((days) => <option key={days} value={days}>За последние {days} дней</option>)}</select></div>
+            <div className="admin-large-chart-v2"><LineChart values={series.map((item) => item.value)} label="График динамики заказов" /><div>{series.filter((_, index) => index % Math.max(1, Math.floor(series.length / 5)) === 0).map((item) => <span key={item.key}>{item.label}</span>)}</div></div>
+          </article>
+          <article className="admin-card-v2 admin-statuses-v2">
+            <div className="admin-card-head-v2"><div><h2>Статусы заказов</h2><span>Распределение по текущим заказам</span></div></div>
+            {statusRows.length ? <div className="admin-status-list-v2">{statusRows.map((row) => <div key={row.status}><span className={statusClass(row.status)} /><b>{row.status}</b><em>{row.value}</em><small>{Math.round((row.value / totalStatuses) * 100)}%</small></div>)}</div> : <Empty text="Заказов пока нет" />}
+          </article>
+        </section>
+      </div>
     </section>
 
     {heroMessage && <p className="admin-dashboard-message-v2">{heroMessage}</p>}
-
-    <section className="admin-dashboard-grid-v2 admin-dashboard-grid-v2--analytics">
-      <article className="admin-card-v2 admin-orders-chart-v2">
-        <div className="admin-card-head-v2"><div><h2>Динамика заказов</h2><span>Фактические заказы за выбранный период</span></div><select value={range} onChange={(event) => setRange(Number(event.target.value) as (typeof ranges)[number])}>{ranges.map((days) => <option key={days} value={days}>За последние {days} дней</option>)}</select></div>
-        <div className="admin-large-chart-v2"><LineChart values={series.map((item) => item.value)} label="График динамики заказов" /><div>{series.filter((_, index) => index % Math.max(1, Math.floor(series.length / 5)) === 0).map((item) => <span key={item.key}>{item.label}</span>)}</div></div>
-      </article>
-      <article className="admin-card-v2 admin-statuses-v2">
-        <div className="admin-card-head-v2"><div><h2>Статусы заказов</h2><span>Распределение по текущим заказам</span></div></div>
-        {statusRows.length ? <div className="admin-status-list-v2">{statusRows.map((row) => <div key={row.status}><span className={statusClass(row.status)} /><b>{row.status}</b><em>{row.value}</em><small>{Math.round((row.value / totalStatuses) * 100)}%</small></div>)}</div> : <Empty text="Заказов пока нет" />}
-      </article>
-    </section>
 
     <section className="admin-dashboard-grid-v2 admin-dashboard-grid-v2--work">
       <article className="admin-card-v2"><div className="admin-card-head-v2"><div><h2>Быстрые действия</h2><span>Рабочие разделы админки</span></div></div><div className="admin-quick-actions-v2">{quickActions.map((item) => { const Icon = item.icon; return <Link key={item.title} href={item.href}><Icon size={19} /><span>{item.title}</span><ArrowRight size={15} /></Link>; })}</div></article>
