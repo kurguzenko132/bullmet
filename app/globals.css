@@ -26370,6 +26370,13 @@ body:not(.admin-body) .auth-page::before {
   opacity: .95;
 }
 body:not(.admin-body):has(.auth-page) .header-actions-exact .login-btn { text-transform: none; }
+@media (min-width: 1024px) {
+  body:not(.admin-body) .auth-page {
+    height: calc(100vh - 88px);
+    min-height: 760px;
+    box-sizing: border-box;
+  }
+}
 @media (max-width: 1023px) {
   body:not(.admin-body) .auth-page::before { background-position: 70% center; opacity: .4; }
 }
