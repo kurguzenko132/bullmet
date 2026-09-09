@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Factory, Heart, MessageCircle, Minus, Plus, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
+import { Icon } from './Icon';
 import type { CatalogProduct } from '@/lib/products';
 
 type CartItem = {
@@ -164,5 +165,28 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
 
 function CartRecommendations({ products, onAdd }: { products: CatalogProduct[]; onAdd: (product: CatalogProduct) => void }) {
   if (!products.length) return null;
-  return <section className="cart-recommendations-v3"><div className="cart-section-title-v3"><div><h2>Возможно, вам понравится</h2></div><Link href="/catalog">Перейти в каталог <span>→</span></Link></div><div className="cart-recommendation-grid-v3">{products.map((product) => <article key={product.slug}><button className="cart-heart-v3" type="button" aria-label="Добавить в избранное"><Heart /></button><Link href={`/product/${product.slug}`}><img src={product.image} alt={product.title} /><b>{product.title}</b></Link><div><strong>{money(product.price)} BYN</strong><button type="button" onClick={() => onAdd(product)}>В корзину</button></div></article>)}</div></section>;
+  return <section className="cart-recommendations-v3">
+    <div className="cart-section-title-v3">
+      <div><h2>Возможно, вам понравится</h2></div>
+      <Link href="/catalog">Перейти в каталог <span>→</span></Link>
+    </div>
+    <div className="catalog-grid-market cart-recommendation-grid-v3">
+      {products.map((product) => <article className="catalog-card-market" key={product.slug}>
+        <button className="cart-heart-v3" type="button" aria-label={`Добавить ${product.title} в избранное`}><Heart /></button>
+        <Link href={`/product/${product.slug}`} className="catalog-card-image-market" aria-label={`Открыть товар: ${product.title}`}>
+          <img src={product.image} alt={product.title} />
+        </Link>
+        <div className="catalog-card-body-market">
+          <div className="catalog-card-rating-market"><small>Нет отзывов</small></div>
+          <h3>{product.title}</h3>
+          <p>{product.material || product.short}</p>
+          <p className="catalog-card-color-market">Цвет: <span>{product.colorName || 'не указан'}</span></p>
+          <div className="catalog-card-bottom-market">
+            <b>от {money(product.price)} BYN</b>
+            <button type="button" aria-label={`Добавить в корзину: ${product.title}`} onClick={() => onAdd(product)}><Icon name="cart" /></button>
+          </div>
+        </div>
+      </article>)}
+    </div>
+  </section>;
 }
