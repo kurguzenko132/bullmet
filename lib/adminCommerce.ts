@@ -74,7 +74,7 @@ export function formatDate(value?: string) {
 
 export function statusClass(status?: string) {
   const value = String(status || '').toLowerCase();
-  if (value.includes('выполн') || value.includes('закры') || value.includes('рассчит')) return 'is-done';
+  if (value.includes('выполн') || value.includes('закры') || value.includes('рассчит') || value.includes('оплач') || value.includes('передан') || value.includes('достав')) return 'is-done';
   if (value.includes('работ') || value.includes('ожида')) return 'is-progress';
   if (value.includes('отмен')) return 'is-cancel';
   return 'is-new';

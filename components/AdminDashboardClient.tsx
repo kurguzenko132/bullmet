@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import {
-  ArrowRight, Bell, Boxes, CircleDollarSign, FilePlus2, ImagePlus, PackagePlus,
-  Pencil, ShoppingBag, Star, UserRound, UsersRound, Wrench
+  ArrowRight, Bell, Boxes, ClipboardList, FilePlus2, ImagePlus, PackagePlus,
+  Pencil, Wrench
 } from 'lucide-react';
 import type { AdminOrder, AdminRequest } from '@/lib/adminCommerce';
-import { formatDate, money, statusClass } from '@/lib/adminCommerce';
-import type { AdminActivityItem } from '@/lib/adminPeople';
+import { formatDate, money, orderStatuses, statusClass } from '@/lib/adminCommerce';
+import { actionLabel, type AdminActivityItem } from '@/lib/adminPeople';
 import type { HomeControlSettings } from '@/lib/homepageControl';
 import type { CatalogProduct } from '@/lib/products';
 import { AdminImagePicker } from './AdminImagePicker';
@@ -48,6 +48,21 @@ function makeSeries(orders: AdminOrder[], days: number) {
   return points;
 }
 
+function makeBuyerSeries(orders: AdminOrder[], days: number) {
+  const points = makeSeries([], days).map((point) => ({ ...point, buyers: new Set<string>() }));
+  const index = new Map(points.map((point, position) => [point.key, position]));
+  orders.forEach((order) => {
+    const position = index.get(dateKey(order.created_at));
+    const contact = order.customer?.email || order.customer?.phone || order.customer?.name;
+    if (position !== undefined && contact) points[position].buyers.add(contact);
+  });
+  return points.map((point) => point.buyers.size);
+}
+
+function isCancelled(status?: string) {
+  return String(status || '').toLowerCase().includes('отмен');
+}
+
 function LineChart({ values, color = '#f97316', label }: { values: number[]; color?: string; label: string }) {
   const max = Math.max(...values, 1);
   const points = values.map((value, index) => `${(index / Math.max(values.length - 1, 1)) * 100},${94 - (value / max) * 78}`).join(' ');
@@ -69,10 +84,15 @@ export function AdminDashboardClient({ products, orders, requests, reviews, acti
   const [heroMessage, setHeroMessage] = useState('');
   const series = useMemo(() => makeSeries(orders, range), [orders, range]);
   const monthSeries = useMemo(() => makeSeries(orders, 30), [orders]);
+  const buyerSeries = useMemo(() => makeBuyerSeries(orders, 30), [orders]);
   const activeOrders = orders.filter((item) => !['Выполнен', 'Отменён'].includes(String(item.status || '')));
-  const revenue = orders.filter((item) => item.status !== 'Отменён').reduce((sum, item) => sum + Number(item.total || 0), 0);
+  const newOrders = orders.filter((item) => !item.status || item.status === 'Новый');
+  const newRequests = requests.filter((item) => !item.status || item.status === 'Новая');
+  const pendingReviews = reviews.filter((item) => !item.status || item.status === 'pending' || item.status === 'Новый');
+  const revenue = orders.filter((item) => !isCancelled(item.status)).reduce((sum, item) => sum + Number(item.total || 0), 0);
   const buyers = new Set(orders.map((item) => item.customer?.email || item.customer?.phone || item.customer?.name).filter(Boolean)).size;
-  const statuses = ['Новый', 'В работе', 'Ожидает оплаты', 'Оплачен', 'Передан в доставку', 'Выполнен', 'Отменён'];
+  const publishedProducts = products.filter((item) => item.status !== 'hidden' && item.status !== 'draft').length;
+  const statuses = orderStatuses;
   const statusRows = statuses.map((status) => ({ status, value: orders.filter((order) => (order.status || 'Новый') === status).length })).filter((row) => row.value);
   const totalStatuses = Math.max(orders.length, 1);
   const popular = [...products].filter((item) => item.isPopular).slice(0, 5);
@@ -118,10 +138,10 @@ export function AdminDashboardClient({ products, orders, requests, reviews, acti
 
       <div className="admin-dashboard-side-v2">
         <section className="admin-kpi-grid-v2">
-          <Kpi title="Заказы" value={String(orders.length)} hint={`${activeOrders.length} активных`} color="#f97316" series={monthSeries.map((item) => item.value)} />
-          <Kpi title="Выручка" value={`${money(revenue)} BYN`} hint="без отменённых" color="#22a06b" series={monthSeries.map((item) => item.revenue)} />
-          <Kpi title="Покупатели" value={String(buyers)} hint="уникальные контакты" color="#3578e5" series={monthSeries.map((item) => item.value)} />
-          <Kpi title="Товары" value={String(products.length)} hint={`${products.filter((item) => item.isPopular).length} популярных`} color="#8464d8" series={products.map((_, index) => index + 1)} />
+          <Kpi title="Заказы" value={String(orders.length)} hint={`${activeOrders.length} активных`} color="#f97316" series={monthSeries.map((item) => item.value)} href="/admin/orders" />
+          <Kpi title="Выручка" value={`${money(revenue)} BYN`} hint="без отменённых" color="#22a06b" series={monthSeries.map((item) => item.revenue)} href="/admin/reports" />
+          <Kpi title="Покупатели" value={String(buyers)} hint="уникальные контакты" color="#3578e5" series={buyerSeries} href="/admin/customers" />
+          <Kpi title="Товары" value={String(products.length)} hint={`${publishedProducts} опубликовано`} color="#8464d8" href="/admin/products" />
         </section>
 
         <section className="admin-dashboard-grid-v2 admin-dashboard-grid-v2--analytics">
@@ -141,7 +161,7 @@ export function AdminDashboardClient({ products, orders, requests, reviews, acti
 
     <section className="admin-dashboard-grid-v2 admin-dashboard-grid-v2--work">
       <article className="admin-card-v2"><div className="admin-card-head-v2"><div><h2>Быстрые действия</h2><span>Рабочие разделы админки</span></div></div><div className="admin-quick-actions-v2">{quickActions.map((item) => { const Icon = item.icon; return <Link key={item.title} href={item.href}><Icon size={19} /><span>{item.title}</span><ArrowRight size={15} /></Link>; })}</div></article>
-      <article className="admin-card-v2"><div className="admin-card-head-v2"><div><h2>Активность на сайте</h2><span>Последние события</span></div><Link href="/admin/activity">Вся активность →</Link></div><div className="admin-activity-list-v2">{activity.slice(0, 5).map((item) => <div key={item.id}><span><Bell size={15} /></span><p><b>{item.action || 'Изменение в админке'}</b><small>{formatDate(item.created_at)}</small></p></div>)}{!activity.length && <Empty text="Новых событий пока нет" />}</div></article>
+      <article className="admin-card-v2"><div className="admin-card-head-v2"><div><h2>Требует внимания</h2><span>Новые обращения и модерация</span></div></div><div className="admin-attention-list-v2"><Link href="/admin/orders"><ClipboardList size={17} /><span><b>Новые заказы</b><small>Проверьте и назначьте статус</small></span><em>{newOrders.length}</em></Link><Link href="/admin/requests"><Bell size={17} /><span><b>Новые заявки</b><small>Ответьте клиентам</small></span><em>{newRequests.length}</em></Link><Link href="/admin/reviews"><Pencil size={17} /><span><b>Отзывы на модерации</b><small>Опубликуйте или скройте</small></span><em>{pendingReviews.length}</em></Link></div></article>
     </section>
 
     <section className="admin-dashboard-grid-v2 admin-dashboard-grid-v2--content">
@@ -156,14 +176,18 @@ export function AdminDashboardClient({ products, orders, requests, reviews, acti
       </article>
     </section>
 
-    <section className="admin-dashboard-grid-v2 admin-dashboard-grid-v2--footer"><article className="admin-card-v2 admin-site-health-v2"><div><Boxes size={22} /><p><b>Состояние сайта</b><span>{requests.filter((item) => !item.status || item.status === 'Новая').length} новых заявок · {reviews.filter((item) => !item.status || item.status === 'Новый').length} новых отзывов</span></p></div><div><Link href="/admin/requests">Заявки</Link><Link href="/admin/reviews">Отзывы</Link><Link href="/admin/settings">Настройки</Link></div></article></section>
+    <section className="admin-dashboard-grid-v2 admin-dashboard-grid-v2--activity">
+      <article className="admin-card-v2"><div className="admin-card-head-v2"><div><h2>Активность на сайте</h2><span>Последние действия в панели</span></div><Link href="/admin/activity">Вся активность →</Link></div><div className="admin-activity-list-v2">{activity.slice(0, 5).map((item) => <div key={item.id}><span><Bell size={15} /></span><p><b>{actionLabel(item.action)}</b><small>{formatDate(item.created_at)}</small></p></div>)}{!activity.length && <Empty text="Новых событий пока нет" />}</div></article>
+    </section>
+
+    <section className="admin-dashboard-grid-v2 admin-dashboard-grid-v2--footer"><article className="admin-card-v2 admin-site-health-v2"><div><Boxes size={22} /><p><b>Состояние сайта</b><span>{newRequests.length} новых заявок · {pendingReviews.length} отзывов на модерации</span></p></div><div><Link href="/admin/requests">Заявки</Link><Link href="/admin/reviews">Отзывы</Link><Link href="/admin/settings">Настройки</Link></div></article></section>
 
     {editingHero && <div className="admin-hero-modal-v2" role="dialog" aria-modal="true" aria-label="Редактирование главного слайда"><button className="admin-hero-modal-backdrop-v2" aria-label="Закрыть" onClick={() => setEditingHero(false)} /><section><div className="admin-card-head-v2"><div><h2>Главный слайд</h2><span>Изменения будут опубликованы на главной сразу после сохранения.</span></div><button type="button" onClick={() => setEditingHero(false)}>×</button></div><div className="admin-hero-form-v2"><label>Метка<input value={homepage.hero.kicker} onChange={(event) => setHomepage((current) => ({ ...current, hero: { ...current.hero, kicker: event.target.value } }))} /></label><label>Заголовок<textarea rows={3} value={homepage.hero.title} onChange={(event) => setHomepage((current) => ({ ...current, hero: { ...current.hero, title: event.target.value } }))} /></label><label>Описание<textarea rows={4} value={homepage.hero.text} onChange={(event) => setHomepage((current) => ({ ...current, hero: { ...current.hero, text: event.target.value } }))} /></label><AdminImagePicker label="Изображение" value={homepage.hero.image} onChange={(value) => setHomepage((current) => ({ ...current, hero: { ...current.hero, image: value } }))} altValue={homepage.hero.imageAlt} onAltChange={(value) => setHomepage((current) => ({ ...current, hero: { ...current.hero, imageAlt: value } }))} /><label>Текст кнопки<input value={homepage.hero.primaryLabel} onChange={(event) => setHomepage((current) => ({ ...current, hero: { ...current.hero, primaryLabel: event.target.value } }))} /></label><label>Ссылка кнопки<input value={homepage.hero.primaryHref} onChange={(event) => setHomepage((current) => ({ ...current, hero: { ...current.hero, primaryHref: event.target.value } }))} /></label></div><div className="admin-hero-form-actions-v2"><button type="button" onClick={() => setEditingHero(false)}>Отмена</button><button type="button" onClick={saveHero} disabled={savingHero}>{savingHero ? 'Сохраняем…' : 'Сохранить'}</button></div></section></div>}
   </div>;
 }
 
-function Kpi({ title, value, hint, color, series }: { title: string; value: string; hint: string; color: string; series: number[] }) {
-  return <article className="admin-kpi-card-v2"><p>{title}</p><b>{value}</b><small>{hint}</small><Sparkline values={series} color={color} /></article>;
+function Kpi({ title, value, hint, color, series, href }: { title: string; value: string; hint: string; color: string; series?: number[]; href: string }) {
+  return <Link href={href} className="admin-kpi-card-v2"><p>{title}</p><b>{value}</b><small>{hint}</small>{series ? <Sparkline values={series} color={color} /> : <i className="admin-kpi-accent-v2" style={{ backgroundColor: color }} />}</Link>;
 }
 
 function SalesBars({ values }: { values: Array<{ label: string; value: number }> }) {
