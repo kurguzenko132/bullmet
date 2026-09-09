@@ -26,6 +26,24 @@ export type SiteNavigationItem = {
   order: number;
 };
 
+export type CommerceOption = {
+  id: string;
+  title: string;
+  description: string;
+  enabled: boolean;
+  note: string;
+  order: number;
+};
+
+export type CouponRule = {
+  id: string;
+  code: string;
+  type: 'percent' | 'fixed';
+  value: number;
+  enabled: boolean;
+  note: string;
+};
+
 export type SiteControlSettings = {
   general: {
     siteName: string;
@@ -49,6 +67,11 @@ export type SiteControlSettings = {
     defaultDescription: string;
     ogImage: string;
     robotsIndex: boolean;
+  };
+  commerce: {
+    deliveryMethods: CommerceOption[];
+    paymentMethods: CommerceOption[];
+    couponRules: CouponRule[];
   };
 };
 
@@ -96,6 +119,19 @@ export const defaultSiteControl: SiteControlSettings = {
     defaultDescription: 'Настенные часы из металла с элементами дерева собственного производства Bullmet. Производство металлоизделий в Беларуси.',
     ogImage: '/og-image.jpg',
     robotsIndex: true
+  },
+  commerce: {
+    deliveryMethods: [
+      { id: 'belarus_delivery', title: 'Доставка по Беларуси', description: 'Стоимость и сроки менеджер согласует после оформления.', enabled: true, note: 'Основной способ получения', order: 1 },
+      { id: 'pickup', title: 'Самовывоз', description: 'Заберите заказ после подтверждения готовности.', enabled: true, note: 'Адрес берётся из настроек контактов', order: 2 },
+      { id: 'call', title: 'Уточнить при звонке', description: 'Менеджер поможет выбрать удобный способ получения.', enabled: true, note: 'Резервный вариант', order: 3 }
+    ],
+    paymentMethods: [
+      { id: 'manager', title: 'Согласовать с менеджером', description: 'Менеджер подтвердит доступный способ оплаты после заказа.', enabled: true, note: 'Рабочий сценарий до подключения эквайринга', order: 1 },
+      { id: 'cash', title: 'Наличными при получении', description: 'Оплата при самовывозе или получении заказа.', enabled: false, note: 'Включить, когда способ доступен', order: 2 },
+      { id: 'online', title: 'Онлайн-оплата', description: 'Оплата банковской картой на сайте.', enabled: false, note: 'Требует подключенного платёжного провайдера', order: 3 }
+    ],
+    couponRules: []
   }
 };
 
@@ -108,6 +144,41 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
   const general = { ...defaultSiteControl.general, ...asObject(incoming.general) };
   const contacts = { ...defaultSiteControl.contacts, ...asObject(incoming.contacts) };
   const seo = { ...defaultSiteControl.seo, ...asObject(incoming.seo) };
+  const commerceIncoming = asObject(incoming.commerce);
+  const mergeCommerceOptions = (source: CommerceOption[], value: unknown) => {
+    if (!Array.isArray(value)) return source;
+    return value
+      .filter((candidate: any) => candidate?.id)
+      .map((candidate: any, index) => {
+        const base = source.find((item) => item.id === candidate.id);
+        return {
+          ...(base || { id: String(candidate.id), title: 'Новый вариант', description: '', enabled: false, note: '', order: 100 + index }),
+          ...asObject(candidate),
+          id: String(candidate.id),
+          title: String(candidate.title || base?.title || 'Новый вариант'),
+          description: String(candidate.description || base?.description || ''),
+          note: String(candidate.note || base?.note || ''),
+          enabled: Boolean(candidate.enabled),
+          order: Number(candidate.order || base?.order || 100 + index)
+        } as CommerceOption;
+      })
+      .sort((a, b) => a.order - b.order);
+  };
+  const couponRules = (Array.isArray(commerceIncoming.couponRules) ? commerceIncoming.couponRules : [])
+    .filter((item: any) => item?.id && item?.code)
+    .map((item: any) => ({
+      id: String(item.id),
+      code: String(item.code).trim().toUpperCase(),
+      type: item.type === 'fixed' ? 'fixed' : 'percent',
+      value: Math.max(0, Number(item.value || 0)),
+      enabled: Boolean(item.enabled),
+      note: String(item.note || '')
+    } as CouponRule));
+  const commerce = {
+    deliveryMethods: mergeCommerceOptions(defaultSiteControl.commerce.deliveryMethods, commerceIncoming.deliveryMethods),
+    paymentMethods: mergeCommerceOptions(defaultSiteControl.commerce.paymentMethods, commerceIncoming.paymentMethods),
+    couponRules
+  };
 
   const incomingDirections = Array.isArray(incoming.directions) ? incoming.directions : [];
   const directions = defaultSiteControl.directions.map((direction) => {
@@ -156,7 +227,7 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
 
   const navigation = [...defaultNavigation, ...customNavigation].sort((a, b) => a.order - b.order);
 
-  return { general, contacts, directions, navigation, seo };
+  return { general, contacts, directions, navigation, seo, commerce };
 }
 
 export async function getSiteControlSettings(): Promise<SiteControlSettings> {

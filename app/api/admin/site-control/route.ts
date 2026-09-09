@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       action: 'site_control_update',
       entity: 'site_settings',
       entity_id: siteControlKey,
-      payload: { sections: ['general', 'contacts', 'directions', 'navigation', 'seo'] }
+      payload: { sections: ['general', 'contacts', 'directions', 'navigation', 'seo', 'commerce'] }
     })
     .then(() => null);
 
