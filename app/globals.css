@@ -26356,3 +26356,17 @@ body:not(.admin-body) .auth-forgot-page { background: #eee8dc !important; }
 body:not(.admin-body) .auth-info { background: transparent !important; border-color: transparent !important; }
 body:not(.admin-body) .auth-card { background: #fbf8f1 !important; border-color: #d4cabb !important; }
 body:not(.admin-body) .auth-input-wrap input { background: #fffdf9 !important; border-color: #d4cabb !important; }
+
+/* Keep the login header focused and keep decoration out of the form column. */
+body:not(.admin-body):has(.auth-page) .header-actions-exact .calc-btn { display: none !important; }
+body:not(.admin-body) .auth-page::before {
+  right: auto;
+  left: 0;
+  width: 58%;
+  height: 34%;
+  background: linear-gradient(90deg, #eee8dc 0%, rgba(238,232,220,.88) 40%, rgba(238,232,220,.1) 100%), url('/assets/result-home.jpg') center bottom / cover no-repeat;
+  opacity: .68;
+}
+@media (max-width: 1023px) {
+  body:not(.admin-body) .auth-page::before { width: 100%; height: 24%; opacity: .24; }
+}
