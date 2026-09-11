@@ -70,6 +70,27 @@ export type HomeGalleryItem = {
   order: number;
 };
 
+export type HomeHeroSlide = {
+  id: string;
+  kicker: string;
+  title: string;
+  text: string;
+  image: string;
+  imageAlt: string;
+  primaryLabel: string;
+  primaryHref: string;
+  visible: boolean;
+  order: number;
+};
+
+export type HomeLayoutSection = {
+  id: 'hero' | 'directions' | 'products' | 'production' | 'steps' | 'gallery' | 'cta';
+  label: string;
+  visible: boolean;
+  order: number;
+  locked?: boolean;
+};
+
 export type HomeControlSettings = {
   hero: {
     enabled: boolean;
@@ -81,6 +102,24 @@ export type HomeControlSettings = {
     primaryLabel: string;
     primaryHref: string;
   };
+  heroSlides: HomeHeroSlide[];
+  seo: {
+    title: string;
+    description: string;
+    ogTitle: string;
+    ogDescription: string;
+    ogImage: string;
+    canonical: string;
+    robotsIndex: boolean;
+  };
+  settings: {
+    heroAutoplay: boolean;
+    heroInterval: number;
+    showDots: boolean;
+    showArrows: boolean;
+    lazyImages: boolean;
+  };
+  layout: HomeLayoutSection[];
   features: HomeFeatureItem[];
   directionsSection: {
     enabled: boolean;
@@ -152,6 +191,45 @@ export const defaultHomepageControl: HomeControlSettings = {
     primaryLabel: 'Перейти в каталог',
     primaryHref: '/catalog'
   },
+  heroSlides: [
+    {
+      id: 'hero-main',
+      kicker: 'Производство металлоизделий Bullmet',
+      title: 'Изделия из металла с элементами дерева',
+      text: 'Изготавливаем: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.',
+      image: '/assets/hero-bullmet.png',
+      imageAlt: 'Станок режет металл',
+      primaryLabel: 'Перейти в каталог',
+      primaryHref: '/catalog',
+      visible: true,
+      order: 1
+    }
+  ],
+  seo: {
+    title: 'Bullmet — изделия из металла и дерева',
+    description: 'Настенные часы и изделия из металла с элементами дерева собственного производства Bullmet.',
+    ogTitle: 'Bullmet — изделия из металла и дерева',
+    ogDescription: 'Собственное производство изделий Bullmet.',
+    ogImage: '/assets/hero-bullmet.png',
+    canonical: 'https://bullmet.by/',
+    robotsIndex: true
+  },
+  settings: {
+    heroAutoplay: false,
+    heroInterval: 5000,
+    showDots: true,
+    showArrows: true,
+    lazyImages: true
+  },
+  layout: [
+    { id: 'hero', label: 'Главный слайд (Hero)', visible: true, order: 1, locked: true },
+    { id: 'directions', label: 'Преимущества и направления', visible: true, order: 2 },
+    { id: 'production', label: 'Собственное производство', visible: true, order: 3 },
+    { id: 'products', label: 'Популярные товары и услуги', visible: true, order: 4 },
+    { id: 'steps', label: 'Как мы работаем', visible: true, order: 5 },
+    { id: 'gallery', label: 'Галерея производства', visible: true, order: 6 },
+    { id: 'cta', label: 'Индивидуальный заказ', visible: true, order: 7 }
+  ],
   features: [
     { id: 'production', icon: 'factory', text: 'Собственное\nпроизводство', visible: true, order: 1 },
     { id: 'clocks', icon: 'custom', text: 'Индивидуальные\nзаказы', visible: true, order: 2 },
@@ -264,8 +342,28 @@ function mergeArray<T extends { id: string; order: number }>(defaults: T[], inco
 export function mergeHomepageControl(value: unknown): HomeControlSettings {
   const incoming = asObject(value);
 
+  const hero = { ...defaultHomepageControl.hero, ...asObject(incoming.hero) };
+  const legacyHeroSlide: HomeHeroSlide = {
+    id: 'hero-main',
+    kicker: hero.kicker,
+    title: hero.title,
+    text: hero.text,
+    image: hero.image,
+    imageAlt: hero.imageAlt,
+    primaryLabel: hero.primaryLabel,
+    primaryHref: hero.primaryHref,
+    visible: hero.enabled,
+    order: 1
+  };
+  const configuredSlides = Array.isArray(incoming.heroSlides) ? incoming.heroSlides : [legacyHeroSlide];
+  const heroSlides = mergeArray(defaultHomepageControl.heroSlides, configuredSlides);
+
   return {
-    hero: { ...defaultHomepageControl.hero, ...asObject(incoming.hero) },
+    hero,
+    heroSlides,
+    seo: { ...defaultHomepageControl.seo, ...asObject(incoming.seo) },
+    settings: { ...defaultHomepageControl.settings, ...asObject(incoming.settings) },
+    layout: mergeArray(defaultHomepageControl.layout, incoming.layout),
     features: mergeArray(defaultHomepageControl.features, incoming.features),
     directionsSection: { ...defaultHomepageControl.directionsSection, ...asObject(incoming.directionsSection) },
     directions: mergeArray(defaultHomepageControl.directions, incoming.directions),

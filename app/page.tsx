@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
+import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
@@ -38,38 +39,61 @@ function cleanPublicText(value: string) {
     .trim();
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  const home = await getHomepageControlSettings();
+  return {
+    title: home.seo.title,
+    description: home.seo.description,
+    alternates: { canonical: home.seo.canonical },
+    robots: { index: home.seo.robotsIndex, follow: home.seo.robotsIndex },
+    openGraph: {
+      title: home.seo.ogTitle || home.seo.title,
+      description: home.seo.ogDescription || home.seo.description,
+      images: home.seo.ogImage ? [{ url: home.seo.ogImage }] : []
+    }
+  };
+}
+
 export default async function HomePage() {
   const [home, allProducts] = await Promise.all([
     getHomepageControlSettings(),
     getCatalogProducts()
   ]);
 
-  const products = allProducts.slice(0, 4);
+  const products = allProducts.slice(0, Math.max(1, home.productsSection.limit || 4));
 
   const featureItems = visibleHomeItems(home.features);
   const categories = visibleHomeItems(home.directions).filter((item) => item.id !== 'bending');
   const productionBenefits = visibleHomeItems(home.productionBenefits);
   const productionGallery = visibleHomeItems(home.gallery);
-  const heroTitle = `BULLMET — ${home.hero.title.replace(/^bullmet\s*[—-]\s*/i, '')}`;
-  const heroDescription = 'Изготавливаем: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.';
+  const selectedHero = visibleHomeItems(home.heroSlides)[0];
+  const activeHero = selectedHero || {
+    ...home.hero,
+    visible: home.heroSlides.length ? false : home.hero.enabled,
+    order: 1,
+    id: 'hero-main'
+  };
+  const sectionVisible = (id: string, enabled: boolean) => (home.layout.find((item) => item.id === id)?.visible ?? true) && enabled;
+  const heroTitle = `BULLMET — ${activeHero.title.replace(/^bullmet\s*[—-]\s*/i, '')}`;
+  const heroDescription = activeHero.text;
 
   return (
     <>
       <Header />
       <main className="exact-home home-final-page">
-        {home.hero.enabled && (
+        {sectionVisible('hero', activeHero.visible) && (
           <section className="hero-exact home-final-hero">
             <picture className="hero-background" aria-hidden="true">
-              <img src="/assets/hero-bullmet.png" alt="" className="hero-photo" />
+              <img src={activeHero.image} alt="" className="hero-photo" loading={home.settings.lazyImages ? 'lazy' : 'eager'} />
             </picture>
             <div className="hero-fade" />
             <div className="home-container hero-inner">
               <div className="hero-copy">
-                <span className="home-hero-kicker">{home.hero.kicker}</span>
+                <span className="home-hero-kicker">{activeHero.kicker}</span>
                 <h1>{heroTitle}</h1>
                 <p>{heroDescription}</p>
                 <div className="hero-actions">
-                  <Link href={home.hero.primaryHref} className="btn-orange">{home.hero.primaryLabel}</Link>
+                  <Link href={activeHero.primaryHref} className="btn-orange">{activeHero.primaryLabel}</Link>
                 </div>
               </div>
               {!!featureItems.length && (
@@ -88,7 +112,7 @@ export default async function HomePage() {
 
         <HomePromoBanners placement="home_top" />
 
-        {home.directionsSection.enabled && !!categories.length && (
+        {sectionVisible('directions', home.directionsSection.enabled) && !!categories.length && (
           <section className="home-container home-categories-final">
             <div className="home-section-title-row">
               <div>
@@ -111,7 +135,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {home.productionSection.enabled && (
+        {sectionVisible('production', home.productionSection.enabled) && (
           <section className="home-container production-section production-section-final" id="production">
             <div className="production-text">
               <p className="eyebrow">{home.productionSection.eyebrow}</p>
@@ -128,7 +152,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {home.productsSection.enabled && (
+        {sectionVisible('products', home.productsSection.enabled) && (
           <section className="home-container home-shop-final">
             <div className="products-services products-services-final">
               <div className="popular-block">
@@ -152,7 +176,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {home.stepsSection.enabled && (
+        {sectionVisible('steps', home.stepsSection.enabled) && (
           <section className="home-container work-process">
             <h2 className="work-process__title">Как мы работаем</h2>
             <div className="work-process__panel">
@@ -177,7 +201,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {home.gallerySection.enabled && !!productionGallery.length && (
+        {sectionVisible('gallery', home.gallerySection.enabled) && !!productionGallery.length && (
           <section className="home-container production-simple production-simple-final">
             <div className="production-simple-head">
               <h2>Производство Bullmet</h2>
@@ -198,7 +222,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {home.cta.enabled && (
+        {sectionVisible('cta', home.cta.enabled) && (
           <section className="home-container custom-order">
             <div className="custom-order__banner">
               <img className="custom-order__background" src="/mockup/cta-bg.jpg" alt="Чертёж и готовая металлическая деталь индивидуального изготовления" />
