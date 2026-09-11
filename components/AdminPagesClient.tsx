@@ -1,13 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Copy, Eye, EyeOff, FileText, Plus, Save, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Clock3, Copy, Eye, EyeOff, ExternalLink, FileText, Filter, Grid2X2, List, MoreHorizontal, Pencil, Plus, Save, Search, Settings2, Trash2 } from 'lucide-react';
 import { AdminImagePicker } from '@/components/AdminImagePicker';
 import type { SitePage, SitePageInput, SitePageSection, SitePageSectionType, SitePageStatus } from '@/lib/sitePages';
 import { formatDate } from '@/lib/adminCommerce';
 
 type Filter = 'all' | SitePageStatus;
+type PageView = 'list' | 'grid';
+type PageKind = 'all' | 'standard' | 'system' | 'legal' | 'service';
 
 const sectionTypes: Array<{ value: SitePageSectionType; label: string }> = [
   { value: 'hero', label: 'Hero / первый экран' },
@@ -20,14 +22,30 @@ const sectionTypes: Array<{ value: SitePageSectionType; label: string }> = [
 
 function statusLabel(status?: string) {
   if (status === 'published') return 'Опубликована';
-  if (status === 'hidden') return 'Скрыта';
+  if (status === 'hidden') return 'В архиве';
   return 'Черновик';
 }
 
 function statusClass(status?: string) {
   if (status === 'published') return 'is-published';
-  if (status === 'hidden') return 'is-hidden';
+  if (status === 'hidden') return 'is-archived';
   return 'is-draft';
+}
+
+function getPageType(page: SitePage): Exclude<PageKind, 'all'> {
+  const value = `${page.slug} ${page.title}`.toLowerCase();
+  if (/(privacy|offer|policy|terms|конфиден|оферт|политик)/.test(value)) return 'legal';
+  if (/(contacts|contact|контакт)/.test(value)) return 'system';
+  if (/(production|services|service|delivery|производ|услуг|достав)/.test(value)) return 'service';
+  return 'standard';
+}
+
+function pageTypeLabel(type: Exclude<PageKind, 'all'>) {
+  return ({ standard: 'Обычная', system: 'Системная', legal: 'Юридическая', service: 'Сервисная' })[type];
+}
+
+function pageImage(page: SitePage) {
+  return page.og_image || page.sections.find((section) => section.image)?.image || '';
 }
 
 function PreviewLines({ value }: { value?: string }) {
@@ -255,22 +273,47 @@ function pageToForm(page: SitePage): SitePageInput & { id?: string; created_at?:
 
 export function AdminPagesClient({ initialPages, supabaseConfigured }: { initialPages: SitePage[]; supabaseConfigured: boolean }) {
   const [pages, setPages] = useState(initialPages);
-  const [form, setForm] = useState(emptyPage());
+  const [form, setForm] = useState(() => initialPages[0] ? pageToForm(initialPages[0]) : emptyPage());
   const [filter, setFilter] = useState<Filter>('all');
+  const [queryInput, setQueryInput] = useState('');
   const [query, setQuery] = useState('');
+  const [pageKind, setPageKind] = useState<PageKind>('all');
+  const [dateFilter, setDateFilter] = useState<'all' | 'week' | 'month'>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [view, setView] = useState<PageView>('list');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState(form.sections[0]?.id || '');
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setQuery(queryInput), 320);
+    return () => window.clearTimeout(timer);
+  }, [queryInput]);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem('bullmet-admin-pages-view');
+    if (saved === 'grid' || saved === 'list') setView(saved);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem('bullmet-admin-pages-view', view);
+  }, [view]);
 
   const filtered = useMemo(() => {
     const clean = query.trim().toLowerCase();
     return pages.filter((page) => {
       const byStatus = filter === 'all' || page.status === filter;
       const haystack = [page.title, page.slug, page.excerpt, page.status].filter(Boolean).join(' ').toLowerCase();
-      return byStatus && (!clean || haystack.includes(clean));
+      const byKind = pageKind === 'all' || getPageType(page) === pageKind;
+      const updated = new Date(page.updated_at || page.created_at || 0).getTime();
+      const age = Date.now() - updated;
+      const byDate = dateFilter === 'all' || (dateFilter === 'week' && age <= 7 * 86400000) || (dateFilter === 'month' && age <= 31 * 86400000);
+      return byStatus && byKind && byDate && (!clean || haystack.includes(clean));
     });
-  }, [pages, query, filter]);
+  }, [pages, query, filter, pageKind, dateFilter]);
 
   const activeSection = form.sections.find((section) => section.id === activeSectionId) || form.sections[0];
   const published = pages.filter((page) => page.status === 'published').length;
@@ -289,6 +332,7 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
     const next = pageToForm(page);
     setForm(next);
     setActiveSectionId(next.sections[0]?.id || '');
+    setEditorOpen(false);
     setMessage('');
   }
 
@@ -296,6 +340,7 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
     const next = emptyPage();
     setForm(next);
     setActiveSectionId(next.sections[0]?.id || '');
+    setEditorOpen(true);
     setMessage('Создан новый черновик. Заполните данные и нажмите “Сохранить”.');
   }
 
@@ -309,6 +354,7 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
     };
     setForm(next);
     setActiveSectionId(next.sections[0]?.id || '');
+    setEditorOpen(true);
     setMessage('Создана копия как черновик. Нажмите “Сохранить”.');
   }
 
@@ -429,7 +475,64 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
     }
   }
 
-  return (
+  async function updateStatus(page: SitePage, status: SitePageStatus) {
+    setSaving(true);
+    setMessage('');
+    try {
+      const response = await fetch(`/api/admin/pages/${encodeURIComponent(page.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...pageToForm(page), status })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось изменить статус страницы.');
+      const nextPage = data.page as SitePage;
+      setPages((current) => current.map((item) => item.id === page.id ? nextPage : item));
+      if (form.id === page.id) setForm(pageToForm(nextPage));
+      setMessage(status === 'published' ? 'Страница опубликована.' : status === 'hidden' ? 'Страница перемещена в архив.' : 'Страница сохранена как черновик.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось изменить статус страницы.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function bulkUpdate(status: SitePageStatus | 'delete') {
+    if (!selectedIds.length) return;
+    const targets = pages.filter((page) => selectedIds.includes(page.id));
+    if (status === 'delete' && !confirm(`Удалить страниц: ${targets.length}? Восстановить их будет нельзя.`)) return;
+    setSaving(true);
+    try {
+      await Promise.all(targets.map(async (page) => {
+        const url = `/api/admin/pages/${encodeURIComponent(page.id)}`;
+        const response = await fetch(url, status === 'delete' ? { method: 'DELETE' } : {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...pageToForm(page), status })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.message || 'Операция не выполнена.');
+      }));
+      await refreshPages();
+      setSelectedIds([]);
+      setMessage(status === 'delete' ? 'Выбранные страницы удалены.' : 'Статус выбранных страниц обновлён.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось обработать выбранные страницы.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const selectedPage = pages.find((page) => page.id === form.id) || pages[0];
+  const allSelected = filtered.length > 0 && filtered.every((page) => selectedIds.includes(page.id));
+
+  function toggleSelection(id: string) {
+    setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  }
+
+  function toggleAllSelection() {
+    setSelectedIds(allSelected ? current => current.filter((id) => !filtered.some((page) => page.id === id)) : current => [...new Set([...current, ...filtered.map((page) => page.id)])]);
+  }
+
+  if (editorOpen) return (
     <div className="admin-pages-cms">
       <div className="admin-page-head">
         <div>
@@ -438,6 +541,7 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
           <span>Создавайте новые страницы, управляйте SEO и собирайте контент из готовых блоков.</span>
         </div>
         <div className="admin-head-actions">
+          <button type="button" onClick={() => { setEditorOpen(false); setMessage(''); }}>К списку страниц</button>
           <button type="button" onClick={newPage}><Plus size={17} /> Новая страница</button>
           <button type="button" onClick={duplicatePage}><Copy size={17} /> Дублировать</button>
           <button type="button" onClick={savePage} disabled={saving}><Save size={17} /> {saving ? 'Сохраняем...' : 'Сохранить'}</button>
@@ -639,6 +743,87 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
           </section>
         </div>
       )}
+    </div>
+  );
+
+  return (
+    <div className="admin-pages-v2">
+      <header className="admin-pages-v2-header">
+        <div>
+          <h1>Страницы</h1>
+          <p>Управление статическими страницами сайта. Создавайте, редактируйте и публикуйте контент.</p>
+        </div>
+        <button type="button" className="admin-pages-v2-primary" onClick={newPage}><Plus size={18} />Добавить страницу</button>
+      </header>
+
+      {!supabaseConfigured && <div className="admin-pages-v2-notice is-warning">Supabase не подключен: изменения не сохранятся в базе данных.</div>}
+      {message && <div className="admin-pages-v2-notice">{message}</div>}
+
+      <section className="admin-pages-v2-kpis" aria-label="Статистика страниц">
+        <article><span><FileText size={22} /></span><div><small>Всего страниц</small><b>{pages.length}</b><em>Все типы страниц</em></div></article>
+        <article><span><Eye size={22} /></span><div><small>Опубликовано</small><b>{published}</b><em>{pages.length ? `${Math.round(published / pages.length * 100)}% от всех` : 'Нет страниц'}</em></div></article>
+        <article><span><Clock3 size={22} /></span><div><small>Черновики</small><b>{drafts}</b><em>{drafts ? 'Требуют проверки' : 'Всё опубликовано'}</em></div></article>
+        <article><span><Archive size={22} /></span><div><small>В архиве</small><b>{hidden}</b><em>{hidden ? 'Скрыты с сайта' : 'Архив пуст'}</em></div></article>
+      </section>
+
+      <section className="admin-pages-v2-workspace">
+        <div className="admin-pages-v2-list-card">
+          <div className="admin-pages-v2-tabs" role="tablist">
+            {([
+              ['all', 'Все', pages.length],
+              ['published', 'Опубликованные', published],
+              ['draft', 'Черновики', drafts],
+              ['hidden', 'Архив', hidden]
+            ] as Array<[Filter, string, number]>).map(([key, label, count]) => <button key={key} type="button" className={filter === key ? 'is-active' : ''} onClick={() => setFilter(key)}>{label} <span>({count})</span></button>)}
+            <div className="admin-pages-v2-view-toggle" aria-label="Вид списка">
+              <button type="button" className={view === 'list' ? 'is-active' : ''} onClick={() => setView('list')} aria-label="Список"><List size={17} /></button>
+              <button type="button" className={view === 'grid' ? 'is-active' : ''} onClick={() => setView('grid')} aria-label="Карточки"><Grid2X2 size={16} /></button>
+            </div>
+            <div className="admin-pages-v2-filter-wrap">
+              <button type="button" className={filtersOpen || pageKind !== 'all' || dateFilter !== 'all' ? 'is-active' : ''} onClick={() => setFiltersOpen((current) => !current)}><Filter size={15} />Фильтры</button>
+              {filtersOpen && <div className="admin-pages-v2-filters">
+                <label>Тип страницы<select value={pageKind} onChange={(event) => setPageKind(event.target.value as PageKind)}><option value="all">Все типы</option><option value="standard">Обычная</option><option value="system">Системная</option><option value="legal">Юридическая</option><option value="service">Сервисная</option></select></label>
+                <label>Дата обновления<select value={dateFilter} onChange={(event) => setDateFilter(event.target.value as typeof dateFilter)}><option value="all">За всё время</option><option value="week">За неделю</option><option value="month">За месяц</option></select></label>
+                <button type="button" onClick={() => { setPageKind('all'); setDateFilter('all'); setFiltersOpen(false); }}>Сбросить фильтры</button>
+              </div>}
+            </div>
+          </div>
+
+          <div className="admin-pages-v2-search-row">
+            <label><Search size={18} /><input value={queryInput} onChange={(event) => setQueryInput(event.target.value)} placeholder="Поиск по страницам..." /></label>
+            <span>{queryInput !== query ? 'Поиск…' : `${filtered.length} из ${pages.length}`}</span>
+          </div>
+
+          {selectedIds.length > 0 && <div className="admin-pages-v2-bulk"><b>Выбрано: {selectedIds.length}</b><button type="button" onClick={() => bulkUpdate('published')} disabled={saving}>Опубликовать</button><button type="button" onClick={() => bulkUpdate('draft')} disabled={saving}>В черновик</button><button type="button" onClick={() => bulkUpdate('hidden')} disabled={saving}>Архивировать</button><button type="button" className="is-danger" onClick={() => bulkUpdate('delete')} disabled={saving}>Удалить</button></div>}
+
+          {filtered.length === 0 ? <div className="admin-pages-v2-empty"><FileText size={28} /><b>{pages.length ? 'Ничего не найдено' : 'Страниц пока нет'}</b><span>{pages.length ? 'Измените запрос или сбросьте фильтры.' : 'Создайте первую страницу для сайта Bullmet.'}</span><button type="button" onClick={pages.length ? () => { setQueryInput(''); setQuery(''); setFilter('all'); setPageKind('all'); setDateFilter('all'); } : newPage}>{pages.length ? 'Сбросить фильтры' : 'Добавить страницу'}</button></div> : view === 'list' ? <div className="admin-pages-v2-table">
+            <div className="admin-pages-v2-table-head"><label><input type="checkbox" checked={allSelected} onChange={toggleAllSelection} /></label><span>Страница</span><span>URL (slug)</span><span>Статус</span><span>Обновлена</span><span>Действия</span></div>
+            {filtered.map((page) => <article key={page.id} className={selectedPage?.id === page.id ? 'is-selected' : ''} onClick={() => selectPage(page)}>
+              <label onClick={(event) => event.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(page.id)} onChange={() => toggleSelection(page.id)} /></label>
+              <button type="button" className="admin-pages-v2-page-cell" onDoubleClick={() => { selectPage(page); setEditorOpen(true); }}><span className="admin-pages-v2-thumb">{pageImage(page) ? <img src={pageImage(page)} alt="" /> : <FileText size={20} />}</span><span><b>{page.title}</b><em>{page.excerpt || pageTypeLabel(getPageType(page))}</em></span></button>
+              <code>/{page.slug}</code><span className={`admin-pages-v2-status ${statusClass(page.status)}`}>{statusLabel(page.status)}</span><span className="admin-pages-v2-date">{formatDate(page.updated_at || page.created_at)}<small>Система</small></span>
+              <span className="admin-pages-v2-row-actions" onClick={(event) => event.stopPropagation()}><button type="button" title="Редактировать" onClick={() => { selectPage(page); setEditorOpen(true); }}><Pencil size={16} /></button><button type="button" title="Другие действия" onClick={() => selectPage(page)}><MoreHorizontal size={18} /></button></span>
+            </article>)}
+          </div> : <div className="admin-pages-v2-grid">{filtered.map((page) => <article key={page.id} className={selectedPage?.id === page.id ? 'is-selected' : ''} onClick={() => selectPage(page)}><div>{pageImage(page) ? <img src={pageImage(page)} alt="" /> : <FileText size={25} />}</div><b>{page.title}</b><span>/{page.slug}</span><em className={`admin-pages-v2-status ${statusClass(page.status)}`}>{statusLabel(page.status)}</em><button type="button" onClick={(event) => { event.stopPropagation(); selectPage(page); setEditorOpen(true); }}>Редактировать</button></article>)}</div>}
+
+          {filtered.length > 0 && <footer className="admin-pages-v2-pagination"><span>Показано {filtered.length} из {pages.length}</span><div><button type="button" disabled>←</button><b>1</b><button type="button" disabled>→</button></div></footer>}
+        </div>
+
+        <aside className="admin-pages-v2-preview">
+          {selectedPage ? <>
+            <header><b>Предпросмотр страницы</b>{selectedPage.status === 'published' && <Link href={`/${selectedPage.slug}`} target="_blank">Открыть на сайте <ExternalLink size={14} /></Link>}</header>
+            <button type="button" className="admin-pages-v2-preview-canvas" onClick={() => setPreviewOpen(true)}>
+              {pageImage(selectedPage) ? <img src={pageImage(selectedPage)} alt="" /> : <div className="admin-pages-v2-preview-fallback"><FileText size={28} /></div>}
+              <div><small>{selectedPage.sections[0]?.subtitle || 'BULLMET'}</small><strong>{selectedPage.sections[0]?.title || selectedPage.title}</strong><span>{selectedPage.sections[0]?.text || selectedPage.excerpt || 'Страница Bullmet'}</span></div>
+            </button>
+            <section className="admin-pages-v2-preview-meta"><div><b>{selectedPage.title}</b><span className={`admin-pages-v2-status ${statusClass(selectedPage.status)}`}>{statusLabel(selectedPage.status)}</span></div><p>Последнее обновление: {formatDate(selectedPage.updated_at || selectedPage.created_at)}</p><p>URL: <code>/{selectedPage.slug}</code></p><p>Автор: Система</p></section>
+            <button type="button" className="admin-pages-v2-edit" onClick={() => { selectPage(selectedPage); setEditorOpen(true); }}><Pencil size={16} />Редактировать страницу</button>
+            <div className="admin-pages-v2-preview-actions"><button type="button" onClick={() => { selectPage(selectedPage); setEditorOpen(true); }}><Settings2 size={16} />Настройки SEO</button><button type="button" onClick={() => { selectPage(selectedPage); duplicatePage(); }}><Copy size={16} />Дублировать страницу</button>{selectedPage.status === 'hidden' ? <button type="button" onClick={() => updateStatus(selectedPage, 'draft')} disabled={saving}><ArchiveRestore size={16} />Восстановить из архива</button> : <button type="button" onClick={() => updateStatus(selectedPage, 'hidden')} disabled={saving}><Archive size={16} />Переместить в архив</button>}<button type="button" className="is-danger" onClick={() => { selectPage(selectedPage); deletePage(); }}><Trash2 size={16} />Удалить страницу</button></div>
+          </> : null}
+        </aside>
+      </section>
+
+      {previewOpen && <div className="admin-page-preview-modal" role="dialog" aria-modal="true"><button type="button" className="admin-page-preview-backdrop" aria-label="Закрыть предпросмотр" onClick={() => setPreviewOpen(false)} /><section className="admin-page-preview-dialog"><div className="admin-page-preview-head"><div><p>Предпросмотр</p><h2>{form.title || 'Без названия'}</h2><span>/{slugify(form.slug || '')}</span></div><button type="button" onClick={() => setPreviewOpen(false)}>Закрыть</button></div><main className="site-page-builder admin-page-preview-surface">{(form.sections?.length ? form.sections : [emptySection('text')]).map((section) => <PageSectionPreview key={section.id} section={section} />)}</main></section></div>}
     </div>
   );
 }
