@@ -54,14 +54,19 @@ export async function POST(request: NextRequest) {
     }
 
     const total = normalizedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const createdAt = new Date().toISOString();
     const order = {
       id: makeOrderId(),
       customer,
       delivery: cleanText(body.delivery) || 'Доставка по Беларуси',
+      delivery_address: cleanText(body.deliveryAddress || body.delivery_address),
+      payment_method: cleanText(body.paymentMethod || body.payment_method) || 'При получении',
+      source: 'website',
       comment: cleanText(body.comment),
       items: normalizedItems,
       total,
-      status: 'Новый'
+      status: 'Новый',
+      status_history: [{ status: 'Новый', created_at: createdAt, author: 'Система' }]
     };
 
     if (!serverSupabase) {

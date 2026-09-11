@@ -3,9 +3,11 @@ import { serverSupabase } from './serverSupabase';
 export type AdminOrderItem = {
   slug?: string;
   title?: string;
+  sku?: string;
   price?: number;
   quantity?: number;
   size?: string;
+  color?: string;
   material?: string;
   image?: string;
 };
@@ -15,6 +17,9 @@ export type AdminOrder = {
   created_at?: string;
   customer?: { name?: string; phone?: string; email?: string };
   delivery?: string;
+  delivery_address?: string;
+  payment_method?: string;
+  source?: string;
   comment?: string;
   admin_note?: string;
   priority?: string;
@@ -23,6 +28,7 @@ export type AdminOrder = {
   items?: AdminOrderItem[];
   total?: number;
   status?: string;
+  status_history?: Array<{ status: string; created_at: string; author?: string; note?: string }>;
 };
 
 export type AdminRequest = {
@@ -85,7 +91,7 @@ export async function getAdminOrders() {
 
   const { data, error } = await serverSupabase
     .from('orders')
-    .select('id, created_at, customer, delivery, comment, admin_note, priority, follow_up_at, manager, items, total, status')
+    .select('id, created_at, customer, delivery, delivery_address, payment_method, source, comment, admin_note, priority, follow_up_at, manager, items, total, status, status_history')
     .order('created_at', { ascending: false })
     .limit(200);
 

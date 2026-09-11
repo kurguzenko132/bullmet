@@ -1,286 +1,62 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { CalendarClock, Mail, Phone, Send, UserRound } from 'lucide-react';
-import type { AdminOrder } from '@/lib/adminCommerce';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { CalendarClock, Check, ChevronRight, CircleX, Download, Mail, MoreHorizontal, Package, Phone, Plus, Search, Truck, UserRound, X } from 'lucide-react';
+import type { AdminOrder, AdminOrderItem } from '@/lib/adminCommerce';
 import { formatDate, money, orderStatuses, priorityOptions, statusClass } from '@/lib/adminCommerce';
 
-type Filter = 'all' | 'Новый' | 'В работе' | 'Ожидает оплаты' | 'Оплачен' | 'Передан в доставку' | 'Выполнен' | 'Отменён';
+type Tab = 'all' | 'Новый' | 'В работе' | 'Ожидает оплаты' | 'Оплачен' | 'Передан в доставку' | 'Выполнен' | 'Отменён';
+const deliveryOptions = ['Самовывоз', 'Доставка по Беларуси'];
+const statusNames: Record<string, string> = { Новый: 'Новый', 'В работе': 'В работе', 'Ожидает оплаты': 'Ожидает оплаты', Оплачен: 'Оплачен', 'Передан в доставку': 'Доставка', Выполнен: 'Выполнен', Отменён: 'Отменён' };
+const priorityNames: Record<string, string> = { normal: 'Обычный', high: 'Высокий', urgent: 'Срочный' };
+const orderNumber = (order: AdminOrder) => order.id.startsWith('#') ? order.id : `#${order.id.replace(/\D/g, '').slice(-8) || order.id.slice(-8)}`;
+const itemsTotal = (items?: AdminOrderItem[]) => (items || []).reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
+const cleanPhone = (value?: string) => String(value || '').replace(/[^\d+]/g, '');
+const toDateInput = (value?: string) => value ? value.slice(0, 10) : '';
 
-function customerLine(order: AdminOrder) {
-  return [order.customer?.name, order.customer?.phone, order.customer?.email].filter(Boolean).join(' · ') || 'Клиент не указан';
-}
-
-
-function priorityLabel(value?: string) {
-  if (value === 'urgent') return 'Срочно';
-  if (value === 'high') return 'Высокий';
-  return 'Обычный';
-}
-
-function priorityClass(value?: string) {
-  if (value === 'urgent') return 'is-urgent';
-  if (value === 'high') return 'is-high';
-  return 'is-normal';
-}
-
-function cleanPhone(value?: string) {
-  return String(value || '').replace(/[^\d+]/g, '');
-}
-
-function telegramLink(phone?: string) {
-  const digits = cleanPhone(phone).replace(/^\+/, '');
-  return digits ? `https://t.me/+${digits}` : '';
-}
-
-function mailLink(email?: string, subject?: string) {
-  return email ? `mailto:${email}?subject=${encodeURIComponent(subject || 'Bullmet')}` : '';
-}
-
-function nowLabel() {
-  return new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-}
+function Status({ value }: { value?: string }) { return <span className={`orders-status-v5 ${statusClass(value)}`}>{value || 'Новый'}</span>; }
+function dateText(value?: string) { if (!value) return '—'; const date = new Date(value); return <>{date.toLocaleDateString('ru-RU')}<small>{date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</small></>; }
 
 export function AdminOrdersClient({ initialOrders, supabaseConfigured }: { initialOrders: AdminOrder[]; supabaseConfigured: boolean }) {
   const [orders, setOrders] = useState(initialOrders);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [query, setQuery] = useState('');
-  const [activeId, setActiveId] = useState(initialOrders[0]?.id || '');
-  const [message, setMessage] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastSync, setLastSync] = useState(nowLabel());
-
+  const [tab, setTab] = useState<Tab>('all'); const [query, setQuery] = useState(''); const [status, setStatus] = useState(''); const [delivery, setDelivery] = useState(''); const [payment, setPayment] = useState(''); const [period, setPeriod] = useState(''); const [sort, setSort] = useState('new'); const [page, setPage] = useState(1); const [activeId, setActiveId] = useState(''); const [selected, setSelected] = useState<string[]>([]); const [message, setMessage] = useState(''); const [createOpen, setCreateOpen] = useState(false); const [creating, setCreating] = useState(false);
+  const limit = 10;
+  const statuses = useMemo(() => Object.fromEntries(orderStatuses.map((value) => [value, orders.filter((order) => order.status === value).length])), [orders]);
   const filtered = useMemo(() => {
-    const clean = query.trim().toLowerCase();
-
-    return orders.filter((order) => {
-      const byStatus = filter === 'all' || order.status === filter;
-      const haystack = [
-        order.id,
-        order.customer?.name,
-        order.customer?.phone,
-        order.customer?.email,
-        order.status,
-        order.delivery,
-        order.comment,
-        order.admin_note,
-        order.priority,
-        order.manager,
-        order.follow_up_at,
-        ...(order.items || []).map((item) => item.title)
-      ].filter(Boolean).join(' ').toLowerCase();
-      return byStatus && (!clean || haystack.includes(clean));
+    const dateFrom = new Date(); const clean = query.trim().toLowerCase();
+    if (period === 'today') dateFrom.setHours(0,0,0,0); else if (period === '7') dateFrom.setDate(dateFrom.getDate() - 7); else if (period === '30') dateFrom.setDate(dateFrom.getDate() - 30);
+    const data = orders.filter((order) => {
+      const haystack = [order.id, order.customer?.name, order.customer?.phone, order.customer?.email, order.delivery, order.delivery_address, ...(order.items || []).flatMap((item) => [item.title, item.slug, item.sku])].filter(Boolean).join(' ').toLowerCase();
+      const byStatus = (!tab || tab === 'all' || order.status === tab) && (!status || order.status === status);
+      const byDelivery = !delivery || order.delivery === delivery; const byPayment = !payment || order.payment_method === payment;
+      const byDate = !period || (order.created_at && new Date(order.created_at) >= dateFrom);
+      return byStatus && byDelivery && byPayment && byDate && (!clean || haystack.includes(clean));
     });
-  }, [orders, filter, query]);
-
-  const active = orders.find((order) => order.id === activeId) || filtered[0] || orders[0];
-  const totalRevenue = orders.filter((order) => order.status !== 'Отменён').reduce((sum, order) => sum + Number(order.total || 0), 0);
-  const newCount = orders.filter((order) => order.status === 'Новый').length;
-  const workCount = orders.filter((order) => ['В работе', 'Ожидает оплаты'].includes(order.status || '')).length;
-  const doneCount = orders.filter((order) => order.status === 'Выполнен').length;
-  const urgentCount = orders.filter((order) => order.priority === 'urgent' || order.priority === 'high').length;
-  const followUpCount = orders.filter((order) => order.follow_up_at).length;
-
-  async function refreshOrders() {
-    setMessage('');
-    setRefreshing(true);
-    try {
-      const response = await fetch('/api/admin/orders', { cache: 'no-store' });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось обновить список заказов.');
-      const nextOrders = Array.isArray(data.orders) ? data.orders as AdminOrder[] : [];
-      setOrders(nextOrders);
-      setActiveId((current) => nextOrders.some((order) => order.id === current) ? current : nextOrders[0]?.id || '');
-      setLastSync(nowLabel());
-      setMessage('Заказы обновлены.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось обновить список заказов.');
-    } finally {
-      setRefreshing(false);
-    }
-  }
-
-  async function updateOrder(id: string, patch: Partial<Pick<AdminOrder, 'status' | 'admin_note' | 'priority' | 'follow_up_at' | 'manager'>>) {
-    setMessage('');
-    const previous = orders;
-    setOrders((current) => current.map((order) => order.id === id ? { ...order, ...patch } : order));
-
-    try {
-      const response = await fetch(`/api/admin/orders/${encodeURIComponent(id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch)
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось обновить заказ.');
-      setLastSync(nowLabel());
-      setMessage('Изменения сохранены.');
-    } catch (error) {
-      setOrders(previous);
-      setMessage(error instanceof Error ? error.message : 'Не удалось обновить заказ.');
-    }
-  }
-
+    return data.sort((a,b) => sort === 'old' ? +new Date(a.created_at || 0) - +new Date(b.created_at || 0) : sort === 'total-desc' ? Number(b.total || 0) - Number(a.total || 0) : sort === 'total-asc' ? Number(a.total || 0) - Number(b.total || 0) : +new Date(b.created_at || 0) - +new Date(a.created_at || 0));
+  }, [orders, tab, query, status, delivery, payment, period, sort]);
+  const paged = filtered.slice((page - 1) * limit, page * limit); const active = orders.find((order) => order.id === activeId);
+  const revenue = orders.filter((order) => order.status !== 'Отменён').reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const today = new Date().toDateString(); const newToday = orders.filter((order) => order.status === 'Новый' && order.created_at && new Date(order.created_at).toDateString() === today).length;
+  const inWork = orders.filter((order) => ['В работе', 'Ожидает оплаты'].includes(order.status || '')).length; const delivering = orders.filter((order) => order.status === 'Передан в доставку').length;
+  const activeFilter = Boolean(query || status || delivery || payment || period || sort !== 'new' || tab !== 'all');
+  useEffect(() => setPage(1), [tab, query, status, delivery, payment, period, sort]);
+  useEffect(() => { const close = (event: KeyboardEvent) => event.key === 'Escape' && setActiveId(''); window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close); }, []);
+  async function refresh() { try { const response = await fetch('/api/admin/orders', { cache: 'no-store' }); const data = await response.json(); if (!response.ok || !data.ok) throw new Error(data.message); setOrders(data.orders || []); setMessage('Заказы обновлены.'); } catch { setMessage('Не удалось загрузить заказы. Попробуйте ещё раз.'); } }
+  async function update(id: string, patch: Record<string, unknown>, success = 'Заказ обновлён') { const previous = orders; setOrders((items) => items.map((order) => order.id === id ? { ...order, ...patch } : order)); try { const response = await fetch(`/api/admin/orders/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }); const data = await response.json(); if (!response.ok || !data.ok) throw new Error(); if (data.order) setOrders((items) => items.map((order) => order.id === id ? data.order : order)); setMessage(`✓ ${success}`); } catch { setOrders(previous); setMessage('Не удалось сохранить изменения.'); } }
+  function cancel(order: AdminOrder) { const reason = prompt(`Причина отмены ${orderNumber(order)}:`, 'Клиент отказался'); if (reason === null) return; void update(order.id, { status: 'Отменён', admin_note: `${order.admin_note || ''}${order.admin_note ? '\n' : ''}Отмена: ${reason}` }, 'Заказ отменён'); }
+  function reset() { setTab('all'); setQuery(''); setStatus(''); setDelivery(''); setPayment(''); setPeriod(''); setSort('new'); }
+  function exportCsv() { const header = 'Номер,Дата,Покупатель,Телефон,Статус,Получение,Сумма\n'; const rows = filtered.map((order) => [orderNumber(order), formatDate(order.created_at), order.customer?.name || '', order.customer?.phone || '', order.status || '', order.delivery || '', order.total || 0].map((cell) => `"${String(cell).replaceAll('"','""')}"`).join(',')).join('\n'); const href = URL.createObjectURL(new Blob([header + rows], { type: 'text/csv;charset=utf-8' })); const link = document.createElement('a'); link.href = href; link.download = 'bullmet-orders.csv'; link.click(); URL.revokeObjectURL(href); }
+  function toggle(id: string) { setSelected((items) => items.includes(id) ? items.filter((item) => item !== id) : [...items, id]); }
   return (
-    <div className="admin-commerce-page">
-      <div className="admin-page-head">
-        <div>
-          <p>Заказы</p>
-          <h1>Заказы клиентов</h1>
-          <span>Проверяйте новые заказы после оформления корзины, меняйте статусы и ведите заметки.</span>
-        </div>
-        <div className="admin-head-actions">
-          <button type="button" onClick={refreshOrders} disabled={refreshing}>{refreshing ? 'Обновляем...' : 'Обновить'}</button>
-          <a href="/cart" target="_blank">Тест корзины ↗</a>
-          <a href="/admin/requests">Заявки</a>
-        </div>
-      </div>
-
-      <section className="admin-sync-panel">
-        <div>
-          <b>{supabaseConfigured ? 'Supabase подключен' : 'Supabase не подключен'}</b>
-          <span>{supabaseConfigured ? `Последняя синхронизация: ${lastSync}. Новые заказы появятся после нажатия “Обновить” или перезагрузки страницы.` : 'Добавьте NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY / anon key, иначе заказы не будут сохраняться в админке.'}</span>
-        </div>
-        <button type="button" onClick={refreshOrders} disabled={refreshing}>{refreshing ? 'Ждём...' : 'Проверить новые заказы'}</button>
-      </section>
-
-      <section className="admin-commerce-stats admin-commerce-stats--crm">
-        <article><span>Всего заказов</span><b>{orders.length}</b><em>{newCount} новых</em></article>
-        <article><span>В работе</span><b>{workCount}</b><em>активная обработка</em></article>
-        <article><span>Выполнено</span><b>{doneCount}</b><em>закрытые сделки</em></article>
-        <article><span>Приоритет</span><b>{urgentCount}</b><em>важные/срочные</em></article>
-        <article><span>Напоминания</span><b>{followUpCount}</b><em>есть follow-up</em></article>
-        <article><span>Оборот</span><b>{money(totalRevenue)}</b><em>BYN без отмененных</em></article>
-      </section>
-
-      <div className="admin-commerce-toolbar">
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по номеру, клиенту, телефону, email, товару или комментарию" />
-        <div>
-          {(['all', ...orderStatuses] as Filter[]).map((item) => (
-            <button key={item} type="button" className={filter === item ? 'is-active' : ''} onClick={() => setFilter(item)}>
-              {item === 'all' ? 'Все' : item}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {message && <div className="admin-message">{message}</div>}
-
-      {!orders.length ? (
-        <section className="admin-empty-commerce">
-          <h2>Заказов пока нет</h2>
-          <p>{supabaseConfigured ? 'Оформите тестовый заказ через корзину, затем нажмите “Проверить новые заказы”.' : 'Supabase не подключен, поэтому админка не может получить заказы из базы.'}</p>
-          <div className="admin-empty-actions">
-            <a href="/cart" target="_blank">Проверить корзину</a>
-            <button type="button" onClick={refreshOrders} disabled={refreshing}>Обновить список</button>
-          </div>
-        </section>
-      ) : !filtered.length ? (
-        <section className="admin-empty-commerce">
-          <h2>Ничего не найдено</h2>
-          <p>Измените поиск или сбросьте фильтр статуса.</p>
-          <button type="button" onClick={() => { setQuery(''); setFilter('all'); }}>Сбросить фильтры</button>
-        </section>
-      ) : (
-        <section className="admin-commerce-layout">
-          <div className="admin-commerce-list">
-            {filtered.map((order) => (
-              <button key={order.id} type="button" className={active?.id === order.id ? 'is-active' : ''} onClick={() => setActiveId(order.id)}>
-                <div>
-                  <b>{order.id}</b>
-                  <em className={statusClass(order.status)}>{order.status || 'Новый'}</em>
-                </div>
-                <span>{customerLine(order)}</span>
-                <small>{formatDate(order.created_at)} · {money(Number(order.total || 0))} BYN</small>
-                <i className={`admin-crm-priority ${priorityClass(order.priority)}`}>{priorityLabel(order.priority)}</i>
-              </button>
-            ))}
-          </div>
-
-          {active && (
-            <article className="admin-commerce-detail">
-              <div className="admin-commerce-detail-head">
-                <div>
-                  <p>Заказ</p>
-                  <h2>{active.id}</h2>
-                  <span>{formatDate(active.created_at)}</span>
-                </div>
-                <select value={active.status || 'Новый'} onChange={(event) => updateOrder(active.id, { status: event.target.value })}>
-                  {orderStatuses.map((status) => <option key={status}>{status}</option>)}
-                </select>
-              </div>
-
-              <div className="admin-crm-pipeline">
-                {orderStatuses.map((status) => (
-                  <button key={status} type="button" className={active.status === status ? 'is-current' : ''} onClick={() => updateOrder(active.id, { status })}>
-                    {status}
-                  </button>
-                ))}
-              </div>
-
-              <div className="admin-crm-management">
-                <label>Приоритет
-                  <select value={active.priority || 'normal'} onChange={(event) => updateOrder(active.id, { priority: event.target.value })}>
-                    {priorityOptions.map((priority) => <option key={priority} value={priority}>{priorityLabel(priority)}</option>)}
-                  </select>
-                </label>
-                <label>Ответственный
-                  <input value={active.manager || ''} onChange={(event) => updateOrder(active.id, { manager: event.target.value })} placeholder="Имя менеджера" />
-                </label>
-                <label>Напомнить
-                  <input type="datetime-local" value={active.follow_up_at ? active.follow_up_at.slice(0, 16) : ''} onChange={(event) => updateOrder(active.id, { follow_up_at: event.target.value })} />
-                </label>
-              </div>
-
-              <div className="admin-customer-box admin-customer-box--crm">
-                <h3>Клиент</h3>
-                <p><UserRound size={15} /><b>Имя:</b> {active.customer?.name || 'не указано'}</p>
-                <p><Phone size={15} /><b>Телефон:</b> {active.customer?.phone || 'не указан'}</p>
-                <p><Mail size={15} /><b>Email:</b> {active.customer?.email || 'не указан'}</p>
-                <p><CalendarClock size={15} /><b>Получение:</b> {active.delivery || 'не указано'}</p>
-                {active.comment && <p><b>Комментарий:</b> {active.comment}</p>}
-                <div className="admin-crm-contact-actions">
-                  {active.customer?.phone && <a href={`tel:${cleanPhone(active.customer.phone)}`}>Позвонить</a>}
-                  {active.customer?.phone && <a href={telegramLink(active.customer.phone)} target="_blank">Telegram</a>}
-                  {active.customer?.email && <a href={mailLink(active.customer.email, `Заказ Bullmet ${active.id}`)}>Email</a>}
-                </div>
-              </div>
-
-              <div className="admin-order-items">
-                <h3>Товары</h3>
-                {(active.items || []).length ? (active.items || []).map((item, index) => (
-                  <div key={`${item.slug}-${index}`}>
-                    {item.image && <img src={item.image} alt="" />}
-                    <div>
-                      <b>{item.title}</b>
-                      <span>{[item.size, item.material].filter(Boolean).join(' · ') || 'Без варианта'}</span>
-                    </div>
-                    <em>× {item.quantity || 1}</em>
-                    <strong>{money(Number(item.price || 0) * Number(item.quantity || 1))} BYN</strong>
-                  </div>
-                )) : <p>Список товаров не передан.</p>}
-                <footer>
-                  <span>Итого</span>
-                  <b>{money(Number(active.total || 0))} BYN</b>
-                </footer>
-              </div>
-
-              <label className="admin-note-field">
-                Заметка администратора
-                <textarea defaultValue={active.admin_note || ''} rows={4} onBlur={(event) => updateOrder(active.id, { admin_note: event.target.value })} placeholder="Например: клиент просил перезвонить после 18:00" />
-              </label>
-
-              <div className="admin-crm-timeline">
-                <h3>История обработки</h3>
-                <p><Send size={15} /> Заказ создан: {formatDate(active.created_at)}</p>
-                <p><CalendarClock size={15} /> Текущий статус: {active.status || 'Новый'}</p>
-                {active.follow_up_at && <p><CalendarClock size={15} /> Напоминание: {formatDate(active.follow_up_at)}</p>}
-                {active.manager && <p><UserRound size={15} /> Ответственный: {active.manager}</p>}
-              </div>
-            </article>
-          )}
-        </section>
-      )}
-    </div>
+    <div className="orders-page-v5"><header className="orders-head-v5"><div><h1>Заказы</h1><p>Управляйте заказами, отслеживайте статусы и обрабатывайте покупки клиентов.</p></div><div><button onClick={refresh}>Обновить</button><button className="primary" onClick={() => setCreateOpen(true)}><Plus size={18} />Создать заказ</button></div></header>{message && <div className="orders-toast-v5">{message}<button onClick={() => setMessage('')}><X size={15}/></button></div>}{!supabaseConfigured && <div className="orders-warning-v5">Supabase не подключён: просмотр доступен, но создание и изменения заказов не сохранятся.</div>}
+    <section className="orders-kpis-v5"><Kpi icon={<Package/>} label="Всего заказов" value={orders.length} note={newToday ? `${newToday} новых сегодня` : 'нет новых сегодня'} /><Kpi icon={<span>₿</span>} label="Выручка" value={`${money(revenue)} BYN`} note="без отменённых" /><Kpi icon={<Plus/>} label="Новых сегодня" value={newToday} note="требуют внимания" /><Kpi icon={<CalendarClock/>} label="В обработке" value={inWork} note="ожидают действия" /><Kpi icon={<Truck/>} label="Доставляются" value={delivering} note="переданы в доставку" /></section>
+    <section className="orders-workspace-v5"><div className="orders-tabs-v5">{(['all', ...orderStatuses] as Tab[]).map((item) => <button key={item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)}>{item === 'all' ? 'Все' : statusNames[item] || item} ({item === 'all' ? orders.length : statuses[item] || 0})</button>)}</div><div className="orders-filters-v5"><label><Search size={17}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по номеру заказа, имени, телефону..." /></label><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">Статус</option>{orderStatuses.map((item) => <option key={item}>{item}</option>)}</select><select value={payment} onChange={(event) => setPayment(event.target.value)}><option value="">Способ оплаты</option>{Array.from(new Set(orders.map((item) => item.payment_method).filter(Boolean))).map((item) => <option key={item}>{item}</option>)}</select><select value={delivery} onChange={(event) => setDelivery(event.target.value)}><option value="">Способ получения</option>{deliveryOptions.map((item) => <option key={item}>{item}</option>)}</select><select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="">Период</option><option value="today">Сегодня</option><option value="7">7 дней</option><option value="30">30 дней</option></select><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="new">Сначала новые</option><option value="old">Сначала старые</option><option value="total-desc">По сумме ↓</option><option value="total-asc">По сумме ↑</option></select>{activeFilter && <button className="reset" onClick={reset}>Сбросить</button>}</div>
+      {selected.length > 0 && <div className="orders-bulk-v5"><b>Выбрано: {selected.length}</b><select onChange={(event) => { if (event.target.value) selected.forEach((id) => void update(id, { status: event.target.value }, 'Статусы изменены')); }} defaultValue=""><option value="" disabled>Изменить статус</option>{orderStatuses.map((item) => <option key={item}>{item}</option>)}</select><button onClick={exportCsv}><Download size={15}/>Экспорт CSV</button><button onClick={() => setSelected([])}>Снять выделение</button></div>}
+      {!orders.length ? <Empty text="Новые заказы с сайта появятся здесь автоматически." refresh={refresh} /> : !filtered.length ? <Empty text="По выбранным параметрам заказов нет." refresh={reset} reset /> : <div className="orders-layout-v5"><div className="orders-table-wrap-v5"><table><thead><tr><th><input type="checkbox" checked={paged.length > 0 && paged.every((item) => selected.includes(item.id))} onChange={() => setSelected(paged.every((item) => selected.includes(item.id)) ? [] : paged.map((item) => item.id))} /></th><th>№ заказа</th><th>Дата</th><th>Покупатель</th><th>Товары</th><th>Сумма</th><th>Статус</th><th>Получение</th><th /></tr></thead><tbody>{paged.map((order) => <OrderRow key={order.id} order={order} active={activeId === order.id} selected={selected.includes(order.id)} choose={() => setActiveId(order.id)} toggle={() => toggle(order.id)} />)}</tbody></table><div className="orders-pagination-v5"><span>Показано {Math.min(filtered.length, (page - 1) * limit + 1)}–{Math.min(filtered.length, page * limit)} из {filtered.length}</span><div><button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>‹</button><b>{page}</b><button disabled={page * limit >= filtered.length} onClick={() => setPage((value) => value + 1)}>›</button></div></div></div>{active ? <OrderDetails order={active} close={() => setActiveId('')} update={update} cancel={cancel} /> : <aside className="orders-detail-empty-v5">Выберите заказ, чтобы увидеть подробности.</aside>}</div>}</section>{createOpen && <CreateOrder close={() => setCreateOpen(false)} created={(order) => { setOrders((items) => [order, ...items]); setActiveId(order.id); setCreateOpen(false); setMessage('✓ Заказ создан'); }} creating={creating} setCreating={setCreating} />}</div>
   );
 }
+function Kpi({ icon, label, value, note }: { icon: React.ReactNode; label: string; value: string | number; note: string }) { return <article><span>{icon}</span><div><small>{label}</small><b>{value}</b><em>{note}</em></div></article>; }
+function Empty({ text, refresh, reset }: { text: string; refresh: () => void; reset?: boolean }) { return <div className="orders-empty-v5"><Package size={28}/><b>{text}</b><button onClick={refresh}>{reset ? 'Сбросить фильтры' : 'Обновить список'}</button></div>; }
+function OrderRow({ order, active, selected, choose, toggle }: { order: AdminOrder; active: boolean; selected: boolean; choose: () => void; toggle: () => void }) { const items = order.items || []; return <tr className={active ? 'active' : ''} onClick={choose}><td onClick={(event) => event.stopPropagation()}><input type="checkbox" checked={selected} onChange={toggle}/></td><td><b>{orderNumber(order)}</b></td><td>{dateText(order.created_at)}</td><td><b>{order.customer?.name || 'Гость'}</b><small>{order.delivery_address?.split(',')[0] || '—'}</small></td><td><div className="orders-thumbs-v5">{items.slice(0,2).map((item,index) => item.image ? <img key={index} src={item.image} alt=""/> : <span key={index}><Package size={14}/></span>)}{items.length > 2 && <i>+{items.length - 2}</i>}</div></td><td><strong>{money(order.total)} BYN</strong></td><td><Status value={order.status}/></td><td><b>{order.delivery || '—'}</b><small>{order.delivery_address || ''}</small></td><td><MoreHorizontal size={18}/></td></tr>; }
+function OrderDetails({ order, close, update, cancel }: { order: AdminOrder; close: () => void; update: (id: string, patch: Record<string, unknown>, success?: string) => Promise<void>; cancel: (order: AdminOrder) => void }) { const [note, setNote] = useState(order.admin_note || ''); const items = order.items || []; const statusHistory = [...(order.status_history || [])].reverse(); return <aside className="orders-detail-v5"><header><div><h2>Заказ {orderNumber(order)}</h2><span>{formatDate(order.created_at)}</span></div><button onClick={close}><X size={19}/></button></header><div className="orders-detail-status-v5"><Status value={order.status}/><select value={order.status || 'Новый'} onChange={(event) => void update(order.id, { status: event.target.value }, 'Статус заказа изменён')}>{orderStatuses.map((item) => <option key={item}>{item}</option>)}</select></div>{order.status === 'Новый' && <button className="take-work-v5" onClick={() => void update(order.id, { status: 'В работе' }, 'Заказ взят в работу')}>Взять в работу <ChevronRight size={16}/></button>}<section><h3>Покупатель</h3><div className="customer-v5"><UserRound size={25}/><div><b>{order.customer?.name || 'Гость'}</b><a href={`mailto:${order.customer?.email || ''}`}>{order.customer?.email || 'Email не указан'}</a><a href={`tel:${cleanPhone(order.customer?.phone)}`}>{order.customer?.phone || 'Телефон не указан'}</a></div></div><div className="contact-actions-v5">{order.customer?.email && <a href={`mailto:${order.customer.email}?subject=${encodeURIComponent(`Заказ Bullmet ${orderNumber(order)}`)}`}><Mail size={15}/>Написать</a>}{order.customer?.phone && <a href={`tel:${cleanPhone(order.customer.phone)}`}><Phone size={15}/>Позвонить</a>}</div></section><section><h3>Получение</h3><p><Truck size={17}/><b>{order.delivery || 'Не указано'}</b></p>{order.delivery_address && <span>{order.delivery_address}</span>}</section><section><h3>Способ оплаты</h3><p>{order.payment_method || 'При получении'}</p></section><section><h3>Товары ({items.length})</h3><div className="detail-items-v5">{items.map((item, index) => <a key={index} href={item.slug ? `/admin/products?search=${item.slug}` : undefined}>{item.image && <img src={item.image} alt=""/>}<span><b>{item.title || 'Товар'}</b><small>{[item.sku, item.color && `Цвет: ${item.color}`, item.size && `Размер: ${item.size}`, item.material].filter(Boolean).join(' · ')}</small><em>{money(Number(item.price || 0))} BYN × {item.quantity || 1}</em></span><strong>{money(Number(item.price || 0) * Number(item.quantity || 1))} BYN</strong></a>)}</div><footer><span>Товары</span><b>{money(itemsTotal(items))} BYN</b><strong>Итого <b>{money(order.total)} BYN</b></strong></footer></section>{order.comment && <section><h3>Комментарий клиента</h3><p>«{order.comment}»</p></section>}<section><h3>Заметка команды</h3><textarea value={note} onChange={(event) => setNote(event.target.value)} onBlur={() => note !== (order.admin_note || '') && void update(order.id, { admin_note: note }, 'Заметка сохранена')} placeholder="Только для сотрудников..." /></section><section className="order-management-v5"><label>Ответственный<select value={order.manager || ''} onChange={(event) => void update(order.id, { manager: event.target.value }, 'Ответственный назначен')}><option value="">Без менеджера</option><option>Администратор</option><option>Иван Петров</option><option>Ольга Иванова</option></select></label><label>Приоритет<select value={order.priority || 'normal'} onChange={(event) => void update(order.id, { priority: event.target.value }, 'Приоритет обновлён')}>{priorityOptions.map((item) => <option key={item} value={item}>{priorityNames[item]}</option>)}</select></label><label>Напомнить<input type="date" value={toDateInput(order.follow_up_at)} onChange={(event) => void update(order.id, { follow_up_at: event.target.value }, 'Напоминание сохранено')}/></label></section><section className="order-history-v5"><h3>История заказа</h3>{statusHistory.length ? statusHistory.map((event, index) => <p key={index}><Check size={14}/><span>{formatDate(event.created_at)} — <b>{event.status}</b><small>{event.author || 'Система'}</small></span></p>) : <p><Check size={14}/><span>{formatDate(order.created_at)} — <b>{order.status || 'Новый'}</b><small>Система</small></span></p>}</section><footer className="detail-actions-v5"><button onClick={() => void update(order.id, { status: order.status }, 'Заказ обновлён')}>Редактировать</button><button className="danger" onClick={() => cancel(order)}><CircleX size={15}/>Отменить заказ</button></footer></aside>; }
+function CreateOrder({ close, created, creating, setCreating }: { close: () => void; created: (order: AdminOrder) => void; creating: boolean; setCreating: (value: boolean) => void }) { const [name,setName]=useState(''); const [phone,setPhone]=useState(''); const [email,setEmail]=useState(''); const [title,setTitle]=useState(''); const [price,setPrice]=useState(''); const [quantity,setQuantity]=useState('1'); const [delivery,setDelivery]=useState('Самовывоз'); const [comment,setComment]=useState(''); const [error,setError]=useState(''); async function submit(event: FormEvent) { event.preventDefault(); setCreating(true); setError(''); try { const response=await fetch('/api/admin/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer:{name,phone,email},delivery,comment,items:[{title,price:Number(price),quantity:Number(quantity)}]})}); const data=await response.json(); if(!response.ok||!data.ok) throw new Error(data.message); created(data.order); } catch(error) { setError(error instanceof Error?error.message:'Не удалось создать заказ.'); } finally { setCreating(false); } } return <div className="create-order-overlay-v5"><button className="create-order-backdrop-v5" onClick={close}/><form className="create-order-v5" onSubmit={submit}><header><div><p>Новый заказ</p><h2>Создать заказ вручную</h2></div><button type="button" onClick={close}><X/></button></header><div className="create-grid-v5"><label>Покупатель*<input required value={name} onChange={(e)=>setName(e.target.value)} placeholder="Имя клиента"/></label><label>Телефон*<input required value={phone} onChange={(e)=>setPhone(e.target.value)} placeholder="+375 ..."/></label><label>Email<input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="mail@example.com"/></label><label>Получение<select value={delivery} onChange={(e)=>setDelivery(e.target.value)}>{deliveryOptions.map((item)=><option key={item}>{item}</option>)}</select></label><label className="wide">Товар*<input required value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="Название товара"/></label><label>Цена, BYN*<input required type="number" min="0" value={price} onChange={(e)=>setPrice(e.target.value)} placeholder="0"/></label><label>Количество<input required type="number" min="1" value={quantity} onChange={(e)=>setQuantity(e.target.value)}/></label><label className="wide">Комментарий<textarea value={comment} onChange={(e)=>setComment(e.target.value)} placeholder="Детали заказа от клиента"/></label></div>{error && <p className="create-error-v5">{error}</p>}<footer><button type="button" onClick={close}>Отмена</button><button className="primary" disabled={creating}>{creating?'Создаём...':'Создать заказ'}</button></footer></form></div>; }

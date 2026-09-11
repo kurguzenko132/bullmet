@@ -56,11 +56,16 @@ create table if not exists public.orders (
   created_at timestamptz not null default now(),
   customer jsonb not null,
   delivery text not null default 'Доставка по Беларуси',
+  delivery_address text,
+  payment_method text,
+  source text not null default 'website',
   comment text,
   admin_note text not null default '',
   items jsonb not null default '[]'::jsonb,
   total numeric(12,2) not null default 0,
-  status text not null default 'Новый'
+  status text not null default 'Новый',
+  status_history jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.requests (
