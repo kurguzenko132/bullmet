@@ -45,11 +45,28 @@ export function AdminTopbar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchIndex, setSearchIndex] = useState<Array<{ id: string; title: string; detail: string; href: string; type: string }>>([]);
   const notificationRef = useRef<HTMLDivElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setPageTitle(getPageTitle());
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    async function buildSearchIndex() {
+      try {
+        const response = await fetch('/api/admin/search', { cache: 'no-store' });
+        const data = response.ok ? await response.json() : {};
+        if (active) setSearchIndex(Array.isArray(data.items) ? data.items : []);
+      } catch { if (active) setSearchIndex([]); }
+    }
+    void buildSearchIndex();
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -101,6 +118,7 @@ export function AdminTopbar() {
     function closeOnOutsideClick(event: MouseEvent) {
       if (!notificationRef.current?.contains(event.target as Node)) setNotificationsOpen(false);
       if (!profileRef.current?.contains(event.target as Node)) setProfileOpen(false);
+      if (!searchRef.current?.contains(event.target as Node)) setSearchOpen(false);
     }
 
     function closeOnEscape(event: KeyboardEvent) {
@@ -156,6 +174,11 @@ export function AdminTopbar() {
     { title: 'Товары и каталог', text: 'Проверь цены, фото, статусы и категории', href: '/admin/products' },
     { title: 'Экспорт данных', text: 'Перед изменениями скачай полный JSON', href: '/admin/backup' }
   ], [notificationCount]);
+  const searchResults = useMemo(() => {
+    const needle = searchQuery.trim().toLowerCase();
+    if (needle.length < 2) return [];
+    return searchIndex.filter((item) => `${item.title} ${item.detail} ${item.type}`.toLowerCase().includes(needle)).slice(0, 7);
+  }, [searchIndex, searchQuery]);
 
   return (
     <header className="admin-topbar-redesign admin-topbar-redesign--fixed">
@@ -167,15 +190,11 @@ export function AdminTopbar() {
         </div>
       </div>
 
-      <label className="admin-topbar-search">
+      <div className="admin-topbar-search" ref={searchRef}>
         <Search size={17} />
-        <input placeholder="Поиск по заказам, товарам, клиентам..." onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            const value = event.currentTarget.value.trim();
-            if (value) window.location.href = `/admin/products?q=${encodeURIComponent(value)}`;
-          }
-        }} />
-      </label>
+        <input value={searchQuery} onFocus={() => setSearchOpen(true)} onChange={(event) => { setSearchQuery(event.target.value); setSearchOpen(true); }} placeholder="Поиск по заказам, страницам, клиентам..." onKeyDown={(event) => { if (event.key === 'Escape') setSearchOpen(false); }} />
+        {searchOpen && searchQuery.trim().length >= 2 && <div className="admin-topbar-search-results">{searchResults.length ? searchResults.map((item) => <Link href={item.href} key={item.id} onClick={() => { setSearchOpen(false); setSearchQuery(''); }}><small>{item.type}</small><b>{item.title}</b><span>{item.detail}</span></Link>) : <p>Ничего не найдено. Попробуйте имя, номер заказа или название.</p>}</div>}
+      </div>
 
       <div className="admin-topbar-actions">
         <Link href="/" target="_blank">Перейти на сайт <ExternalLink size={15} /></Link>
