@@ -1,221 +1,42 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { Eye, EyeOff, Image as ImageIcon, Star, Trash2 } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Eye, EyeOff, Image as ImageIcon, List, MessageSquare, Plus, Settings2, Star, Trash2, X } from 'lucide-react';
 import type { AdminReview } from '@/lib/adminContent';
-import { formatDate } from '@/lib/adminCommerce';
 
-type Filter = 'all' | 'published' | 'hidden' | 'pending';
-
-function statusLabel(status?: string) {
-  if (status === 'hidden') return 'Скрыт';
-  if (status === 'pending') return 'На проверке';
-  return 'Опубликован';
-}
-
-function statusClass(status?: string) {
-  if (status === 'hidden') return 'is-hidden';
-  if (status === 'pending') return 'is-pending';
-  return 'is-published';
-}
-
-function Stars({ value }: { value: number }) {
-  return <span className="admin-review-stars">{Array.from({ length: 5 }, (_, index) => <Star key={index} size={15} fill={index < value ? 'currentColor' : 'none'} />)}</span>;
-}
+type Status = 'all' | 'published' | 'pending' | 'rejected' | 'hidden'; type View = 'grid' | 'list';
+type ReviewSettingsState = { autoPublish: boolean; allowPhotos: boolean; allowGuest: boolean; productRating: boolean; productCount: boolean; homepage: boolean };
+const labels: Record<Exclude<Status, 'all'>, string> = { published: 'Опубликован', pending: 'На модерации', rejected: 'Отклонён', hidden: 'Скрыт' };
+const statuses: Exclude<Status, 'all'>[] = ['published', 'pending', 'rejected', 'hidden'];
+const sources = ['website', 'instagram', 'telegram', 'offline', 'import'] as const;
+const iconStars = (value: number, size = 15) => <span className="reviews-stars-v3">{Array.from({ length: 5 }, (_, i) => <Star key={i} size={size} fill={i < value ? 'currentColor' : 'none'} />)}</span>;
+const date = (value?: string) => value ? new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(value)) : '—';
+const initials = (review: AdminReview) => (review.user_name || review.user_email || 'П').split(/\s+/).map((x) => x[0]).slice(0, 2).join('').toUpperCase();
+const statusOf = (review: AdminReview) => statuses.includes(review.status as any) ? review.status as Exclude<Status, 'all'> : 'published';
 
 export function AdminReviewsClient({ initialReviews, supabaseConfigured }: { initialReviews: AdminReview[]; supabaseConfigured: boolean }) {
-  const [reviews, setReviews] = useState(initialReviews);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [query, setQuery] = useState('');
-  const [activeId, setActiveId] = useState(initialReviews[0]?.id || '');
-  const [message, setMessage] = useState('');
-  const [lightbox, setLightbox] = useState('');
-
-  const filtered = useMemo(() => {
-    const clean = query.trim().toLowerCase();
-    return reviews.filter((review) => {
-      const byStatus = filter === 'all' || review.status === filter;
-      const haystack = [review.product_slug, review.user_name, review.user_email, review.comment, review.status].filter(Boolean).join(' ').toLowerCase();
-      return byStatus && (!clean || haystack.includes(clean));
-    });
-  }, [reviews, filter, query]);
-
-  const active = reviews.find((review) => review.id === activeId) || filtered[0] || reviews[0];
-  const published = reviews.filter((review) => review.status === 'published').length;
-  const hidden = reviews.filter((review) => review.status === 'hidden').length;
-  const pending = reviews.filter((review) => review.status === 'pending').length;
-  const photos = reviews.reduce((sum, review) => sum + (review.photo_urls?.length || 0), 0);
-  const avg = reviews.length ? reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length : 0;
-
-  async function refreshReviews() {
-    setMessage('');
-    try {
-      const response = await fetch('/api/admin/reviews', { cache: 'no-store' });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось обновить отзывы.');
-      const next = Array.isArray(data.reviews) ? data.reviews as AdminReview[] : [];
-      setReviews(next);
-      setActiveId((current) => next.some((review) => review.id === current) ? current : next[0]?.id || '');
-      setMessage('Отзывы обновлены.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось обновить отзывы.');
-    }
-  }
-
-  async function updateReview(id: string, patch: Partial<Pick<AdminReview, 'status' | 'comment'>>) {
-    setMessage('');
-    const previous = reviews;
-    setReviews((current) => current.map((review) => review.id === id ? { ...review, ...patch } : review));
-
-    try {
-      const response = await fetch(`/api/admin/reviews/${encodeURIComponent(id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch)
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось обновить отзыв.');
-      setMessage('Отзыв обновлён.');
-    } catch (error) {
-      setReviews(previous);
-      setMessage(error instanceof Error ? error.message : 'Не удалось обновить отзыв.');
-    }
-  }
-
-  async function deleteReview(id: string) {
-    if (!confirm('Удалить отзыв полностью?')) return;
-    setMessage('');
-
-    try {
-      const response = await fetch(`/api/admin/reviews/${encodeURIComponent(id)}`, { method: 'DELETE' });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось удалить отзыв.');
-      setReviews((current) => current.filter((review) => review.id !== id));
-      setActiveId((current) => current === id ? '' : current);
-      setMessage('Отзыв удалён.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось удалить отзыв.');
-    }
-  }
-
-  return (
-    <div className="admin-reviews-page">
-      <div className="admin-page-head">
-        <div>
-          <p>Отзывы</p>
-          <h1>Отзывы покупателей</h1>
-          <span>Отзывы публикуются сразу, но здесь их можно скрыть, вернуть, удалить и открыть фото.</span>
-        </div>
-        <div className="admin-head-actions">
-          <button type="button" onClick={refreshReviews}>Обновить</button>
-          <Link href="/catalog" target="_blank">Открыть каталог ↗</Link>
-        </div>
-      </div>
-
-      <section className="admin-reviews-stats">
-        <article><b>{reviews.length}</b><span>всего отзывов</span></article>
-        <article><b>{published}</b><span>опубликовано</span></article>
-        <article><b>{hidden}</b><span>скрыто</span></article>
-        <article><b>{pending}</b><span>на проверке</span></article>
-        <article><b>{photos}</b><span>фото</span></article>
-        <article><b>{avg.toFixed(1)}</b><span>средняя оценка</span></article>
-      </section>
-
-      <div className="admin-commerce-toolbar">
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по товару, имени, email или тексту отзыва" />
-        <div>
-          {(['all', 'published', 'hidden', 'pending'] as Filter[]).map((item) => (
-            <button key={item} type="button" className={filter === item ? 'is-active' : ''} onClick={() => setFilter(item)}>
-              {item === 'all' ? 'Все' : statusLabel(item)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {message && <div className="admin-message">{message}</div>}
-
-      {!supabaseConfigured && <div className="admin-message">Supabase не подключен: отзывы не загрузятся из базы.</div>}
-
-      {!filtered.length ? (
-        <section className="admin-empty-commerce">
-          <h2>Отзывы не найдены</h2>
-          <p>Измените фильтр или оставьте тестовый отзыв на карточке товара.</p>
-        </section>
-      ) : (
-        <section className="admin-reviews-layout">
-          <div className="admin-reviews-list">
-            {filtered.map((review) => (
-              <button key={review.id} type="button" className={active?.id === review.id ? 'is-active' : ''} onClick={() => setActiveId(review.id)}>
-                <div>
-                  <b>{review.user_name || review.user_email || 'Покупатель'}</b>
-                  <em className={statusClass(review.status)}>{statusLabel(review.status)}</em>
-                </div>
-                <Stars value={Number(review.rating || 0)} />
-                <span>{review.comment || 'Без текста'}</span>
-                <small>{review.product_slug} · {formatDate(review.created_at)}</small>
-              </button>
-            ))}
-          </div>
-
-          {active && (
-            <article className="admin-review-detail">
-              <div className="admin-commerce-detail-head">
-                <div>
-                  <p>Отзыв</p>
-                  <h2>{active.user_name || active.user_email || 'Покупатель'}</h2>
-                  <span>{formatDate(active.created_at)} · {active.product_slug}</span>
-                </div>
-                <select value={active.status || 'published'} onChange={(event) => updateReview(active.id, { status: event.target.value })}>
-                  <option value="published">Опубликован</option>
-                  <option value="hidden">Скрыт</option>
-                  <option value="pending">На проверке</option>
-                </select>
-              </div>
-
-              <div className="admin-review-score">
-                <Stars value={Number(active.rating || 0)} />
-                <b>{active.rating}/5</b>
-                <Link href={`/product/${active.product_slug}`} target="_blank">Открыть товар ↗</Link>
-              </div>
-
-              <label className="admin-note-field">
-                Текст отзыва
-                <textarea defaultValue={active.comment || ''} rows={5} onBlur={(event) => updateReview(active.id, { comment: event.target.value })} />
-              </label>
-
-              {!!active.photo_urls?.length && (
-                <div className="admin-review-photos">
-                  <h3>Фото отзыва</h3>
-                  <div>
-                    {active.photo_urls.map((url) => (
-                      <button key={url} type="button" onClick={() => setLightbox(url)}>
-                        <img src={url} alt="" />
-                        <ImageIcon size={18} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="admin-review-actions">
-                <button type="button" onClick={() => updateReview(active.id, { status: active.status === 'hidden' ? 'published' : 'hidden' })}>
-                  {active.status === 'hidden' ? <Eye size={17} /> : <EyeOff size={17} />}
-                  {active.status === 'hidden' ? 'Опубликовать' : 'Скрыть'}
-                </button>
-                <button type="button" onClick={() => deleteReview(active.id)}><Trash2 size={17} />Удалить</button>
-              </div>
-            </article>
-          )}
-        </section>
-      )}
-
-      {lightbox && (
-        <div className="admin-review-lightbox" onClick={() => setLightbox('')}>
-          <button type="button" aria-label="Закрыть">×</button>
-          <img src={lightbox} alt="" />
-        </div>
-      )}
-    </div>
-  );
+  const [reviews, setReviews] = useState(initialReviews); const [tab, setTab] = useState<Status>('all'); const [view, setView] = useState<View>('grid'); const [query, setQuery] = useState(''); const [rating, setRating] = useState('all'); const [product, setProduct] = useState('all'); const [photo, setPhoto] = useState('all'); const [sort, setSort] = useState('new'); const [activeId, setActiveId] = useState(initialReviews[0]?.id || ''); const [message, setMessage] = useState(''); const [settingsOpen, setSettingsOpen] = useState(false); const [editorOpen, setEditorOpen] = useState(false); const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null); const [settings, setSettings] = useState<ReviewSettingsState>({ autoPublish: true, allowPhotos: true, allowGuest: true, productRating: true, productCount: true, homepage: false });
+  useEffect(() => { const saved = window.localStorage.getItem('admin-reviews-view'); if (saved === 'list' || saved === 'grid') setView(saved); const savedSettings = window.localStorage.getItem('admin-reviews-settings'); if (savedSettings) try { setSettings(JSON.parse(savedSettings)); } catch {} }, []);
+  useEffect(() => { window.localStorage.setItem('admin-reviews-settings', JSON.stringify(settings)); }, [settings]);
+  const counts = (value?: Status) => reviews.filter((review) => !value || value === 'all' || statusOf(review) === value).length;
+  const products = useMemo(() => Array.from(new Set(reviews.map((review) => review.product_slug).filter(Boolean))).sort(), [reviews]);
+  const filtered = useMemo(() => reviews.filter((review) => { const haystack = [review.user_name, review.user_email, review.product_slug, review.comment].filter(Boolean).join(' ').toLowerCase(); return (tab === 'all' || statusOf(review) === tab) && (!query || haystack.includes(query.toLowerCase())) && (rating === 'all' || Number(review.rating) === Number(rating)) && (product === 'all' || review.product_slug === product) && (photo === 'all' || (photo === 'with' ? !!review.photo_urls?.length : !review.photo_urls?.length)); }).sort((a, b) => sort === 'old' ? +new Date(a.created_at || 0) - +new Date(b.created_at || 0) : sort === 'high' ? Number(b.rating) - Number(a.rating) : sort === 'low' ? Number(a.rating) - Number(b.rating) : sort === 'photos' ? (b.photo_urls?.length || 0) - (a.photo_urls?.length || 0) : +new Date(b.created_at || 0) - +new Date(a.created_at || 0)), [reviews, tab, query, rating, product, photo, sort]);
+  const active = reviews.find((review) => review.id === activeId) || filtered[0]; const published = reviews.filter((review) => statusOf(review) === 'published'); const average = published.length ? published.reduce((sum, review) => sum + Number(review.rating), 0) / published.length : 0; const distribution = [5, 4, 3, 2, 1].map((score) => ({ score, count: reviews.filter((review) => Number(review.rating) === score).length })); const positive = reviews.filter((r) => r.rating >= 4).length; const neutral = reviews.filter((r) => r.rating === 3).length; const negative = reviews.filter((r) => r.rating <= 2).length;
+  async function save(id: string, patch: Record<string, unknown>, success = 'Изменения сохранены.') { const before = reviews; setReviews((items) => items.map((item) => item.id === id ? { ...item, ...patch } as AdminReview : item)); try { const response = await fetch(`/api/admin/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }); const data = await response.json(); if (!response.ok || !data.ok) throw new Error(data.message); setMessage(success); } catch (error) { setReviews(before); setMessage(error instanceof Error ? error.message : 'Не удалось сохранить изменения.'); } }
+  async function remove(id: string) { if (!confirm('Удалить отзыв без возможности восстановления?')) return; const response = await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE' }); const data = await response.json(); if (!response.ok || !data.ok) return setMessage(data.message || 'Не удалось удалить отзыв.'); setReviews((items) => items.filter((item) => item.id !== id)); setActiveId(''); setMessage('Отзыв удалён.'); }
+  async function addReview(form: FormData) { const payload = Object.fromEntries(form.entries()); const response = await fetch('/api/admin/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, rating: Number(payload.rating), status: settings.autoPublish ? 'published' : 'pending', source: payload.source || 'offline' }) }); const data = await response.json(); if (!response.ok || !data.ok) return setMessage(data.message || 'Не удалось добавить отзыв.'); setReviews((items) => [data.review as AdminReview, ...items]); setActiveId(data.review.id); setEditorOpen(false); setMessage('Отзыв добавлен.'); }
+  function setStatus(status: Exclude<Status, 'all'>) { if (active) save(active.id, { status, action: status === 'published' ? 'review_publish' : status === 'hidden' ? 'review_hide' : status === 'rejected' ? 'review_reject' : 'review_update' }, `Статус: ${labels[status]}.`); }
+  const reset = () => { setTab('all'); setQuery(''); setRating('all'); setProduct('all'); setPhoto('all'); setSort('new'); };
+  return <div className="admin-reviews-v3"><header className="admin-reviews-head-v3"><div><h1>Отзывы покупателей</h1><p>Просматривайте отзывы клиентов, фотографии, оценки и управляйте их отображением на сайте.</p></div><div><button type="button" onClick={() => setSettingsOpen(true)}><Settings2 size={16} />Настройки отзывов</button><button type="button" className="reviews-primary-v3" onClick={() => setEditorOpen(true)}><Plus size={17} />Добавить отзыв</button></div></header>{message && <div className="reviews-notice-v3">{message}<button onClick={() => setMessage('')}><X size={15} /></button></div>}{!supabaseConfigured && <div className="reviews-warning-v3">Подключите Supabase и выполните `database/admin-reviews-cms.sql`, чтобы сохранять ответы, заметки и новые отзывы.</div>}
+    <section className="reviews-kpis-v3"><Metric label="Всего отзывов" value={reviews.length} icon={<MessageSquare />} /><Metric label="Средняя оценка" value={<>{average.toFixed(1)} <small>из 5</small></>} icon={<Star />} text={`на основе ${published.length} опубликованных`} highlight /><Metric label="Опубликовано" value={counts('published')} icon={<Check />} text={`${reviews.length ? Math.round(counts('published') / reviews.length * 100) : 0}% от всех`} /><Metric label="На модерации" value={counts('pending')} icon={<MessageSquare />} text={`${reviews.length ? Math.round(counts('pending') / reviews.length * 100) : 0}% от всех`} /><Metric label="Отклонено" value={counts('rejected')} icon={<EyeOff />} text={`${reviews.length ? Math.round(counts('rejected') / reviews.length * 100) : 0}% от всех`} /></section>
+    <section className="reviews-analytics-v3"><div><h2>Распределение оценок</h2>{distribution.map(({ score, count }) => <p key={score}><b>{score} ★</b><span><i style={{ width: `${reviews.length ? count / reviews.length * 100 : 0}%` }} /></span><em>{count}</em></p>)}</div><aside><strong>{reviews.length ? Math.round(positive / reviews.length * 100) : 0}%</strong><b>Положительных</b><p><i className="positive" />Положительные <span>{positive}</span></p><p><i className="neutral" />Нейтральные <span>{neutral}</span></p><p><i className="negative" />Отрицательные <span>{negative}</span></p></aside></section>
+    <section className="reviews-workspace-v3"><div className="reviews-main-v3"><nav className="reviews-tabs-v3">{([['all', 'Все'], ['published', 'Опубликованные'], ['pending', 'На модерации'], ['rejected', 'Отклонённые']] as [Status, string][]).map(([key, label]) => <button key={key} className={tab === key ? 'is-active' : ''} onClick={() => setTab(key)}>{label} ({counts(key)})</button>)}<select value={sort} onChange={(e) => setSort(e.target.value)}><option value="new">Сначала новые</option><option value="old">Сначала старые</option><option value="high">С высокой оценкой</option><option value="low">С низкой оценкой</option><option value="photos">С фото</option></select><span><button className={view === 'list' ? 'is-active' : ''} onClick={() => { setView('list'); localStorage.setItem('admin-reviews-view', 'list'); }}><List size={16} /></button><button className={view === 'grid' ? 'is-active' : ''} onClick={() => { setView('grid'); localStorage.setItem('admin-reviews-view', 'grid'); }}><ImageIcon size={16} /></button></span></nav><div className="reviews-filters-v3"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск по отзывам, именам..." /><select value={rating} onChange={(e) => setRating(e.target.value)}><option value="all">Все оценки</option>{[5,4,3,2,1].map((item) => <option key={item} value={item}>{item} ★</option>)}</select><select value={product} onChange={(e) => setProduct(e.target.value)}><option value="all">Все товары</option>{products.map((item) => <option key={item}>{item}</option>)}</select><select value={photo} onChange={(e) => setPhoto(e.target.value)}><option value="all">Все фото</option><option value="with">Только с фото</option><option value="without">Без фото</option></select><button onClick={reset}>Сбросить</button></div>{filtered.length ? <div className={view === 'grid' ? 'reviews-grid-v3' : 'reviews-list-v3'}>{filtered.map((review) => <ReviewCard key={review.id} review={review} active={active?.id === review.id} list={view === 'list'} onClick={() => setActiveId(review.id)} lightbox={() => setLightbox({ photos: review.photo_urls || [], index: 0 })} />)}</div> : <div className="reviews-empty-v3"><MessageSquare size={30} /><b>{reviews.length ? 'Отзывы не найдены' : 'Отзывов пока нет'}</b><span>{reviews.length ? 'Сбросьте фильтры или измените поиск.' : 'Отзывы покупателей появятся здесь после публикации.'}</span><button onClick={reviews.length ? reset : () => setEditorOpen(true)}>{reviews.length ? 'Сбросить фильтры' : '+ Добавить отзыв'}</button></div>}</div><ReviewDetails review={active} setStatus={setStatus} save={save} remove={remove} lightbox={setLightbox} /></section>
+    {settingsOpen && <ReviewSettings settings={settings} setSettings={setSettings} close={() => setSettingsOpen(false)} />}{editorOpen && <ReviewEditor close={() => setEditorOpen(false)} create={addReview} />}{lightbox && <Lightbox state={lightbox} close={() => setLightbox(null)} />}</div>;
 }
+function Metric({ label, value, icon, text, highlight }: { label: string; value: ReactNode; icon: ReactNode; text?: string; highlight?: boolean }) { return <article className={highlight ? 'is-highlight' : ''}><span>{icon}</span><div><small>{label}</small><b>{value}</b><em>{text || ''}</em></div></article>; }
+function ReviewCard({ review, active, list, onClick, lightbox }: { review: AdminReview; active: boolean; list: boolean; onClick: () => void; lightbox: () => void }) { const photos = review.photo_urls || []; return <article className={`review-card-v3 ${active ? 'is-active' : ''} ${list ? 'is-list' : ''}`} onClick={onClick}><button className="review-card-image-v3" onClick={(e) => { e.stopPropagation(); if (photos.length) lightbox(); }}><img src={photos[0] || '/assets/prod-clock-loft.jpg'} alt="" />{!photos.length && <small>Фото товара</small>}{photos.length > 1 && <b>+{photos.length - 1}</b>}</button><div className="review-card-body-v3"><header>{iconStars(Number(review.rating))}<time>{date(review.created_at)}</time></header><p>{review.comment || 'Без текста отзыва'}</p><footer><span className="review-avatar-v3">{initials(review)}</span><div><b>{review.user_name || review.user_email || 'Покупатель'}</b><small>{review.customer_city || 'Город не указан'}</small></div></footer><aside><img src="/assets/prod-clock-loft.jpg" alt="" /><span><b>{review.product_slug || 'Общий отзыв'}</b><small>{statusOf(review) === 'published' ? 'Опубликован' : labels[statusOf(review)]}</small></span></aside></div></article>; }
+function ReviewDetails({ review, setStatus, save, remove, lightbox }: { review?: AdminReview; setStatus: (status: Exclude<Status, 'all'>) => void; save: (id: string, patch: Record<string, unknown>, success?: string) => void; remove: (id: string) => void; lightbox: (value: { photos: string[]; index: number } | null) => void }) { if (!review) return <aside className="review-details-v3 reviews-empty-v3"><MessageSquare size={30} /><b>Выберите отзыв</b></aside>; const photos = review.photo_urls || []; return <aside className="review-details-v3"><header><h2>Просмотр отзыва</h2><span>{date(review.created_at)}</span></header><section className="review-customer-v3"><span>{initials(review)}</span><div><b>{review.user_name || review.user_email || 'Покупатель'}</b><small>{review.customer_city || 'Город не указан'}</small>{iconStars(Number(review.rating))}</div>{review.verified_purchase && <em>✓ Подтверждённая покупка</em>}</section><p className="review-full-text-v3">{review.comment}</p>{photos.length > 0 && <section className="review-photos-v3"><h3>Фото от покупателя</h3><div>{photos.map((url, index) => <button key={url} onClick={() => lightbox({ photos, index })}><img src={url} alt="" /></button>)}</div></section>}<section className="review-product-v3"><h3>Информация о товаре</h3><Link href={`/admin/products?search=${encodeURIComponent(review.product_slug || '')}`}><img src="/assets/prod-clock-loft.jpg" alt="" /><span><b>{review.product_slug || 'Общий отзыв'}</b><small>Перейти к товару ↗</small></span></Link></section><section className="review-data-v3"><h3>Данные покупателя</h3><p>Имя <b>{review.user_name || '—'}</b></p><p>Email <b>{review.user_email || '—'}</b></p><p>Телефон <b>{review.customer_phone || '—'}</b></p><p>Город <b>{review.customer_city || '—'}</b></p></section><section className="review-status-v3"><label>Статус отзыва<select value={statusOf(review)} onChange={(e) => setStatus(e.target.value as Exclude<Status, 'all'>)}>{statuses.map((item) => <option key={item} value={item}>{labels[item]}</option>)}</select></label><label><input type="checkbox" checked={review.show_on_homepage === true} onChange={(e) => save(review.id, { show_on_homepage: e.target.checked })} />Разрешить показывать на главной</label></section><section className="review-reply-v3"><h3>Ответ Bullmet</h3><textarea defaultValue={review.admin_reply || ''} placeholder="Написать ответ от имени компании..." onBlur={(e) => { if (e.target.value !== (review.admin_reply || '')) save(review.id, { admin_reply: e.target.value, action: 'review_reply' }, 'Ответ компании сохранён.'); }} /><textarea defaultValue={review.internal_note || ''} placeholder="Внутренняя заметка (не видна клиенту)" onBlur={(e) => { if (e.target.value !== (review.internal_note || '')) save(review.id, { internal_note: e.target.value }); }} /></section><footer><button onClick={() => setStatus(statusOf(review) === 'hidden' ? 'published' : 'hidden')}>{statusOf(review) === 'hidden' ? <Eye size={16} /> : <EyeOff size={16} />}{statusOf(review) === 'hidden' ? 'Опубликовать' : 'Скрыть на сайте'}</button><button className="is-danger" onClick={() => remove(review.id)}><Trash2 size={16} />Удалить</button></footer></aside>; }
+function ReviewSettings({ settings, setSettings, close }: { settings: ReviewSettingsState; setSettings: (value: ReviewSettingsState) => void; close: () => void }) { const rows: [keyof ReviewSettingsState, string][] = [['autoPublish', 'Автоматически публиковать новые отзывы'], ['allowPhotos', 'Разрешать отзывы с фото'], ['allowGuest', 'Разрешать отзывы без авторизации'], ['productRating', 'Показывать рейтинг товара'], ['productCount', 'Показывать количество отзывов'], ['homepage', 'Показывать отзывы на главной']]; return <div className="review-modal-v3"><button onClick={close} /><section><header><div><p>Настройки</p><h2>Настройки отзывов</h2></div><button onClick={close}><X /></button></header>{rows.map(([key, label]) => <label key={key}><span>{label}<small>{key === 'autoPublish' ? 'Если выключить, новые отзывы будут попадать на модерацию.' : ''}</small></span><input type="checkbox" checked={settings[key]} onChange={(e) => setSettings({ ...settings, [key]: e.target.checked })} /></label>)}<footer><button onClick={close}>Готово</button></footer></section></div>; }
+function ReviewEditor({ close, create }: { close: () => void; create: (form: FormData) => void }) { return <div className="review-modal-v3"><button onClick={close} /><form action={create}><header><div><p>Новая запись</p><h2>Добавить отзыв</h2></div><button type="button" onClick={close}><X /></button></header><div className="review-editor-v3"><label>Имя<input name="user_name" required placeholder="Алексей К." /></label><label>Город<input name="customer_city" placeholder="Минск" /></label><label>Оценка<select name="rating" defaultValue="5">{[5,4,3,2,1].map((item) => <option key={item}>{item}</option>)}</select></label><label>Источник<select name="source">{sources.map((source) => <option key={source}>{source}</option>)}</select></label><label className="span2">Товар / slug<input name="product_slug" placeholder="chasy-classic" /></label><label className="span2">Текст отзыва<textarea name="comment" required rows={5} /></label></div><footer><button type="button" onClick={close}>Отмена</button><button className="reviews-primary-v3">Добавить отзыв</button></footer></form></div>; }
+function Lightbox({ state, close }: { state: { photos: string[]; index: number }; close: () => void }) { const [index, setIndex] = useState(state.index); useEffect(() => { const esc = (e: KeyboardEvent) => e.key === 'Escape' && close(); addEventListener('keydown', esc); return () => removeEventListener('keydown', esc); }, [close]); const photos = state.photos; return <div className="review-lightbox-v3" onClick={close}><button onClick={(e) => { e.stopPropagation(); setIndex((index - 1 + photos.length) % photos.length); }}><ChevronLeft /></button><img src={photos[index]} alt="" onClick={(e) => e.stopPropagation()} /><button onClick={(e) => { e.stopPropagation(); setIndex((index + 1) % photos.length); }}><ChevronRight /></button><button className="close" onClick={close}><X /></button></div>; }

@@ -10,7 +10,18 @@ export type AdminReview = {
   rating: number;
   comment: string;
   photo_urls?: string[];
-  status: 'pending' | 'published' | 'hidden' | string;
+  status: 'pending' | 'published' | 'hidden' | 'rejected' | string;
+  customer_city?: string | null;
+  customer_phone?: string | null;
+  product_id?: string | null;
+  order_id?: string | null;
+  verified_purchase?: boolean;
+  source?: 'website' | 'instagram' | 'telegram' | 'offline' | 'import' | string;
+  admin_reply?: string | null;
+  admin_reply_at?: string | null;
+  internal_note?: string | null;
+  show_on_homepage?: boolean;
+  rejection_reason?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -92,7 +103,7 @@ export async function getAdminReviews() {
 
   const { data, error } = await serverSupabase
     .from('product_reviews')
-    .select('id, product_slug, user_id, user_email, user_name, rating, comment, photo_urls, status, created_at, updated_at')
+    .select('*')
     .order('created_at', { ascending: false })
     .limit(300);
 
