@@ -1,6 +1,7 @@
 import { serverSupabase } from './serverSupabase';
 
 export type CatalogCategoryKind = 'clock' | 'product' | 'service';
+export type CatalogCategoryStatus = 'active' | 'hidden' | 'archived';
 
 export type CatalogCategory = {
   id: string;
@@ -13,6 +14,13 @@ export type CatalogCategory = {
   image: string;
   seoTitle?: string;
   seoDescription?: string;
+  status?: CatalogCategoryStatus;
+  showInCatalog?: boolean;
+  showInFilter?: boolean;
+  showOnHomepage?: boolean;
+  showWhenEmpty?: boolean;
+  ogImage?: string;
+  parentId?: string | null;
 };
 
 export type CatalogControlSettings = {
@@ -54,14 +62,31 @@ export function mergeCatalogControl(value: unknown): CatalogControlSettings {
   const incoming = asObject(value);
   const incomingCategories = Array.isArray(incoming.categories) ? incoming.categories : [];
 
+  const normalizeCategory = (item: CatalogCategory) => {
+    const rawStatus = item.status;
+    const status: CatalogCategoryStatus = rawStatus === 'archived'
+      ? 'archived'
+      : rawStatus === 'hidden' || item.visible === false ? 'hidden' : 'active';
+
+    return {
+      ...item,
+      status,
+      visible: status === 'active' && item.visible !== false,
+      showInCatalog: item.showInCatalog !== false,
+      showInFilter: item.showInFilter !== false,
+      showOnHomepage: item.showOnHomepage === true,
+      showWhenEmpty: item.showWhenEmpty !== false
+    } as CatalogCategory;
+  };
+
   const categories = defaultCatalogControl.categories.map((item) => {
     const match = incomingCategories.find((category: any) => category?.id === item.id);
-    return { ...item, ...asObject(match) } as CatalogCategory;
+    return normalizeCategory({ ...item, ...asObject(match) } as CatalogCategory);
   });
 
   const customCategories = incomingCategories
     .filter((category: any) => category?.id && !categories.some((item) => item.id === category.id))
-    .map((category: any) => ({ ...defaultCatalogControl.categories[0], ...asObject(category) } as CatalogCategory));
+    .map((category: any) => normalizeCategory({ ...defaultCatalogControl.categories[0], ...asObject(category) } as CatalogCategory));
 
   return {
     enabled: typeof incoming.enabled === 'boolean' ? incoming.enabled : defaultCatalogControl.enabled,
@@ -84,6 +109,6 @@ export async function getCatalogControlSettings(): Promise<CatalogControlSetting
 
 export function visibleCatalogCategories(settings: CatalogControlSettings, kind?: CatalogCategoryKind) {
   return settings.categories
-    .filter((item) => item.visible && (!kind || item.kind === kind))
+    .filter((item) => item.visible && item.status !== 'archived' && item.showInCatalog !== false && item.showInFilter !== false && (!kind || item.kind === kind))
     .sort((a, b) => a.order - b.order);
 }
