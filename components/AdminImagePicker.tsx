@@ -91,16 +91,29 @@ export function AdminImagePicker({ label, value, onChange, altValue, onAltChange
 
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
       if (data.publicUrl) {
-        uploadedFiles.push({
-          id: data.publicUrl,
-          url: data.publicUrl,
-          title: file.name,
-          folder: 'uploaded',
-          source: 'admin upload',
-          used_in: 'editor',
-          size: file.size,
-          created_at: new Date().toISOString()
-        });
+        try {
+          const registered = await fetch('/api/admin/media', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url: data.publicUrl,
+              title: file.name,
+              folder: 'uploaded',
+              source: 'admin upload',
+              size_bytes: file.size,
+              mime_type: file.type
+            })
+          });
+          const payload = await registered.json();
+          if (registered.ok && payload?.file) {
+            uploadedFiles.push({ ...payload.file, size: payload.file.size_bytes || file.size });
+            continue;
+          }
+        } catch {
+          // The asset remains usable even if the media registry is temporarily unavailable.
+        }
+
+        uploadedFiles.push({ id: data.publicUrl, url: data.publicUrl, title: file.name, folder: 'uploaded', source: 'admin upload', used_in: '', size: file.size, created_at: new Date().toISOString() });
       }
     }
 

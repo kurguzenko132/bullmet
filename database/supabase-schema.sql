@@ -533,7 +533,14 @@ create table if not exists public.media_files (
   source text not null default 'admin',
   used_in text,
   size_bytes bigint,
-  created_at timestamptz not null default now()
+  mime_type text,
+  width integer,
+  height integer,
+  alt_text text not null default '',
+  description text not null default '',
+  tags text[] not null default '{}',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 alter table public.media_files enable row level security;

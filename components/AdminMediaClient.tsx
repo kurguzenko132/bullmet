@@ -1,178 +1,39 @@
 'use client';
 
-import { ChangeEvent, useMemo, useState } from 'react';
-import { Copy, Eye, RefreshCw, Upload } from 'lucide-react';
+import { ChangeEvent, DragEvent, useEffect, useMemo, useState } from 'react';
+import { Check, ChevronRight, Copy, Download, Eye, EyeOff, FolderOpen, Grid2X2, Image as ImageIcon, Info, List, MoreVertical, Move, Pencil, Plus, Search, Tag, Trash2, Upload, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { AdminMediaFile } from '@/lib/adminContent';
 
-type Filter = 'all' | 'products' | 'reviews' | 'banners' | 'uploaded' | 'site';
+type Tab = 'all' | 'images' | 'used' | 'unused'; type View = 'grid' | 'list';
+const folders = ['uploaded', 'products', 'categories', 'homepage', 'production', 'reviews', 'banners', 'documents'];
+const folderLabel: Record<string, string> = { uploaded: 'Загруженные', products: 'Товары', categories: 'Категории', homepage: 'Главная', production: 'Производство', reviews: 'Отзывы', banners: 'Баннеры', documents: 'Документы', site: 'Сайт' };
+const bytes = (value?: number) => !value ? '—' : value < 1024 * 1024 ? `${Math.ceil(value / 1024)} КБ` : `${(value / 1024 / 1024).toFixed(1)} МБ`;
+const fileName = (file: AdminMediaFile) => file.title || file.url.split('/').pop() || 'media';
+const isImage = (file: AdminMediaFile) => !file.mime_type || file.mime_type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|svg|avif)$/i.test(file.url);
 
 export function AdminMediaClient({ initialFiles, supabaseConfigured }: { initialFiles: AdminMediaFile[]; supabaseConfigured: boolean }) {
-  const [files, setFiles] = useState(initialFiles);
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
-  const [message, setMessage] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [lightbox, setLightbox] = useState('');
-
-  const filtered = useMemo(() => {
-    const clean = query.trim().toLowerCase();
-    return files.filter((file) => {
-      const byFolder = filter === 'all' || file.folder === filter || file.source === filter;
-      const haystack = [file.url, file.title, file.folder, file.source, file.used_in].filter(Boolean).join(' ').toLowerCase();
-      return byFolder && (!clean || haystack.includes(clean));
-    });
-  }, [files, query, filter]);
-
-  const stats = useMemo(() => ({
-    all: files.length,
-    products: files.filter((file) => file.folder === 'products').length,
-    reviews: files.filter((file) => file.folder === 'reviews').length,
-    banners: files.filter((file) => file.folder === 'banners').length,
-    uploaded: files.filter((file) => file.folder === 'uploaded').length
-  }), [files]);
-
-  async function refreshMedia() {
-    setMessage('');
-    try {
-      const response = await fetch('/api/admin/media', { cache: 'no-store' });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось обновить медиа.');
-      setFiles(Array.isArray(data.files) ? data.files : []);
-      setMessage('Медиафайлы обновлены.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось обновить медиа.');
-    }
-  }
-
-  async function copyUrl(url: string) {
-    try {
-      await navigator.clipboard.writeText(url);
-      setMessage('Ссылка скопирована.');
-    } catch {
-      setMessage(url);
-    }
-  }
-
-  async function uploadFiles(event: ChangeEvent<HTMLInputElement>) {
-    const selected = Array.from(event.target.files || []);
-    if (!selected.length) return;
-
-    if (!supabase) {
-      setMessage('Supabase не подключен. Загрузка недоступна.');
-      return;
-    }
-
-    setUploading(true);
-    setMessage('');
-
-    const bucket = process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_IMAGES_BUCKET || 'product-images';
-    const uploaded: AdminMediaFile[] = [];
-
-    for (const file of selected) {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '-');
-      const path = `admin-media/${Date.now()}-${safeName}`;
-      const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
-
-      if (error) {
-        setMessage(error.message);
-        continue;
-      }
-
-      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-      if (data.publicUrl) {
-        uploaded.push({
-          id: data.publicUrl,
-          url: data.publicUrl,
-          title: file.name,
-          folder: 'uploaded',
-          source: 'admin upload',
-          used_in: 'manual',
-          size: file.size,
-          created_at: new Date().toISOString()
-        });
-      }
-    }
-
-    setFiles((current) => [...uploaded, ...current]);
-    setUploading(false);
-    setMessage(uploaded.length ? `Загружено файлов: ${uploaded.length}` : 'Файлы не загрузились. Проверь Storage policies.');
-    event.target.value = '';
-  }
-
-  return (
-    <div className="admin-media-page">
-      <div className="admin-page-head">
-        <div>
-          <p>Медиацентр</p>
-          <h1>Медиафайлы сайта</h1>
-          <span>Фото товаров, отзывов, баннеров и загруженные файлы для дальнейшего использования на сайте.</span>
-        </div>
-        <div className="admin-head-actions">
-          <label className="admin-media-upload-button">
-            <Upload size={17} />
-            {uploading ? 'Загрузка...' : 'Загрузить фото'}
-            <input type="file" accept="image/*" multiple onChange={uploadFiles} disabled={uploading} />
-          </label>
-          <button type="button" onClick={refreshMedia}><RefreshCw size={17} /> Обновить</button>
-        </div>
-      </div>
-
-      {!supabaseConfigured && <div className="admin-message">Supabase не подключен: загрузка и список из базы могут быть недоступны.</div>}
-      {message && <div className="admin-message">{message}</div>}
-
-      <section className="admin-media-stats">
-        <article><b>{stats.all}</b><span>всего файлов</span></article>
-        <article><b>{stats.products}</b><span>товары</span></article>
-        <article><b>{stats.reviews}</b><span>отзывы</span></article>
-        <article><b>{stats.banners}</b><span>баннеры</span></article>
-        <article><b>{stats.uploaded}</b><span>загружено вручную</span></article>
-      </section>
-
-      <div className="admin-commerce-toolbar">
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по ссылке, названию или месту использования" />
-        <div>
-          {(['all', 'products', 'reviews', 'banners', 'uploaded'] as Filter[]).map((item) => (
-            <button key={item} type="button" className={filter === item ? 'is-active' : ''} onClick={() => setFilter(item)}>
-              {item === 'all' ? 'Все' : item}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <section className="admin-media-library-grid">
-        {filtered.map((file) => (
-          <article key={file.url}>
-            <button type="button" className="admin-media-thumb" onClick={() => setLightbox(file.url)}>
-              <img src={file.url} alt={file.title || ''} />
-              <Eye size={18} />
-            </button>
-            <div>
-              <b>{file.title || 'media'}</b>
-              <span>{file.folder} · {file.source}</span>
-              {file.used_in && <small>{file.used_in}</small>}
-            </div>
-            <div className="admin-media-actions">
-              <button type="button" onClick={() => copyUrl(file.url)}><Copy size={16} /> Скопировать</button>
-              <a href={file.url} target="_blank" rel="noreferrer">Открыть ↗</a>
-            </div>
-          </article>
-        ))}
-      </section>
-
-      {!filtered.length && (
-        <section className="admin-empty-commerce">
-          <h2>Медиафайлы не найдены</h2>
-          <p>Измените фильтр или загрузите изображения через кнопку сверху.</p>
-        </section>
-      )}
-
-      {lightbox && (
-        <div className="admin-review-lightbox" onClick={() => setLightbox('')}>
-          <button type="button" aria-label="Закрыть">×</button>
-          <img src={lightbox} alt="" />
-        </div>
-      )}
-    </div>
-  );
+  const [files, setFiles] = useState(initialFiles); const [tab, setTab] = useState<Tab>('all'); const [view, setView] = useState<View>('grid'); const [query, setQuery] = useState(''); const [folder, setFolder] = useState('all'); const [sort, setSort] = useState('new'); const [selected, setSelected] = useState<string[]>([]); const [activeId, setActiveId] = useState(initialFiles[0]?.id || ''); const [message, setMessage] = useState(''); const [uploads, setUploads] = useState<Array<{ name: string; progress: number; state: string }>>([]); const [dragging, setDragging] = useState(false); const [lightbox, setLightbox] = useState('');
+  useEffect(() => { const saved = localStorage.getItem('admin-media-view'); if (saved === 'grid' || saved === 'list') setView(saved); }, []);
+  const filtered = useMemo(() => files.filter((file) => { const used = !!file.usage?.length; const haystack = [fileName(file), file.alt_text, file.description, ...(file.tags || []), file.folder, file.used_in].filter(Boolean).join(' ').toLowerCase(); return (tab === 'all' || tab === 'images' && isImage(file) || tab === 'used' && used || tab === 'unused' && !used) && (folder === 'all' || file.folder === folder) && (!query || haystack.includes(query.toLowerCase())); }).sort((a,b) => sort === 'old' ? +new Date(a.created_at || 0) - +new Date(b.created_at || 0) : sort === 'name-asc' ? fileName(a).localeCompare(fileName(b), 'ru') : sort === 'name-desc' ? fileName(b).localeCompare(fileName(a), 'ru') : sort === 'size' ? (b.size || 0) - (a.size || 0) : +new Date(b.created_at || 0) - +new Date(a.created_at || 0)), [files, tab, folder, query, sort]);
+  const active = files.find((item) => item.id === activeId) || filtered[0]; const used = files.filter((file) => file.usage?.length); const unused = files.filter((file) => !file.usage?.length); const totalSize = files.reduce((sum, file) => sum + (file.size || 0), 0); const collections = ['products','categories','homepage','reviews','production','banners'].map((key) => ({ key, count: files.filter((file) => file.folder === key || file.usage?.some((usage) => usage.type.toLowerCase().includes(folderLabel[key].slice(0, -1).toLowerCase()))).length }));
+  function choose(id: string, multi = false) { setActiveId(id); if (multi) setSelected((items) => items.includes(id) ? items.filter((item) => item !== id) : [...items, id]); }
+  async function refresh() { const response = await fetch('/api/admin/media', { cache: 'no-store' }); const data = await response.json(); if (!response.ok || !data.ok) return setMessage(data.message || 'Не удалось обновить медиатеку.'); setFiles(data.files); setMessage('Медиатека обновлена.'); }
+  async function upload(list: File[]) { if (!list.length) return; if (!supabase) return setMessage('Supabase не подключён. Загрузка недоступна.'); setUploads(list.map((file) => ({ name: file.name, progress: 0, state: 'Загрузка...' }))); const bucket = process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_IMAGES_BUCKET || 'product-images'; const created: AdminMediaFile[] = []; let failures = 0; for (let index = 0; index < list.length; index++) { const file = list[index]; const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g, '-'); const path = `admin-media/${Date.now()}-${index}-${safe}`; setUploads((items) => items.map((item, i) => i === index ? { ...item, progress: 45 } : item)); const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false }); if (error) { failures++; setUploads((items) => items.map((item, i) => i === index ? { ...item, progress: 100, state: 'Ошибка загрузки' } : item)); continue; } const { data } = supabase.storage.from(bucket).getPublicUrl(path); const imageMeta = await dimensions(file); const response = await fetch('/api/admin/media', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: data.publicUrl, title: file.name, folder: 'uploaded', source: 'admin upload', size: file.size, mime_type: file.type, ...imageMeta }) }); const record = await response.json(); if (record.ok) created.push({ ...record.file, size: record.file.size_bytes }); else failures++; setUploads((items) => items.map((item, i) => i === index ? { ...item, progress: 100, state: record.ok ? 'Готово' : 'Ошибка регистрации' } : item)); }
+    setFiles((items) => [...created, ...items]); if (created[0]) setActiveId(created[0].id); setMessage(failures ? `${created.length} файлов загружено, ${failures} не удалось загрузить.` : `✓ Загружено ${created.length} файлов`); setTimeout(() => setUploads([]), 1800); }
+  function uploadInput(event: ChangeEvent<HTMLInputElement>) { void upload(Array.from(event.target.files || [])); event.target.value = ''; }
+  function drop(event: DragEvent<HTMLDivElement>) { event.preventDefault(); setDragging(false); void upload(Array.from(event.dataTransfer.files)); }
+  async function save(id: string, patch: Record<string, unknown>) { if (id.startsWith('http')) return setMessage('Этот файл подключён из контента сайта. Сначала добавьте его в медиатеку через загрузку, чтобы редактировать метаданные.'); const response = await fetch(`/api/admin/media/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }); const data = await response.json(); if (!response.ok || !data.ok) return setMessage(data.message || 'Не удалось сохранить файл.'); setFiles((items) => items.map((item) => item.id === id ? { ...item, ...data.file, size: data.file.size_bytes } : item)); setMessage('Изменения сохранены.'); }
+  async function remove(id: string) { const target = files.find((file) => file.id === id); if (!target) return; if (target.id.startsWith('http')) return setMessage('Файл подключён из контента сайта. Удалите или замените его в соответствующем редакторе.'); if (target.usage?.length) return setMessage(`Файл используется в ${target.usage.length} местах. Сначала замените его в привязках.`); if (!confirm(`Удалить ${fileName(target)}?`)) return; const response = await fetch(`/api/admin/media/${id}`, { method: 'DELETE' }); const data = await response.json(); if (!response.ok || !data.ok) return setMessage(data.message || 'Не удалось удалить файл.'); setFiles((items) => items.filter((file) => file.id !== id)); setSelected((items) => items.filter((item) => item !== id)); setActiveId(''); setMessage('Файл удалён.'); }
+  async function copy(url: string) { try { await navigator.clipboard.writeText(url); setMessage('Ссылка скопирована.'); } catch { setMessage(url); } }
+  const bulkMove = async () => { const to = prompt('Папка: uploaded, products, categories, homepage, production, reviews, banners, documents'); if (!to || !folders.includes(to)) return; await Promise.all(selected.map((id) => save(id, { folder: to }))); setSelected([]); };
+  return <div className="admin-media-v4"><header className="admin-media-head-v4"><div><h1>Медиафайлы</h1><p>Храните и управляйте изображениями и файлами сайта Bullmet. Используйте их в товарах, страницах и других разделах.</p></div><label className="media-primary-v4"><Upload size={17} />Загрузить файлы<input type="file" multiple accept="image/*,.pdf,.mp4,.svg" onChange={uploadInput} /></label></header>{!supabaseConfigured && <div className="media-note-v4">Supabase не подключён: просмотр доступен, а загрузка и редактирование медиатеки требуют подключения.</div>}{message && <div className="media-note-v4 success">{message}<button onClick={() => setMessage('')}><X size={15} /></button></div>}
+    <section className="media-kpis-v4"><Metric icon={<ImageIcon />} label="Всего файлов" value={files.length} text={files.length ? `+ ${files.filter((file) => new Date(file.created_at || 0).getMonth() === new Date().getMonth()).length} за месяц` : 'Нет файлов'} /><Metric icon={<Check />} label="Используется" value={used.length} text={`${files.length ? Math.round(used.length / files.length * 100) : 0}% от всех`} /><Metric icon={<EyeOff />} label="Не используется" value={unused.length} text={`${files.length ? Math.round(unused.length / files.length * 100) : 0}% от всех`} /><Metric icon={<FolderOpen />} label="Занято в хранилище" value={bytes(totalSize)} text="Реальный размер известных файлов" progress={Math.min(100, totalSize / (20 * 1024 * 1024 * 1024) * 100)} /></section>
+    <section className="media-top-v4"><div className={`media-drop-v4 ${dragging ? 'is-dragging' : ''}`} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={drop}><Upload size={32} /><b>Перетащите файлы сюда<br />или выберите на устройстве</b><span>JPG, PNG, WEBP, SVG, PDF, MP4 · до 30 МБ</span><label>Выбрать файлы<input type="file" multiple accept="image/*,.pdf,.mp4,.svg" onChange={uploadInput} /></label>{uploads.map((item) => <div className="media-upload-progress-v4" key={item.name}><span>{item.name}</span><i><b style={{ width: `${item.progress}%` }} /></i><em>{item.state}</em></div>)}</div><div className="media-collections-v4"><header><h2>Быстрые подборки</h2><button onClick={() => { setFolder('all'); setTab('all'); }}>Все папки <ChevronRight size={15} /></button></header><div>{collections.map((item) => <button key={item.key} onClick={() => { setFolder(item.key); setTab('all'); }}><FolderOpen size={20} /><span><b>{folderLabel[item.key]}</b><small>{item.count} файлов</small></span></button>)}</div></div></section>
+    <section className="media-library-v4"><div className="media-toolbar-v4"><nav>{([['all','Все файлы'],['images','Изображения'],['used','Используется'],['unused','Не используется']] as [Tab,string][]).map(([key,label]) => <button key={key} className={tab === key ? 'is-active' : ''} onClick={() => setTab(key)}>{label} ({key === 'all' ? files.length : key === 'images' ? files.filter(isImage).length : key === 'used' ? used.length : unused.length})</button>)}</nav><div><label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск по файлам, названию, тегам..." /></label><select value={folder} onChange={(e) => setFolder(e.target.value)}><option value="all">Все папки</option>{folders.map((item) => <option key={item} value={item}>{folderLabel[item]}</option>)}</select><select value={sort} onChange={(e) => setSort(e.target.value)}><option value="new">Сначала новые</option><option value="old">Сначала старые</option><option value="name-asc">По имени А–Я</option><option value="name-desc">По имени Я–А</option><option value="size">По размеру</option></select><span><button className={view === 'grid' ? 'is-active' : ''} onClick={() => { setView('grid'); localStorage.setItem('admin-media-view','grid'); }}><Grid2X2 size={17} /></button><button className={view === 'list' ? 'is-active' : ''} onClick={() => { setView('list'); localStorage.setItem('admin-media-view','list'); }}><List size={17} /></button></span></div></div><div className="media-library-body-v4"><div className={view === 'grid' ? 'media-grid-v4' : 'media-list-v4'}>{filtered.map((file) => <MediaCard key={file.id} file={file} active={file.id === active?.id} selected={selected.includes(file.id)} list={view === 'list'} select={(multi) => choose(file.id, multi)} lightbox={() => setLightbox(file.url)} />)}{!filtered.length && <div className="media-empty-v4"><ImageIcon size={34} /><b>{files.length ? 'Файлы не найдены' : 'Медиатека пока пуста'}</b><span>{files.length ? 'Сбросьте фильтры или измените поиск.' : 'Загрузите изображения, которые сможете использовать в товарах и страницах сайта.'}</span></div>}</div><MediaDetails file={active} save={save} remove={remove} copy={copy} open={setLightbox} /></div></section>
+    {selected.length > 0 && <div className="media-bulk-v4"><b>Выбрано файлов: {selected.length}</b><button onClick={() => selected.forEach((id) => { const file = files.find((item) => item.id === id); if (file) window.open(file.url, '_blank'); })}><Download size={16} />Скачать</button><button onClick={bulkMove}><Move size={16} />Переместить</button><button onClick={() => { const tag = prompt('Новый тег'); if (tag) selected.forEach((id) => { const file = files.find((item) => item.id === id); if (file) save(id, { tags: [...(file.tags || []), tag] }); }); }}><Tag size={16} />Добавить теги</button><button className="danger" onClick={() => selected.forEach(remove)}><Trash2 size={16} />Удалить</button><button onClick={() => setSelected([])}>Снять выделение <X size={16} /></button></div>}{lightbox && <div className="media-lightbox-v4" onClick={() => setLightbox('')}><img src={lightbox} alt="" onClick={(e) => e.stopPropagation()} /><button onClick={() => setLightbox('')}><X /></button></div>}</div>;
 }
+function Metric({ icon, label, value, text, progress }: { icon: React.ReactNode; label: string; value: string | number; text: string; progress?: number }) { return <article><span>{icon}</span><div><small>{label}</small><b>{value}</b><em>{text}</em>{progress !== undefined && <i><u style={{ width: `${progress}%` }} /></i>}</div></article>; }
+function MediaCard({ file, active, selected, list, select, lightbox }: { file: AdminMediaFile; active: boolean; selected: boolean; list: boolean; select: (multi: boolean) => void; lightbox: () => void }) { const used = !!file.usage?.length; return <article className={`${active ? 'is-active' : ''} ${list ? 'is-list' : ''}`} onClick={() => select(false)}><button className="media-check-v4" onClick={(e) => { e.stopPropagation(); select(true); }}>{selected && <Check size={15} />}</button><button className="media-preview-v4" onClick={(e) => { e.stopPropagation(); lightbox(); }}><img loading="lazy" src={file.url} alt={file.alt_text || fileName(file)} /></button><div className="media-card-copy-v4"><b>{fileName(file)}</b><small>{bytes(file.size)} · {file.width && file.height ? `${file.width} × ${file.height}` : file.mime_type?.replace('image/','').toUpperCase() || 'изображение'}</small><em className={used ? 'used' : ''}>{used ? '✓ Используется' : 'Не используется'}</em></div><button className="media-more-v4" onClick={(e) => { e.stopPropagation(); lightbox(); }}><MoreVertical size={17} /></button></article>; }
+function MediaDetails({ file, save, remove, copy, open }: { file?: AdminMediaFile; save: (id: string, patch: Record<string, unknown>) => void; remove: (id: string) => void; copy: (url: string) => void; open: (url: string) => void }) { const [tags, setTags] = useState(''); useEffect(() => setTags((file?.tags || []).join(', ')), [file?.id]); if (!file) return <aside className="media-details-v4 media-empty-v4"><Info size={32} /><b>Выберите файл</b><span>Здесь появятся свойства изображения и места использования.</span></aside>; const used = !!file.usage?.length; return <aside className="media-details-v4"><header><h2>Информация о файле</h2></header><div className="media-detail-preview-v4"><img src={file.url} alt={file.alt_text || ''} /></div><div className="media-detail-title-v4"><b>{fileName(file)}</b><em className={used ? 'used' : ''}>{used ? '✓ Используется' : 'Не используется'}</em></div><dl><dt>Формат</dt><dd>{file.mime_type?.replace('image/','').toUpperCase() || 'JPG'}</dd><dt>Размер</dt><dd>{bytes(file.size)}</dd><dt>Разрешение</dt><dd>{file.width && file.height ? `${file.width} × ${file.height}` : 'Не определено'}</dd><dt>Загружен</dt><dd>{file.created_at ? new Intl.DateTimeFormat('ru-RU').format(new Date(file.created_at)) : '—'}</dd></dl><label>Название файла<input defaultValue={fileName(file)} onBlur={(e) => e.target.value !== file.title && save(file.id, { title: e.target.value })} /></label><label>Папка<select value={file.folder || 'uploaded'} onChange={(e) => save(file.id, { folder: e.target.value })}>{folders.map((item) => <option key={item} value={item}>{folderLabel[item]}</option>)}</select></label><label>ALT-текст <small>{(file.alt_text || '').length}/255</small><input defaultValue={file.alt_text || ''} maxLength={255} placeholder="Короткое описание изображения" onBlur={(e) => e.target.value !== (file.alt_text || '') && save(file.id, { alt_text: e.target.value })} /></label><label>Описание<textarea defaultValue={file.description || ''} placeholder="Внутреннее описание файла" onBlur={(e) => e.target.value !== (file.description || '') && save(file.id, { description: e.target.value })} /></label><label>Теги<input value={tags} placeholder="часы, loft, дерево" onChange={(e) => setTags(e.target.value)} onBlur={() => save(file.id, { tags: tags.split(',').map((item) => item.trim()).filter(Boolean) })} /></label><section className="media-usage-v4"><h3>Где используется ({file.usage?.length || 0})</h3>{file.usage?.length ? file.usage.map((usage, index) => <a href={usage.href} key={`${usage.href}-${index}`}><ImageIcon size={16} /><span><b>{usage.type}: {usage.title}</b><small>{usage.publicHref || usage.href}</small></span><ChevronRight size={16} /></a>) : <p>Файл нигде не используется. Его можно безопасно удалить или выбрать в одном из редакторов.</p>}</section><div className="media-detail-actions-v4"><label><Upload size={15} />Заменить файл<input type="file" accept="image/*" onChange={() => alert('Замена требует переназначения всех существующих ссылок. Используйте этот файл через MediaPicker, чтобы не потерять оригинал.')} /></label><button onClick={() => copy(file.url)}><Copy size={15} />Скопировать ссылку</button><a href={file.url} target="_blank" rel="noreferrer"><Download size={15} />Открыть файл</a><button className="danger" disabled={used} onClick={() => remove(file.id)}><Trash2 size={15} />{used ? 'Есть привязки' : 'Удалить файл'}</button></div></aside>; }
+async function dimensions(file: File) { if (!file.type.startsWith('image/')) return {}; return new Promise<{ width?: number; height?: number }>((resolve) => { const image = new Image(); image.onload = () => { resolve({ width: image.naturalWidth, height: image.naturalHeight }); URL.revokeObjectURL(image.src); }; image.onerror = () => resolve({}); image.src = URL.createObjectURL(file); }); }

@@ -34,7 +34,15 @@ export type AdminMediaFile = {
   source?: string;
   used_in?: string;
   size?: number;
+  mime_type?: string;
+  width?: number;
+  height?: number;
+  alt_text?: string;
+  description?: string;
+  tags?: string[];
+  usage?: Array<{ type: string; title: string; href: string; publicHref?: string }>;
   created_at?: string;
+  updated_at?: string;
 };
 
 export type BannerItem = {
@@ -121,17 +129,37 @@ export async function getAdminMediaFiles() {
   const add = (url?: string | null, meta?: Partial<AdminMediaFile>) => {
     const clean = String(url || '').trim();
     if (!clean) return;
+    const current = files.get(clean);
+    const usage = [...(current?.usage || []), ...(meta?.usage || [])];
     files.set(clean, {
-      id: clean,
+      id: meta?.id || current?.id || clean,
       url: clean,
-      title: meta?.title || clean.split('/').pop() || 'media',
-      folder: meta?.folder || 'site',
-      source: meta?.source || 'unknown',
-      used_in: meta?.used_in || '',
-      size: meta?.size,
-      created_at: meta?.created_at
+      title: meta?.title || current?.title || clean.split('/').pop() || 'media',
+      folder: meta?.folder || current?.folder || 'site',
+      source: meta?.source || current?.source || 'unknown',
+      used_in: meta?.used_in || current?.used_in || '',
+      size: meta?.size || current?.size,
+      mime_type: meta?.mime_type || current?.mime_type,
+      width: meta?.width || current?.width,
+      height: meta?.height || current?.height,
+      alt_text: meta?.alt_text || current?.alt_text,
+      description: meta?.description || current?.description,
+      tags: meta?.tags || current?.tags || [],
+      usage,
+      created_at: meta?.created_at || current?.created_at,
+      updated_at: meta?.updated_at || current?.updated_at
     });
   };
+
+  if (serverSupabase) {
+    const { data } = await serverSupabase.from('media_files').select('*').order('created_at', { ascending: false }).limit(500);
+    (data || []).forEach((file: any) => add(file.url, {
+      id: file.id, title: file.title, folder: file.folder, source: file.source, used_in: file.used_in,
+      size: file.size_bytes, mime_type: file.mime_type, width: file.width, height: file.height,
+      alt_text: file.alt_text, description: file.description, tags: Array.isArray(file.tags) ? file.tags : [],
+      created_at: file.created_at, updated_at: file.updated_at
+    }));
+  }
 
   const products = await getAdminCatalogProducts();
   products.forEach((product) => {
@@ -139,7 +167,8 @@ export async function getAdminMediaFiles() {
       title: product.title,
       folder: 'products',
       source: 'product',
-      used_in: `/product/${product.slug}`
+      used_in: `/product/${product.slug}`,
+      usage: [{ type: 'Товар', title: product.title, href: `/admin/products?search=${encodeURIComponent(product.slug)}`, publicHref: `/product/${product.slug}` }]
     }));
   });
 
@@ -150,7 +179,8 @@ export async function getAdminMediaFiles() {
       folder: 'reviews',
       source: 'review',
       used_in: `/product/${review.product_slug}`,
-      created_at: review.created_at
+      created_at: review.created_at,
+      usage: [{ type: 'Отзыв', title: review.product_slug || 'Фото отзыва', href: `/admin/reviews`, publicHref: `/product/${review.product_slug}` }]
     }));
   });
 
@@ -159,10 +189,11 @@ export async function getAdminMediaFiles() {
     title: banner.title,
     folder: 'banners',
     source: 'banner',
-    used_in: banner.placement
+    used_in: banner.placement,
+    usage: [{ type: 'Баннер', title: banner.title, href: `/admin/banners`, publicHref: banner.href }]
   }));
 
-  return Array.from(files.values());
+  return Array.from(files.values()).map((file) => ({ ...file, used_in: file.usage?.map((item) => item.title).join(', ') || file.used_in || '' }));
 }
 
 export async function getBannerControlSettings(): Promise<BannerControlSettings> {
