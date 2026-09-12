@@ -1,10 +1,15 @@
+import { AdminStatsClient } from '@/components/AdminStatsClient';
+import { getAdminCoupons } from '@/lib/adminCoupons';
+import { getAdminReviews } from '@/lib/adminContent';
+import { getAdminOrders } from '@/lib/adminCommerce';
+import { buildAdminStats } from '@/lib/adminStats';
 import { getCatalogProducts } from '@/lib/products';
-import { getAdminOrders, getAdminRequests, money } from '@/lib/adminCommerce';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Статистика | Админка Bullmet' };
 
 export default async function AdminStats() {
-  const [products, orders, requests] = await Promise.all([getCatalogProducts(), getAdminOrders(), getAdminRequests()]);
-  const active = products.filter((item) => item.status !== 'draft').length; const draft = products.length - active; const revenue = orders.filter((order) => /оплачен|выполнен|передан/i.test(order.status || '')).reduce((sum, order) => sum + Number(order.total || 0), 0); const allValue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0); const byStatus = orders.reduce<Record<string, number>>((all, order) => { const status = order.status || 'Новый'; all[status] = (all[status] || 0) + 1; return all; }, {}); const byCategory = products.reduce<Record<string, number>>((all, item) => { const category = item.category || 'Без категории'; all[category] = (all[category] || 0) + 1; return all; }, {}); const maxCategory = Math.max(1, ...Object.values(byCategory)); const maxStatus = Math.max(1, ...Object.values(byStatus));
-  return <div className="admin-dashboard-pro admin-stats-cms"><div className="admin-page-head"><div><p>Аналитика</p><h1>Статистика магазина</h1><span>Показатели рассчитываются по реальным товарам, заказам и заявкам из CMS.</span></div></div><section className="admin-stat-grid"><article><span>Каталог</span><b>{products.length}</b><em>{active} опубликовано / {draft} черновиков</em></article><article><span>Заказы</span><b>{orders.length}</b><em>{Object.values(byStatus).reduce((sum, value) => sum + value, 0)} всего в CRM</em></article><article><span>Заявки</span><b>{requests.length}</b><em>требуют обработки менеджером</em></article><article><span>Оборот</span><b>{money(allValue)} BYN</b><em>{money(revenue)} BYN оплачено / выполнено</em></article></section><section className="admin-dashboard-grid two"><div className="admin-panel-card big"><div className="admin-card-title"><h2>Товары по категориям</h2><span>Структура ассортимента</span></div><div className="admin-bars">{Object.entries(byCategory).map(([name, count]) => <div key={name}><span>{name}</span><b>{count}</b><i style={{ width: `${Math.max(8, count / maxCategory * 100)}%` }} /></div>)}</div></div><div className="admin-panel-card"><div className="admin-card-title"><h2>Статусы заказов</h2><span>Очередь для команды</span></div><div className="admin-bars admin-status-bars">{Object.entries(byStatus).map(([name, count]) => <div key={name}><span>{name}</span><b>{count}</b><i style={{ width: `${Math.max(8, count / maxStatus * 100)}%` }} /></div>)}{!orders.length && <p>Заказов пока нет.</p>}</div></div></section><section className="admin-panel-card admin-stats-actions"><h2>Что делать дальше</h2><div><a href="/admin/orders">Разобрать заказы</a><a href="/admin/requests">Проверить заявки</a><a href="/admin/products">Проверить каталог</a><a href="/admin/reports">Скачать отчёт</a></div></section></div>;
+  const [orders, products, reviews, couponData] = await Promise.all([getAdminOrders(), getCatalogProducts(), getAdminReviews(), getAdminCoupons()]);
+  const initialStats = buildAdminStats({ orders, products, reviews, coupons: couponData.coupons, usages: couponData.usages, period: '30', compare: 'previous' });
+  return <AdminStatsClient initialStats={initialStats} />;
 }
