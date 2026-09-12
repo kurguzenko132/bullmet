@@ -102,6 +102,44 @@ export type SiteControlSettings = {
     couponRules: CouponRule[];
     deliverySettings: DeliverySettings;
   };
+  adminSettings: {
+    company: {
+      legalName: string;
+      description: string;
+      additionalInfo: string;
+      logo: string;
+      favicon: string;
+      requisites: { inn: string; unp: string; bank: string; account: string };
+    };
+    site: {
+      maintenance: boolean;
+      timezone: string;
+      currency: string;
+      language: string;
+    };
+    contacts: {
+      secondaryPhone: string;
+      ordersEmail: string;
+      whatsapp: string;
+      vk: string;
+      youtube: string;
+    };
+    orders: {
+      allowGuestCheckout: boolean;
+      autoNewStatus: boolean;
+      quickOrder: boolean;
+      orderPrefix: string;
+      nextOrderNumber: number;
+    };
+    notifications: {
+      adminEmail: boolean;
+      telegram: boolean;
+      customerEmail: boolean;
+      newOrder: boolean;
+      orderStatus: boolean;
+      lowStock: boolean;
+    };
+  };
 };
 
 export const siteControlKey = 'site_control';
@@ -163,6 +201,16 @@ export const defaultSiteControl: SiteControlSettings = {
     ],
     couponRules: [],
     deliverySettings: { freeDeliveryEnabled: true, freeDeliveryFrom: 300, freeDeliveryScope: 'delivery_only', showEstimatedDates: true, showInstruction: true, showPickupAddress: true, allowComment: true }
+  },
+  adminSettings: {
+    company: {
+      legalName: '', description: 'Производим металлические изделия и стильные часы для дома и бизнеса.', additionalInfo: '', logo: '', favicon: '',
+      requisites: { inn: '', unp: '', bank: '', account: '' }
+    },
+    site: { maintenance: false, timezone: 'Europe/Minsk', currency: 'BYN', language: 'Русский' },
+    contacts: { secondaryPhone: '', ordersEmail: '', whatsapp: '', vk: '', youtube: '' },
+    orders: { allowGuestCheckout: true, autoNewStatus: true, quickOrder: true, orderPrefix: 'BM-', nextOrderNumber: 100249 },
+    notifications: { adminEmail: true, telegram: false, customerEmail: true, newOrder: true, orderStatus: true, lowStock: true }
   }
 };
 
@@ -175,6 +223,16 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
   const general = { ...defaultSiteControl.general, ...asObject(incoming.general) };
   const contacts = { ...defaultSiteControl.contacts, ...asObject(incoming.contacts) };
   const seo = { ...defaultSiteControl.seo, ...asObject(incoming.seo) };
+  const adminIncoming = asObject(incoming.adminSettings);
+  const adminCompany = { ...defaultSiteControl.adminSettings.company, ...asObject(adminIncoming.company) };
+  const adminRequisites = { ...defaultSiteControl.adminSettings.company.requisites, ...asObject(asObject(adminIncoming.company).requisites) };
+  const adminSettings = {
+    company: { ...adminCompany, requisites: adminRequisites },
+    site: { ...defaultSiteControl.adminSettings.site, ...asObject(adminIncoming.site) },
+    contacts: { ...defaultSiteControl.adminSettings.contacts, ...asObject(adminIncoming.contacts) },
+    orders: { ...defaultSiteControl.adminSettings.orders, ...asObject(adminIncoming.orders) },
+    notifications: { ...defaultSiteControl.adminSettings.notifications, ...asObject(adminIncoming.notifications) }
+  } as SiteControlSettings['adminSettings'];
   const commerceIncoming = asObject(incoming.commerce);
   const mergeCommerceOptions = (source: CommerceOption[], value: unknown) => {
     if (!Array.isArray(value)) return source;
@@ -293,7 +351,7 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
 
   const navigation = [...defaultNavigation, ...customNavigation].sort((a, b) => a.order - b.order);
 
-  return { general, contacts, directions, navigation, seo, commerce };
+  return { general, contacts, directions, navigation, seo, commerce, adminSettings };
 }
 
 export async function getSiteControlSettings(): Promise<SiteControlSettings> {

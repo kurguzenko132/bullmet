@@ -1,252 +1,94 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Eye, EyeOff, Globe2, Menu, Phone, RotateCcw, Save, Search, Settings2, ToggleLeft } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
+  AlertTriangle, Bell, Building2, Check, ChevronRight, CircleHelp, Clock3, Code2, Database,
+  ExternalLink, Globe2, ImageIcon, Mail, MapPin, PackageCheck, Phone, Save, Search,
+  Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, Trash2, UsersRound
+} from 'lucide-react';
 import { AdminImagePicker } from '@/components/AdminImagePicker';
 import { defaultSiteControl, type SiteControlSettings } from '@/lib/siteControl';
 
-type Props = {
-  initialSettings: SiteControlSettings;
-  diagnostics: {
-    supabaseConfigured: boolean;
-    telegramConfigured: boolean;
-    adminEmailConfigured: boolean;
-    siteUrl: string;
-  };
-};
+type Section = 'company' | 'site' | 'contacts' | 'orders' | 'notifications' | 'seo' | 'integrations' | 'system' | 'danger';
+type Props = { initialSettings: SiteControlSettings; diagnostics: { supabaseConfigured: boolean; telegramConfigured: boolean; adminEmailConfigured: boolean; siteUrl: string } };
 
-function updateArrayItem<T extends { [key: string]: any }>(items: T[], key: keyof T, value: T[keyof T], patch: Partial<T>) {
-  return items.map((item) => item[key] === value ? { ...item, ...patch } : item);
+const sections: Array<{ id: Section; label: string; note: string; icon: typeof Building2 }> = [
+  { id: 'company', label: 'Компания', note: 'Основная информация, контакты', icon: Building2 },
+  { id: 'site', label: 'Сайт', note: 'Статус, валюта, направления', icon: Globe2 },
+  { id: 'contacts', label: 'Контакты и соцсети', note: 'Телефоны, email, мессенджеры', icon: Phone },
+  { id: 'orders', label: 'Заказы', note: 'Правила оформления и номера', icon: ShoppingCart },
+  { id: 'notifications', label: 'Уведомления', note: 'Email, Telegram, события', icon: Bell },
+  { id: 'seo', label: 'SEO', note: 'Глобальные SEO-настройки', icon: Search },
+  { id: 'integrations', label: 'Интеграции', note: 'Внешние сервисы и API', icon: Code2 },
+  { id: 'system', label: 'Система', note: 'Технические параметры', icon: Settings2 },
+  { id: 'danger', label: 'Опасная зона', note: 'Режим обслуживания, очистка', icon: AlertTriangle }
+];
+
+function Toggle({ checked, onChange, label, note }: { checked: boolean; onChange: (value: boolean) => void; label: string; note?: string }) {
+  return <label className="settings-v3-toggle"><span><b>{label}</b>{note && <small>{note}</small>}</span><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /><i aria-hidden="true" /></label>;
+}
+
+function Field({ label, children, span = false }: { label: string; children: ReactNode; span?: boolean }) {
+  return <label className={span ? 'settings-v3-field span-2' : 'settings-v3-field'}><span>{label}</span>{children}</label>;
 }
 
 export function AdminSiteSettingsClient({ initialSettings, diagnostics }: Props) {
-  const [settings, setSettings] = useState<SiteControlSettings>(initialSettings);
-  const [activeTab, setActiveTab] = useState<'general' | 'directions' | 'navigation' | 'seo'>('general');
-  const [message, setMessage] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const visibleDirections = useMemo(() => settings.directions.filter((item) => item.visible).length, [settings.directions]);
-  const visibleNav = useMemo(() => settings.navigation.filter((item) => item.visible).length, [settings.navigation]);
-
-  function patchGeneral(patch: Partial<SiteControlSettings['general']>) {
-    setSettings((current) => ({ ...current, general: { ...current.general, ...patch } }));
-  }
-
-  function patchContacts(patch: Partial<SiteControlSettings['contacts']>) {
-    setSettings((current) => ({ ...current, contacts: { ...current.contacts, ...patch } }));
-  }
-
-  function patchSeo(patch: Partial<SiteControlSettings['seo']>) {
-    setSettings((current) => ({ ...current, seo: { ...current.seo, ...patch } }));
-  }
-
-  function patchDirection(key: string, patch: Partial<SiteControlSettings['directions'][number]>) {
-    setSettings((current) => ({
-      ...current,
-      directions: updateArrayItem(current.directions, 'key', key as any, patch)
-    }));
-  }
-
-  function patchNavigation(id: string, patch: Partial<SiteControlSettings['navigation'][number]>) {
-    setSettings((current) => ({
-      ...current,
-      navigation: updateArrayItem(current.navigation, 'id', id as any, patch)
-    }));
-  }
+  const router = useRouter(); const pathname = usePathname(); const query = useSearchParams();
+  const querySection = query.get('section') as Section | null;
+  const active: Section = sections.some((item) => item.id === querySection) ? querySection! : 'company';
+  const [settings, setSettings] = useState(initialSettings);
+  const [saved, setSaved] = useState(initialSettings);
+  const [saving, setSaving] = useState(false); const [notice, setNotice] = useState(''); const [dangerConfirm, setDangerConfirm] = useState('');
+  const dirty = useMemo(() => JSON.stringify(settings) !== JSON.stringify(saved), [settings, saved]);
+  const update = (patch: Partial<SiteControlSettings>) => setSettings((current) => ({ ...current, ...patch }));
+  const patchGeneral = (patch: Partial<SiteControlSettings['general']>) => update({ general: { ...settings.general, ...patch } });
+  const patchContacts = (patch: Partial<SiteControlSettings['contacts']>) => update({ contacts: { ...settings.contacts, ...patch } });
+  const patchAdmin = (section: keyof SiteControlSettings['adminSettings'], patch: Record<string, unknown>) => update({ adminSettings: { ...settings.adminSettings, [section]: { ...settings.adminSettings[section], ...patch } } as SiteControlSettings['adminSettings'] });
+  const setSection = (section: Section) => router.replace(`${pathname}?section=${section}`, { scroll: false });
 
   async function saveSettings() {
-    setSaving(true);
-    setMessage('');
-
+    if (!settings.general.siteName.trim() || !settings.contacts.phone.trim() || !settings.contacts.email.includes('@')) { setNotice('Проверьте название компании, телефон и корректность email.'); return; }
+    setSaving(true); setNotice('');
     try {
-      const response = await fetch('/api/admin/site-control', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings })
-      });
-
+      const response = await fetch('/api/admin/site-control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ settings }) });
       const result = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Не удалось сохранить настройки.');
-      }
-
-      setSettings(result.settings || settings);
-      setMessage('Настройки сохранены. Публичный сайт использует эти данные в меню, футере, контактах и SEO.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось сохранить настройки.');
-    } finally {
-      setSaving(false);
-    }
+      if (!response.ok) throw new Error(result.error || 'Не удалось сохранить настройки.');
+      setSettings(result.settings || settings); setSaved(result.settings || settings); setNotice('Изменения сохранены и синхронизированы с публичным сайтом.');
+    } catch (error) { setNotice(error instanceof Error ? error.message : 'Не удалось сохранить настройки.'); } finally { setSaving(false); }
   }
+  function clearChanges() { setSettings(saved); setNotice('Несохранённые изменения отменены.'); }
+  function resetDefaults() { setSettings(defaultSiteControl); setNotice('Загружены значения по умолчанию. Сохраните их, чтобы применить.'); }
+  const visibleDirections = settings.directions.filter((item) => item.visible).length;
+  const addressLines = settings.contacts.address.split(',').slice(0, 2).join(',');
+  const sectionMeta = sections.find((item) => item.id === active)!;
 
-  function resetDefaults() {
-    setSettings(defaultSiteControl);
-    setMessage('Настройки сброшены локально. Нажмите “Сохранить”, чтобы записать их в Supabase.');
-  }
-
-  return (
-    <div className="admin-site-control">
-      <section className="admin-site-control-hero">
-        <div>
-          <p>Фундамент управления сайтом</p>
-          <h1>Настройки Bullmet</h1>
-          <span>Контакты, видимые направления, меню и SEO — база для управления сайтом без кода.</span>
-        </div>
-        <div className="admin-site-control-actions">
-          <Link href="/" target="_blank"><Globe2 size={17} /> Открыть сайт</Link>
-          <button type="button" onClick={resetDefaults}><RotateCcw size={17} /> Сбросить</button>
-          <button type="button" onClick={saveSettings} disabled={saving}><Save size={17} /> {saving ? 'Сохраняем...' : 'Сохранить'}</button>
-        </div>
-      </section>
-
-      {message && <div className="admin-site-control-message">{message}</div>}
-
-      <section className="admin-site-control-status">
-        <article className={diagnostics.supabaseConfigured ? 'is-ok' : 'is-bad'}><b>Supabase</b><span>{diagnostics.supabaseConfigured ? 'подключен' : 'не подключен'}</span></article>
-        <article className={diagnostics.telegramConfigured ? 'is-ok' : 'is-warn'}><b>Telegram</b><span>{diagnostics.telegramConfigured ? 'уведомления включены' : 'не настроен'}</span></article>
-        <article className={diagnostics.adminEmailConfigured ? 'is-ok' : 'is-bad'}><b>Админ</b><span>{diagnostics.adminEmailConfigured ? 'email задан' : 'email не задан'}</span></article>
-        <article><b>Направления</b><span>{visibleDirections} видно клиентам</span></article>
-        <article><b>Меню</b><span>{visibleNav} активных пунктов</span></article>
-      </section>
-
-      <section className="admin-site-control-tabs">
-        <button className={activeTab === 'general' ? 'active' : ''} type="button" onClick={() => setActiveTab('general')}><Settings2 size={17} /> Основное и контакты</button>
-        <button className={activeTab === 'directions' ? 'active' : ''} type="button" onClick={() => setActiveTab('directions')}><ToggleLeft size={17} /> Видимость направлений</button>
-        <button className={activeTab === 'navigation' ? 'active' : ''} type="button" onClick={() => setActiveTab('navigation')}><Menu size={17} /> Меню сайта</button>
-        <button className={activeTab === 'seo' ? 'active' : ''} type="button" onClick={() => setActiveTab('seo')}><Search size={17} /> SEO</button>
-      </section>
-
-      {activeTab === 'general' && (
-        <section className="admin-site-control-grid">
-          <div className="admin-site-control-card">
-            <div className="admin-site-control-card-head">
-              <h2>Основные данные</h2>
-              <span>Название, позиционирование и режим запуска</span>
-            </div>
-            <div className="admin-form-grid-two">
-              <label>Название сайта<input value={settings.general.siteName} onChange={(e) => patchGeneral({ siteName: e.target.value })} /></label>
-              <label>Текст логотипа<input value={settings.general.logoText} onChange={(e) => patchGeneral({ logoText: e.target.value })} /></label>
-              <label>Подпись под логотипом<input value={settings.general.tagline} onChange={(e) => patchGeneral({ tagline: e.target.value })} /></label>
-              <label>Позиционирование<input value={settings.general.positioning} onChange={(e) => patchGeneral({ positioning: e.target.value })} /></label>
-              <label className="span-2">Режим публичного запуска
-                <select value={settings.general.launchMode} onChange={(e) => patchGeneral({ launchMode: e.target.value as any })}>
-                  <option value="clocks_only">Только часы</option>
-                  <option value="mixed">Часы + выбранные направления</option>
-                  <option value="all">Все направления</option>
-                </select>
-              </label>
-            </div>
-          </div>
-
-          <div className="admin-site-control-card">
-            <div className="admin-site-control-card-head">
-              <h2>Контакты</h2>
-              <span>Данные, которые должны попадать в футер, контакты и заявки</span>
-            </div>
-            <div className="admin-form-grid-two">
-              <label>Телефон<input value={settings.contacts.phone} onChange={(e) => patchContacts({ phone: e.target.value })} /></label>
-              <label>Email<input value={settings.contacts.email} onChange={(e) => patchContacts({ email: e.target.value })} /></label>
-              <label className="span-2">Адрес<input value={settings.contacts.address} onChange={(e) => patchContacts({ address: e.target.value })} /></label>
-              <label>Время работы<input value={settings.contacts.hours} onChange={(e) => patchContacts({ hours: e.target.value })} /></label>
-              <label>Telegram<input value={settings.contacts.telegram} onChange={(e) => patchContacts({ telegram: e.target.value })} /></label>
-              <label>Instagram<input value={settings.contacts.instagram} onChange={(e) => patchContacts({ instagram: e.target.value })} /></label>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {activeTab === 'directions' && (
-        <section className="admin-site-control-card">
-          <div className="admin-site-control-card-head">
-            <h2>Видимость направлений</h2>
-            <span>Клиент видит только включённые направления. Остальные остаются подготовленными внутри проекта.</span>
-          </div>
-          <div className="admin-directions-table">
-            {settings.directions.map((item) => (
-              <article key={item.key} className={item.visible ? 'is-visible' : ''}>
-                <button type="button" onClick={() => patchDirection(item.key, { visible: !item.visible })}>
-                  {item.visible ? <Eye size={18} /> : <EyeOff size={18} />}
-                </button>
-                <div>
-                  <b>{item.title}</b>
-                  <span>{item.note}</span>
-                </div>
-                <input type="number" value={item.order} onChange={(e) => patchDirection(item.key, { order: Number(e.target.value) || item.order })} />
-                <input value={item.href} onChange={(e) => patchDirection(item.key, { href: e.target.value })} />
-                <em>{item.visible ? 'Видно' : 'Скрыто'}</em>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {activeTab === 'navigation' && (
-        <section className="admin-site-control-card">
-          <div className="admin-site-control-card-head">
-            <h2>Меню сайта</h2>
-            <span>Заготовка управления шапкой, мобильной панелью и футером.</span>
-          </div>
-          <div className="admin-nav-settings-list">
-            {settings.navigation.map((item) => (
-              <article key={item.id}>
-                <button type="button" className={item.visible ? 'is-on' : ''} onClick={() => patchNavigation(item.id, { visible: !item.visible })}>
-                  {item.visible ? <CheckCircle2 size={18} /> : <EyeOff size={18} />}
-                </button>
-                <select value={item.location} onChange={(e) => patchNavigation(item.id, { location: e.target.value as any })}>
-                  <option value="header">Шапка</option>
-                  <option value="mobile">Мобильное меню</option>
-                  <option value="footer">Футер</option>
-                </select>
-                <input value={item.label} onChange={(e) => patchNavigation(item.id, { label: e.target.value })} />
-                <input value={item.href} onChange={(e) => patchNavigation(item.id, { href: e.target.value })} />
-                <input type="number" value={item.order} onChange={(e) => patchNavigation(item.id, { order: Number(e.target.value) || item.order })} />
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {activeTab === 'seo' && (
-        <section className="admin-site-control-grid">
-          <div className="admin-site-control-card">
-            <div className="admin-site-control-card-head">
-              <h2>SEO по умолчанию</h2>
-              <span>Базовые данные для страниц, sitemap и превью.</span>
-            </div>
-            <div className="admin-form-grid-two">
-              <label className="span-2">Title<input value={settings.seo.defaultTitle} onChange={(e) => patchSeo({ defaultTitle: e.target.value })} /></label>
-              <label className="span-2">Description<textarea rows={4} value={settings.seo.defaultDescription} onChange={(e) => patchSeo({ defaultDescription: e.target.value })} /></label>
-              <div>
-                <AdminImagePicker label="OG image" value={settings.seo.ogImage} onChange={(value) => patchSeo({ ogImage: value })} />
-              </div>
-              <label className="admin-checkbox-label"><input type="checkbox" checked={settings.seo.robotsIndex} onChange={(e) => patchSeo({ robotsIndex: e.target.checked })} /> Индексировать сайт</label>
-            </div>
-          </div>
-
-          <div className="admin-site-control-card admin-launch-preview">
-            <div className="admin-site-control-card-head">
-              <h2>Где применяется</h2>
-              <span>Эти данные уже используются публичным сайтом</span>
-            </div>
-            <ul>
-              <li>Админка сохраняет данные в Supabase `site_settings`.</li>
-              <li>Шапка, футер и мобильное меню читают активные пункты меню.</li>
-              <li>Контакты попадают в футер, контактную страницу и формы заявок.</li>
-              <li>SEO по умолчанию используется в layout, sitemap и CMS-страницах.</li>
-              <li>Если данных нет, включаются безопасные значения по умолчанию.</li>
-            </ul>
-          </div>
-        </section>
-      )}
-
-      <section className="admin-site-control-roadmap">
-        <div><Phone size={20} /><b>Контакты</b><span>управление телефоном, адресом, временем работы</span></div>
-        <div><ToggleLeft size={20} /><b>Видимость</b><span>включать направления по мере готовности</span></div>
-        <div><Menu size={20} /><b>Меню</b><span>контроль шапки, футера и мобильной панели</span></div>
-        <div><Search size={20} /><b>SEO</b><span>база для title, description и noindex</span></div>
-      </section>
+  return <div className="settings-v3">
+    <header className="settings-v3-head"><div><p>Настройки</p><h1>{sectionMeta.label}</h1><span>Управляйте основными параметрами сайта, контактной информацией и системными настройками Bullmet.</span></div><Link href="/" target="_blank">Перейти на сайт <ExternalLink size={15} /></Link></header>
+    {notice && <div className={`settings-v3-notice ${notice.includes('Не удалось') || notice.includes('Проверьте') ? 'error' : ''}`}>{notice}</div>}
+    <div className="settings-v3-layout">
+      <aside className="settings-v3-nav">{sections.map(({ id, label, note, icon: Icon }) => <button type="button" key={id} className={active === id ? 'active' : ''} onClick={() => setSection(id)}><Icon size={20} /><span><b>{label}</b><small>{note}</small></span><ChevronRight size={16} /></button>)}</aside>
+      <main className="settings-v3-main">
+        {active === 'company' && <>
+          <section className="settings-v3-card"><header><div><h2>Компания</h2><p>Основная информация о компании. Эти данные используются на сайте, в контактах и документах.</p></div><button className="primary" type="button" onClick={saveSettings} disabled={saving || !dirty}><Save size={16} />{saving ? 'Сохраняем...' : 'Сохранить изменения'}</button></header>
+            <h3>Основные данные</h3><div className="settings-v3-grid"><Field label="Название компании *"><input value={settings.general.siteName} onChange={(e) => patchGeneral({ siteName: e.target.value })} /></Field><Field label="Юридическое название"><input value={settings.adminSettings.company.legalName} onChange={(e) => patchAdmin('company', { legalName: e.target.value })} /></Field><Field label="Краткое описание" span><textarea rows={3} value={settings.adminSettings.company.description} onChange={(e) => patchAdmin('company', { description: e.target.value })} /></Field><div><AdminImagePicker label="Логотип" value={settings.adminSettings.company.logo} onChange={(value) => patchAdmin('company', { logo: value })} /></div><div><AdminImagePicker label="Favicon" value={settings.adminSettings.company.favicon} onChange={(value) => patchAdmin('company', { favicon: value })} /></div></div>
+          </section>
+          <section className="settings-v3-card"><h3>Контактная информация</h3><div className="settings-v3-grid"><Field label="Телефон *"><input value={settings.contacts.phone} onChange={(e) => patchContacts({ phone: e.target.value })} /></Field><Field label="Email *"><input type="email" value={settings.contacts.email} onChange={(e) => patchContacts({ email: e.target.value })} /></Field><Field label="Адрес *" span><input value={settings.contacts.address} onChange={(e) => patchContacts({ address: e.target.value })} /></Field><Field label="График работы"><textarea rows={3} value={settings.contacts.hours} onChange={(e) => patchContacts({ hours: e.target.value })} /></Field><Field label="Дополнительная информация"><textarea rows={3} value={settings.adminSettings.company.additionalInfo} onChange={(e) => patchAdmin('company', { additionalInfo: e.target.value })} /></Field></div></section>
+          <section className="settings-v3-card"><h3>Реквизиты</h3><div className="settings-v3-grid"><Field label="ИНН"><input value={settings.adminSettings.company.requisites.inn} onChange={(e) => patchAdmin('company', { requisites: { ...settings.adminSettings.company.requisites, inn: e.target.value } })} /></Field><Field label="УНП"><input value={settings.adminSettings.company.requisites.unp} onChange={(e) => patchAdmin('company', { requisites: { ...settings.adminSettings.company.requisites, unp: e.target.value } })} /></Field><Field label="Банк"><input value={settings.adminSettings.company.requisites.bank} onChange={(e) => patchAdmin('company', { requisites: { ...settings.adminSettings.company.requisites, bank: e.target.value } })} /></Field><Field label="Расчётный счёт"><input value={settings.adminSettings.company.requisites.account} onChange={(e) => patchAdmin('company', { requisites: { ...settings.adminSettings.company.requisites, account: e.target.value } })} /></Field></div></section>
+        </>}
+        {active === 'site' && <section className="settings-v3-card"><header><div><h2>Настройки сайта</h2><p>Управляйте доступностью публичного сайта и направлениями каталога.</p></div><button className="primary" type="button" onClick={saveSettings} disabled={saving || !dirty}><Save size={16} />Сохранить изменения</button></header><div className="settings-v3-grid"><Field label="Режим запуска"><select value={settings.general.launchMode} onChange={(e) => patchGeneral({ launchMode: e.target.value as SiteControlSettings['general']['launchMode'] })}><option value="clocks_only">Только часы</option><option value="mixed">Часы + выбранные направления</option><option value="all">Все направления</option></select></Field><Field label="Часовой пояс"><select value={settings.adminSettings.site.timezone} onChange={(e) => patchAdmin('site', { timezone: e.target.value })}><option>Europe/Minsk</option><option>Europe/Moscow</option></select></Field><Field label="Валюта"><input value={settings.adminSettings.site.currency} onChange={(e) => patchAdmin('site', { currency: e.target.value })} /></Field><Field label="Язык сайта"><input value={settings.adminSettings.site.language} onChange={(e) => patchAdmin('site', { language: e.target.value })} /></Field></div><div className="settings-v3-list">{settings.directions.map((direction) => <Toggle key={direction.key} checked={direction.visible} label={direction.title} note={direction.note} onChange={(visible) => update({ directions: settings.directions.map((item) => item.key === direction.key ? { ...item, visible } : item) })} />)}</div></section>}
+        {active === 'contacts' && <section className="settings-v3-card"><header><div><h2>Контакты и социальные сети</h2><p>Единый источник данных для футера, контактов, карт и сообщений клиентам.</p></div><button className="primary" type="button" onClick={saveSettings} disabled={saving || !dirty}><Save size={16} />Сохранить изменения</button></header><div className="settings-v3-grid"><Field label="Основной телефон"><input value={settings.contacts.phone} onChange={(e) => patchContacts({ phone: e.target.value })} /></Field><Field label="Дополнительный телефон"><input value={settings.adminSettings.contacts.secondaryPhone} onChange={(e) => patchAdmin('contacts', { secondaryPhone: e.target.value })} /></Field><Field label="Email для заказов"><input value={settings.adminSettings.contacts.ordersEmail} onChange={(e) => patchAdmin('contacts', { ordersEmail: e.target.value })} /></Field><Field label="Telegram"><input value={settings.contacts.telegram} onChange={(e) => patchContacts({ telegram: e.target.value })} /></Field><Field label="Instagram"><input value={settings.contacts.instagram} onChange={(e) => patchContacts({ instagram: e.target.value })} /></Field><Field label="WhatsApp"><input value={settings.adminSettings.contacts.whatsapp} onChange={(e) => patchAdmin('contacts', { whatsapp: e.target.value })} /></Field><Field label="VK"><input value={settings.adminSettings.contacts.vk} onChange={(e) => patchAdmin('contacts', { vk: e.target.value })} /></Field><Field label="YouTube"><input value={settings.adminSettings.contacts.youtube} onChange={(e) => patchAdmin('contacts', { youtube: e.target.value })} /></Field></div></section>}
+        {active === 'orders' && <section className="settings-v3-card"><header><div><h2>Правила оформления заказов</h2><p>Настройте сценарий покупки без изменения кода сайта.</p></div><button className="primary" type="button" onClick={saveSettings} disabled={saving || !dirty}><Save size={16} />Сохранить изменения</button></header><div className="settings-v3-grid"><Field label="Префикс номера заказа"><input value={settings.adminSettings.orders.orderPrefix} onChange={(e) => patchAdmin('orders', { orderPrefix: e.target.value })} /></Field><Field label="Следующий номер заказа"><input type="number" value={settings.adminSettings.orders.nextOrderNumber} onChange={(e) => patchAdmin('orders', { nextOrderNumber: Number(e.target.value) || 1 })} /></Field></div><div className="settings-v3-list"><Toggle checked={settings.adminSettings.orders.allowGuestCheckout} label="Оформление без регистрации" note="Покупатель сможет оформить заказ как гость." onChange={(allowGuestCheckout) => patchAdmin('orders', { allowGuestCheckout })} /><Toggle checked={settings.adminSettings.orders.autoNewStatus} label="Автоматический статус «Новый»" note="Назначать заказу статус сразу после отправки формы." onChange={(autoNewStatus) => patchAdmin('orders', { autoNewStatus })} /><Toggle checked={settings.commerce.deliverySettings.allowComment} label="Комментарий к заказу" note="Показывать поле с пожеланиями покупателя." onChange={(allowComment) => update({ commerce: { ...settings.commerce, deliverySettings: { ...settings.commerce.deliverySettings, allowComment } } })} /><Toggle checked={settings.adminSettings.orders.quickOrder} label="Быстрый заказ" note="Показывать короткую форму заявки на карточке товара." onChange={(quickOrder) => patchAdmin('orders', { quickOrder })} /></div></section>}
+        {active === 'notifications' && <section className="settings-v3-card"><header><div><h2>Уведомления</h2><p>Выберите каналы и события, о которых должна узнавать команда.</p></div><button className="primary" type="button" onClick={saveSettings} disabled={saving || !dirty}><Save size={16} />Сохранить изменения</button></header><div className="settings-v3-list"><Toggle checked={settings.adminSettings.notifications.adminEmail} label="Уведомления на email администратора" note={diagnostics.adminEmailConfigured ? 'Email администратора подключён.' : 'Укажите email администратора в переменных окружения.'} onChange={(adminEmail) => patchAdmin('notifications', { adminEmail })} /><Toggle checked={settings.adminSettings.notifications.telegram} label="Уведомления в Telegram" note={diagnostics.telegramConfigured ? 'Telegram-бот подключён.' : 'Telegram ещё не настроен.'} onChange={(telegram) => patchAdmin('notifications', { telegram })} /><Toggle checked={settings.adminSettings.notifications.customerEmail} label="Письма покупателям" note="Подтверждения заказа и изменения статуса." onChange={(customerEmail) => patchAdmin('notifications', { customerEmail })} /><Toggle checked={settings.adminSettings.notifications.newOrder} label="Новый заказ" note="Сообщать команде сразу после покупки." onChange={(newOrder) => patchAdmin('notifications', { newOrder })} /><Toggle checked={settings.adminSettings.notifications.orderStatus} label="Изменение статуса заказа" onChange={(orderStatus) => patchAdmin('notifications', { orderStatus })} /><Toggle checked={settings.adminSettings.notifications.lowStock} label="Мало товара на складе" onChange={(lowStock) => patchAdmin('notifications', { lowStock })} /></div></section>}
+        {active === 'seo' && <section className="settings-v3-card"><header><div><h2>Глобальные SEO-настройки</h2><p>Значения используются для страниц без индивидуальных метаданных.</p></div><button className="primary" type="button" onClick={saveSettings} disabled={saving || !dirty}><Save size={16} />Сохранить изменения</button></header><div className="settings-v3-grid"><Field label="Title по умолчанию" span><input value={settings.seo.defaultTitle} onChange={(e) => update({ seo: { ...settings.seo, defaultTitle: e.target.value } })} /></Field><Field label="Description по умолчанию" span><textarea rows={4} value={settings.seo.defaultDescription} onChange={(e) => update({ seo: { ...settings.seo, defaultDescription: e.target.value } })} /></Field><div className="span-2"><AdminImagePicker label="Open Graph изображение" value={settings.seo.ogImage} onChange={(value) => update({ seo: { ...settings.seo, ogImage: value } })} /></div></div><div className="settings-v3-list"><Toggle checked={settings.seo.robotsIndex} label="Разрешить индексацию сайта" note="Управляет глобальной директивой robots." onChange={(robotsIndex) => update({ seo: { ...settings.seo, robotsIndex } })} /></div></section>}
+        {active === 'integrations' && <section className="settings-v3-card"><header><div><h2>Интеграции</h2><p>Статус подключённых внешних сервисов и подсказки по настройке.</p></div></header><div className="settings-v3-integrations"><article className={diagnostics.supabaseConfigured ? 'ok' : 'warning'}><Database /><b>Supabase</b><span>{diagnostics.supabaseConfigured ? 'Подключён и хранит данные CMS.' : 'Не подключён: изменения не будут сохранены.'}</span></article><article className={diagnostics.telegramConfigured ? 'ok' : 'warning'}><Bell /><b>Telegram</b><span>{diagnostics.telegramConfigured ? 'Бот готов к отправке уведомлений.' : 'Нужны токен бота и чат администратора.'}</span></article><article className={diagnostics.adminEmailConfigured ? 'ok' : 'warning'}><Mail /><b>Email администратора</b><span>{diagnostics.adminEmailConfigured ? 'Адрес для важных событий указан.' : 'Добавьте NEXT_PUBLIC_ADMIN_EMAIL.'}</span></article><article><Globe2 /><b>Публичный сайт</b><span>{diagnostics.siteUrl || 'Адрес определяется средой размещения.'}</span></article></div></section>}
+        {active === 'system' && <section className="settings-v3-card"><header><div><h2>Система</h2><p>Технические параметры и безопасные действия без доступа к коду.</p></div><button className="primary" type="button" onClick={saveSettings} disabled={saving || !dirty}><Save size={16} />Сохранить изменения</button></header><div className="settings-v3-system"><article><ShieldCheck /><div><b>Состояние CMS</b><span>Панель работает, публичные данные синхронизируются после сохранения.</span></div><em>v1.0</em></article><article><Clock3 /><div><b>Часовой пояс</b><span>{settings.adminSettings.site.timezone}</span></div></article><article><UsersRound /><div><b>Публичных направлений</b><span>{visibleDirections} из {settings.directions.length}</span></div></article></div><footer><button type="button" onClick={() => { router.refresh(); setNotice('Кэш страницы обновлён.'); }}><RotateCcwIcon />Обновить данные страницы</button><button type="button" onClick={clearChanges} disabled={!dirty}>Отменить несохранённые изменения</button></footer></section>}
+        {active === 'danger' && <section className="settings-v3-card danger"><header><div><h2>Опасная зона</h2><p>Действия ниже влияют на доступность сайта. Используйте их осознанно.</p></div></header><div className="settings-v3-list"><Toggle checked={settings.adminSettings.site.maintenance} label="Режим обслуживания" note="Публичный сайт должен показывать страницу технических работ." onChange={(maintenance) => patchAdmin('site', { maintenance })} /></div><div className="settings-v3-danger-box"><AlertTriangle /><div><b>Сбросить настройки к значениям по умолчанию</b><span>Введите BULLMET, затем загрузите значения по умолчанию. После этого их нужно отдельно сохранить.</span><input placeholder="BULLMET" value={dangerConfirm} onChange={(e) => setDangerConfirm(e.target.value)} /></div><button type="button" disabled={dangerConfirm !== 'BULLMET'} onClick={() => { resetDefaults(); setDangerConfirm(''); }}><Trash2 size={16} />Сбросить настройки</button></div><footer><button className="primary" type="button" onClick={saveSettings} disabled={saving || !dirty}><Save size={16} />Применить изменения</button></footer></section>}
+      </main>
+      <aside className="settings-v3-preview"><header><span>Как это выглядит на сайте</span><ExternalLink size={16} /></header><div className="settings-v3-preview-card"><div className="settings-v3-logo">{settings.adminSettings.company.logo ? <img src={settings.adminSettings.company.logo} alt="" /> : <ImageIcon />}<b>{settings.general.logoText || settings.general.siteName}</b></div><small>{settings.general.tagline}</small><p><Phone size={16} />{settings.contacts.phone}</p><p><Mail size={16} />{settings.contacts.email}</p><p><MapPin size={16} />{addressLines}</p><p><Clock3 size={16} />{settings.contacts.hours}</p></div><div className="settings-v3-sync"><Check size={18} /><div><b>Данные синхронизируются</b><span>Контактная информация используется в футере, на странице контактов, в формах заявок и документах.</span><ul><li>Футер сайта</li><li>Контактная страница</li><li>Самовывоз и доставка</li><li>Письма клиентам</li></ul></div></div><div className="settings-v3-help"><CircleHelp size={18} /><span>Изменения применяются автоматически после сохранения.</span></div></aside>
     </div>
-  );
+  </div>;
 }
+
+function RotateCcwIcon() { return <SlidersHorizontal size={16} />; }
