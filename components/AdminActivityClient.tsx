@@ -1,171 +1,43 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Activity, Database, RefreshCw, Search } from 'lucide-react';
-import type { AdminActivityItem } from '@/lib/adminPeople';
-import { actionLabel } from '@/lib/adminPeople';
-import { formatDate } from '@/lib/adminCommerce';
+import * as XLSX from 'xlsx';
+import { Activity, AlertTriangle, ChevronLeft, ChevronRight, Download, FileText, RotateCcw, Search, Server, Shield, UserRound, X } from 'lucide-react';
+import type { AdminActivityItem, AdminProfile } from '@/lib/adminPeople';
+import type { AdminOrder } from '@/lib/adminCommerce';
+import type { CatalogProduct } from '@/lib/products';
+import type { AdminCoupon } from '@/lib/adminCoupons';
 
-type Filter = 'all' | 'site_settings' | 'products' | 'orders' | 'requests' | 'product_reviews' | 'profiles';
+type Props = { initialActivity: AdminActivityItem[]; profiles: AdminProfile[]; orders: AdminOrder[]; products: CatalogProduct[]; coupons: AdminCoupon[]; supabaseConfigured: boolean };
+type Period = 'today' | '7' | '30' | '90' | 'year' | 'all';
 
-function entityLabel(entity?: string) {
-  const map: Record<string, string> = {
-    site_settings: 'Настройки',
-    products: 'Товары',
-    orders: 'Заказы',
-    requests: 'Заявки',
-    product_reviews: 'Отзывы',
-    profiles: 'Пользователи'
-  };
-  return map[String(entity || '')] || String(entity || 'Система');
-}
+const sections: Record<string, { label: string; tone: string }> = {
+  site_settings: { label: 'Настройки', tone: 'orange' }, homepage: { label: 'Главная страница', tone: 'orange' }, pages: { label: 'Страницы', tone: 'purple' }, page: { label: 'Страницы', tone: 'purple' },
+  categories: { label: 'Категории', tone: 'violet' }, category: { label: 'Категории', tone: 'violet' }, products: { label: 'Каталог товаров', tone: 'blue' }, product: { label: 'Каталог товаров', tone: 'blue' },
+  services: { label: 'Услуги', tone: 'teal' }, service: { label: 'Услуги', tone: 'teal' }, production: { label: 'Производство', tone: 'orange' }, product_reviews: { label: 'Отзывы', tone: 'pink' }, reviews: { label: 'Отзывы', tone: 'pink' }, media: { label: 'Медиафайлы', tone: 'blue' }, media_files: { label: 'Медиафайлы', tone: 'blue' },
+  orders: { label: 'Заказы', tone: 'blue' }, customers: { label: 'Покупатели', tone: 'teal' }, profiles: { label: 'Пользователи', tone: 'slate' }, roles: { label: 'Роли и права', tone: 'purple' }, coupons: { label: 'Купоны', tone: 'orange' }, delivery: { label: 'Доставка', tone: 'teal' }, payment: { label: 'Оплата', tone: 'green' }, reports: { label: 'Отчёты', tone: 'violet' }, backup: { label: 'Резервные копии', tone: 'slate' }, security: { label: 'Безопасность', tone: 'pink' }, system: { label: 'Система', tone: 'slate' }, requests: { label: 'Заявки', tone: 'orange' }
+};
+const fieldNames: Record<string, string> = { price: 'Цена', oldPrice: 'Старая цена', status: 'Статус', category: 'Категория', role: 'Роль пользователя', title: 'Название', name: 'Название', description: 'Описание', short: 'Краткое описание', material: 'Материал', image: 'Главное фото', delivery: 'Доставка', manager: 'Ответственный', priority: 'Приоритет', value: 'Значение', visible: 'Видимость' };
 
-function entityClass(entity?: string) {
-  if (entity === 'orders') return 'is-orders';
-  if (entity === 'requests') return 'is-requests';
-  if (entity === 'products') return 'is-products';
-  if (entity === 'product_reviews') return 'is-reviews';
-  if (entity === 'profiles') return 'is-users';
-  return 'is-settings';
-}
+function section(item: AdminActivityItem) { return sections[item.entity] || { label: item.entity || 'Система', tone: 'slate' }; }
+function actionGroup(action = '') { const v = action.toLowerCase(); if (/failed|неудач/.test(v)) return 'failed_login'; if (/login|вход/.test(v)) return 'login'; if (/logout|выход/.test(v)) return 'logout'; if (/role/.test(v)) return 'role'; if (/status/.test(v)) return 'status'; if (/backup/.test(v)) return 'backup'; if (/export/.test(v)) return 'export'; if (/publish/.test(v)) return 'publish'; if (/hide/.test(v)) return 'hide'; if (/archive/.test(v)) return 'archive'; if (/restore/.test(v)) return 'restore'; if (/delete|remove/.test(v)) return 'delete'; if (/create|add/.test(v)) return 'create'; return 'update'; }
+function actionText(item: AdminActivityItem) { const entity = section(item).label.replace('Каталог ', '').toLowerCase(); const group = actionGroup(item.action); const map: Record<string, string> = { create: 'Создал', update: 'Изменил', publish: 'Опубликовал', hide: 'Скрыл', archive: 'Переместил в архив', restore: 'Восстановил', delete: 'Удалил', status: 'Изменил статус', role: 'Изменил роль пользователя', login: 'Вход в систему', failed_login: 'Неудачная попытка входа', logout: 'Вышел из системы', export: 'Экспортировал данные', backup: 'Создана резервная копия' }; return group === 'login' || group === 'logout' || group === 'failed_login' || group === 'backup' ? map[group] : `${map[group] || 'Изменил'} ${entity}`; }
+function roleLabel(role?: string | null) { return ({ admin: 'Администратор', manager: 'Менеджер', content: 'Контент-менеджер', customer: 'Клиент' } as Record<string, string>)[String(role || '')] || 'Сотрудник'; }
+function eventDate(value?: string) { if (!value) return 'Дата не указана'; return new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value)); }
+function eventTime(value?: string) { if (!value) return '—'; return new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(new Date(value)); }
+function isCritical(item: AdminActivityItem) { return ['failed_login', 'role', 'delete', 'backup'].includes(actionGroup(item.action)) || /block|security|password/.test(item.action.toLowerCase()); }
+function safeValue(value: unknown) { if (value === null || value === undefined || value === '') return '—'; if (typeof value === 'boolean') return value ? 'Да' : 'Нет'; if (typeof value === 'number' && Math.abs(value) >= 10 && Number.isFinite(value)) return `${new Intl.NumberFormat('ru-RU').format(value)} BYN`; return String(value).slice(0, 90); }
+function download(name: string, text: string, type: string) { const url = URL.createObjectURL(new Blob([text], { type })); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url); }
 
-function formatPayload(payload?: Record<string, unknown>) {
-  if (!payload || !Object.keys(payload).length) return 'Нет деталей';
-  try {
-    return JSON.stringify(payload, null, 2);
-  } catch {
-    return 'Детали недоступны';
-  }
-}
-
-export function AdminActivityClient({ initialActivity, supabaseConfigured }: { initialActivity: AdminActivityItem[]; supabaseConfigured: boolean }) {
-  const [activity, setActivity] = useState(initialActivity);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [query, setQuery] = useState('');
-  const [message, setMessage] = useState('');
-  const [activeId, setActiveId] = useState(initialActivity[0]?.id || '');
-  const [refreshing, setRefreshing] = useState(false);
-
-  const filtered = useMemo(() => {
-    const clean = query.trim().toLowerCase();
-
-    return activity.filter((item) => {
-      const byEntity = filter === 'all' || item.entity === filter;
-      const haystack = [item.action, item.entity, item.entity_id, item.actor_email, JSON.stringify(item.payload || {})].filter(Boolean).join(' ').toLowerCase();
-      return byEntity && (!clean || haystack.includes(clean));
-    });
-  }, [activity, filter, query]);
-
-  const active = activity.find((item) => item.id === activeId) || filtered[0] || activity[0];
-
-  const stats = useMemo(() => ({
-    total: activity.length,
-    settings: activity.filter((item) => item.entity === 'site_settings').length,
-    orders: activity.filter((item) => item.entity === 'orders').length,
-    requests: activity.filter((item) => item.entity === 'requests').length,
-    users: activity.filter((item) => item.entity === 'profiles').length
-  }), [activity]);
-
-  async function refreshActivity() {
-    setRefreshing(true);
-    setMessage('');
-
-    try {
-      const response = await fetch('/api/admin/activity', { cache: 'no-store' });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось обновить журнал.');
-      const next = Array.isArray(data.activity) ? data.activity as AdminActivityItem[] : [];
-      setActivity(next);
-      setActiveId((current) => next.some((item) => item.id === current) ? current : next[0]?.id || '');
-      setMessage('Журнал обновлён.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось обновить журнал.');
-    } finally {
-      setRefreshing(false);
-    }
-  }
-
-  return (
-    <div className="admin-activity-page">
-      <div className="admin-page-head">
-        <div>
-          <p>Журнал действий</p>
-          <h1>История изменений в админке</h1>
-          <span>Здесь собираются изменения настроек, товаров, заказов, заявок, отзывов, баннеров и пользователей.</span>
-        </div>
-        <div className="admin-head-actions">
-          <button type="button" onClick={refreshActivity} disabled={refreshing}><RefreshCw size={17} /> {refreshing ? 'Обновляем...' : 'Обновить'}</button>
-        </div>
-      </div>
-
-      {!supabaseConfigured && <div className="admin-message">Supabase не подключен: журнал действий не загрузится.</div>}
-      {message && <div className="admin-message">{message}</div>}
-
-      <section className="admin-activity-stats">
-        <article><Activity size={22} /><div><b>{stats.total}</b><span>всего действий</span></div></article>
-        <article><Database size={22} /><div><b>{stats.settings}</b><span>настройки</span></div></article>
-        <article><Database size={22} /><div><b>{stats.orders}</b><span>заказы</span></div></article>
-        <article><Database size={22} /><div><b>{stats.requests}</b><span>заявки</span></div></article>
-        <article><Database size={22} /><div><b>{stats.users}</b><span>пользователи</span></div></article>
-      </section>
-
-      <div className="admin-commerce-toolbar">
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по действию, объекту, ID или деталям" />
-        <div>
-          {(['all', 'site_settings', 'products', 'orders', 'requests', 'product_reviews', 'profiles'] as Filter[]).map((item) => (
-            <button key={item} type="button" className={filter === item ? 'is-active' : ''} onClick={() => setFilter(item)}>
-              {item === 'all' ? 'Все' : entityLabel(item)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {!filtered.length ? (
-        <section className="admin-empty-commerce">
-          <h2>Журнал пуст</h2>
-          <p>Сделайте изменение в админке: поменяйте статус заказа, сохраните настройки или обновите пользователя.</p>
-        </section>
-      ) : (
-        <section className="admin-activity-layout">
-          <div className="admin-activity-list">
-            {filtered.map((item) => (
-              <button key={item.id} type="button" className={active?.id === item.id ? 'is-active' : ''} onClick={() => setActiveId(item.id)}>
-                <div>
-                  <b>{actionLabel(item.action)}</b>
-                  <em className={entityClass(item.entity)}>{entityLabel(item.entity)}</em>
-                </div>
-                <span>{item.entity_id || 'без ID'} · {item.actor_email || 'система'}</span>
-                <small>{formatDate(item.created_at)}</small>
-              </button>
-            ))}
-          </div>
-
-          {active && (
-            <article className="admin-activity-detail">
-              <div className="admin-user-detail-head">
-                <div>
-                  <p>{entityLabel(active.entity)}</p>
-                  <h2>{actionLabel(active.action)}</h2>
-                  <span>{formatDate(active.created_at)}</span>
-                </div>
-                <em className={entityClass(active.entity)}>{active.entity}</em>
-              </div>
-
-              <div className="admin-activity-meta">
-                <p><b>ID записи:</b> {active.id}</p>
-                <p><b>Объект:</b> {active.entity}</p>
-                <p><b>ID объекта:</b> {active.entity_id || 'не указан'}</p>
-                <p><b>Автор:</b> {active.actor_email || 'система / API'}</p>
-              </div>
-
-              <div className="admin-activity-payload">
-                <h3>Детали изменения</h3>
-                <pre>{formatPayload(active.payload)}</pre>
-              </div>
-            </article>
-          )}
-        </section>
-      )}
-    </div>
-  );
+export function AdminActivityClient({ initialActivity, profiles, orders, products, coupons, supabaseConfigured }: Props) {
+  const [query, setQuery] = useState(''); const [user, setUser] = useState('all'); const [sectionFilter, setSectionFilter] = useState('all'); const [action, setAction] = useState('all'); const [period, setPeriod] = useState<Period>('30'); const [page, setPage] = useState(1); const [perPage, setPerPage] = useState(50); const [selectedId, setSelectedId] = useState(initialActivity[0]?.id || ''); const [showExports, setShowExports] = useState(false);
+  const people = useMemo(() => new Map(profiles.filter((p) => p.email).map((p) => [String(p.email).toLowerCase(), p])), [profiles]);
+  const getActor = (item: AdminActivityItem) => { const profile = people.get(String(item.actor_email || '').toLowerCase()); return profile ? { name: profile.full_name || profile.email || 'Сотрудник', role: roleLabel(profile.role), system: false } : item.actor_email ? { name: item.actor_email, role: 'Сотрудник', system: false } : { name: 'Система', role: 'Системное событие', system: true }; };
+  const objectName = (item: AdminActivityItem) => { const p = item.payload || {}; const fromPayload = [p.title, p.name, p.product_title, p.order_number, p.code, p.slug].find((v) => typeof v === 'string' || typeof v === 'number'); if (fromPayload) return String(fromPayload); if (item.entity === 'orders') { const order = orders.find((x) => x.id === item.entity_id); return `Заказ #${item.entity_id || ''}${order?.customer?.name ? ` · ${order.customer.name}` : ''}`; } if (item.entity === 'products' || item.entity === 'product') return products.find((x) => x.id === item.entity_id || x.slug === item.entity_id)?.title || `Товар ${item.entity_id || ''}`; if (item.entity === 'coupons') return coupons.find((x) => x.id === item.entity_id)?.code || `Купон ${item.entity_id || ''}`; return item.entity_id || 'Системное событие'; };
+  const summary = (item: AdminActivityItem) => { const p = item.payload || {}; const patch = (p.patch || p.changes) as Record<string, unknown> | undefined; if (patch && typeof patch === 'object') return `Обновлены ${Object.keys(patch).map((k) => fieldNames[k] || k).slice(0, 3).join(', ')}`; if (p.status) return `Статус: ${safeValue(p.status)}`; return actionGroup(item.action) === 'backup' ? 'Автоматическое резервное копирование' : 'Детали доступны в карточке события'; };
+  const filtered = useMemo(() => { const min = period === 'all' ? 0 : Date.now() - ({ today: 1, '7': 7, '30': 30, '90': 90, year: 365 }[period] || 30) * 86400000; const q = query.trim().toLowerCase(); return initialActivity.filter((item) => { const actor = getActor(item); const haystack = [actor.name, item.actor_email, actionText(item), objectName(item), item.entity_id, JSON.stringify(item.payload || {})].join(' ').toLowerCase(); const byUser = user === 'all' || (user === 'system' ? actor.system : user === 'admin' || user === 'manager' || user === 'content' ? people.get(String(item.actor_email || '').toLowerCase())?.role === user : String(item.actor_email || '').toLowerCase() === user); return (!q || haystack.includes(q)) && (sectionFilter === 'all' || item.entity === sectionFilter) && (action === 'all' || actionGroup(item.action) === action) && byUser && (!min || new Date(item.created_at || 0).getTime() >= min); }); }, [initialActivity, query, user, sectionFilter, action, period, people]);
+  const selected = filtered.find((x) => x.id === selectedId) || filtered[0]; const rows = filtered.slice((page - 1) * perPage, page * perPage); const pages = Math.max(1, Math.ceil(filtered.length / perPage)); const activeStaff = new Set(filtered.map((x) => x.actor_email).filter(Boolean)).size; const important = filtered.find(isCritical) || filtered[0];
+  const changes = (item?: AdminActivityItem) => { const payload = item?.payload || {}; const source = (payload.patch || payload.changes || payload.before || {}) as Record<string, unknown>; const after = (payload.after || {}) as Record<string, unknown>; return Object.entries(source).filter(([key]) => !/password|token|secret|key/i.test(key)).slice(0, 7).map(([key, value]) => ({ label: fieldNames[key] || key, from: typeof value === 'object' && value && 'from' in (value as object) ? (value as { from: unknown }).from : payload.before ? value : '—', to: typeof value === 'object' && value && 'to' in (value as object) ? (value as { to: unknown }).to : after[key] ?? value })); };
+  const exportLog = (format: 'csv' | 'xlsx' | 'json') => { const data = filtered.map((x) => ({ 'Время': eventDate(x.created_at), 'Пользователь': getActor(x).name, 'Роль': getActor(x).role, 'Действие': actionText(x), 'Объект': objectName(x), 'Раздел': section(x).label, 'ID объекта': x.entity_id || '' })); if (format === 'json') download('bullmet-activity.json', JSON.stringify(data, null, 2), 'application/json'); else if (format === 'csv') download('bullmet-activity.csv', '\ufeff' + XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(data)), 'text/csv;charset=utf-8'); else { const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(data); ws['!cols'] = [18, 24, 20, 28, 30, 20, 18].map((wch) => ({ wch })); XLSX.utils.book_append_sheet(wb, ws, 'Активность'); XLSX.writeFile(wb, 'bullmet-activity.xlsx'); } setShowExports(false); };
+  return <div className="admin-activity-v2"><header className="admin-activity-v2-head"><div><h1>Активность</h1><p>История действий сотрудников и системных изменений Bullmet.</p></div><div><button type="button" onClick={() => setShowExports(!showExports)}><Download size={16} />Экспорт журнала</button>{showExports && <aside><button onClick={() => exportLog('xlsx')}>XLSX</button><button onClick={() => exportLog('csv')}>CSV</button><button onClick={() => exportLog('json')}>JSON</button></aside>}</div></header>{!supabaseConfigured && <p className="admin-activity-warning-v2">Журнал действий станет доступен после подключения Supabase.</p>}<section className="admin-activity-filters-v2"><label><Search size={16}/><input value={query} onChange={(e) => { setQuery(e.target.value); setPage(1); }} placeholder="Поиск по действиям, объектам, пользователям..."/></label><select value={user} onChange={(e) => { setUser(e.target.value); setPage(1); }}><option value="all">Все пользователи</option><option value="admin">Администратор</option><option value="manager">Менеджеры</option><option value="content">Контент-менеджеры</option><option value="system">Система</option>{profiles.filter((p) => p.email).map((p) => <option value={String(p.email).toLowerCase()} key={p.id}>{p.full_name || p.email}</option>)}</select><select value={sectionFilter} onChange={(e) => { setSectionFilter(e.target.value); setPage(1); }}><option value="all">Все разделы</option>{Object.entries(sections).filter(([key]) => !['product','category','page','service','reviews'].includes(key)).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}</select><select value={action} onChange={(e) => { setAction(e.target.value); setPage(1); }}><option value="all">Все действия</option>{[['create','Создание'],['update','Изменение'],['publish','Публикация'],['hide','Скрытие'],['archive','Архивирование'],['restore','Восстановление'],['delete','Удаление'],['status','Изменение статуса'],['role','Изменение роли'],['login','Вход'],['failed_login','Неудачный вход'],['logout','Выход'],['export','Экспорт'],['backup','Резервная копия']].map(([value,label]) => <option value={value} key={value}>{label}</option>)}</select><select value={period} onChange={(e) => { setPeriod(e.target.value as Period); setPage(1); }}><option value="today">Сегодня</option><option value="7">7 дней</option><option value="30">За 30 дней</option><option value="90">90 дней</option><option value="year">Год</option><option value="all">За всё время</option></select><button className="reset" onClick={() => { setQuery(''); setUser('all'); setSectionFilter('all'); setAction('all'); setPeriod('30'); setPage(1); }}><RotateCcw size={15}/>Сбросить</button></section><section className="admin-activity-summary-v2"><article><Activity/><span>Всего действий</span><b>{filtered.length}</b><small>за выбранный период</small></article><article><UserRound/><span>Активных сотрудников</span><b>{activeStaff}</b><small>совершали действия</small></article><article><AlertTriangle/><span>Критических событий</span><b>{filtered.filter(isCritical).length}</b><small>требуют внимания</small></article><article><Shield/><span>Последнее важное событие</span><b>{important ? actionText(important) : 'Нет событий'}</b><small>{important ? eventTime(important.created_at) : '—'}</small></article></section><section className="admin-activity-workspace-v2"><div className="admin-activity-table-v2"><div className="admin-activity-table-head-v2"><span>Время</span><span>Пользователь</span><span>Действие</span><span>Объект</span><span>Раздел</span><span>⋯</span></div>{rows.map((item) => { const actor = getActor(item); return <button type="button" key={item.id} className={selected?.id === item.id ? 'selected' : ''} onClick={() => setSelectedId(item.id)}><time><b>{eventTime(item.created_at)}</b><small>{eventDate(item.created_at).split(',')[0]}</small></time><span className="actor">{actor.system ? <Server/> : <UserRound/>}<i><b>{actor.name}</b><small>{actor.role}</small></i></span><span className="action"><b>{actionText(item)}</b><small>{summary(item)}</small></span><span className="object"><b>{objectName(item)}</b><small>{item.entity_id || '—'}</small></span><em className={`section ${section(item).tone}`}>{section(item).label}</em><span className="ellipsis">•••</span></button>})}{!rows.length && <div className="admin-activity-empty-v2">По выбранным фильтрам нет событий.</div>}<footer><span>Показано {rows.length ? (page - 1) * perPage + 1 : 0}–{Math.min(page * perPage, filtered.length)} из {filtered.length}</span><div><button disabled={page === 1} onClick={() => setPage(page - 1)}><ChevronLeft size={15}/></button><b>{page}</b><button disabled={page === pages} onClick={() => setPage(page + 1)}><ChevronRight size={15}/></button></div><label>Строк на странице <select value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}><option>10</option><option>25</option><option>50</option><option>100</option></select></label></footer></div><aside className="admin-activity-detail-v2">{selected ? <><header><div><h2>{actionText(selected)}</h2><p>{eventDate(selected.created_at)}</p></div><button onClick={() => setSelectedId('')} aria-label="Закрыть"><X size={18}/></button></header><section className="event-actor"><span>{getActor(selected).system ? <Server/> : <UserRound/>}</span><div><b>{getActor(selected).name}</b><small>{getActor(selected).role}</small></div></section><section><h3>Объект</h3><div className="event-object"><FileText/><span><b>{objectName(selected)}</b><small>{selected.entity_id || 'Системное событие'}</small></span></div></section><section><h3>Раздел</h3><em className={`section ${section(selected).tone}`}>{section(selected).label}</em></section><section><h3>Изменения</h3><div className="event-changes">{changes(selected).length ? changes(selected).map((change, i) => <p key={i}><b>{change.label}</b><span>{safeValue(change.from)} <i>→</i> {safeValue(change.to)}</span></p>) : <p><span>{summary(selected)}</span></p>}</div></section><section><h3>Дополнительная информация</h3><dl><dt>ID объекта</dt><dd>{selected.entity_id || '—'}</dd><dt>Автор</dt><dd>{selected.actor_email || 'Система'}</dd><dt>Тип записи</dt><dd>{selected.entity}</dd></dl></section></> : <div className="admin-activity-empty-v2">Выберите событие в журнале.</div>}</aside></section></div>;
 }
