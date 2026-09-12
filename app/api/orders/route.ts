@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSupabase } from '@/lib/serverSupabase';
 import { notifyTelegram } from '@/lib/notifications';
+import { validateCoupon } from '@/lib/couponValidation';
 
 type OrderItem = {
   slug?: string;
@@ -53,7 +54,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, message: 'Укажите имя и телефон.' }, { status: 400 });
     }
 
-    const total = normalizedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = normalizedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const couponCheck = body.couponCode
+      ? await validateCoupon({ code: body.couponCode, items: normalizedItems, customer, delivery: cleanText(body.delivery) })
+      : null;
+    if (couponCheck && !couponCheck.ok) return NextResponse.json({ ok: false, message: couponCheck.message }, { status: 400 });
+    const discountAmount = Number(couponCheck?.discount || 0);
+    const total = Math.max(0, subtotal - discountAmount);
     const createdAt = new Date().toISOString();
     const order = {
       id: makeOrderId(),
@@ -64,6 +71,13 @@ export async function POST(request: NextRequest) {
       source: 'website',
       comment: cleanText(body.comment),
       items: normalizedItems,
+      subtotal,
+      coupon_id: couponCheck?.coupon?.id || null,
+      coupon_code: couponCheck?.coupon?.code || null,
+      coupon_type: couponCheck?.coupon?.type || null,
+      coupon_value: couponCheck?.coupon?.value || null,
+      discount_amount: discountAmount,
+      delivery_discount: couponCheck?.deliveryDiscount || 0,
       total,
       status: 'Новый',
       status_history: [{ status: 'Новый', created_at: createdAt, author: 'Система' }]
@@ -101,6 +115,18 @@ export async function POST(request: NextRequest) {
         ]
       });
       return NextResponse.json({ ok: true, id: order.id, savedToSupabase: false, warning: `Supabase не сохранил заказ: ${error.message}` });
+    }
+
+    if (couponCheck?.coupon && couponCheck.customerKey) {
+      const { error: usageError } = await serverSupabase.from('coupon_usages').insert({
+        coupon_id: couponCheck.coupon.id,
+        order_id: order.id,
+        customer_name: customer.name,
+        customer_key: couponCheck.customerKey,
+        order_total: subtotal,
+        discount_amount: discountAmount
+      });
+      if (usageError) console.error('Coupon usage save error:', usageError.message);
     }
 
     const telegramResult = await notifyTelegram({

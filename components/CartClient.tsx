@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Factory, Heart, MessageCircle, Minus, Plus, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
+import { Factory, Heart, MessageCircle, Minus, Plus, ShieldCheck, ShoppingCart, Trash2, Ticket, X } from 'lucide-react';
 import { Icon } from './Icon';
 import type { CatalogProduct } from '@/lib/products';
 
@@ -38,6 +38,10 @@ function money(value: number) {
 export function CartClient({ recommendations }: { recommendations: CatalogProduct[] }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [promoCode, setPromoCode] = useState('');
+  const [coupon, setCoupon] = useState<{ code: string; discount: number; message: string } | null>(null);
+  const [promoMessage, setPromoMessage] = useState('');
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
 
   useEffect(() => {
     const sync = () => {
@@ -46,6 +50,7 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
       setSelected(new Set(next.map(keyOf)));
     };
     sync();
+    try { const saved = JSON.parse(window.localStorage.getItem('bullmet_coupon') || 'null'); if (saved?.code) { setCoupon(saved); setPromoCode(saved.code); } } catch {}
     window.addEventListener('bullmet-cart-updated', sync);
     window.addEventListener('storage', sync);
     return () => {
@@ -58,6 +63,23 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
   const total = useMemo(() => selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [selectedItems]);
   const totalQty = useMemo(() => selectedItems.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [selectedItems]);
   const allSelected = items.length > 0 && selected.size === items.length;
+  const discountedTotal = Math.max(0, total - Number(coupon?.discount || 0));
+
+  async function applyCoupon() {
+    const code = promoCode.trim().toUpperCase();
+    if (!code || !selectedItems.length) return;
+    setCheckingCoupon(true); setPromoMessage('');
+    try {
+      const response = await fetch('/api/coupons/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, items: selectedItems }) });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Промокод не найден.');
+      const next = { code: data.code || code, discount: Number(data.discount || 0), message: String(data.message || 'Промокод применён.') };
+      setCoupon(next); setPromoCode(next.code); window.localStorage.setItem('bullmet_coupon', JSON.stringify(next));
+    } catch (error) { setCoupon(null); window.localStorage.removeItem('bullmet_coupon'); setPromoMessage(error instanceof Error ? error.message : 'Не удалось применить промокод.'); }
+    finally { setCheckingCoupon(false); }
+  }
+
+  function removeCoupon() { setCoupon(null); setPromoCode(''); setPromoMessage(''); window.localStorage.removeItem('bullmet_coupon'); }
 
   function save(next: CartItem[]) {
     setItems(next);
@@ -149,8 +171,9 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
       <aside className="cart-summary-v3">
         <div className="cart-summary-sticky-v3">
           <h2>Итого</h2>
-          <div className="cart-summary-lines-v3"><div><span>Товары ({totalQty})</span><b>{money(total)} BYN</b></div><div><span>Доставка</span><span>Способ получения уточняется</span></div></div>
-          <div className="cart-summary-total-v3"><span>Итого</span><strong>{money(total)} BYN</strong></div>
+          <div className="cart-promo-v4"><label><Ticket size={17}/><input value={promoCode} onChange={(event) => setPromoCode(event.target.value.toUpperCase())} placeholder="Введите промокод"/><button type="button" disabled={checkingCoupon || !promoCode.trim() || !selectedItems.length} onClick={() => void applyCoupon()}>{checkingCoupon ? 'Проверяем...' : 'Применить'}</button></label>{coupon && <p><b>{coupon.code}</b><span>{coupon.message}</span><button type="button" onClick={removeCoupon} aria-label="Удалить промокод"><X size={15}/></button></p>}{promoMessage && <small>{promoMessage}</small>}</div>
+          <div className="cart-summary-lines-v3"><div><span>Товары ({totalQty})</span><b>{money(total)} BYN</b></div>{coupon && <div className="cart-discount-line-v4"><span>Скидка {coupon.code}</span><b>−{money(coupon.discount)} BYN</b></div>}<div><span>Доставка</span><span>Способ получения уточняется</span></div></div>
+          <div className="cart-summary-total-v3"><span>Итого</span><strong>{money(discountedTotal)} BYN</strong></div>
           <Link href={selected.size ? '/checkout' : '#'} className={!selected.size ? 'is-disabled' : ''} onClick={(event) => { if (!selected.size) event.preventDefault(); }}>Оформить заказ <span>→</span></Link>
           <Link href="/catalog" className="cart-continue-v3">Продолжить покупки</Link>
           <ul className="cart-summary-benefits-v3"><li><ShieldCheck /><div><b>Надёжное оформление</b><span>Ваши данные защищены</span></div></li><li><MessageCircle /><div><b>Уточним детали</b><span>Свяжемся после оформления</span></div></li><li><Factory /><div><b>Собственное производство</b><span>Согласуем сроки изготовления</span></div></li></ul>
@@ -158,7 +181,7 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
       </aside>
     </div>
     <CartRecommendations products={recommendationItems} onAdd={addRecommendation} />
-    <div className="cart-mobile-checkout-v3"><span>Итого: <b>{money(total)} BYN</b></span><Link href={selected.size ? '/checkout' : '#'} className={!selected.size ? 'is-disabled' : ''}>Оформить</Link></div>
+    <div className="cart-mobile-checkout-v3"><span>Итого: <b>{money(discountedTotal)} BYN</b></span><Link href={selected.size ? '/checkout' : '#'} className={!selected.size ? 'is-disabled' : ''}>Оформить</Link></div>
   </>;
 }
 
