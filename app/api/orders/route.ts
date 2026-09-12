@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { serverSupabase } from '@/lib/serverSupabase';
 import { notifyTelegram } from '@/lib/notifications';
 import { validateCoupon } from '@/lib/couponValidation';
+import { getSiteControlSettings, quoteDelivery } from '@/lib/siteControl';
 
 type OrderItem = {
   slug?: string;
@@ -59,13 +60,18 @@ export async function POST(request: NextRequest) {
       ? await validateCoupon({ code: body.couponCode, items: normalizedItems, customer, delivery: cleanText(body.delivery) })
       : null;
     if (couponCheck && !couponCheck.ok) return NextResponse.json({ ok: false, message: couponCheck.message }, { status: 400 });
+    const settings = await getSiteControlSettings();
+    const deliveryQuote = quoteDelivery(settings, cleanText(body.deliveryMethodId), subtotal);
+    if (!deliveryQuote) return NextResponse.json({ ok: false, message: 'Выберите доступный способ получения.' }, { status: 400 });
     const discountAmount = Number(couponCheck?.discount || 0);
-    const total = Math.max(0, subtotal - discountAmount);
+    const deliveryPriceBeforeCoupon = deliveryQuote.price;
+    const deliveryPrice = couponCheck?.deliveryDiscount ? 0 : deliveryPriceBeforeCoupon;
+    const total = Math.max(0, subtotal - discountAmount + deliveryPrice);
     const createdAt = new Date().toISOString();
     const order = {
       id: makeOrderId(),
       customer,
-      delivery: cleanText(body.delivery) || 'Доставка по Беларуси',
+      delivery: deliveryQuote.method.title,
       delivery_address: cleanText(body.deliveryAddress || body.delivery_address),
       payment_method: cleanText(body.paymentMethod || body.payment_method) || 'При получении',
       source: 'website',
@@ -77,7 +83,7 @@ export async function POST(request: NextRequest) {
       coupon_type: couponCheck?.coupon?.type || null,
       coupon_value: couponCheck?.coupon?.value || null,
       discount_amount: discountAmount,
-      delivery_discount: couponCheck?.deliveryDiscount || 0,
+      delivery_discount: deliveryPriceBeforeCoupon - deliveryPrice,
       total,
       status: 'Новый',
       status_history: [{ status: 'Новый', created_at: createdAt, author: 'Система' }]

@@ -35,6 +35,34 @@ export type CommerceOption = {
   order: number;
 };
 
+export type DeliveryMethod = CommerceOption & {
+  type?: 'pickup' | 'delivery' | 'courier' | 'pickup_point' | 'other';
+  icon?: 'store' | 'truck' | 'package' | 'map-pin' | 'bike' | 'box';
+  pricingType?: 'free' | 'fixed' | 'carrier';
+  price?: number;
+  freeFromAmount?: number | null;
+  estimatedMinDays?: number | null;
+  estimatedMaxDays?: number | null;
+  workingDaysOnly?: boolean;
+  coverage?: 'all_belarus' | 'minsk' | 'cities' | 'custom';
+  cities?: string[];
+  useCompanyAddress?: boolean;
+  address?: string;
+  schedule?: string;
+  customerInstruction?: string;
+  archived?: boolean;
+};
+
+export type DeliverySettings = {
+  freeDeliveryEnabled: boolean;
+  freeDeliveryFrom: number;
+  freeDeliveryScope: 'delivery_only' | 'all_paid';
+  showEstimatedDates: boolean;
+  showInstruction: boolean;
+  showPickupAddress: boolean;
+  allowComment: boolean;
+};
+
 export type CouponRule = {
   id: string;
   code: string;
@@ -69,9 +97,10 @@ export type SiteControlSettings = {
     robotsIndex: boolean;
   };
   commerce: {
-    deliveryMethods: CommerceOption[];
+    deliveryMethods: DeliveryMethod[];
     paymentMethods: CommerceOption[];
     couponRules: CouponRule[];
+    deliverySettings: DeliverySettings;
   };
 };
 
@@ -122,16 +151,18 @@ export const defaultSiteControl: SiteControlSettings = {
   },
   commerce: {
     deliveryMethods: [
-      { id: 'belarus_delivery', title: 'Доставка по Беларуси', description: 'Стоимость и сроки менеджер согласует после оформления.', enabled: true, note: 'Основной способ получения', order: 1 },
-      { id: 'pickup', title: 'Самовывоз', description: 'Заберите заказ после подтверждения готовности.', enabled: true, note: 'Адрес берётся из настроек контактов', order: 2 },
-      { id: 'call', title: 'Уточнить при звонке', description: 'Менеджер поможет выбрать удобный способ получения.', enabled: true, note: 'Резервный вариант', order: 3 }
+      { id: 'pickup', title: 'Самовывоз', description: 'Заберите заказ на производстве после подтверждения готовности.', enabled: true, note: 'Получение на производстве', order: 1, type: 'pickup', icon: 'store', pricingType: 'free', price: 0, coverage: 'all_belarus', useCompanyAddress: true, customerInstruction: 'После подтверждения заказа мы сообщим, когда он будет готов к получению.' },
+      { id: 'belarus_delivery', title: 'Доставка по Беларуси', description: 'Доставка заказов курьером по всей стране.', enabled: true, note: 'Основной способ получения', order: 2, type: 'delivery', icon: 'truck', pricingType: 'fixed', price: 15, freeFromAmount: 300, estimatedMinDays: 1, estimatedMaxDays: 3, workingDaysOnly: true, coverage: 'all_belarus' },
+      { id: 'europost', title: 'Европочта', description: 'Доставка в отделение Европочты.', enabled: false, note: 'Подготовлено к подключению', order: 3, type: 'pickup_point', icon: 'package', pricingType: 'carrier', coverage: 'all_belarus' },
+      { id: 'minsk_courier', title: 'Курьер (Минск)', description: 'Доставка курьером по Минску.', enabled: false, note: 'Подготовлено к подключению', order: 4, type: 'courier', icon: 'bike', pricingType: 'fixed', price: 20, freeFromAmount: 300, estimatedMinDays: 0, estimatedMaxDays: 1, workingDaysOnly: true, coverage: 'minsk' }
     ],
     paymentMethods: [
       { id: 'manager', title: 'Согласовать с менеджером', description: 'Менеджер подтвердит доступный способ оплаты после заказа.', enabled: true, note: 'Рабочий сценарий до подключения эквайринга', order: 1 },
       { id: 'cash', title: 'Наличными при получении', description: 'Оплата при самовывозе или получении заказа.', enabled: false, note: 'Включить, когда способ доступен', order: 2 },
       { id: 'online', title: 'Онлайн-оплата', description: 'Оплата банковской картой на сайте.', enabled: false, note: 'Требует подключенного платёжного провайдера', order: 3 }
     ],
-    couponRules: []
+    couponRules: [],
+    deliverySettings: { freeDeliveryEnabled: true, freeDeliveryFrom: 300, freeDeliveryScope: 'delivery_only', showEstimatedDates: true, showInstruction: true, showPickupAddress: true, allowComment: true }
   }
 };
 
@@ -174,10 +205,45 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
       enabled: Boolean(item.enabled),
       note: String(item.note || '')
     } as CouponRule));
+  const deliveryRaw = mergeCommerceOptions(defaultSiteControl.commerce.deliveryMethods, commerceIncoming.deliveryMethods)
+    .map((item: any) => {
+      const base = defaultSiteControl.commerce.deliveryMethods.find((method) => method.id === item.id);
+      return {
+        ...base,
+        ...item,
+        type: ['pickup', 'delivery', 'courier', 'pickup_point', 'other'].includes(item.type) ? item.type : base?.type || 'delivery',
+        icon: ['store', 'truck', 'package', 'map-pin', 'bike', 'box'].includes(item.icon) ? item.icon : base?.icon || 'truck',
+        pricingType: ['free', 'fixed', 'carrier'].includes(item.pricingType) ? item.pricingType : base?.pricingType || 'free',
+        price: Math.max(0, Number(item.price ?? base?.price ?? 0)),
+        freeFromAmount: item.freeFromAmount === null || item.freeFromAmount === '' ? null : Math.max(0, Number(item.freeFromAmount ?? base?.freeFromAmount ?? 0)),
+        estimatedMinDays: item.estimatedMinDays === null || item.estimatedMinDays === '' ? null : Math.max(0, Number(item.estimatedMinDays ?? base?.estimatedMinDays ?? 0)),
+        estimatedMaxDays: item.estimatedMaxDays === null || item.estimatedMaxDays === '' ? null : Math.max(0, Number(item.estimatedMaxDays ?? base?.estimatedMaxDays ?? 0)),
+        workingDaysOnly: Boolean(item.workingDaysOnly ?? base?.workingDaysOnly),
+        coverage: ['all_belarus', 'minsk', 'cities', 'custom'].includes(item.coverage) ? item.coverage : base?.coverage || 'all_belarus',
+        cities: Array.isArray(item.cities) ? item.cities.map(String) : base?.cities || [],
+        useCompanyAddress: item.useCompanyAddress === undefined ? base?.useCompanyAddress !== false : Boolean(item.useCompanyAddress),
+        address: String(item.address || base?.address || ''),
+        schedule: String(item.schedule || base?.schedule || ''),
+        customerInstruction: String(item.customerInstruction || base?.customerInstruction || ''),
+        archived: Boolean(item.archived)
+      } as DeliveryMethod;
+    });
+  const deliveryIncoming = asObject(commerceIncoming.deliverySettings);
+  const deliverySettings: DeliverySettings = {
+    ...defaultSiteControl.commerce.deliverySettings,
+    freeDeliveryEnabled: deliveryIncoming.freeDeliveryEnabled === undefined ? defaultSiteControl.commerce.deliverySettings.freeDeliveryEnabled : Boolean(deliveryIncoming.freeDeliveryEnabled),
+    freeDeliveryFrom: Math.max(0, Number(deliveryIncoming.freeDeliveryFrom ?? defaultSiteControl.commerce.deliverySettings.freeDeliveryFrom)),
+    freeDeliveryScope: deliveryIncoming.freeDeliveryScope === 'all_paid' ? 'all_paid' : 'delivery_only',
+    showEstimatedDates: deliveryIncoming.showEstimatedDates === undefined ? true : Boolean(deliveryIncoming.showEstimatedDates),
+    showInstruction: deliveryIncoming.showInstruction === undefined ? true : Boolean(deliveryIncoming.showInstruction),
+    showPickupAddress: deliveryIncoming.showPickupAddress === undefined ? true : Boolean(deliveryIncoming.showPickupAddress),
+    allowComment: deliveryIncoming.allowComment === undefined ? true : Boolean(deliveryIncoming.allowComment)
+  };
   const commerce = {
-    deliveryMethods: mergeCommerceOptions(defaultSiteControl.commerce.deliveryMethods, commerceIncoming.deliveryMethods),
+    deliveryMethods: deliveryRaw,
     paymentMethods: mergeCommerceOptions(defaultSiteControl.commerce.paymentMethods, commerceIncoming.paymentMethods),
-    couponRules
+    couponRules,
+    deliverySettings
   };
 
   const incomingDirections = Array.isArray(incoming.directions) ? incoming.directions : [];
@@ -253,4 +319,23 @@ export function visibleDirections(settings: SiteControlSettings) {
   return settings.directions
     .filter((item) => item.visible)
     .sort((a, b) => a.order - b.order);
+}
+
+export function visibleDeliveryMethods(settings: SiteControlSettings) {
+  return settings.commerce.deliveryMethods
+    .filter((method) => method.enabled && !method.archived)
+    .sort((a, b) => a.order - b.order);
+}
+
+export function quoteDelivery(settings: SiteControlSettings, methodId: string, subtotal: number) {
+  const method = visibleDeliveryMethods(settings).find((item) => item.id === methodId);
+  if (!method) return null;
+  const amount = Math.max(0, Number(subtotal || 0));
+  const methodThreshold = method.freeFromAmount ?? settings.commerce.deliverySettings.freeDeliveryFrom;
+  const canBeFree = settings.commerce.deliverySettings.freeDeliveryEnabled
+    && method.pricingType === 'fixed'
+    && (settings.commerce.deliverySettings.freeDeliveryScope === 'all_paid' || method.type !== 'pickup')
+    && amount >= Number(methodThreshold || 0);
+  const price = method.pricingType === 'free' || method.pricingType === 'carrier' || canBeFree ? 0 : Math.max(0, Number(method.price || 0));
+  return { method, price, isFree: method.pricingType === 'free' || canBeFree, priceType: method.pricingType };
 }
