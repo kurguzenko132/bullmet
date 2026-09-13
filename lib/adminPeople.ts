@@ -1,5 +1,5 @@
 import { serverSupabase } from './serverSupabase';
-export { adminRoles, type AdminRole, roleLabel, roleClass, actionLabel } from './adminAccess';
+export { adminRoles, type AdminRole, roleLabel, roleClass, actionLabel, isStaffRole } from './adminAccess';
 
 export type AdminProfile = {
   id: string;
