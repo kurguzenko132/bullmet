@@ -1,112 +1,111 @@
 'use client';
 
-import { useState } from 'react';
-import { DatabaseBackup, FileJson, RefreshCw, Table } from 'lucide-react';
-import type { BackupOverview, ExportType } from '@/lib/adminBackup';
+import { useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, Clock3, DatabaseBackup, Download, FileJson, HardDrive, Info, LoaderCircle, LockKeyhole, RefreshCw, ShieldCheck, Table, Trash2 } from 'lucide-react';
+import type { BackupDashboard, BackupKind, BackupRecord, ExportType } from '@/lib/adminBackup';
 
-type Props = {
-  initialOverview: BackupOverview;
-};
+type Props = { initialDashboard: BackupDashboard };
 
-const exportItems: Array<{ type: ExportType; title: string; description: string; csv: boolean }> = [
-  { type: 'all', title: 'Полная копия', description: 'Все основные данные сайта одним JSON-файлом.', csv: false },
-  { type: 'products', title: 'Товары', description: 'Каталог товаров, цены, фото, статусы и SEO.', csv: true },
-  { type: 'orders', title: 'Заказы', description: 'Заказы клиентов, товары, статусы и CRM-поля.', csv: true },
-  { type: 'requests', title: 'Заявки', description: 'Заявки на расчет, услуги и быстрые обращения.', csv: true },
-  { type: 'reviews', title: 'Отзывы', description: 'Отзывы, рейтинги, фото и статусы.', csv: true },
-  { type: 'users', title: 'Пользователи', description: 'Профили, роли, телефоны и статусы.', csv: true },
-  { type: 'settings', title: 'Настройки сайта', description: 'Главная, SEO, категории, баннеры и общие настройки.', csv: false },
-  { type: 'pages', title: 'CMS-страницы', description: 'Страницы, созданные через супер-админку.', csv: true },
-  { type: 'activity', title: 'Журнал действий', description: 'История изменений в админке.', csv: true }
+const exports: Array<{ type: ExportType; title: string; description: string; csv?: boolean }> = [
+  { type: 'all', title: 'Все данные', description: 'Товары, заказы, заявки, пользователи, CMS и настройки.', csv: false },
+  { type: 'products', title: 'Товары', description: 'Карточки каталога, цены и состояния.', csv: true },
+  { type: 'orders', title: 'Заказы', description: 'Заказы, позиции и текущие статусы.', csv: true },
+  { type: 'requests', title: 'Заявки', description: 'Обращения с сайта и расчёты.', csv: true },
+  { type: 'settings', title: 'Настройки CMS', description: 'Главная, баннеры, категории и параметры сайта.' },
+  { type: 'pages', title: 'Страницы', description: 'Страницы, созданные через CMS.', csv: true }
 ];
 
-export function AdminBackupClient({ initialOverview }: Props) {
-  const [overview, setOverview] = useState(initialOverview);
+const kindLabels: Record<BackupKind, string> = { full: 'Полная копия', database: 'Только данные', media: 'Реестр медиа' };
+const statusLabels: Record<BackupRecord['status'], string> = { creating: 'Создаётся', ready: 'Готова', error: 'Ошибка', restoring: 'Восстановление', deleting: 'Удаляется' };
+
+function date(value?: string) {
+  if (!value) return '—';
+  return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+}
+function bytes(value?: number) {
+  if (!value) return '—';
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} КБ`;
+  return `${(value / 1024 / 1024).toFixed(2)} МБ`;
+}
+
+export function AdminBackupClient({ initialDashboard }: Props) {
+  const [dashboard, setDashboard] = useState(initialDashboard);
+  const [selectedId, setSelectedId] = useState<string | null>(initialDashboard.records[0]?.id || null);
   const [message, setMessage] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [kind, setKind] = useState<BackupKind>('full');
+  const [comment, setComment] = useState('');
+  const [settings, setSettings] = useState(initialDashboard.settings);
 
-  async function refreshBackup() {
-    setRefreshing(true);
-    setMessage('');
+  const selected = useMemo(() => dashboard.records.find((record) => record.id === selectedId) || dashboard.records[0], [dashboard.records, selectedId]);
+  const lastReady = dashboard.records.find((record) => record.status === 'ready');
+  const totalSize = dashboard.records.reduce((sum, record) => sum + (record.sizeBytes || 0), 0);
 
-    try {
-      const response = await fetch('/api/admin/backup', { cache: 'no-store' });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось обновить данные.');
-      setOverview(data.overview);
-      setMessage('Сводка экспорта обновлена.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось обновить данные.');
-    } finally {
-      setRefreshing(false);
-    }
+  async function request(body?: Record<string, unknown>) {
+    const response = await fetch('/api/admin/backup', body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : { cache: 'no-store' });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.message || 'Операция не выполнена.');
+    return data;
+  }
+  async function refresh() {
+    setBusy(true); setMessage('');
+    try { const data = await request(); setDashboard(data.dashboard); setSettings(data.dashboard.settings); setMessage('Данные резервного копирования обновлены.'); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось обновить данные.'); }
+    finally { setBusy(false); }
+  }
+  async function create() {
+    setBusy(true); setMessage('');
+    try { const data = await request({ action: 'create', kind, comment }); setCreating(false); setComment(''); setSelectedId(data.record.id); await refresh(); setMessage(data.message); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось создать копию.'); setBusy(false); }
+  }
+  async function update(action: 'delete' | 'protect', body: Record<string, unknown>) {
+    setBusy(true); setMessage('');
+    try { const data = await request({ action, ...body }); setMessage(data.message); await refresh(); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Операция не выполнена.'); setBusy(false); }
+  }
+  async function download(id: string) {
+    setBusy(true); setMessage('');
+    try { const data = await request({ action: 'download', id }); window.location.assign(data.signedUrl); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Скачивание недоступно.'); }
+    finally { setBusy(false); }
+  }
+  async function saveSettings() {
+    setBusy(true); setMessage('');
+    try { const data = await request({ action: 'settings', ...settings }); setSettings(data.settings); setMessage(data.message); await refresh(); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось сохранить настройки.'); setBusy(false); }
   }
 
-  function exportUrl(type: ExportType, format: 'json' | 'csv') {
-    return `/api/admin/export?type=${encodeURIComponent(type)}&format=${format}`;
-  }
+  return <div className="admin-backup-v3">
+    <header className="admin-backup-v3__head">
+      <div><p>Настройки / Защита данных</p><h1>Резервное копирование</h1><span>Защита данных Bullmet: ручные снимки, контроль хранения и экспорт данных для аналитики.</span></div>
+      <div className="admin-backup-v3__head-actions"><button onClick={refresh} disabled={busy}><RefreshCw size={17} className={busy ? 'is-spinning' : ''} /> Обновить</button><button className="is-primary" onClick={() => setCreating(true)} disabled={!dashboard.serviceReady || busy}><DatabaseBackup size={17} /> Создать резервную копию</button></div>
+    </header>
 
-  return (
-    <div className="admin-backup-page">
-      <div className="admin-page-head">
-        <div>
-          <p>Экспорт данных</p>
-          <h1>Резервные копии сайта</h1>
-          <span>Выгружайте товары, заказы, заявки, страницы и настройки в JSON или CSV без доступа к коду.</span>
-        </div>
-        <div className="admin-head-actions">
-          <button type="button" onClick={refreshBackup} disabled={refreshing}><RefreshCw size={17} /> {refreshing ? 'Обновляем...' : 'Обновить данные'}</button>
-          <a href="/api/admin/export?type=all&format=json"><DatabaseBackup size={17} /> Скачать полный JSON</a>
-        </div>
-      </div>
+    {message && <div className="admin-backup-v3__message">{message}</div>}
+    {!dashboard.serviceReady && <div className="admin-backup-v3__warning"><AlertTriangle size={18} /><span><b>Защищённое хранилище не подключено.</b> Для создания настоящих архивов задайте <code>SUPABASE_SERVICE_ROLE_KEY</code>. Кнопки не создают фиктивные копии.</span></div>}
 
-      {message && <div className="admin-message">{message}</div>}
+    <section className="admin-backup-v3__metrics">
+      <article><DatabaseBackup /><span>Последняя копия</span><b>{lastReady ? date(lastReady.completedAt || lastReady.createdAt) : 'Копий ещё нет'}</b><small>{lastReady ? kindLabels[lastReady.kind] : 'Создайте первый снимок'}</small></article>
+      <article><Clock3 /><span>Следующая копия</span><b>{dashboard.settings.enabled && dashboard.schedulerReady ? `${dashboard.settings.frequency === 'daily' ? 'Ежедневно' : 'Еженедельно'}, ${dashboard.settings.time}` : 'Не запланирована'}</b><small>{dashboard.schedulerReady ? 'По расписанию' : 'Cron-планировщик не подключён'}</small></article>
+      <article><HardDrive /><span>Хранилище копий</span><b>{bytes(totalSize)}</b><small>{dashboard.records.length} записей в архиве</small></article>
+      <article><ShieldCheck /><span>Состояние системы</span><b>{dashboard.serviceReady ? 'Готово' : 'Требуется настройка'}</b><small>{dashboard.storageReady ? 'Закрытое Storage доступно' : 'Проверка хранилища недоступна'}</small></article>
+    </section>
 
-      <section className="admin-backup-overview">
-        <article><b>{overview.products}</b><span>товаров</span></article>
-        <article><b>{overview.orders}</b><span>заказов</span></article>
-        <article><b>{overview.requests}</b><span>заявок</span></article>
-        <article><b>{overview.reviews}</b><span>отзывов</span></article>
-        <article><b>{overview.users}</b><span>пользователей</span></article>
-        <article><b>{overview.settings}</b><span>настроек</span></article>
-        <article><b>{overview.pages}</b><span>CMS-страниц</span></article>
-      </section>
+    <section className="admin-backup-v3__grid">
+      <article className="admin-backup-v3__card admin-backup-v3__history"><div className="admin-backup-v3__card-head"><div><h2>Резервные копии</h2><p>Фактические снимки создаются только в закрытом хранилище.</p></div><span>{dashboard.records.length} всего</span></div>
+        <div className="admin-backup-v3__table" role="table"><div className="admin-backup-v3__table-head" role="row"><span>Дата и время</span><span>Тип</span><span>Состав</span><span>Размер</span><span>Статус</span><span /></div>{dashboard.records.length ? dashboard.records.map((record) => <button className={selected?.id === record.id ? 'is-selected' : ''} onClick={() => setSelectedId(record.id)} key={record.id} role="row"><span>{date(record.createdAt)}<small>{record.trigger === 'automatic' ? 'Автоматическая' : 'Ручная'}</small></span><span>{kindLabels[record.kind]}</span><span>{record.includesDatabase ? 'Данные' : 'Медиа'}{record.includesStorage ? ' + Storage' : ' + реестр'}</span><span>{bytes(record.sizeBytes)}</span><span><i className={`status-${record.status}`}>{statusLabels[record.status]}</i></span><span>›</span></button>) : <div className="admin-backup-v3__empty">Архив пуст. После создания здесь появятся готовые снимки и их контрольные суммы.</div>}</div>
+      </article>
 
-      <section className="admin-backup-main-grid admin-backup-main-grid--export">
-        <article className="admin-backup-rules">
-          <h2>Как использовать экспорт</h2>
-          <ol>
-            <li>Перед массовым редактированием скачайте полную копию JSON.</li>
-            <li>Для таблиц используйте CSV по товарам, заказам, заявкам и отзывам.</li>
-            <li>Для восстановления настроек храните свежий JSON с настройками и CMS-страницами.</li>
-          </ol>
-        </article>
-      </section>
+      <aside className="admin-backup-v3__side"><article className="admin-backup-v3__card admin-backup-v3__detail"><div className="admin-backup-v3__card-head"><h2>Сведения о копии</h2>{selected && <span>{selected.protected ? <LockKeyhole size={17} /> : <DatabaseBackup size={17} />}</span>}</div>{selected ? <><h3>{kindLabels[selected.kind]}</h3><p>{date(selected.createdAt)} · {selected.createdBy}</p><dl><div><dt>Статус</dt><dd>{statusLabels[selected.status]}</dd></div><div><dt>Размер</dt><dd>{bytes(selected.sizeBytes)}</dd></div><div><dt>Контрольная сумма</dt><dd>{selected.checksum ? `${selected.checksum.slice(0, 12)}…` : 'Будет создана после завершения'}</dd></div><div><dt>Состав</dt><dd>{selected.includesDatabase ? 'Данные сайта' : 'Реестр медиа'}; физические файлы Storage не входят</dd></div></dl>{selected.comment && <p className="admin-backup-v3__comment">{selected.comment}</p>}<div className="admin-backup-v3__detail-actions"><button onClick={() => download(selected.id)} disabled={busy || selected.status !== 'ready'}><Download size={15} /> Скачать</button><button onClick={() => update('protect', { id: selected.id, protected: !selected.protected })} disabled={busy}>{selected.protected ? 'Снять защиту' : 'Защитить'}</button><button className="is-danger" onClick={() => window.confirm('Удалить резервную копию без возможности восстановления?') && update('delete', { id: selected.id })} disabled={busy}><Trash2 size={15} /> Удалить</button></div></> : <p>Выберите копию из истории.</p>}</article>
+        <article className="admin-backup-v3__restore"><Info size={18} /><div><b>Восстановление защищено</b><p>Полное восстановление выполняется только через отдельную серверную процедуру после проверки состава и ручного подтверждения администратора системы.</p></div></article></aside>
+    </section>
 
-      <section className="admin-export-section">
-        <div className="admin-section-inline-head">
-          <div>
-            <p>Экспорт</p>
-            <h2>Резервные копии данных</h2>
-          </div>
-          <span>JSON подходит для восстановления, CSV — для Excel/Google Sheets.</span>
-        </div>
+    <section className="admin-backup-v3__lower-grid"><article className="admin-backup-v3__card admin-backup-v3__settings"><div className="admin-backup-v3__card-head"><div><h2>Автоматическое резервное копирование</h2><p>Расписание сработает только после подключения защищённого cron-планировщика.</p></div></div><label className="admin-backup-v3__toggle"><input type="checkbox" checked={settings.enabled} onChange={(event) => setSettings({ ...settings, enabled: event.target.checked })} /><span /> Включить расписание</label><div className="admin-backup-v3__settings-fields"><label>Частота<select value={settings.frequency} onChange={(event) => setSettings({ ...settings, frequency: event.target.value as 'daily' | 'weekly' })}><option value="daily">Каждый день</option><option value="weekly">Раз в неделю</option></select></label><label>Время<input type="time" value={settings.time} onChange={(event) => setSettings({ ...settings, time: event.target.value })} /></label><label>Хранить копий<input type="number" min="7" max="90" value={settings.retentionCount} onChange={(event) => setSettings({ ...settings, retentionCount: Number(event.target.value) })} /></label><button className="is-primary" onClick={saveSettings} disabled={busy}>Сохранить настройки</button></div>{!dashboard.schedulerReady && <p className="admin-backup-v3__muted">Планировщик ещё не подключён: включение настройки само по себе не запускает автоматические снимки.</p>}</article>
+      <article className="admin-backup-v3__card admin-backup-v3__health"><h2>Проверка готовности</h2><ul><li className={dashboard.overview.configured ? 'ok' : ''}>{dashboard.overview.configured ? <CheckCircle2 /> : <AlertTriangle />} Подключение к базе данных</li><li className={dashboard.serviceReady ? 'ok' : ''}>{dashboard.serviceReady ? <CheckCircle2 /> : <AlertTriangle />} Сервисный ключ для закрытых архивов</li><li className={dashboard.schedulerReady ? 'ok' : ''}>{dashboard.schedulerReady ? <CheckCircle2 /> : <AlertTriangle />} Планировщик автоматических копий</li><li className={lastReady ? 'ok' : ''}>{lastReady ? <CheckCircle2 /> : <AlertTriangle />} Есть хотя бы один готовый снимок</li></ul></article></section>
 
-        <div className="admin-export-grid">
-          {exportItems.map((item) => (
-            <article key={item.type}>
-              <div>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
-              </div>
-              <div className="admin-export-actions">
-                <a href={exportUrl(item.type, 'json')}><FileJson size={16} /> JSON</a>
-                {item.csv && <a href={exportUrl(item.type, 'csv')}><Table size={16} /> CSV</a>}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
+    <section className="admin-backup-v3__card admin-backup-v3__exports"><div className="admin-backup-v3__card-head"><div><p>Выгрузка данных</p><h2>Экспорт для отчётов и переноса</h2></div><span>Экспорт не заменяет резервную копию.</span></div><div className="admin-backup-v3__export-grid">{exports.map((item) => <article key={item.type}><FileJson size={20} /><h3>{item.title}</h3><p>{item.description}</p><div><a href={`/api/admin/export?type=${item.type}&format=json`}><FileJson size={14} /> JSON</a>{item.csv && <a href={`/api/admin/export?type=${item.type}&format=csv`}><Table size={14} /> CSV</a>}</div></article>)}</div></section>
+
+    {creating && <div className="admin-backup-v3__modal-backdrop"><form className="admin-backup-v3__modal" onSubmit={(event) => { event.preventDefault(); create(); }}><button type="button" className="admin-backup-v3__modal-close" onClick={() => setCreating(false)}>×</button><p>Защищённый снимок</p><h2>Создать резервную копию</h2><span>Архив сохраняется в закрытом Supabase Storage и получает контрольную сумму.</span><fieldset>{(['full', 'database', 'media'] as BackupKind[]).map((item) => <label key={item}><input type="radio" checked={kind === item} onChange={() => setKind(item)} /><b>{kindLabels[item]}</b><small>{item === 'full' ? 'Данные сайта и реестр медиа' : item === 'database' ? 'Только данные сайта' : 'Только реестр медиафайлов'}</small></label>)}</fieldset><label>Комментарий<textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Например: перед массовым обновлением каталога" /></label><div><button type="button" onClick={() => setCreating(false)}>Отмена</button><button className="is-primary" disabled={busy}>{busy ? <LoaderCircle className="is-spinning" size={17} /> : <DatabaseBackup size={17} />} Создать копию</button></div></form></div>}
+  </div>;
 }

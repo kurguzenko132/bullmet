@@ -25,7 +25,7 @@ const pageTitles: Array<[string, string]> = [
   ['/admin/payment', 'Оплата'],
   ['/admin/roles', 'Роли и права'],
   ['/admin/activity', 'Журнал действий'],
-  ['/admin/backup', 'Экспорт данных'],
+  ['/admin/backup', 'Резервное копирование'],
   ['/admin/stats', 'Статистика'],
   ['/admin/reports', 'Отчеты'],
   ['/admin/settings', 'Настройки сайта']

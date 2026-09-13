@@ -1,11 +1,11 @@
 import { AdminBackupClient } from '@/components/AdminBackupClient';
-import { getBackupOverview } from '@/lib/adminBackup';
+import { getBackupDashboard } from '@/lib/adminBackup';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Экспорт данных | Админка Bullmet' };
+export const metadata = { title: 'Резервное копирование | Админка Bullmet' };
 
 export default async function AdminBackupPage() {
-  const overview = await getBackupOverview();
+  const dashboard = await getBackupDashboard();
 
-  return <AdminBackupClient initialOverview={overview} />;
+  return <AdminBackupClient initialDashboard={dashboard} />;
 }
