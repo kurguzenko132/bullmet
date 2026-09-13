@@ -78,7 +78,6 @@ export function CatalogClient({
   const [minPrice, setMinPrice] = useState(initialPriceFrom);
   const [maxPrice, setMaxPrice] = useState(initialPriceTo);
   const [sort, setSort] = useState(initialSort);
-  const [view, setView] = useState<'grid' | 'list'>('grid');
   const [notice, setNotice] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -193,10 +192,6 @@ export function CatalogClient({
             <option value="discount">Со скидкой</option>
           </select>
 
-          <div className="view-switcher view-switcher--market" aria-label="Вид каталога">
-            <button type="button" aria-label="Плитка" className={view === 'grid' ? 'is-active' : ''} onClick={() => setView('grid')}><span className="grid-icon" /></button>
-            <button type="button" aria-label="Список" className={view === 'list' ? 'is-active' : ''} onClick={() => setView('list')}><span className="list-icon" /></button>
-          </div>
         </div>
 
         <div className="catalog-results-row-market">
@@ -211,7 +206,7 @@ export function CatalogClient({
 
         {notice && <div className="catalog-cart-notice catalog-cart-notice--market">{notice}</div>}
 
-        <div className={view === 'grid' ? 'catalog-grid-market' : 'catalog-grid-market catalog-grid-market--list'}>
+        <div className="catalog-grid-market">
           {filteredProducts.map((product) => {
             const imageSettings = getImagePreset(product, product.image, 'catalog');
             const discount = discountPercent(product.price, product.oldPrice);
