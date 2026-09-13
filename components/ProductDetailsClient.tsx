@@ -424,8 +424,12 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               <img src={activeImage} alt={product.title} style={activeImageSettings.style} />
               {images.length > 1 && (
                 <>
-                  <button className="gallery-nav gallery-nav--prev" type="button" onClick={(event) => { event.stopPropagation(); prevImage(); }} aria-label="Предыдущее фото">‹</button>
-                  <button className="gallery-nav gallery-nav--next" type="button" onClick={(event) => { event.stopPropagation(); nextImage(); }} aria-label="Следующее фото">›</button>
+                  <button className="gallery-nav gallery-nav--prev" type="button" onClick={(event) => { event.stopPropagation(); prevImage(); }} aria-label="Предыдущее фото">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
+                  </button>
+                  <button className="gallery-nav gallery-nav--next" type="button" onClick={(event) => { event.stopPropagation(); nextImage(); }} aria-label="Следующее фото">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
+                  </button>
                   <div className="gallery-dots" aria-hidden="true">
                     {images.map((_, index) => <span key={index} className={activeIndex === index ? 'is-active' : ''} />)}
                   </div>

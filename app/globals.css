@@ -1690,11 +1690,21 @@ img { display: block; max-width: 100%; }
   border-radius: 999px;
   background: rgba(255,255,255,.92);
   color: #222;
-  font-size: 34px;
-  line-height: 1;
+  padding: 0;
   display: grid;
   place-items: center;
   cursor: pointer;
+}
+
+.gallery-nav > svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .gallery-nav--prev { left: 18px; }
 .gallery-nav--next { right: 18px; }
