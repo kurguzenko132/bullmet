@@ -24441,8 +24441,8 @@ body:not(.admin-body) .production-simple-final .production-simple-grid {
 }
 body:not(.admin-body) .production-simple-final .production-simple-card,
 body:not(.admin-body) .production-simple-final .production-simple-card img {
-  height: 150px !important;
-  min-height: 150px !important;
+  height: 210px !important;
+  min-height: 210px !important;
   border-radius: 3px !important;
 }
 body:not(.admin-body) .production-simple-final .production-simple-link:hover { color: #d7650b !important; }
@@ -24610,7 +24610,7 @@ body:not(.admin-body) .footer-exact .footer-contacts svg { flex: 0 0 auto; width
   body:not(.admin-body) .custom-order__title { font-size: 23px !important; line-height: 28px !important; }
   body:not(.admin-body) .footer-exact .footer-grid-exact { grid-template-columns: minmax(210px,1.2fr) minmax(130px,.8fr) minmax(140px,.85fr) minmax(140px,.85fr) minmax(250px,1.3fr) !important; column-gap: 28px !important; }
   body:not(.admin-body) .production-simple-final .production-simple-card,
-  body:not(.admin-body) .production-simple-final .production-simple-card img { height: 140px !important; min-height: 140px !important; }
+  body:not(.admin-body) .production-simple-final .production-simple-card img { height: 180px !important; min-height: 180px !important; }
 }
 
 @media (max-width: 1279px) {
