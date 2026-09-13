@@ -25222,8 +25222,8 @@ body:not(.admin-body) .review-form--redesign button[type="submit"] {
     margin: 10px 0 12px;
     overflow: hidden;
     color: #4e4a45;
-    font-size: 12px;
-    line-height: 17px;
+    font-size: 16px;
+    line-height: 24px;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 4;
   }
@@ -25234,8 +25234,8 @@ body:not(.admin-body) .review-form--redesign button[type="submit"] {
   }
 
   body:not(.admin-body) .product-detail-specs p {
-    font-size: 12px;
-    line-height: 16px;
+    font-size: 15px;
+    line-height: 22px;
   }
 
   body:not(.admin-body) .product-detail-specs p:nth-child(n + 6) {
