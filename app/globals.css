@@ -3078,7 +3078,6 @@ body:not(.admin-body) {
 .color-variants--photos {
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
-.variant-photo img,
 .related-image img,
 .lightbox-thumbs img {
   object-fit: contain !important;
@@ -24880,6 +24879,7 @@ body:not(.admin-body) .size-options button { min-width: 72px; height: 42px; bord
 body:not(.admin-body) .color-variants--photos { display: flex; gap: 10px; }
 body:not(.admin-body) .color-variants--photos a { width: 76px; padding: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; }
 body:not(.admin-body) .color-variants--photos .variant-photo { width: 64px; height: 64px; border: 1px solid #ddd8d2; border-radius: 4px; }
+body:not(.admin-body) .color-variants--photos .variant-photo img { width: 100%; height: 100%; object-fit: cover !important; }
 body:not(.admin-body) .color-variants--photos a.is-active .variant-photo { border: 2px solid #e86f0a; }
 body:not(.admin-body) .color-variants--photos .variant-text { display: block; margin-top: 5px; text-align: center; }
 body:not(.admin-body) .color-variants--photos .variant-text b { display: block; overflow: hidden; color: #333; font-size: 10px; line-height: 14px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
