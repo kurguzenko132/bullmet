@@ -546,10 +546,6 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                   <button type="button" onClick={() => setQty(qty + 1)}>+</button>
                 </div>
               </div>
-              <div>
-                <p>Материал</p>
-                <b className="material-pill">{product.material}</b>
-              </div>
             </div>
 
             <div className="product-actions-row">

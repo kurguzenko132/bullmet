@@ -25203,7 +25203,7 @@ body:not(.admin-body) .review-form--redesign button[type="submit"] {
 
   body:not(.admin-body) .product-info-panel {
     min-height: 0 !important;
-    max-height: 650px;
+    max-height: none;
     padding-top: 4px !important;
   }
 
