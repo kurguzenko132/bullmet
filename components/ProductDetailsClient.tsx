@@ -650,7 +650,14 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               const vote = reviewVotes[review.id];
               return <article key={review.id} className="product-review-market-card">
                 <div className="product-review-market-card__avatar">{author.charAt(0).toUpperCase()}</div>
-                <div className="product-review-market-card__body"><header><div><b>{author}</b><span>{review.created_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : 'Отзыв покупателя'} <i>✓ Куплено на Bullmet</i></span></div><RatingStars value={review.rating} readOnly size="small" /></header><p>{review.comment}</p>{!!review.photo_urls?.length && <div className="product-review-market-card__photos">{review.photo_urls.map((url) => <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)}><img src={url} alt="Фото отзыва" /></button>)}</div>}<footer><span>Полезен отзыв?</span><button className={vote === 'up' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'up' ? undefined : 'up' }))}>♡ Полезно</button><button className={vote === 'down' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'down' ? undefined : 'down' }))}>Не очень</button></footer></div>
+                <div className="product-review-market-card__body">
+                  <header><div><b>{author}</b><span>{review.created_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : 'Отзыв покупателя'} <i>✓ Куплено на Bullmet</i></span></div></header>
+                  <div className="product-review-market-card__content">
+                    <RatingStars value={review.rating} readOnly size="small" />
+                    <div className="product-review-market-card__main"><p>{review.comment}</p>{!!review.photo_urls?.length && <div className="product-review-market-card__photos">{review.photo_urls.map((url) => <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)}><img src={url} alt="Фото отзыва" /></button>)}</div>}</div>
+                  </div>
+                  <footer><span>Полезен отзыв?</span><button className={vote === 'up' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'up' ? undefined : 'up' }))}>♡ Полезно</button><button className={vote === 'down' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'down' ? undefined : 'down' }))}>Не очень</button></footer>
+                </div>
               </article>;
             }) : <div className="product-reviews-market__empty"><b>{reviewFilter === 'photo' ? 'Отзывов с фото пока нет' : 'Отзывов пока нет'}</b><span>Станьте первым, кто поделится впечатлением о товаре.</span><button type="button" onClick={scrollToReviewForm}>Оставить отзыв</button></div>}
           </div>
