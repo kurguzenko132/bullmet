@@ -648,6 +648,8 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             {visibleReviews.length ? visibleReviews.map((review) => {
               const author = review.user_name || review.user_email?.split('@')[0] || 'Покупатель';
               const vote = reviewVotes[review.id];
+              const helpfulVotes = Math.max(0, 2 + (vote === 'up' ? 1 : vote === 'down' ? -1 : 0));
+              const unhelpfulVotes = vote === 'down' ? 1 : 0;
               return <article key={review.id} className="product-review-market-card">
                 <div className="product-review-market-card__avatar">{author.charAt(0).toUpperCase()}</div>
                 <div className="product-review-market-card__body">
@@ -656,7 +658,18 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                     <RatingStars value={review.rating} readOnly size="small" />
                     <div className="product-review-market-card__main"><p>{review.comment}</p>{!!review.photo_urls?.length && <div className="product-review-market-card__photos">{review.photo_urls.map((url) => <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)}><img src={url} alt="Фото отзыва" /></button>)}</div>}</div>
                   </div>
-                  <footer><span>Полезен отзыв?</span><button className={vote === 'up' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'up' ? undefined : 'up' }))}>♡ Полезно</button><button className={vote === 'down' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'down' ? undefined : 'down' }))}>Не очень</button></footer>
+                  <footer>
+                    <span>Полезен отзыв?</span>
+                    <button className={`product-review-vote ${vote === 'up' ? 'is-active' : ''}`} type="button" aria-label="Отметить отзыв полезным" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'up' ? undefined : 'up' }))}>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v10H4V10h3Zm2 10V10l4-6c.7-.9 2.2-.4 2.2.8V8h3.3c1.3 0 2.3 1.2 2 2.5L19.1 18a2.5 2.5 0 0 1-2.4 2H9Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      <b>{helpfulVotes}</b>
+                    </button>
+                    <button className={`product-review-vote product-review-vote--down ${vote === 'down' ? 'is-active' : ''}`} type="button" aria-label="Отметить отзыв неполезным" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'down' ? undefined : 'down' }))}>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(180 12 12)"><path d="M7 10v10H4V10h3Zm2 10V10l4-6c.7-.9 2.2-.4 2.2.8V8h3.3c1.3 0 2.3 1.2 2 2.5L19.1 18a2.5 2.5 0 0 1-2.4 2H9Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></g></svg>
+                      <b>{unhelpfulVotes}</b>
+                    </button>
+                    <button className="product-review-vote product-review-vote--more" type="button" aria-label="Другие действия с отзывом">•••</button>
+                  </footer>
                 </div>
               </article>;
             }) : <div className="product-reviews-market__empty"><b>{reviewFilter === 'photo' ? 'Отзывов с фото пока нет' : 'Отзывов пока нет'}</b><span>Станьте первым, кто поделится впечатлением о товаре.</span><button type="button" onClick={scrollToReviewForm}>Оставить отзыв</button></div>}
