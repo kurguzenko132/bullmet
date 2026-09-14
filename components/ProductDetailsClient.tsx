@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, CSSProperties, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from './Icon';
 import type { CatalogProduct } from '@/lib/products';
@@ -37,17 +37,21 @@ function reviewWord(count: number) {
 
 function RatingStars({ value, onChange, readOnly = false, size = 'normal' }: { value: number; onChange?: (value: number) => void; readOnly?: boolean; size?: 'normal' | 'small' }) {
   return (
-    <div className={`rating-stars rating-stars--${size} ${readOnly ? 'is-readonly' : ''}`} aria-label={`Оценка ${value} из 5`}>
+    <div className={`rating-stars rating-stars--${size} ${readOnly ? 'is-readonly' : ''}`} aria-label={`Оценка ${value} из 5`} role="group">
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
           type="button"
-          className={star <= value ? 'is-active' : ''}
+          className="rating-stars__star"
           disabled={readOnly}
-          onClick={() => onChange?.(star)}
-          aria-label={`Поставить ${star}`}
+          onClick={(event) => {
+            const bounds = event.currentTarget.getBoundingClientRect();
+            const isHalf = event.clientX - bounds.left < bounds.width / 2;
+            onChange?.(Math.min(5, Math.max(0.5, star - (isHalf ? 0.5 : 0))));
+          }}
+          aria-label={`Поставить ${star - 0.5} или ${star} звёзд`}
         >
-          ★
+          <span style={{ '--rating-fill': `${Math.max(0, Math.min(1, value - star + 1)) * 100}%` } as CSSProperties}>★</span>
         </button>
       ))}
     </div>
@@ -123,11 +127,11 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState<string[]>([]);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewPhotoLightbox, setReviewPhotoLightbox] = useState<string | null>(null);
-  const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
   const [reviewFilter, setReviewFilter] = useState<'all' | 'photo'>('all');
   const [reviewSort, setReviewSort] = useState<'new' | 'old' | 'high' | 'low'>('new');
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const [reviewVotes, setReviewVotes] = useState<Record<string, 'up' | 'down' | undefined>>({});
+  const reviewFormRef = useRef<HTMLElement | null>(null);
   const activeImage = images[activeIndex] || product.image;
   const activeImageSettings = getImagePreset(product, activeImage, 'product');
   const activeModalSettings = getImagePreset(product, activeImage, 'modal');
@@ -137,7 +141,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const reviewsLabel = reviews.length ? `${reviews.length} ${reviewWord(reviews.length)}` : 'Нет отзывов';
   const ratingDistribution = useMemo(() => [5, 4, 3, 2, 1].map((rating) => ({
     rating,
-    count: reviews.filter((review) => Number(review.rating) === rating).length
+    count: reviews.filter((review) => Math.round(Number(review.rating)) === rating).length
   })), [reviews]);
   const visibleReviews = useMemo(() => {
     const result = reviewFilter === 'photo' ? reviews.filter((review) => review.photo_urls?.length) : [...reviews];
@@ -207,20 +211,6 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     };
   }, [lightboxOpen, images.length]);
 
-  useEffect(() => {
-    if (!reviewDrawerOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setReviewDrawerOpen(false);
-    };
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [reviewDrawerOpen]);
-
   function prevImage() {
     setActiveIndex((value) => (value - 1 + images.length) % images.length);
   }
@@ -234,6 +224,11 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     const diff = touchStartX - clientX;
     if (Math.abs(diff) > 40) diff > 0 ? nextImage() : prevImage();
     setTouchStartX(null);
+  }
+
+  function scrollToReviewForm() {
+    setReviewMessage('');
+    requestAnimationFrame(() => reviewFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
   }
 
   function pushToCart(cartItem: { slug: string; title: string; price: number; image: string; material?: string; size?: string; quantity: number }) {
@@ -617,7 +612,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
         <article className="product-reviews-market">
           <header className="product-reviews-market__head">
             <h2>Отзывы и оценки</h2>
-            <button type="button" onClick={() => setReviewDrawerOpen(true)}>{reviews.length} {reviewWord(reviews.length)} <span>›</span></button>
+            <button type="button" onClick={scrollToReviewForm}>{reviews.length} {reviewWord(reviews.length)} <span>›</span></button>
           </header>
           <section className="product-reviews-market__summary">
             <div className="product-reviews-market__score">
@@ -631,7 +626,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               ))}
             </div>
             <div className="product-reviews-market__cta">
-              <button type="button" onClick={() => { setReviewMessage(''); setReviewDrawerOpen(true); }}><span aria-hidden="true">✎</span>Оставить отзыв</button>
+              <button type="button" onClick={scrollToReviewForm}><span aria-hidden="true">✎</span>Оставить отзыв</button>
               <span>Поделитесь опытом и помогите другим сделать выбор</span>
             </div>
           </section>
@@ -647,34 +642,30 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                 <div className="product-review-market-card__avatar">{author.charAt(0).toUpperCase()}</div>
                 <div className="product-review-market-card__body"><header><div><b>{author}</b><span>{review.created_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : 'Отзыв покупателя'} <i>✓ Куплено на Bullmet</i></span></div><RatingStars value={review.rating} readOnly size="small" /></header><p>{review.comment}</p>{!!review.photo_urls?.length && <div className="product-review-market-card__photos">{review.photo_urls.map((url) => <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)}><img src={url} alt="Фото отзыва" /></button>)}</div>}<footer><span>Полезен отзыв?</span><button className={vote === 'up' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'up' ? undefined : 'up' }))}>♡ Полезно</button><button className={vote === 'down' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'down' ? undefined : 'down' }))}>Не очень</button></footer></div>
               </article>;
-            }) : <div className="product-reviews-market__empty"><b>{reviewFilter === 'photo' ? 'Отзывов с фото пока нет' : 'Отзывов пока нет'}</b><span>Станьте первым, кто поделится впечатлением о товаре.</span><button type="button" onClick={() => setReviewDrawerOpen(true)}>Оставить отзыв</button></div>}
+            }) : <div className="product-reviews-market__empty"><b>{reviewFilter === 'photo' ? 'Отзывов с фото пока нет' : 'Отзывов пока нет'}</b><span>Станьте первым, кто поделится впечатлением о товаре.</span><button type="button" onClick={scrollToReviewForm}>Оставить отзыв</button></div>}
           </div>
-        </article>
-      </section>
 
-      {reviewDrawerOpen && (
-        <div className="product-review-drawer-layer" role="presentation">
-          <button className="product-review-drawer-layer__backdrop" type="button" onClick={() => setReviewDrawerOpen(false)} aria-label="Закрыть форму отзыва" />
-          <aside className="product-review-drawer" role="dialog" aria-modal="true" aria-labelledby="product-review-drawer-title">
-            <header>
-              <h2 id="product-review-drawer-title">Оставить отзыв</h2>
-              <button type="button" onClick={() => setReviewDrawerOpen(false)} aria-label="Закрыть форму отзыва">×</button>
-            </header>
-            <div className="product-review-drawer__product">
-              <img src={images[0] || product.image} alt={product.title} />
-              <div><b>{product.title}</b><span>{product.material || 'Изделие Bullmet'}</span><Link href={`/product/${product.slug}`}>Перейти к товару ›</Link></div>
+          <section className="product-review-form-card" ref={reviewFormRef} aria-labelledby="product-review-form-title">
+            <div className="product-review-form-card__intro">
+              <span>ВАШЕ МНЕНИЕ</span>
+              <h3 id="product-review-form-title">Оставить отзыв</h3>
+              <p>Поделитесь опытом использования — это поможет другим сделать выбор.</p>
+              <div className="product-review-form-card__product">
+                <img src={images[0] || product.image} alt={product.title} />
+                <div><b>{product.title}</b><small>{product.material || 'Изделие Bullmet'}</small></div>
+              </div>
             </div>
             <form onSubmit={submitReview}>
-              <label className="product-review-drawer__rating"><b>Ваша оценка <i>*</i></b><div><RatingStars value={reviewRating} onChange={setReviewRating} /><span>{reviewRating ? ['', 'Плохо', 'Не очень', 'Нормально', 'Хорошо', 'Отлично!'][reviewRating] : 'Выберите оценку'}</span></div></label>
-              <label className="product-review-drawer__comment"><b>Комментарий <i>*</i></b><textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} maxLength={1000} minLength={10} placeholder="Расскажите о товаре: качество, удобство использования, внешний вид и т.д." /><small>{reviewComment.length}/1000</small></label>
-              <div className="product-review-drawer__photos"><b>Фотографии <span>(до 5)</span></b><div>{reviewPhotoPreviews.map((url, index) => <div className="product-review-preview" key={url}><img src={url} alt={`Новое фото ${index + 1}`} /><button type="button" onClick={() => removeReviewPhoto(index)} aria-label="Удалить фото">×</button></div>)}{reviewPhotoPreviews.length < 5 && <label className="product-review-upload"><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={chooseReviewPhotos} /><span>⌁</span><small>Добавить фото</small></label>}{Array.from({ length: Math.max(0, 4 - reviewPhotoPreviews.length) }).map((_, index) => <span aria-hidden="true" className="product-review-photo-placeholder" key={index}>+</span>)}</div><small>JPG, PNG или WEBP, до 10 МБ на файл.</small></div>
-              <label className="product-review-drawer__confirm"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} /><span>Я подтверждаю, что мой отзыв основан на реальном опыте использования товара.</span></label>
+              <label className="product-review-form-card__rating"><b>Ваша оценка <i>*</i></b><div><RatingStars value={reviewRating} onChange={setReviewRating} /><span>{reviewRating ? `${reviewRating.toFixed(1)} — ${reviewRating >= 4.5 ? 'Отлично!' : reviewRating >= 3.5 ? 'Хорошо' : reviewRating >= 2.5 ? 'Нормально' : 'Есть что улучшить'}` : 'Выберите оценку'}</span></div><small>Можно поставить оценку с шагом 0,5.</small></label>
+              <label className="product-review-form-card__comment"><b>Комментарий <i>*</i></b><textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} maxLength={1000} minLength={10} placeholder="Расскажите о товаре: качество, удобство использования, внешний вид и т.д." /><small>{reviewComment.length}/1000</small></label>
+              <div className="product-review-form-card__photos"><b>Фотографии <span>(до 5)</span></b><div>{reviewPhotoPreviews.map((url, index) => <div className="product-review-preview" key={url}><img src={url} alt={`Новое фото ${index + 1}`} /><button type="button" onClick={() => removeReviewPhoto(index)} aria-label="Удалить фото">×</button></div>)}{reviewPhotoPreviews.length < 5 && <label className="product-review-upload"><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={chooseReviewPhotos} /><span>⌁</span><small>Добавить фото</small></label>}{Array.from({ length: Math.max(0, 4 - reviewPhotoPreviews.length) }).map((_, index) => <span aria-hidden="true" className="product-review-photo-placeholder" key={index}>+</span>)}</div><small>JPG, PNG или WEBP, до 10 МБ на файл.</small></div>
+              <label className="product-review-form-card__confirm"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} /><span>Я подтверждаю, что мой отзыв основан на реальном опыте использования товара.</span></label>
               {reviewMessage && <p className="review-message">{reviewMessage}</p>}
-              <button className="product-review-drawer__submit" type="submit" disabled={reviewSubmitting}>{reviewSubmitting ? 'Публикуем…' : 'Опубликовать отзыв'}</button>
+              <button className="product-review-form-card__submit" type="submit" disabled={reviewSubmitting}>{reviewSubmitting ? 'Публикуем…' : 'Опубликовать отзыв'}</button>
             </form>
-          </aside>
-        </div>
-      )}
+          </section>
+        </article>
+      </section>
 
       {related.length > 0 && (
         <section className="related-products-section">
