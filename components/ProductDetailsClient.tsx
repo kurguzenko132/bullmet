@@ -35,7 +35,7 @@ function reviewWord(count: number) {
   return 'отзывов';
 }
 
-function RatingStars({ value, onChange, readOnly = false, size = 'normal' }: { value: number; onChange?: (value: number) => void; readOnly?: boolean; size?: 'normal' | 'small' }) {
+function RatingStars({ value, onChange, onPreview, readOnly = false, size = 'normal' }: { value: number; onChange?: (value: number) => void; onPreview?: (value: number | null) => void; readOnly?: boolean; size?: 'normal' | 'small' }) {
   return (
     <div className={`rating-stars rating-stars--${size} ${readOnly ? 'is-readonly' : ''}`} aria-label={`Оценка ${value} из 5`} role="group">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -44,6 +44,14 @@ function RatingStars({ value, onChange, readOnly = false, size = 'normal' }: { v
           type="button"
           className="rating-stars__star"
           disabled={readOnly}
+          onMouseMove={(event) => {
+            const bounds = event.currentTarget.getBoundingClientRect();
+            const isHalf = event.clientX - bounds.left < bounds.width / 2;
+            onPreview?.(Math.min(5, Math.max(0.5, star - (isHalf ? 0.5 : 0))));
+          }}
+          onMouseLeave={() => onPreview?.(null)}
+          onFocus={() => onPreview?.(star)}
+          onBlur={() => onPreview?.(null)}
           onClick={(event) => {
             const bounds = event.currentTarget.getBoundingClientRect();
             const isHalf = event.clientX - bounds.left < bounds.width / 2;
@@ -122,6 +130,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewMessage, setReviewMessage] = useState('');
   const [reviewRating, setReviewRating] = useState(0);
+  const [reviewRatingPreview, setReviewRatingPreview] = useState<number | null>(null);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewPhotos, setReviewPhotos] = useState<File[]>([]);
   const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState<string[]>([]);
@@ -610,6 +619,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       </section>
       <section className="product-content-section product-content-section--reviews-only">
         <article className="product-reviews-market">
+          <div className="product-reviews-market__content">
           <header className="product-reviews-market__head">
             <h2>Отзывы и оценки</h2>
             <button type="button" onClick={scrollToReviewForm}>{reviews.length} {reviewWord(reviews.length)} <span>›</span></button>
@@ -644,8 +654,9 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               </article>;
             }) : <div className="product-reviews-market__empty"><b>{reviewFilter === 'photo' ? 'Отзывов с фото пока нет' : 'Отзывов пока нет'}</b><span>Станьте первым, кто поделится впечатлением о товаре.</span><button type="button" onClick={scrollToReviewForm}>Оставить отзыв</button></div>}
           </div>
+          </div>
 
-          <section className="product-review-form-card" ref={reviewFormRef} aria-labelledby="product-review-form-title">
+          <aside className="product-review-form-card" ref={reviewFormRef} aria-labelledby="product-review-form-title">
             <div className="product-review-form-card__intro">
               <span>ВАШЕ МНЕНИЕ</span>
               <h3 id="product-review-form-title">Оставить отзыв</h3>
@@ -656,14 +667,14 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               </div>
             </div>
             <form onSubmit={submitReview}>
-              <label className="product-review-form-card__rating"><b>Ваша оценка <i>*</i></b><div><RatingStars value={reviewRating} onChange={setReviewRating} /><span>{reviewRating ? `${reviewRating.toFixed(1)} — ${reviewRating >= 4.5 ? 'Отлично!' : reviewRating >= 3.5 ? 'Хорошо' : reviewRating >= 2.5 ? 'Нормально' : 'Есть что улучшить'}` : 'Выберите оценку'}</span></div><small>Можно поставить оценку с шагом 0,5.</small></label>
+              <label className="product-review-form-card__rating"><b>Ваша оценка <i>*</i></b><div><RatingStars value={reviewRatingPreview ?? reviewRating} onChange={setReviewRating} onPreview={setReviewRatingPreview} /><span>{(reviewRatingPreview ?? reviewRating) ? `${(reviewRatingPreview ?? reviewRating).toFixed(1)} — ${(reviewRatingPreview ?? reviewRating) >= 4.5 ? 'Отлично!' : (reviewRatingPreview ?? reviewRating) >= 3.5 ? 'Хорошо' : (reviewRatingPreview ?? reviewRating) >= 2.5 ? 'Нормально' : 'Есть что улучшить'}` : 'Выберите оценку'}</span></div><small>Можно поставить оценку с шагом 0,5.</small></label>
               <label className="product-review-form-card__comment"><b>Комментарий <i>*</i></b><textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} maxLength={1000} minLength={10} placeholder="Расскажите о товаре: качество, удобство использования, внешний вид и т.д." /><small>{reviewComment.length}/1000</small></label>
               <div className="product-review-form-card__photos"><b>Фотографии <span>(до 5)</span></b><div>{reviewPhotoPreviews.map((url, index) => <div className="product-review-preview" key={url}><img src={url} alt={`Новое фото ${index + 1}`} /><button type="button" onClick={() => removeReviewPhoto(index)} aria-label="Удалить фото">×</button></div>)}{reviewPhotoPreviews.length < 5 && <label className="product-review-upload"><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={chooseReviewPhotos} /><span>⌁</span><small>Добавить фото</small></label>}{Array.from({ length: Math.max(0, 4 - reviewPhotoPreviews.length) }).map((_, index) => <span aria-hidden="true" className="product-review-photo-placeholder" key={index}>+</span>)}</div><small>JPG, PNG или WEBP, до 10 МБ на файл.</small></div>
               <label className="product-review-form-card__confirm"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} /><span>Я подтверждаю, что мой отзыв основан на реальном опыте использования товара.</span></label>
               {reviewMessage && <p className="review-message">{reviewMessage}</p>}
               <button className="product-review-form-card__submit" type="submit" disabled={reviewSubmitting}>{reviewSubmitting ? 'Публикуем…' : 'Опубликовать отзыв'}</button>
             </form>
-          </section>
+          </aside>
         </article>
       </section>
 
