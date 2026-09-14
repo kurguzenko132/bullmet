@@ -117,11 +117,17 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewMessage, setReviewMessage] = useState('');
-  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewPhotos, setReviewPhotos] = useState<File[]>([]);
+  const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState<string[]>([]);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewPhotoLightbox, setReviewPhotoLightbox] = useState<string | null>(null);
+  const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
+  const [reviewFilter, setReviewFilter] = useState<'all' | 'photo'>('all');
+  const [reviewSort, setReviewSort] = useState<'new' | 'old' | 'high' | 'low'>('new');
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
+  const [reviewVotes, setReviewVotes] = useState<Record<string, 'up' | 'down' | undefined>>({});
   const activeImage = images[activeIndex] || product.image;
   const activeImageSettings = getImagePreset(product, activeImage, 'product');
   const activeModalSettings = getImagePreset(product, activeImage, 'modal');
@@ -133,6 +139,16 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     rating,
     count: reviews.filter((review) => Number(review.rating) === rating).length
   })), [reviews]);
+  const visibleReviews = useMemo(() => {
+    const result = reviewFilter === 'photo' ? reviews.filter((review) => review.photo_urls?.length) : [...reviews];
+    return result.sort((a, b) => {
+      if (reviewSort === 'high') return Number(b.rating) - Number(a.rating);
+      if (reviewSort === 'low') return Number(a.rating) - Number(b.rating);
+      const aDate = new Date(a.created_at || 0).getTime();
+      const bDate = new Date(b.created_at || 0).getTime();
+      return reviewSort === 'old' ? aDate - bDate : bDate - aDate;
+    });
+  }, [reviews, reviewFilter, reviewSort]);
   const sortedColorVariants = useMemo(() => {
     return [...colorVariants].sort((a, b) => {
       if (a.slug === product.slug) return -1;
@@ -190,6 +206,20 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [lightboxOpen, images.length]);
+
+  useEffect(() => {
+    if (!reviewDrawerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setReviewDrawerOpen(false);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [reviewDrawerOpen]);
 
   function prevImage() {
     setActiveIndex((value) => (value - 1 + images.length) % images.length);
@@ -305,11 +335,24 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
 
 
   function chooseReviewPhotos(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files || [])
-      .filter((file) => file.type.startsWith('image/'))
-      .slice(0, 5);
+    const selected = Array.from(event.target.files || []);
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const valid = selected.filter((file) => allowedTypes.includes(file.type) && file.size <= 10 * 1024 * 1024);
+    if (valid.length !== selected.length) setReviewMessage('Можно загрузить JPG, PNG или WEBP размером до 10 МБ.');
+    const files = valid.slice(0, Math.max(0, 5 - reviewPhotos.length));
+    if (files.length) {
+      setReviewPhotos((current) => [...current, ...files]);
+      setReviewPhotoPreviews((current) => [...current, ...files.map((file) => URL.createObjectURL(file))]);
+    }
+    event.target.value = '';
+  }
 
-    setReviewPhotos(files);
+  function removeReviewPhoto(index: number) {
+    setReviewPhotos((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    setReviewPhotoPreviews((current) => {
+      URL.revokeObjectURL(current[index]);
+      return current.filter((_, itemIndex) => itemIndex !== index);
+    });
   }
 
   async function uploadReviewPhotos(userId: string) {
@@ -354,8 +397,18 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       return;
     }
 
-    if (!reviewComment.trim()) {
-      setReviewMessage('Напишите короткий комментарий к отзыву.');
+    if (!reviewRating) {
+      setReviewMessage('Поставьте оценку товару.');
+      return;
+    }
+
+    if (reviewComment.trim().length < 10) {
+      setReviewMessage('Комментарий должен содержать не менее 10 символов.');
+      return;
+    }
+
+    if (!reviewConfirmed) {
+      setReviewMessage('Подтвердите, что отзыв основан на реальном опыте использования.');
       return;
     }
 
@@ -384,8 +437,11 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
 
       setReviewMessage('Отзыв опубликован. Он уже отображается на странице товара.');
       setReviewComment('');
-      setReviewRating(5);
+      setReviewRating(0);
       setReviewPhotos([]);
+      reviewPhotoPreviews.forEach((url) => URL.revokeObjectURL(url));
+      setReviewPhotoPreviews([]);
+      setReviewConfirmed(false);
     } catch (error) {
       setReviewMessage(error instanceof Error ? error.message : 'Не удалось отправить отзыв.');
     } finally {
@@ -558,77 +614,67 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
         </div>
       </section>
       <section className="product-content-section product-content-section--reviews-only">
-        <article className="product-content-card product-content-card--wide product-reviews-redesign">
-          <div className="product-reviews-head product-reviews-head--redesign">
+        <article className="product-reviews-market">
+          <header className="product-reviews-market__head">
             <h2>Отзывы и оценки</h2>
-          </div>
-
-          <div className="product-reviews-grid product-reviews-grid--redesign">
-            <aside className="reviews-summary-card">
-              <strong>{reviews.length ? averageRating.toFixed(1) : '—'}</strong>
+            <button type="button" onClick={() => setReviewDrawerOpen(true)}>{reviews.length} {reviewWord(reviews.length)} <span>›</span></button>
+          </header>
+          <section className="product-reviews-market__summary">
+            <div className="product-reviews-market__score">
+              <b>{reviews.length ? averageRating.toFixed(1) : '—'}</b>
               <RatingStars value={roundedRating} readOnly />
-              <small>{reviews.length ? `На основе ${reviewsLabel}` : 'Пока нет отзывов'}</small>
-              <div className="review-rating-bars" aria-label="Распределение оценок">
-                {ratingDistribution.map(({ rating, count }) => (
-                  <div key={rating}>
-                    <span>{rating}</span>
-                    <i><b style={{ width: reviews.length ? `${(count / reviews.length) * 100}%` : '0%' }} /></i>
-                    <em>{count}</em>
-                  </div>
-                ))}
-              </div>
-            </aside>
-            <div className="reviews-list reviews-list--redesign">
-              {reviews.length ? reviews.map((review) => (
-                <article key={review.id} className="review-card review-card--redesign">
-                  <div className="review-card-top">
-                    <div>
-                      <b>{review.user_name || review.user_email || 'Покупатель'}</b>
-                      <small>{review.created_at ? new Date(review.created_at).toLocaleDateString('ru-RU') : 'Отзыв покупателя'}</small>
-                    </div>
-                    <RatingStars value={review.rating} readOnly size="small" />
-                  </div>
-                  <p>{review.comment}</p>
-                  {!!review.photo_urls?.length && (
-                    <div className="review-photos">
-                      {review.photo_urls.map((url) => (
-                        <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)} aria-label="Открыть фото отзыва">
-                          <img src={url} alt="Фото отзыва" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              )) : (
-                <div className="empty-reviews empty-reviews--redesign">
-                  <b>Отзывов пока нет</b>
-                  <span>Станьте первым, кто поделится впечатлением о товаре.</span>
-                </div>
-              )}
+              <span>{reviews.length ? `На основе ${reviewsLabel}` : 'Пока нет отзывов'}</span>
             </div>
-
-            <form className="review-form review-form--redesign" onSubmit={submitReview}>
-              <h3>Оставить отзыв</h3>
-              <p>Оцените товар, напишите комментарий и при желании добавьте фото. Отзыв появится сразу.</p>
-              <label className="review-stars-field">
-                <span>Ваша оценка</span>
-                <RatingStars value={reviewRating} onChange={setReviewRating} />
-              </label>
-              <label>
-                <span>Комментарий</span>
-                <textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} rows={5} placeholder="Расскажите о товаре" required />
-              </label>
-              <label className="review-photo-field">
-                <span>Фото к отзыву</span>
-                <input type="file" accept="image/*" multiple onChange={chooseReviewPhotos} />
-                <small>{reviewPhotos.length ? `Выбрано фото: ${reviewPhotos.length}` : 'Можно добавить до 5 фото'}</small>
-              </label>
-              {reviewMessage && <p className="review-message">{reviewMessage}</p>}
-              <button type="submit" disabled={reviewSubmitting}>{reviewSubmitting ? 'Публикуем...' : 'Опубликовать отзыв'}</button>
-            </form>
+            <div className="product-reviews-market__distribution" aria-label="Распределение оценок">
+              {ratingDistribution.map(({ rating, count }) => (
+                <div key={rating}><span>{rating} ★</span><i><b style={{ width: reviews.length ? `${(count / reviews.length) * 100}%` : '0%' }} /></i><em>{count}</em></div>
+              ))}
+            </div>
+            <div className="product-reviews-market__cta">
+              <button type="button" onClick={() => { setReviewMessage(''); setReviewDrawerOpen(true); }}><span aria-hidden="true">✎</span>Оставить отзыв</button>
+              <span>Поделитесь опытом и помогите другим сделать выбор</span>
+            </div>
+          </section>
+          <div className="product-reviews-market__tools">
+            <div><button className={reviewFilter === 'all' ? 'is-active' : ''} type="button" onClick={() => setReviewFilter('all')}>Все отзывы ({reviews.length})</button><button className={reviewFilter === 'photo' ? 'is-active' : ''} type="button" onClick={() => setReviewFilter('photo')}>С фото ({reviews.filter((review) => review.photo_urls?.length).length})</button></div>
+            <select value={reviewSort} onChange={(event) => setReviewSort(event.target.value as typeof reviewSort)} aria-label="Сортировка отзывов"><option value="new">Сначала новые</option><option value="old">Сначала старые</option><option value="high">С высокой оценкой</option><option value="low">С низкой оценкой</option></select>
+          </div>
+          <div className="product-reviews-market__list">
+            {visibleReviews.length ? visibleReviews.map((review) => {
+              const author = review.user_name || review.user_email?.split('@')[0] || 'Покупатель';
+              const vote = reviewVotes[review.id];
+              return <article key={review.id} className="product-review-market-card">
+                <div className="product-review-market-card__avatar">{author.charAt(0).toUpperCase()}</div>
+                <div className="product-review-market-card__body"><header><div><b>{author}</b><span>{review.created_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : 'Отзыв покупателя'} <i>✓ Куплено на Bullmet</i></span></div><RatingStars value={review.rating} readOnly size="small" /></header><p>{review.comment}</p>{!!review.photo_urls?.length && <div className="product-review-market-card__photos">{review.photo_urls.map((url) => <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)}><img src={url} alt="Фото отзыва" /></button>)}</div>}<footer><span>Полезен отзыв?</span><button className={vote === 'up' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'up' ? undefined : 'up' }))}>♡ Полезно</button><button className={vote === 'down' ? 'is-active' : ''} type="button" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'down' ? undefined : 'down' }))}>Не очень</button></footer></div>
+              </article>;
+            }) : <div className="product-reviews-market__empty"><b>{reviewFilter === 'photo' ? 'Отзывов с фото пока нет' : 'Отзывов пока нет'}</b><span>Станьте первым, кто поделится впечатлением о товаре.</span><button type="button" onClick={() => setReviewDrawerOpen(true)}>Оставить отзыв</button></div>}
           </div>
         </article>
       </section>
+
+      {reviewDrawerOpen && (
+        <div className="product-review-drawer-layer" role="presentation">
+          <button className="product-review-drawer-layer__backdrop" type="button" onClick={() => setReviewDrawerOpen(false)} aria-label="Закрыть форму отзыва" />
+          <aside className="product-review-drawer" role="dialog" aria-modal="true" aria-labelledby="product-review-drawer-title">
+            <header>
+              <h2 id="product-review-drawer-title">Оставить отзыв</h2>
+              <button type="button" onClick={() => setReviewDrawerOpen(false)} aria-label="Закрыть форму отзыва">×</button>
+            </header>
+            <div className="product-review-drawer__product">
+              <img src={images[0] || product.image} alt={product.title} />
+              <div><b>{product.title}</b><span>{product.material || 'Изделие Bullmet'}</span><Link href={`/product/${product.slug}`}>Перейти к товару ›</Link></div>
+            </div>
+            <form onSubmit={submitReview}>
+              <label className="product-review-drawer__rating"><b>Ваша оценка <i>*</i></b><div><RatingStars value={reviewRating} onChange={setReviewRating} /><span>{reviewRating ? ['', 'Плохо', 'Не очень', 'Нормально', 'Хорошо', 'Отлично!'][reviewRating] : 'Выберите оценку'}</span></div></label>
+              <label className="product-review-drawer__comment"><b>Комментарий <i>*</i></b><textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} maxLength={1000} minLength={10} placeholder="Расскажите о товаре: качество, удобство использования, внешний вид и т.д." /><small>{reviewComment.length}/1000</small></label>
+              <div className="product-review-drawer__photos"><b>Фотографии <span>(до 5)</span></b><div>{reviewPhotoPreviews.map((url, index) => <div className="product-review-preview" key={url}><img src={url} alt={`Новое фото ${index + 1}`} /><button type="button" onClick={() => removeReviewPhoto(index)} aria-label="Удалить фото">×</button></div>)}{reviewPhotoPreviews.length < 5 && <label className="product-review-upload"><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={chooseReviewPhotos} /><span>⌁</span><small>Добавить фото</small></label>}{Array.from({ length: Math.max(0, 4 - reviewPhotoPreviews.length) }).map((_, index) => <span aria-hidden="true" className="product-review-photo-placeholder" key={index}>+</span>)}</div><small>JPG, PNG или WEBP, до 10 МБ на файл.</small></div>
+              <label className="product-review-drawer__confirm"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} /><span>Я подтверждаю, что мой отзыв основан на реальном опыте использования товара.</span></label>
+              {reviewMessage && <p className="review-message">{reviewMessage}</p>}
+              <button className="product-review-drawer__submit" type="submit" disabled={reviewSubmitting}>{reviewSubmitting ? 'Публикуем…' : 'Опубликовать отзыв'}</button>
+            </form>
+          </aside>
+        </div>
+      )}
 
       {related.length > 0 && (
         <section className="related-products-section">
