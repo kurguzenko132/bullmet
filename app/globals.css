@@ -26838,6 +26838,7 @@ body:not(.admin-body) .product-reviews-market{display:grid;gap:16px;color:#20201
 
 /* Inline review form and half-star rating control */
 .rating-stars{display:inline-flex;align-items:center;gap:1px}.rating-stars__star{display:grid!important;width:1em!important;min-width:0!important;height:1em!important;place-items:center!important;border:0!important;background:transparent!important;padding:0!important;cursor:pointer}.rating-stars__star:disabled{cursor:default}.rating-stars__star span{display:block;line-height:1;font-family:Arial,sans-serif;font-size:inherit;background:linear-gradient(90deg,#f18a00 var(--rating-fill),#d8d1c8 var(--rating-fill));-webkit-background-clip:text;background-clip:text;color:transparent}.rating-stars__star:focus-visible{outline:2px solid #ef6b16;outline-offset:2px;border-radius:2px}.rating-stars.is-readonly .rating-stars__star{pointer-events:none}
+.rating-stars__star.is-full span{background:none!important;color:#f18a00!important;-webkit-text-fill-color:#f18a00}.rating-stars__star.is-empty span{background:none!important;color:#d8d1c8!important;-webkit-text-fill-color:#d8d1c8}.rating-stars__star.is-partial span{background:linear-gradient(90deg,#f18a00 var(--rating-fill),#d8d1c8 var(--rating-fill))!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent}
 
 /* Горизонтальная структура карточки отзыва: оценка, текст, фото и действия. */
 .product-review-market-card__body>header>div:first-child{display:grid;gap:5px}

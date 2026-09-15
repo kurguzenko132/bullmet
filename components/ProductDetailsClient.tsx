@@ -36,32 +36,40 @@ function reviewWord(count: number) {
 }
 
 function RatingStars({ value, onChange, onPreview, readOnly = false, size = 'normal' }: { value: number; onChange?: (value: number) => void; onPreview?: (value: number | null) => void; readOnly?: boolean; size?: 'normal' | 'small' }) {
+  const parsedValue = Number(value);
+  const normalizedValue = Number.isFinite(parsedValue) ? Math.min(5, Math.max(0, parsedValue)) : 0;
+
   return (
-    <div className={`rating-stars rating-stars--${size} ${readOnly ? 'is-readonly' : ''}`} aria-label={`Оценка ${value} из 5`} role="group">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          className="rating-stars__star"
-          disabled={readOnly}
-          onMouseMove={(event) => {
-            const bounds = event.currentTarget.getBoundingClientRect();
-            const isHalf = event.clientX - bounds.left < bounds.width / 2;
-            onPreview?.(Math.min(5, Math.max(0.5, star - (isHalf ? 0.5 : 0))));
-          }}
-          onMouseLeave={() => onPreview?.(null)}
-          onFocus={() => onPreview?.(star)}
-          onBlur={() => onPreview?.(null)}
-          onClick={(event) => {
-            const bounds = event.currentTarget.getBoundingClientRect();
-            const isHalf = event.clientX - bounds.left < bounds.width / 2;
-            onChange?.(Math.min(5, Math.max(0.5, star - (isHalf ? 0.5 : 0))));
-          }}
-          aria-label={`Поставить ${star - 0.5} или ${star} звёзд`}
-        >
-          <span style={{ '--rating-fill': `${Math.max(0, Math.min(1, value - star + 1)) * 100}%` } as CSSProperties}>★</span>
-        </button>
-      ))}
+    <div className={`rating-stars rating-stars--${size} ${readOnly ? 'is-readonly' : ''}`} aria-label={`Оценка ${normalizedValue} из 5`} role="group">
+      {[1, 2, 3, 4, 5].map((star) => {
+        const fill = Math.max(0, Math.min(1, normalizedValue - star + 1));
+        const state = fill >= 1 ? 'is-full' : fill > 0 ? 'is-partial' : 'is-empty';
+
+        return (
+          <button
+            key={star}
+            type="button"
+            className={`rating-stars__star ${state}`}
+            disabled={readOnly}
+            onMouseMove={(event) => {
+              const bounds = event.currentTarget.getBoundingClientRect();
+              const isHalf = event.clientX - bounds.left < bounds.width / 2;
+              onPreview?.(Math.min(5, Math.max(0.5, star - (isHalf ? 0.5 : 0))));
+            }}
+            onMouseLeave={() => onPreview?.(null)}
+            onFocus={() => onPreview?.(star)}
+            onBlur={() => onPreview?.(null)}
+            onClick={(event) => {
+              const bounds = event.currentTarget.getBoundingClientRect();
+              const isHalf = event.clientX - bounds.left < bounds.width / 2;
+              onChange?.(Math.min(5, Math.max(0.5, star - (isHalf ? 0.5 : 0))));
+            }}
+            aria-label={`Поставить ${star - 0.5} или ${star} звёзд`}
+          >
+            <span style={{ '--rating-fill': `${fill * 100}%` } as CSSProperties}>★</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
