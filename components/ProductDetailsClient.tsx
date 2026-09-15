@@ -635,10 +635,6 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                 <div key={rating}><span>{rating} ★</span><i><b style={{ width: reviews.length ? `${(count / reviews.length) * 100}%` : '0%' }} /></i><em>{count}</em></div>
               ))}
             </div>
-            <div className="product-reviews-market__cta">
-              <button type="button" onClick={scrollToReviewForm}><span aria-hidden="true">✎</span>Оставить отзыв</button>
-              <span>Поделитесь опытом и помогите другим сделать выбор</span>
-            </div>
           </section>
           <div className="product-reviews-market__tools">
             <div><button className={reviewFilter === 'all' ? 'is-active' : ''} type="button" onClick={() => setReviewFilter('all')}>Все отзывы ({reviews.length})</button><button className={reviewFilter === 'photo' ? 'is-active' : ''} type="button" onClick={() => setReviewFilter('photo')}>С фото ({reviews.filter((review) => review.photo_urls?.length).length})</button></div>
