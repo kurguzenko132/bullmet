@@ -649,7 +649,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               return <article key={review.id} className="product-review-market-card">
                 <div className="product-review-market-card__avatar">{author.charAt(0).toUpperCase()}</div>
                 <div className="product-review-market-card__body">
-        <header><div><div className="product-review-market-card__author"><b>{author}</b><RatingStars value={review.rating} readOnly size="small" /></div><span>{review.created_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : 'Отзыв покупателя'} <i>✓ Куплено на Bullmet</i></span></div></header>
+        <header><div><div className="product-review-market-card__author"><b>{author}</b><RatingStars value={review.rating} readOnly size="small" /></div><span>{review.created_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : 'Отзыв покупателя'}</span></div></header>
         <div className="product-review-market-card__content"><div className="product-review-market-card__main"><p>{review.comment}</p>{!!review.photo_urls?.length && <div className="product-review-market-card__photos">{review.photo_urls.map((url) => <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)}><img src={url} alt="Фото отзыва" /></button>)}</div>}</div></div>
                   <footer>
                     <span>Полезен отзыв?</span>
