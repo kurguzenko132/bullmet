@@ -652,7 +652,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             {visibleReviews.length ? visibleReviews.map((review) => {
               const author = review.user_name || review.user_email?.split('@')[0] || 'Покупатель';
               const vote = reviewVotes[review.id];
-              const helpfulVotes = Math.max(0, 2 + (vote === 'up' ? 1 : vote === 'down' ? -1 : 0));
+              const helpfulVotes = vote === 'up' ? 1 : 0;
               const unhelpfulVotes = vote === 'down' ? 1 : 0;
               return <article key={review.id} className="product-review-market-card">
                 <div className="product-review-market-card__avatar">{author.charAt(0).toUpperCase()}</div>
