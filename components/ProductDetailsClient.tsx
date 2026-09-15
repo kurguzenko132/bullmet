@@ -700,27 +700,21 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               const itemDiscount = discountPercent(item.price, item.oldPrice);
 
               return (
-                <article className="related-card related-card--shop" key={item.slug}>
-                  <Link href={`/product/${item.slug}`} className="related-image related-image--shop">
-                    <img src={item.image} alt={item.title} style={itemImageSettings.style} />
-                    {itemDiscount && <span className="related-sale-badge">-{itemDiscount}%</span>}
-                  </Link>
-                  <div className="related-card-body">
-                    <div className="related-card-meta">
-                      <span className={item.inStock ? 'is-available' : 'is-order'}>{item.inStock ? 'В наличии' : 'Под заказ'}</span>
-                      {item.category && <small>{item.category}</small>}
-                    </div>
-                    <Link href={`/product/${item.slug}`} className="related-card-title">{item.title}</Link>
-                    <p className="related-card-subtitle">{item.short || item.material}</p>
-                    <div className="related-card-tags">
-                      {item.material && <span>{item.material}</span>}
-                      {item.sizes?.[0] && <span>{item.sizes[0]}</span>}
-                    </div>
-                    <div className="related-card-bottom">
-                      <div className="related-card-price">
-                        <b>от {money(item.price)} BYN</b>
-                        {item.oldPrice && item.oldPrice > item.price && <del>{money(item.oldPrice)} BYN</del>}
-                      </div>
+          <article className="catalog-card-market related-catalog-card" key={item.slug}>
+            <Link href={`/product/${item.slug}`} className="catalog-card-image-market related-catalog-image">
+              <img src={item.image} alt={item.title} style={itemImageSettings.style} />
+              {itemDiscount && <span className="catalog-sale-market">-{itemDiscount}%</span>}
+            </Link>
+            <div className="catalog-card-body-market related-catalog-body">
+              <div className="catalog-card-rating-market"><small>Нет отзывов</small></div>
+              <h3><Link href={`/product/${item.slug}`}>{item.title}</Link></h3>
+              <p>{item.material || item.short}</p>
+              <p className="catalog-card-color-market">Цвет: <span>{item.colorName || 'не указан'}</span></p>
+              <div className="catalog-card-bottom-market">
+                <div>
+                  <b>от {money(item.price)} BYN</b>
+                  {item.oldPrice && item.oldPrice > item.price && <del>{money(item.oldPrice)} BYN</del>}
+                </div>
                       <button type="button" aria-label={`Добавить в корзину: ${item.title}`} onClick={() => handleAddRelatedToCart(item)}>
                         <Icon name="cart" />
                       </button>

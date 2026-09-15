@@ -26863,3 +26863,97 @@ body:not(.admin-body) .product-review-form-card__intro,
 body:not(.admin-body) .product-review-form-card form{
   background:#fff;
 }
+
+/* Product page: identical catalogue card composition for related items. */
+body:not(.admin-body) .related-products-section .related-grid{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:16px !important;
+}
+
+body:not(.admin-body) .related-products-section .related-catalog-card{
+  display:flex !important;
+  flex-direction:column !important;
+  min-width:0 !important;
+  height:382px !important;
+  min-height:382px !important;
+  overflow:hidden !important;
+  border:1px solid #e4ded6 !important;
+  border-radius:12px !important;
+  background:#fffdf9 !important;
+  box-shadow:0 4px 14px rgba(45,36,26,.035) !important;
+  transition:transform .2s ease,box-shadow .2s ease !important;
+}
+
+body:not(.admin-body) .related-products-section .related-catalog-card:hover{
+  transform:translateY(-3px) !important;
+  box-shadow:0 12px 24px rgba(45,36,26,.11) !important;
+}
+
+body:not(.admin-body) .related-products-section .related-catalog-image{
+  display:block !important;
+  position:relative !important;
+  flex:0 0 220px !important;
+  height:220px !important;
+  overflow:hidden !important;
+  background:#f2efea !important;
+}
+
+body:not(.admin-body) .related-products-section .related-catalog-image img{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  padding:0 !important;
+  object-fit:cover !important;
+  object-position:center !important;
+  transition:transform .28s ease !important;
+}
+
+body:not(.admin-body) .related-products-section .related-catalog-card:hover .related-catalog-image img{
+  transform:scale(1.035) !important;
+}
+
+body:not(.admin-body) .related-products-section .related-catalog-body{
+  display:flex !important;
+  flex:1 1 auto !important;
+  flex-direction:column !important;
+  min-height:0 !important;
+  padding:12px !important;
+}
+
+body:not(.admin-body) .related-products-section .related-catalog-card h3 a{
+  color:inherit !important;
+  text-decoration:none !important;
+}
+
+body:not(.admin-body) .related-products-section .related-catalog-body .catalog-card-bottom-market{
+  margin-top:auto !important;
+}
+
+/* The footer belongs to the page surface instead of creating a white strip. */
+body:not(.admin-body) .footer-exact,
+body:not(.admin-body) .footer-exact > .footer-container,
+body:not(.admin-body) .footer-exact .footer-grid-exact{
+  background:var(--public-page-bg) !important;
+}
+
+@media (max-width:991px){
+  body:not(.admin-body) .related-products-section .related-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+}
+
+@media (max-width:640px){
+  body:not(.admin-body) .related-products-section .related-grid{
+    display:flex !important;
+    gap:12px !important;
+    overflow-x:auto !important;
+    padding-bottom:4px !important;
+    scroll-snap-type:x mandatory;
+  }
+
+  body:not(.admin-body) .related-products-section .related-catalog-card{
+    flex:0 0 min(78vw,320px) !important;
+    scroll-snap-align:start;
+  }
+}
