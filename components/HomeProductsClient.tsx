@@ -15,6 +15,14 @@ function discountPercent(price: number, oldPrice?: number) {
   return Math.round(((oldPrice - price) / oldPrice) * 100);
 }
 
+function reviewWord(count: number) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'отзыв';
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'отзыва';
+  return 'отзывов';
+}
+
 function addToCart(product: CatalogProduct) {
   try {
     const raw = window.localStorage.getItem('bullmet_cart');
@@ -56,6 +64,9 @@ export function HomeProductsClient({ products }: { products: CatalogProduct[] })
       {products.map((product) => {
         const imageSettings = getImagePreset(product, product.image, 'catalog');
         const discount = discountPercent(product.price, product.oldPrice);
+        const reviewsCount = product.reviewsCount || 0;
+        const rating = product.rating || 0;
+        const reviewsLabel = reviewsCount ? `${reviewsCount} ${reviewWord(reviewsCount)}` : 'Нет отзывов';
 
         return (
           <article
@@ -74,17 +85,12 @@ export function HomeProductsClient({ products }: { products: CatalogProduct[] })
 
             <div className="catalog-card-body-market">
               <div className="catalog-card-rating-market">
-                <span>★ 0.0</span>
-                <small>нет отзывов</small>
+                {reviewsCount ? <><span>★ {rating.toFixed(1)}</span><small>· {reviewsLabel}</small></> : <small>{reviewsLabel}</small>}
               </div>
 
               <h3>{product.title}</h3>
-              <p>{product.short || product.material}</p>
-
-              <div className="catalog-card-status-market">
-                <span className={product.inStock ? 'is-available' : 'is-order'}>{product.inStock ? 'В наличии' : 'Под заказ'}</span>
-                {product.category && <small>{product.category}</small>}
-              </div>
+              <p>{product.material || product.short}</p>
+              <p className="catalog-card-color-market">Цвет: <span>{product.colorName || 'не указан'}</span></p>
 
               <div className="catalog-card-bottom-market">
                 <div>

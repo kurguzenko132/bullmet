@@ -26970,3 +26970,98 @@ body:not(.admin-body) .footer-exact .footer-grid-exact{
     scroll-snap-align:start;
   }
 }
+
+/* Home page popular products use the same catalogue card layout. */
+body:not(.admin-body) .products-services-final .home-product-grid-shop--catalog-style{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:18px !important;
+}
+
+body:not(.admin-body) .products-services-final .home-catalog-card-market{
+  min-height:430px !important;
+  height:auto !important;
+  border:1px solid #e8dfd4 !important;
+  border-radius:0 !important;
+  background:#fff !important;
+  box-shadow:0 8px 22px rgba(37,30,24,.035) !important;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease !important;
+}
+
+body:not(.admin-body) .products-services-final .home-catalog-card-market:hover{
+  transform:translateY(-2px) !important;
+  border-color:#e9c2a4 !important;
+  box-shadow:0 14px 34px rgba(37,30,24,.07) !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-image-market{
+  height:218px !important;
+  flex:0 0 218px !important;
+  background:#f5efe8 !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-body-market{
+  padding:14px 16px 16px !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-rating-market{
+  display:flex !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-body-market h3{
+  min-height:48px !important;
+  margin:9px 0 0 !important;
+  font-size:20px !important;
+  line-height:1.18 !important;
+  font-weight:950 !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-body-market p{
+  min-height:22px !important;
+  margin:8px 0 0 !important;
+  font-size:14px !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-bottom-market{
+  min-height:0 !important;
+  border-top:1px solid #f0e7dd !important;
+  padding-top:13px !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-bottom-market b{
+  font-size:18px !important;
+  line-height:1 !important;
+  font-weight:950 !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-bottom-market button{
+  width:42px !important;
+  height:42px !important;
+  flex:0 0 42px !important;
+  border:1px solid var(--orange) !important;
+  border-radius:0 !important;
+}
+
+@media(max-width:980px){
+  body:not(.admin-body) .products-services-final .home-product-grid-shop--catalog-style{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+}
+
+@media(max-width:640px){
+  body:not(.admin-body) .products-services-final .home-product-grid-shop--catalog-style{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    overflow:visible !important;
+    padding:0 !important;
+  }
+
+  body:not(.admin-body) .products-services-final .home-catalog-card-market{
+    min-height:0 !important;
+  }
+
+  body:not(.admin-body) .products-services-final .catalog-card-image-market{
+    height:245px !important;
+    flex-basis:245px !important;
+  }
+}
