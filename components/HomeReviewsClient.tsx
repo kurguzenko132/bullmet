@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 export type HomeReview = {
@@ -38,7 +37,6 @@ export function HomeReviewsClient({ eyebrow, title, reviews }: { eyebrow: string
   return <section className="home-container home-reviews" aria-labelledby="home-reviews-title">
     <header className="home-reviews__head">
       <div><p>{eyebrow}</p><h2 id="home-reviews-title">{title}</h2></div>
-      <Link href="/catalog">Все отзывы <span>→</span></Link>
     </header>
     <div className="home-reviews__grid">
       {reviews.map((review) => {
