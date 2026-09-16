@@ -646,7 +646,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           </section>
           <div className="product-reviews-market__tools">
             <div><button className={reviewFilter === 'all' ? 'is-active' : ''} type="button" onClick={() => setReviewFilter('all')}>Все отзывы ({reviews.length})</button><button className={reviewFilter === 'photo' ? 'is-active' : ''} type="button" onClick={() => setReviewFilter('photo')}>С фото ({reviews.filter((review) => review.photo_urls?.length).length})</button></div>
-            <select value={reviewSort} onChange={(event) => setReviewSort(event.target.value as typeof reviewSort)} aria-label="Сортировка отзывов"><option value="new">Сначала новые</option><option value="old">Сначала старые</option><option value="high">С высокой оценкой</option><option value="low">С низкой оценкой</option></select>
+  <div className="product-reviews-market__sort"><select value={reviewSort} onChange={(event) => setReviewSort(event.target.value as typeof reviewSort)} aria-label="Сортировка отзывов"><option value="new">Сначала новые</option><option value="old">Сначала старые</option><option value="high">С высокой оценкой</option><option value="low">С низкой оценкой</option></select><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 7 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
           </div>
           <div className="product-reviews-market__list">
             {visibleReviews.length ? visibleReviews.map((review) => {
