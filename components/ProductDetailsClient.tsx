@@ -90,7 +90,6 @@ function normalizeImages(product: CatalogProduct) {
 function productSpecRows(product: CatalogProduct) {
   const rows: Array<[string, string]> = [];
 
-  if (product.material) rows.push(['Материал', product.material]);
   if (product.sizes?.length) rows.push(['Размеры', product.sizes.join(', ')]);
   if (product.category) rows.push(['Категория', product.category]);
   if (product.clockTheme) rows.push(['Тематика', product.clockTheme]);
@@ -127,11 +126,6 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [activeSize, setActiveSize] = useState(product.sizes?.[0] || 'Под заказ');
   const [qty, setQty] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [quickOrderOpen, setQuickOrderOpen] = useState(false);
-  const [quickOrderName, setQuickOrderName] = useState('');
-  const [quickOrderPhone, setQuickOrderPhone] = useState('');
-  const [quickOrderComment, setQuickOrderComment] = useState('');
-  const [quickOrderLoading, setQuickOrderLoading] = useState(false);
   const [cartMessage, setCartMessage] = useState('');
   const [favorite, setFavorite] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -287,48 +281,6 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       size: item.sizes?.[0] || 'Под заказ',
       quantity: 1
     });
-  }
-
-  async function submitQuickOrder(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setCartMessage('');
-    if (!quickOrderName.trim() || !quickOrderPhone.trim()) {
-      setCartMessage('Укажите имя и телефон для заявки.');
-      return;
-    }
-
-    setQuickOrderLoading(true);
-    try {
-      const response = await fetch('/api/requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          kind: 'quick_order',
-          name: quickOrderName,
-          phone: quickOrderPhone,
-          comment: quickOrderComment,
-          productSlug: product.slug,
-          productTitle: product.title,
-          productImage: activeImage || product.image,
-          productPrice: product.price,
-          productMaterial: product.material,
-          size: activeSize,
-          quantity: qty,
-          type: 'Купить в 1 клик'
-        })
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось отправить заявку.');
-      setCartMessage(`Заявка отправлена${data.id ? `: ${data.id}` : ''}. Мы свяжемся с вами.`);
-      setQuickOrderOpen(false);
-      setQuickOrderName('');
-      setQuickOrderPhone('');
-      setQuickOrderComment('');
-    } catch (error) {
-      setCartMessage(error instanceof Error ? error.message : 'Не удалось отправить заявку.');
-    } finally {
-      setQuickOrderLoading(false);
-    }
   }
 
   function toggleFavorite() {
@@ -618,7 +570,6 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
 
             <div className="product-actions-row">
               <button className="button-main" type="button" onClick={handleAddToCart}>В корзину</button>
-              <button className="button-secondary" type="button" onClick={() => setQuickOrderOpen(true)}>Купить в 1 клик</button>
             </div>
 
             {cartMessage && <div className="product-cart-message">{cartMessage}</div>}
@@ -740,24 +691,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <b>от {money(product.price)} BYN</b>
         </div>
         <button type="button" onClick={handleAddToCart}>В корзину</button>
-        <button type="button" onClick={() => setQuickOrderOpen(true)}>1 клик</button>
       </div>
-
-      {quickOrderOpen && (
-        <div className="quick-order-modal" role="dialog" aria-modal="true">
-          <div className="quick-order-card">
-            <button className="quick-order-close" type="button" onClick={() => setQuickOrderOpen(false)} aria-label="Закрыть">×</button>
-            <h2>Купить в 1 клик</h2>
-            <p>{product.title}, {activeSize}, количество: {qty}</p>
-            <form onSubmit={submitQuickOrder}>
-              <input name="name" value={quickOrderName} onChange={(event) => setQuickOrderName(event.target.value)} placeholder="Ваше имя" required />
-              <input name="phone" value={quickOrderPhone} onChange={(event) => setQuickOrderPhone(event.target.value)} placeholder="Телефон" required />
-              <textarea name="comment" value={quickOrderComment} onChange={(event) => setQuickOrderComment(event.target.value)} placeholder="Комментарий к заказу" rows={4} />
-              <button type="submit" disabled={quickOrderLoading}>{quickOrderLoading ? 'Отправляем...' : 'Отправить заявку'}</button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {reviewPhotoLightbox && (
         <div className="review-photo-lightbox" role="dialog" aria-modal="true" onClick={() => setReviewPhotoLightbox(null)}>
