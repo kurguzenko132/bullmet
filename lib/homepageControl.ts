@@ -205,10 +205,12 @@ export type HomeControlSettings = {
     eyebrow: string;
     title: string;
     text: string;
+    image: string;
     primaryLabel: string;
     primaryHref: string;
     secondaryLabel: string;
     secondaryHref: string;
+    benefits: HomeBenefit[];
   };
 };
 
@@ -384,13 +386,19 @@ export const defaultHomepageControl: HomeControlSettings = {
   ],
   cta: {
     enabled: true,
-    eyebrow: 'готовы выбрать часы?',
-    title: 'Откройте каталог настенных часов',
-    text: 'Выберите модель в каталоге, добавьте товар в корзину или свяжитесь с нами для уточнения деталей.',
-    primaryLabel: 'Перейти в каталог',
-    primaryHref: '/catalog',
-    secondaryLabel: 'Связаться',
-    secondaryHref: '/contacts'
+    eyebrow: 'Индивидуальные решения',
+    title: 'Нужен другой\nразмер или цвет?',
+    text: 'Многие модели наших часов мы можем изготовить в другом размере, цвете или варианте исполнения. Подберём решение под ваш интерьер — от компактных версий до крупных акцентных моделей.',
+    image: '/assets/contacts-cta-workbench.jpg',
+    primaryLabel: 'Связаться с нами',
+    primaryHref: '/contacts',
+    secondaryLabel: 'Смотреть каталог',
+    secondaryHref: '/catalog',
+    benefits: [
+      { id: 'options', icon: 'tools', title: 'Варианты исполнения', desc: 'под ваши пожелания', visible: true, order: 1 },
+      { id: 'colors', icon: 'materials', title: 'Выбор размеров,', desc: 'цветов и покрытий', visible: true, order: 2 },
+      { id: 'quality-style', icon: 'spark', title: 'Сохраняем качество', desc: 'и стиль модели', visible: true, order: 3 }
+    ]
   }
 };
 
@@ -452,7 +460,7 @@ export function mergeHomepageControl(value: unknown): HomeControlSettings {
     reviewsSection: { ...defaultHomepageControl.reviewsSection, ...asObject(incoming.reviewsSection) },
     faqSection: { ...defaultHomepageControl.faqSection, ...asObject(incoming.faqSection) },
     faqItems: mergeArray(defaultHomepageControl.faqItems, incoming.faqItems),
-    cta: { ...defaultHomepageControl.cta, ...asObject(incoming.cta) }
+    cta: { ...defaultHomepageControl.cta, ...asObject(incoming.cta), benefits: mergeArray(defaultHomepageControl.cta.benefits, asObject(incoming.cta).benefits) }
   };
 }
 

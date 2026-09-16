@@ -9,6 +9,7 @@ import { HomeProductsClient } from '@/components/HomeProductsClient';
 import { HomePromoBanners } from '@/components/HomePromoBanners';
 import { HomeReviewsClient, type HomeReview } from '@/components/HomeReviewsClient';
 import { HomeFaqClient } from '@/components/HomeFaqClient';
+import { HomeCustomOptions } from '@/components/HomeCustomOptions';
 import { getHomepageControlSettings, visibleHomeItems } from '@/lib/homepageControl';
 import { getCatalogProducts } from '@/lib/products';
 import { getAdminReviews } from '@/lib/adminContent';
@@ -288,20 +289,10 @@ export default async function HomePage() {
 
         {home.reviewsSection.enabled && homeReviews.length > 0 && <HomeReviewsClient eyebrow={home.reviewsSection.eyebrow} title={home.reviewsSection.title} reviews={homeReviews} />}
 
-        {home.faqSection.enabled && <HomeFaqClient eyebrow={home.faqSection.eyebrow} title={home.faqSection.title} text={home.faqSection.text} image={home.faqSection.image} items={visibleHomeItems(home.faqItems).slice(0, 6)} />}
-
         {sectionVisible('cta', home.cta.enabled) && (
-          <section className="home-container custom-order">
-            <div className="custom-order__banner">
-              <img className="custom-order__background" src="/mockup/cta-bg.jpg" alt="Чертёж и готовая металлическая деталь индивидуального изготовления" />
-              <div className="custom-order__content">
-                <h2 className="custom-order__title">Нужно изделие по вашим размерам?</h2>
-                <p className="custom-order__description">Изготовим часы, качели, металлические элементы, декор или детали по вашему эскизу или чертежу.</p>
-                <Link href="/contacts" className="custom-order__button">Обсудить проект</Link>
-              </div>
-            </div>
-          </section>
+          <HomeCustomOptions {...home.cta} benefits={visibleHomeItems(home.cta.benefits)} />
         )}
+        {home.faqSection.enabled && <HomeFaqClient eyebrow={home.faqSection.eyebrow} title={home.faqSection.title} text={home.faqSection.text} image={home.faqSection.image} items={visibleHomeItems(home.faqItems).slice(0, 6)} />}
       </main>
       <Footer />
     </>
