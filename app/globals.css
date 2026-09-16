@@ -27591,16 +27591,16 @@ body:not(.admin-body) .home-review-lightbox__close{position:absolute;top:22px;ri
 
 /* Keep every review card and its photo area aligned, even with short copy or a single image. */
 body:not(.admin-body) .home-reviews__grid{
-  grid-auto-rows:1fr;
+  grid-auto-rows:auto;
 }
 
 body:not(.admin-body) .home-review-card{
   box-sizing:border-box;
-  height:100%;
+  height:auto;
 }
 
 body:not(.admin-body) .home-review-card__text{
-  min-height:96px;
+  min-height:0;
   max-height:96px;
 }
 
@@ -27611,6 +27611,7 @@ body:not(.admin-body) .home-review-gallery.is-2{
   min-height:300px;
   max-height:300px;
   overflow:hidden;
+  margin-top:0;
 }
 
 body:not(.admin-body) .home-review-gallery.is-1 button,
