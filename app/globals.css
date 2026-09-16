@@ -27240,3 +27240,112 @@ body:not(.admin-body) .products-services-final .service-row-final a{
     grid-template-columns:1fr !important;
   }
 }
+
+/* Home page visual system: shared rhythm, type scale, and card treatment. */
+body:not(.admin-body) .home-final-page{
+  --home-heading:#181613;
+  --home-copy:#68625b;
+  --home-card:#fbfaf7;
+  --home-border:#e5ded5;
+}
+
+body:not(.admin-body) .home-final-page > .home-container{
+  margin-top:56px !important;
+}
+
+body:not(.admin-body) .products-services-final .products-services-title,
+body:not(.admin-body) .work-process__title,
+body:not(.admin-body) .production-simple-final .production-simple-head h2{
+  margin:0 0 18px !important;
+  color:var(--home-heading) !important;
+  font-size:18px !important;
+  font-weight:800 !important;
+  letter-spacing:.01em !important;
+  line-height:1.2 !important;
+  text-transform:uppercase;
+}
+
+body:not(.admin-body) .production-section-final .production-text h2{
+  color:var(--home-heading) !important;
+  font-size:clamp(30px,2.6vw,40px) !important;
+  letter-spacing:-.035em !important;
+  line-height:1.08 !important;
+}
+
+body:not(.admin-body) .production-section-final .production-text .body-text{
+  max-width:520px;
+  color:var(--home-copy) !important;
+  font-size:16px !important;
+  line-height:1.55 !important;
+}
+
+body:not(.admin-body) .products-services-final .home-catalog-card-market,
+body:not(.admin-body) .products-services-final .service-row-final article{
+  background:var(--home-card) !important;
+  border-color:var(--home-border) !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-body-market h3{
+  letter-spacing:-.02em !important;
+}
+
+body:not(.admin-body) .products-services-final .catalog-card-body-market p,
+body:not(.admin-body) .products-services-final .service-row-final p{
+  color:var(--home-copy) !important;
+}
+
+body:not(.admin-body) .products-services-final .service-row-final h4{
+  color:var(--home-heading) !important;
+  font-weight:800 !important;
+  letter-spacing:-.015em !important;
+}
+
+body:not(.admin-body) .work-process__panel{
+  border:1px solid var(--home-border) !important;
+  border-radius:10px !important;
+  background:var(--home-card) !important;
+}
+
+body:not(.admin-body) .work-process__item b{
+  color:var(--home-heading) !important;
+  font-size:14px !important;
+  letter-spacing:-.01em !important;
+}
+
+body:not(.admin-body) .work-process__item p{
+  color:var(--home-copy) !important;
+  font-size:12px !important;
+  line-height:1.35 !important;
+}
+
+body:not(.admin-body) .production-simple-final .production-simple-head{
+  margin-bottom:18px !important;
+}
+
+body:not(.admin-body) .production-simple-final .production-simple-link{
+  color:var(--orange) !important;
+  font-size:13px !important;
+  font-weight:750 !important;
+}
+
+body:not(.admin-body) .production-simple-final .production-simple-card{
+  border:1px solid var(--home-border) !important;
+  border-radius:8px !important;
+}
+
+body:not(.admin-body) .bullmet-advantages{
+  margin-top:64px !important;
+  margin-bottom:64px !important;
+}
+
+@media(max-width:767px){
+  body:not(.admin-body) .home-final-page > .home-container{
+    margin-top:44px !important;
+  }
+
+  body:not(.admin-body) .products-services-final .products-services-title,
+  body:not(.admin-body) .work-process__title,
+  body:not(.admin-body) .production-simple-final .production-simple-head h2{
+    font-size:16px !important;
+  }
+}
