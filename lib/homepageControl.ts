@@ -44,6 +44,14 @@ export type HomeDirectionCard = {
 
 export type HomeCollectionCard = HomeDirectionCard & { description: string };
 
+export type HomeFaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+  visible: boolean;
+  order: number;
+};
+
 export type HomeStep = {
   id: string;
   icon: HomeIcon;
@@ -184,6 +192,14 @@ export type HomeControlSettings = {
     mode: 'auto' | 'manual';
     selectedIds: string[];
   };
+  faqSection: {
+    enabled: boolean;
+    eyebrow: string;
+    title: string;
+    text: string;
+    image: string;
+  };
+  faqItems: HomeFaqItem[];
   cta: {
     enabled: boolean;
     eyebrow: string;
@@ -351,6 +367,21 @@ export const defaultHomepageControl: HomeControlSettings = {
     mode: 'auto',
     selectedIds: []
   },
+  faqSection: {
+    enabled: true,
+    eyebrow: 'Частые вопросы',
+    title: 'Ответы\nна ваши вопросы',
+    text: 'Мы собрали ответы на популярные вопросы о наших часах, размерах, вариантах исполнения и доставке.',
+    image: '/assets/prod-clock-classic.jpg'
+  },
+  faqItems: [
+    { id: 'sizes', question: 'Какие размеры часов доступны?', answer: 'Доступные размеры зависят от конкретной модели. Основные варианты указаны в карточке товара. Если нужен другой размер, свяжитесь с нами — уточним возможность изготовления.', visible: true, order: 1 },
+    { id: 'color', question: 'Можно ли выбрать цвет часов?', answer: 'Да, для большинства моделей доступны разные варианты исполнения. Доступные цвета отображаются в карточке товара. Другой вариант можно уточнить у нас перед заказом.', visible: true, order: 2 },
+    { id: 'production-time', question: 'Сколько занимает изготовление?', answer: 'Срок зависит от модели, размера и текущей загрузки производства. Точный срок сообщим после уточнения выбранного исполнения.', visible: true, order: 3 },
+    { id: 'mounting', question: 'Как крепятся часы?', answer: 'Способ крепления зависит от модели. Необходимое крепление указывается в характеристиках товара и передаётся вместе с заказом, если предусмотрено комплектацией.', visible: true, order: 4 },
+    { id: 'delivery', question: 'Есть ли доставка по Беларуси?', answer: 'Да. Согласуем удобный способ получения заказа по Беларуси. Доступные варианты и стоимость уточняются при оформлении.', visible: true, order: 5 },
+    { id: 'custom', question: 'Можно ли заказать часы в другом исполнении?', answer: 'Для многих моделей можно изменить размер, цвет или отдельные элементы исполнения. Напишите нам, и мы уточним, что возможно для выбранной модели.', visible: true, order: 6 }
+  ],
   cta: {
     enabled: true,
     eyebrow: 'готовы выбрать часы?',
@@ -419,6 +450,8 @@ export function mergeHomepageControl(value: unknown): HomeControlSettings {
     gallerySection: { ...defaultHomepageControl.gallerySection, ...asObject(incoming.gallerySection) },
     gallery: mergeArray(defaultHomepageControl.gallery, incoming.gallery),
     reviewsSection: { ...defaultHomepageControl.reviewsSection, ...asObject(incoming.reviewsSection) },
+    faqSection: { ...defaultHomepageControl.faqSection, ...asObject(incoming.faqSection) },
+    faqItems: mergeArray(defaultHomepageControl.faqItems, incoming.faqItems),
     cta: { ...defaultHomepageControl.cta, ...asObject(incoming.cta) }
   };
 }

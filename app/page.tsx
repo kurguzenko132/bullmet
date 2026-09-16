@@ -8,6 +8,7 @@ import { Icon } from '@/components/Icon';
 import { HomeProductsClient } from '@/components/HomeProductsClient';
 import { HomePromoBanners } from '@/components/HomePromoBanners';
 import { HomeReviewsClient, type HomeReview } from '@/components/HomeReviewsClient';
+import { HomeFaqClient } from '@/components/HomeFaqClient';
 import { getHomepageControlSettings, visibleHomeItems } from '@/lib/homepageControl';
 import { getCatalogProducts } from '@/lib/products';
 import { getAdminReviews } from '@/lib/adminContent';
@@ -299,6 +300,7 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+        {home.faqSection.enabled && <HomeFaqClient eyebrow={home.faqSection.eyebrow} title={home.faqSection.title} text={home.faqSection.text} image={home.faqSection.image} items={visibleHomeItems(home.faqItems).slice(0, 6)} />}
       </main>
       <Footer />
     </>

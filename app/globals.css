@@ -27652,3 +27652,24 @@ body:not(.admin-body) .home-collection-card:hover>img{transform:scale(1.025)}
 body:not(.admin-body) .home-collection-card:hover .home-collection-card__arrow{transform:translateX(2px)}
 @media(max-width:1100px){body:not(.admin-body) .home-collections__grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}body:not(.admin-body) .home-collection-card{aspect-ratio:3/4.5}}
 @media(max-width:767px){body:not(.admin-body) .home-collections{width:100%!important;margin-top:48px!important;margin-bottom:48px!important}body:not(.admin-body) .home-collections__head{align-items:start;flex-direction:column;padding:0 20px}body:not(.admin-body) .home-collections__head h2{font-size:clamp(32px,9vw,42px)}body:not(.admin-body) .home-collections__grid{display:flex;gap:12px;overflow-x:auto;margin-top:28px;padding:0 20px 4px;scroll-snap-type:x mandatory;scrollbar-width:none}body:not(.admin-body) .home-collections__grid::-webkit-scrollbar{display:none}body:not(.admin-body) .home-collection-card{flex:0 0 82%;aspect-ratio:auto;height:410px;scroll-snap-align:start}}
+
+/* Frequently asked questions. */
+body:not(.admin-body) .home-faq{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);align-items:start;gap:clamp(52px,5vw,72px);margin-top:64px!important;margin-bottom:72px!important}
+body:not(.admin-body) .home-faq__eyebrow{margin:0;color:var(--orange);font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+body:not(.admin-body) .home-faq__title{margin:14px 0 16px;color:#151311;font-size:clamp(42px,4vw,60px);font-weight:750;letter-spacing:-.045em;line-height:1.03;text-transform:uppercase;white-space:pre-line}
+body:not(.admin-body) .home-faq__lead{max-width:540px;margin:0;color:#605c56;font-size:19px;line-height:1.4}
+body:not(.admin-body) .home-faq__benefits{display:grid;gap:14px;margin-top:24px}
+body:not(.admin-body) .home-faq__benefit{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:13px;color:#55514c;font-size:16px;font-weight:550;line-height:1.25}
+body:not(.admin-body) .home-faq__benefit svg{width:28px;height:28px;color:var(--orange);stroke-width:1.8}
+body:not(.admin-body) .home-faq__image{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;margin-top:25px;border-radius:10px}
+body:not(.admin-body) .home-faq__list{display:grid;gap:16px}
+body:not(.admin-body) .home-faq__item{overflow:hidden;border:1px solid #e3ded7;border-radius:10px;background:#fff;transition:border-color .2s ease,background .2s ease}
+body:not(.admin-body) .home-faq__item:hover{border-color:rgba(236,95,13,.25);background:#fffdfb}
+body:not(.admin-body) .home-faq__item>button{display:flex;width:100%;min-height:102px;align-items:center;justify-content:space-between;gap:20px;border:0;background:transparent;padding:0 30px;color:#181818;cursor:pointer;font:inherit;font-size:clamp(19px,1.45vw,23px);font-weight:700;line-height:1.2;text-align:left}
+body:not(.admin-body) .home-faq__item>button svg{flex:0 0 auto;width:24px;height:24px;transition:transform .2s ease}
+body:not(.admin-body) .home-faq__item.is-open>button svg{transform:rotate(180deg)}
+body:not(.admin-body) .home-faq__answer{padding:0 30px 26px;color:#69645e;animation:home-faq-open .2s ease both}
+body:not(.admin-body) .home-faq__answer p{max-width:90%;margin:0;font-size:16px;line-height:1.55}
+@keyframes home-faq-open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:900px){body:not(.admin-body) .home-faq{grid-template-columns:1fr;gap:36px}body:not(.admin-body) .home-faq__intro{max-width:680px}}
+@media(max-width:767px){body:not(.admin-body) .home-faq{width:100%!important;margin-top:48px!important;margin-bottom:48px!important;padding:0 20px!important;gap:32px}body:not(.admin-body) .home-faq__title{font-size:clamp(36px,10vw,42px)}body:not(.admin-body) .home-faq__lead{font-size:17px}body:not(.admin-body) .home-faq__image{aspect-ratio:16/10;margin-top:22px}body:not(.admin-body) .home-faq__list{gap:12px}body:not(.admin-body) .home-faq__item>button{min-height:68px;padding:18px 16px;font-size:17px}body:not(.admin-body) .home-faq__item>button svg{width:20px;height:20px}body:not(.admin-body) .home-faq__answer{padding:0 16px 20px}body:not(.admin-body) .home-faq__answer p{max-width:none;font-size:15px}}
