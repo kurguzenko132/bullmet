@@ -7,8 +7,10 @@ import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
 import { HomeProductsClient } from '@/components/HomeProductsClient';
 import { HomePromoBanners } from '@/components/HomePromoBanners';
+import { HomeReviewsClient, type HomeReview } from '@/components/HomeReviewsClient';
 import { getHomepageControlSettings, visibleHomeItems } from '@/lib/homepageControl';
 import { getCatalogProducts } from '@/lib/products';
+import { getAdminReviews } from '@/lib/adminContent';
 
 const workProcessSteps = [
   { id: 'request', icon: 'request', num: '01', title: 'Вы оставляете заявку', desc: 'Через форму на сайте или по телефону' },
@@ -56,9 +58,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [home, allProducts] = await Promise.all([
+  const [home, allProducts, allReviews] = await Promise.all([
     getHomepageControlSettings(),
-    getCatalogProducts()
+    getCatalogProducts(),
+    getAdminReviews()
   ]);
 
   const products = allProducts.slice(0, Math.min(3, Math.max(1, home.productsSection.limit || 3)));
@@ -67,6 +70,17 @@ export default async function HomePage() {
   const categories = visibleHomeItems(home.directions).filter((item) => item.id !== 'bending');
   const productionBenefits = visibleHomeItems(home.productionBenefits);
   const productionGallery = visibleHomeItems(home.gallery);
+  const publishedReviews = allReviews.filter((review) => review.status === 'published');
+  const homeReviews = (home.reviewsSection.mode === 'manual'
+    ? home.reviewsSection.selectedIds.map((id) => publishedReviews.find((review) => review.id === id)).filter(Boolean)
+    : [...publishedReviews].sort((a, b) => {
+      const photoDifference = Number(Boolean(b.photo_urls?.length)) - Number(Boolean(a.photo_urls?.length));
+      if (photoDifference) return photoDifference;
+      const ratingDifference = Number(b.rating || 0) - Number(a.rating || 0);
+      if (ratingDifference) return ratingDifference;
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    }))
+    .slice(0, Math.min(3, Math.max(1, home.reviewsSection.limit || 3))) as HomeReview[];
   const selectedHero = visibleHomeItems(home.heroSlides)[0];
   const activeHero = selectedHero || {
     ...home.hero,
@@ -252,6 +266,8 @@ export default async function HomePage() {
             </article>
           </div>
         </section>
+
+        {home.reviewsSection.enabled && homeReviews.length > 0 && <HomeReviewsClient eyebrow={home.reviewsSection.eyebrow} title={home.reviewsSection.title} reviews={homeReviews} />}
 
         {sectionVisible('cta', home.cta.enabled) && (
           <section className="home-container custom-order">

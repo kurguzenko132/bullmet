@@ -12,6 +12,7 @@ import {
   defaultHomepageControl, type HomeControlSettings, type HomeFeatureItem,
   type HomeHeroSlide, type HomeIcon, type HomeLayoutSection
 } from '@/lib/homepageControl';
+import type { AdminReview } from '@/lib/adminContent';
 
 type Tab = 'structure' | 'seo' | 'settings';
 type Device = 'desktop' | 'tablet' | 'mobile';
@@ -55,7 +56,7 @@ function FeatureRow({ item, onChange, onMove }: { item: HomeFeatureItem; onChang
   </article>;
 }
 
-export function AdminHomepageClient({ initialSettings }: { initialSettings: HomeControlSettings }) {
+export function AdminHomepageClient({ initialSettings, reviews }: { initialSettings: HomeControlSettings; reviews: AdminReview[] }) {
   const [settings, setSettings] = useState<HomeControlSettings>(initialSettings);
   const [tab, setTab] = useState<Tab>('structure');
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -78,7 +79,7 @@ export function AdminHomepageClient({ initialSettings }: { initialSettings: Home
     change((current) => ({ ...current, heroSlides: updateItem(current.heroSlides, slide.id, patch) }));
   }
 
-  function patchSection(section: keyof Pick<HomeControlSettings, 'directionsSection' | 'productsSection' | 'productionSection' | 'stepsSection' | 'gallerySection' | 'cta'>, patch: Record<string, unknown>) {
+  function patchSection(section: keyof Pick<HomeControlSettings, 'directionsSection' | 'productsSection' | 'productionSection' | 'stepsSection' | 'gallerySection' | 'reviewsSection' | 'cta'>, patch: Record<string, unknown>) {
     change((current) => ({ ...current, [section]: { ...current[section], ...patch } } as HomeControlSettings));
   }
 
@@ -158,6 +159,12 @@ export function AdminHomepageClient({ initialSettings }: { initialSettings: Home
       </section>
 
       <section className="homepage-cms-split homepage-cms-lower"><div className="homepage-cms-card"><div className="homepage-cms-card-title"><div><h2>Популярные товары</h2><small>Товары отображаются из каталога</small></div><Visibility visible={settings.productsSection.enabled} onClick={() => patchSection('productsSection', { enabled: !settings.productsSection.enabled })} /></div><div className="homepage-cms-fields two"><Field label="Заголовок" value={settings.productsSection.title} onChange={(value) => patchSection('productsSection', { title: value })} /><Field label="Количество товаров" value={String(settings.productsSection.limit)} onChange={(value) => patchSection('productsSection', { limit: Math.max(1, Math.min(8, Number(value) || 4)) })} /><Field label="Кнопка" value={settings.productsSection.buttonLabel} onChange={(value) => patchSection('productsSection', { buttonLabel: value })} /><Field label="Ссылка" value={settings.productsSection.buttonHref} onChange={(value) => patchSection('productsSection', { buttonHref: value })} /></div></div><div className="homepage-cms-card"><div className="homepage-cms-card-title"><div><h2>CTA-блок</h2><small>Индивидуальный заказ</small></div><Visibility visible={settings.cta.enabled} onClick={() => patchSection('cta', { enabled: !settings.cta.enabled })} /></div><div className="homepage-cms-fields"><Field label="Заголовок" value={settings.cta.title} onChange={(value) => patchSection('cta', { title: value })} /><Field label="Описание" value={settings.cta.text} rows={3} onChange={(value) => patchSection('cta', { text: value })} /><Field label="Кнопка" value={settings.cta.primaryLabel} onChange={(value) => patchSection('cta', { primaryLabel: value })} /></div></div></section>
+      <section className="homepage-cms-card">
+        <div className="homepage-cms-card-title"><div><h2>Отзывы покупателей</h2><small>Показываются на главной странице</small></div><Visibility visible={settings.reviewsSection.enabled} onClick={() => patchSection('reviewsSection', { enabled: !settings.reviewsSection.enabled })} /></div>
+        <div className="homepage-cms-fields two"><Field label="Eyebrow" value={settings.reviewsSection.eyebrow} onChange={(value) => patchSection('reviewsSection', { eyebrow: value })} /><Field label="Заголовок" value={settings.reviewsSection.title} onChange={(value) => patchSection('reviewsSection', { title: value })} /><Field label="Количество отзывов" value={String(settings.reviewsSection.limit)} onChange={(value) => patchSection('reviewsSection', { limit: Math.max(1, Math.min(3, Number(value) || 3)) })} /></div>
+        <div className="homepage-cms-setting-row"><div><b>Ручной выбор отзывов</b><span>В автоматическом режиме первыми показываются опубликованные отзывы с фотографиями и высокой оценкой.</span></div><input type="checkbox" checked={settings.reviewsSection.mode === 'manual'} onChange={(event) => patchSection('reviewsSection', { mode: event.target.checked ? 'manual' : 'auto' })} /></div>
+        {settings.reviewsSection.mode === 'manual' && <div className="homepage-cms-sort-list">{reviews.filter((review) => review.status === 'published').map((review) => { const checked = settings.reviewsSection.selectedIds.includes(review.id); const limitReached = !checked && settings.reviewsSection.selectedIds.length >= 3; return <label className="homepage-cms-sort-row" key={review.id}><input type="checkbox" checked={checked} disabled={limitReached} onChange={(event) => patchSection('reviewsSection', { selectedIds: event.target.checked ? [...settings.reviewsSection.selectedIds, review.id].slice(0, 3) : settings.reviewsSection.selectedIds.filter((id) => id !== review.id) })} /><span><b>{review.user_name || review.user_email || 'Покупатель'} · {'★'.repeat(Math.round(review.rating || 0))}</b><small>{review.product_slug || 'Общий отзыв'} · {review.photo_urls?.length ? `${review.photo_urls.length} фото` : 'без фото'}</small></span></label>; })}</div>}
+      </section>
     </>}
 
     {tab === 'seo' && <section className="homepage-cms-seo"><div className="homepage-cms-card"><div className="homepage-cms-card-title"><div><h2>Поисковая оптимизация</h2><small>Настройки влияют только на главную страницу.</small></div></div><div className="homepage-cms-fields two"><Field label="SEO title" max={60} value={settings.seo.title} onChange={(value) => change((current) => ({ ...current, seo: { ...current.seo, title: value } }))} /><Field label="Canonical URL" value={settings.seo.canonical} onChange={(value) => change((current) => ({ ...current, seo: { ...current.seo, canonical: value } }))} /><Field label="Meta description" max={160} rows={4} value={settings.seo.description} onChange={(value) => change((current) => ({ ...current, seo: { ...current.seo, description: value } }))} /><AdminImagePicker label="Open Graph изображение" value={settings.seo.ogImage} onChange={(value) => change((current) => ({ ...current, seo: { ...current.seo, ogImage: value } }))} /></div><label className="homepage-cms-check"><input type="checkbox" checked={settings.seo.robotsIndex} onChange={(event) => change((current) => ({ ...current, seo: { ...current.seo, robotsIndex: event.target.checked } }))} /> Разрешить индексировать главную страницу</label></div><aside className="homepage-cms-google-preview"><small>Предпросмотр в поиске Google</small><b>{settings.seo.title || 'Заголовок страницы'}</b><span>{settings.seo.canonical}</span><p>{settings.seo.description || 'Описание страницы'}</p></aside><aside className="homepage-cms-og-preview"><img src={settings.seo.ogImage} alt="" /><div><small>bullmet.by</small><b>{settings.seo.ogTitle || settings.seo.title}</b><p>{settings.seo.ogDescription || settings.seo.description}</p></div></aside></section>}

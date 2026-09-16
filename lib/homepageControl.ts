@@ -166,6 +166,14 @@ export type HomeControlSettings = {
     buttonHref: string;
   };
   gallery: HomeGalleryItem[];
+  reviewsSection: {
+    enabled: boolean;
+    eyebrow: string;
+    title: string;
+    limit: number;
+    mode: 'auto' | 'manual';
+    selectedIds: string[];
+  };
   cta: {
     enabled: boolean;
     eyebrow: string;
@@ -310,6 +318,14 @@ export const defaultHomepageControl: HomeControlSettings = {
     { id: 'materials', src: '/mockup/gallery-2.jpg', title: 'Материалы', note: 'Металл и дерево для изделий Bullmet', visible: true, order: 5 },
     { id: 'workshop', src: '/mockup/gallery-6.jpg', title: 'Мастерская', note: 'Рабочие процессы собственного производства', visible: true, order: 6 }
   ],
+  reviewsSection: {
+    enabled: true,
+    eyebrow: 'Отзывы покупателей',
+    title: 'Отзывы покупателей',
+    limit: 3,
+    mode: 'auto',
+    selectedIds: []
+  },
   cta: {
     enabled: true,
     eyebrow: 'готовы выбрать часы?',
@@ -375,6 +391,7 @@ export function mergeHomepageControl(value: unknown): HomeControlSettings {
     workBenefits: mergeArray(defaultHomepageControl.workBenefits, incoming.workBenefits),
     gallerySection: { ...defaultHomepageControl.gallerySection, ...asObject(incoming.gallerySection) },
     gallery: mergeArray(defaultHomepageControl.gallery, incoming.gallery),
+    reviewsSection: { ...defaultHomepageControl.reviewsSection, ...asObject(incoming.reviewsSection) },
     cta: { ...defaultHomepageControl.cta, ...asObject(incoming.cta) }
   };
 }
