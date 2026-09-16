@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import type { Metadata } from 'next';
+import { Factory, PaintBucket, Palette, Truck } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
@@ -221,6 +222,36 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        <section className="home-container bullmet-advantages" aria-labelledby="bullmet-advantages-title">
+          <div className="bullmet-advantages__intro">
+            <p>Почему выбирают Bullmet</p>
+            <h2 id="bullmet-advantages-title">Надёжные решения для вашего интерьера</h2>
+            <span>Собственное производство, качественные материалы и внимание к деталям на каждом этапе.</span>
+          </div>
+          <div className="bullmet-advantages__grid">
+            <article>
+              <div className="bullmet-advantages__icon"><Factory aria-hidden="true" /></div>
+              <h3>Собственное производство</h3>
+              <p>Изготавливаем часы сами и контролируем качество на каждом этапе.</p>
+            </article>
+            <article>
+              <div className="bullmet-advantages__icon"><Palette aria-hidden="true" /></div>
+              <h3>Выбор размера и цвета</h3>
+              <p>Для большинства моделей можно подобрать подходящий размер и цвет исполнения.</p>
+            </article>
+            <article>
+              <div className="bullmet-advantages__icon"><PaintBucket aria-hidden="true" /></div>
+              <h3>Порошковая покраска</h3>
+              <p>Стойкое покрытие помогает сохранить внешний вид металлических деталей.</p>
+            </article>
+            <article>
+              <div className="bullmet-advantages__icon"><Truck aria-hidden="true" /></div>
+              <h3>Доставка по Беларуси</h3>
+              <p>Согласуем удобный способ получения заказа по Беларуси.</p>
+            </article>
+          </div>
+        </section>
 
         {sectionVisible('cta', home.cta.enabled) && (
           <section className="home-container custom-order">

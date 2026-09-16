@@ -27065,3 +27065,124 @@ body:not(.admin-body) .products-services-final .catalog-card-bottom-market butto
     flex-basis:245px !important;
   }
 }
+
+/* Why Bullmet: trust-building block on the homepage. */
+body:not(.admin-body) .bullmet-advantages{
+  margin-top:64px;
+  margin-bottom:64px;
+  padding-top:0;
+  padding-bottom:0;
+}
+
+body:not(.admin-body) .bullmet-advantages__intro > p{
+  margin:0;
+  color:var(--orange);
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+body:not(.admin-body) .bullmet-advantages__intro h2{
+  margin:14px 0 0;
+  color:#151311;
+  font-size:clamp(36px,3vw,52px);
+  font-weight:700;
+  letter-spacing:-.035em;
+  line-height:1.05;
+}
+
+body:not(.admin-body) .bullmet-advantages__intro > span{
+  display:block;
+  max-width:850px;
+  margin-top:16px;
+  color:#67635e;
+  font-size:19px;
+  line-height:1.45;
+}
+
+body:not(.admin-body) .bullmet-advantages__grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:18px;
+  margin-top:40px;
+}
+
+body:not(.admin-body) .bullmet-advantages__grid article{
+  display:flex;
+  min-height:250px;
+  flex-direction:column;
+  border:1px solid #e5dfd7;
+  border-radius:12px;
+  background:rgba(255,255,255,.62);
+  padding:28px 28px 30px;
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+
+body:not(.admin-body) .bullmet-advantages__grid article:hover{
+  transform:translateY(-2px);
+  border-color:rgba(236,95,13,.25);
+  box-shadow:0 10px 25px rgba(0,0,0,.035);
+}
+
+body:not(.admin-body) .bullmet-advantages__icon{
+  display:grid;
+  width:68px;
+  height:68px;
+  place-items:center;
+  border-radius:50%;
+  background:#fff1e6;
+  color:var(--orange);
+}
+
+body:not(.admin-body) .bullmet-advantages__icon svg{
+  width:32px;
+  height:32px;
+  stroke-width:2;
+}
+
+body:not(.admin-body) .bullmet-advantages__grid h3{
+  margin:22px 0 0;
+  color:#171512;
+  font-size:24px;
+  font-weight:700;
+  letter-spacing:-.03em;
+  line-height:1.15;
+}
+
+body:not(.admin-body) .bullmet-advantages__grid article > p{
+  margin:16px 0 0;
+  color:#6c6863;
+  font-size:17px;
+  line-height:1.45;
+}
+
+@media(max-width:1100px){
+  body:not(.admin-body) .bullmet-advantages__grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:767px){
+  body:not(.admin-body) .bullmet-advantages{
+    margin-top:48px;
+    margin-bottom:48px;
+  }
+
+  body:not(.admin-body) .bullmet-advantages__intro h2{
+    font-size:clamp(32px,9vw,42px);
+  }
+
+  body:not(.admin-body) .bullmet-advantages__intro > span{
+    font-size:17px;
+  }
+
+  body:not(.admin-body) .bullmet-advantages__grid{
+    grid-template-columns:1fr;
+    margin-top:32px;
+  }
+
+  body:not(.admin-body) .bullmet-advantages__grid article{
+    min-height:0;
+  }
+}
