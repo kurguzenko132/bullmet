@@ -27588,3 +27588,43 @@ body:not(.admin-body) .home-review-lightbox__close{position:absolute;top:22px;ri
   body:not(.admin-body) .home-review-lightbox{grid-template-columns:42px minmax(0,1fr) 42px;gap:8px;padding:16px}
   body:not(.admin-body) .home-review-lightbox > button{width:42px;height:42px}
 }
+
+/* Keep every review card and its photo area aligned, even with short copy or a single image. */
+body:not(.admin-body) .home-reviews__grid{
+  grid-auto-rows:1fr;
+}
+
+body:not(.admin-body) .home-review-card{
+  box-sizing:border-box;
+  height:100%;
+}
+
+body:not(.admin-body) .home-review-card__text{
+  min-height:96px;
+  max-height:96px;
+}
+
+body:not(.admin-body) .home-review-gallery,
+body:not(.admin-body) .home-review-gallery.is-1,
+body:not(.admin-body) .home-review-gallery.is-2{
+  height:300px !important;
+  min-height:300px;
+  max-height:300px;
+  overflow:hidden;
+}
+
+body:not(.admin-body) .home-review-gallery.is-1 button,
+body:not(.admin-body) .home-review-gallery.is-2 button,
+body:not(.admin-body) .home-review-gallery button{
+  min-height:0;
+}
+
+@media(max-width:767px){
+  body:not(.admin-body) .home-review-gallery,
+  body:not(.admin-body) .home-review-gallery.is-1,
+  body:not(.admin-body) .home-review-gallery.is-2{
+    height:270px !important;
+    min-height:270px;
+    max-height:270px;
+  }
+}
