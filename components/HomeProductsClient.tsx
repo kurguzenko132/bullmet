@@ -60,7 +60,7 @@ export function HomeProductsClient({ products }: { products: CatalogProduct[] })
   }
 
   return (
-    <div className="home-product-grid-shop home-product-grid-shop--catalog-style">
+    <div className="catalog-grid-market home-popular-catalog-grid">
       {products.map((product) => {
         const imageSettings = getImagePreset(product, product.image, 'catalog');
         const discount = discountPercent(product.price, product.oldPrice);
@@ -70,7 +70,7 @@ export function HomeProductsClient({ products }: { products: CatalogProduct[] })
 
         return (
           <article
-            className="catalog-card-market home-catalog-card-market"
+            className="catalog-card-market"
             key={product.slug}
             role="link"
             tabIndex={0}
