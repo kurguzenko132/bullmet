@@ -517,7 +517,7 @@ export async function getProductPageData(slug: string): Promise<{ product: Catal
       const sameCategoryB = b.category === product.category ? 0 : 1;
       return sameCategoryA - sameCategoryB;
     })
-    .slice(0, 4);
+    .slice(0, 5);
 
   return { product, related, colorVariants };
 }

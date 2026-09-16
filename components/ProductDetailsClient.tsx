@@ -654,7 +654,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <div className="related-head"><h2>Похожие товары</h2><Link href="/catalog">В каталог</Link></div>
           <div className="related-grid">
             {related.map((item) => {
-              const itemImageSettings = getImagePreset(item, item.image, 'related');
+              const itemImageSettings = getImagePreset(item, item.image, 'catalog');
               const itemDiscount = discountPercent(item.price, item.oldPrice);
 
               return (
