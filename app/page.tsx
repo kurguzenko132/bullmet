@@ -68,6 +68,7 @@ export default async function HomePage() {
 
   const featureItems = visibleHomeItems(home.features);
   const categories = visibleHomeItems(home.directions).filter((item) => item.id !== 'bending');
+  const collections = visibleHomeItems(home.collections);
   const productionBenefits = visibleHomeItems(home.productionBenefits);
   const productionGallery = visibleHomeItems(home.gallery);
   const publishedReviews = allReviews.filter((review) => review.status === 'published');
@@ -187,6 +188,23 @@ export default async function HomePage() {
                   </article>
                 </div>
               </aside>
+            </div>
+          </section>
+        )}
+
+        {home.collectionsSection.enabled && collections.length > 0 && (
+          <section className="home-container home-collections" aria-labelledby="home-collections-title">
+            <header className="home-collections__head">
+              <div><p>{home.collectionsSection.eyebrow}</p><h2 id="home-collections-title">{home.collectionsSection.title}</h2></div>
+              <Link href={home.collectionsSection.buttonHref}>{home.collectionsSection.buttonLabel} <span>→</span></Link>
+            </header>
+            <div className="home-collections__grid">
+              {collections.map((item) => <Link className="home-collection-card" href={item.href} key={item.id}>
+                <img src={item.img} alt={item.title} />
+                <span className="home-collection-card__shade" aria-hidden="true" />
+                <span className="home-collection-card__copy"><b>{item.title}</b><small><Lines value={item.description} /></small></span>
+                <span className="home-collection-card__arrow" aria-hidden="true">→</span>
+              </Link>)}
             </div>
           </section>
         )}

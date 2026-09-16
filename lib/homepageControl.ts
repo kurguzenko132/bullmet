@@ -42,6 +42,8 @@ export type HomeDirectionCard = {
   order: number;
 };
 
+export type HomeCollectionCard = HomeDirectionCard & { description: string };
+
 export type HomeStep = {
   id: string;
   icon: HomeIcon;
@@ -140,6 +142,14 @@ export type HomeControlSettings = {
     limit: number;
     onlyClocks: boolean;
   };
+  collectionsSection: {
+    enabled: boolean;
+    eyebrow: string;
+    title: string;
+    buttonLabel: string;
+    buttonHref: string;
+  };
+  collections: HomeCollectionCard[];
   productionSection: {
     enabled: boolean;
     eyebrow: string;
@@ -269,6 +279,21 @@ export const defaultHomepageControl: HomeControlSettings = {
     limit: 3,
     onlyClocks: true
   },
+  collectionsSection: {
+    enabled: true,
+    eyebrow: 'Коллекции',
+    title: 'Подберите часы под интерьер',
+    buttonLabel: 'Смотреть все коллекции',
+    buttonHref: '/catalog'
+  },
+  collections: [
+    { id: 'classic', title: 'Классика', description: 'Универсальный стиль\nна все времена', img: '/assets/prod-clock-classic.jpg', href: '/catalog?category=classic', visible: true, order: 1 },
+    { id: 'coffee-kitchen', title: 'Кофе и кухня', description: 'Для уютной\nатмосферы', img: '/mockup/prod-clock-1.jpg', href: '/catalog?category=coffee-kitchen', visible: true, order: 2 },
+    { id: 'loft', title: 'Лофт', description: 'Стиль и характер\nв интерьере', img: '/assets/prod-clock-loft.jpg', href: '/catalog?category=loft', visible: true, order: 3 },
+    { id: 'roman', title: 'Римские цифры', description: 'Элегантная\nклассика', img: '/mockup/prod-clock-2.jpg', href: '/catalog?category=roman', visible: true, order: 4 },
+    { id: 'wood', title: 'С элементами дерева', description: 'Тепло натуральных\nматериалов', img: '/assets/prod-clock-classic.jpg', href: '/catalog?material=Металл%20с%20элементами%20дерева', visible: true, order: 5 },
+    { id: 'quotes', title: 'Надписи', description: 'Индивидуальный\nхарактер', img: '/mockup/gallery-4.jpg', href: '/catalog?category=Цитаты%20и%20надписи', visible: true, order: 6 }
+  ],
   productionSection: {
     enabled: true,
     eyebrow: 'производство металлоизделий',
@@ -384,6 +409,8 @@ export function mergeHomepageControl(value: unknown): HomeControlSettings {
     directionsSection: { ...defaultHomepageControl.directionsSection, ...asObject(incoming.directionsSection) },
     directions: mergeArray(defaultHomepageControl.directions, incoming.directions),
     productsSection: { ...defaultHomepageControl.productsSection, ...asObject(incoming.productsSection) },
+    collectionsSection: { ...defaultHomepageControl.collectionsSection, ...asObject(incoming.collectionsSection) },
+    collections: mergeArray(defaultHomepageControl.collections, incoming.collections),
     productionSection: { ...defaultHomepageControl.productionSection, ...asObject(incoming.productionSection) },
     productionBenefits: mergeArray(defaultHomepageControl.productionBenefits, incoming.productionBenefits),
     stepsSection: { ...defaultHomepageControl.stepsSection, ...asObject(incoming.stepsSection) },
