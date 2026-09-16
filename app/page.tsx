@@ -61,7 +61,7 @@ export default async function HomePage() {
     getCatalogProducts()
   ]);
 
-  const products = allProducts.slice(0, Math.max(1, home.productsSection.limit || 4));
+  const products = allProducts.slice(0, Math.min(3, Math.max(1, home.productsSection.limit || 3)));
 
   const featureItems = visibleHomeItems(home.features);
   const categories = visibleHomeItems(home.directions).filter((item) => item.id !== 'bending');

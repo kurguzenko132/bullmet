@@ -26974,7 +26974,7 @@ body:not(.admin-body) .footer-exact .footer-grid-exact{
 /* Home page popular products use the same catalogue card layout. */
 body:not(.admin-body) .products-services-final .home-product-grid-shop--catalog-style{
   display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
   gap:18px !important;
 }
 

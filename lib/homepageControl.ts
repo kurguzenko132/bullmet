@@ -258,7 +258,7 @@ export const defaultHomepageControl: HomeControlSettings = {
     text: 'Модели, с которых удобно начать знакомство с Bullmet.',
     buttonLabel: 'Все часы',
     buttonHref: '/catalog',
-    limit: 4,
+    limit: 3,
     onlyClocks: true
   },
   productionSection: {
