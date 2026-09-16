@@ -669,7 +669,6 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                       <svg viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(180 12 12)"><path d="M7 10v10H4V10h3Zm2 10V10l4-6c.7-.9 2.2-.4 2.2.8V8h3.3c1.3 0 2.3 1.2 2 2.5L19.1 18a2.5 2.5 0 0 1-2.4 2H9Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></g></svg>
                       <b>{unhelpfulVotes}</b>
                     </button>
-                    <button className="product-review-vote product-review-vote--more" type="button" aria-label="Другие действия с отзывом">•••</button>
                   </footer>
                 </div>
               </article>;
