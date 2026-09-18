@@ -289,10 +289,10 @@ export default async function HomePage() {
 
         {home.reviewsSection.enabled && homeReviews.length > 0 && <HomeReviewsClient eyebrow={home.reviewsSection.eyebrow} title={home.reviewsSection.title} reviews={homeReviews} />}
 
+        {home.faqSection.enabled && <HomeFaqClient eyebrow={home.faqSection.eyebrow} title={home.faqSection.title} text={home.faqSection.text} image={home.faqSection.image} items={visibleHomeItems(home.faqItems).slice(0, 6)} />}
         {sectionVisible('cta', home.cta.enabled) && (
           <HomeCustomOptions {...home.cta} benefits={visibleHomeItems(home.cta.benefits)} />
         )}
-        {home.faqSection.enabled && <HomeFaqClient eyebrow={home.faqSection.eyebrow} title={home.faqSection.title} text={home.faqSection.text} image={home.faqSection.image} items={visibleHomeItems(home.faqItems).slice(0, 6)} />}
       </main>
       <Footer />
     </>
