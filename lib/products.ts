@@ -106,8 +106,7 @@ export const clockCatalogCategories = [
   'Профессии',
   'Романтика',
   'Рыбалка, охота',
-  'Спорт',
-  'Христианские'
+  'Спорт'
 ];
 
 export const localFallbackProducts: CatalogProduct[] = [

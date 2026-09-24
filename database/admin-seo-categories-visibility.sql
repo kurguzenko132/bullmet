@@ -17,7 +17,6 @@ values (
       { "id": "clock-romance", "title": "Романтика", "slug": "Романтика", "kind": "clock", "visible": true, "order": 10, "description": "Романтические модели", "image": "/mockup/cat-clock.jpg" },
       { "id": "clock-fishing", "title": "Рыбалка, охота", "slug": "Рыбалка, охота", "kind": "clock", "visible": true, "order": 11, "description": "Тематика рыбалки и охоты", "image": "/mockup/cat-clock.jpg" },
       { "id": "clock-sport", "title": "Спорт", "slug": "Спорт", "kind": "clock", "visible": true, "order": 12, "description": "Спортивные модели часов", "image": "/mockup/cat-clock.jpg" },
-      { "id": "clock-christian", "title": "Христианские", "slug": "Христианские", "kind": "clock", "visible": true, "order": 13, "description": "Христианская тематика", "image": "/mockup/cat-clock.jpg" },
       { "id": "service-laser", "title": "Лазерная резка", "slug": "laser_cutting", "kind": "service", "visible": false, "order": 101, "description": "Художественная лазерная резка из листового металла", "image": "/assets/service-metal.jpg" },
       { "id": "service-bending", "title": "Гибка металла", "slug": "metal_bending", "kind": "service", "visible": false, "order": 102, "description": "Гибка металлических деталей", "image": "/assets/service-wood.jpg" },
       { "id": "service-wholesale", "title": "Мелкий опт металлопроката", "slug": "metal_wholesale", "kind": "service", "visible": false, "order": 103, "description": "Подбор металлопроката под задачу", "image": "/assets/cat-metal.jpg" },
