@@ -1,23 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, MessageCircleQuestion, MessagesSquare, ShieldCheck } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import type { HomeFaqItem } from '@/lib/homepageControl';
 
-type Props = { eyebrow: string; title: string; text: string; image: string; items: HomeFaqItem[] };
+type Props = { title: string; text: string; image: string; items: HomeFaqItem[] };
 
-const benefits = [
-  { icon: ShieldCheck, text: 'Честные и понятные ответы' },
-  { icon: MessageCircleQuestion, text: 'Поможем подобрать подходящий вариант' },
-  { icon: MessagesSquare, text: 'Связаться с нами можно, если ответа нет' }
-];
-
-export function HomeFaqClient({ eyebrow, title, text, image, items }: Props) {
+export function HomeFaqClient({ title, text, image, items }: Props) {
   const [openId, setOpenId] = useState(items[0]?.id ?? '');
   return <section className="home-container home-faq" aria-labelledby="home-faq-title">
+    <header className="home-faq__heading"><h2 id="home-faq-title" className="home-faq__title">{title}</h2></header>
     <div className="home-faq__intro">
-      <p className="home-faq__eyebrow">{eyebrow}</p><h2 id="home-faq-title" className="home-faq__title">{title}</h2><p className="home-faq__lead">{text}</p>
-      <div className="home-faq__benefits">{benefits.map(({ icon: BenefitIcon, text: benefit }) => <div className="home-faq__benefit" key={benefit}><BenefitIcon aria-hidden="true" /><span>{benefit}</span></div>)}</div>
+      <p className="home-faq__lead">{text}</p>
       <img className="home-faq__image" src={image} alt="Интерьер с настенными часами Bullmet" />
     </div>
     <div className="home-faq__list">{items.map((item) => {

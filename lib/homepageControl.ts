@@ -282,11 +282,11 @@ export const defaultHomepageControl: HomeControlSettings = {
     buttonHref: '/catalog'
   },
   directions: [
-    { id: 'clocks', title: 'Часы собственного\nпроизводства', img: '/mockup/cat-clock.jpg', href: '/catalog?category=Настенные часы', visible: true, order: 1 },
-    { id: 'garden', title: 'Садовые\nкачели', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: true, order: 2 },
-    { id: 'laser', title: 'Резка\nметалла', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: true, order: 3 },
-    { id: 'wholesale', title: 'Резка\nдерева', img: '/mockup/service-wood.jpg', href: '/services#wood', visible: true, order: 4 },
-    { id: 'loft', title: 'Изделия\nна заказ', img: '/mockup/cat-custom.jpg', href: '/contacts', visible: true, order: 5 }
+    { id: 'clocks', title: 'Настенные\nчасы', img: '/mockup/cat-clock.jpg', href: '/catalog?category=Настенные часы', visible: true, order: 1 },
+    { id: 'garden', title: 'Садовая\nмебель', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: true, order: 2 },
+    { id: 'loft', title: 'Мебель для дома\nв стиле лофт', img: '/mockup/cat-custom.jpg', href: '/services', visible: true, order: 3 },
+    { id: 'laser', title: 'Лазерная\nрезка', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: true, order: 4 },
+    { id: 'wholesale', title: 'Мелкий опт\nметаллопроката', img: '/mockup/service-metal.jpg', href: '/contacts', visible: true, order: 5 }
   ],
   productsSection: {
     enabled: true,

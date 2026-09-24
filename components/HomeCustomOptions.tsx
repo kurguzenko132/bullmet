@@ -6,7 +6,6 @@ import type { HomeBenefit } from '@/lib/homepageControl';
 const benefitIcons = { tools: Wrench, materials: Palette, spark: Layers3 };
 
 type Props = {
-  eyebrow: string;
   title: string;
   text: string;
   image: string;
@@ -17,11 +16,10 @@ type Props = {
   benefits: HomeBenefit[];
 };
 
-export function HomeCustomOptions({ eyebrow, title, text, image, primaryLabel, primaryHref, secondaryLabel, secondaryHref, benefits }: Props) {
+export function HomeCustomOptions({ title, text, image, primaryLabel, primaryHref, secondaryLabel, secondaryHref, benefits }: Props) {
   return <section className="home-container home-custom-options" aria-labelledby="home-custom-options-title">
     <div className="home-custom-options__card">
       <div className="home-custom-options__content">
-        <p className="home-custom-options__eyebrow">{eyebrow}</p>
         <h2 id="home-custom-options-title">{title}</h2>
         <p className="home-custom-options__text">{text}</p>
         <div className="home-custom-options__benefits">
@@ -31,7 +29,7 @@ export function HomeCustomOptions({ eyebrow, title, text, image, primaryLabel, p
           })}
         </div>
         <div className="home-custom-options__actions">
-          <Link className="home-custom-options__primary" href={primaryHref}>{primaryLabel}<span aria-hidden="true">→</span></Link>
+          <Link className="home-custom-options__primary" href={primaryHref}>{primaryLabel}</Link>
           <Link className="home-custom-options__secondary" href={secondaryHref}>{secondaryLabel}</Link>
         </div>
       </div>

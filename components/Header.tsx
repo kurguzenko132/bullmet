@@ -62,8 +62,6 @@ function readCartCount() {
   }
 }
 
-const quickSearches = ['римские', 'кофе', 'классика', 'кухня', 'настенные часы'];
-
 export function Header() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
@@ -77,7 +75,6 @@ export function Header() {
   const [serviceNavigation, setServiceNavigation] = useState<ServiceNavigationItem[]>([]);
   const mobileDialogRef = useRef<HTMLDivElement>(null);
   const mobileCloseRef = useRef<HTMLButtonElement>(null);
-  const searchDialogRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const trimmedQuery = query.trim();
@@ -201,7 +198,10 @@ export function Header() {
   }, []);
 
   useAccessibleDialog({ open: mobileOpen, onClose: () => setMobileOpen(false), dialogRef: mobileDialogRef, initialFocusRef: mobileCloseRef });
-  useAccessibleDialog({ open: searchOpen, onClose: () => setSearchOpen(false), dialogRef: searchDialogRef, initialFocusRef: searchInputRef });
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
 
   useEffect(() => {
     if (!searchOpen || trimmedQuery.length < 2) {
@@ -237,28 +237,46 @@ export function Header() {
     window.location.href = `/catalog?q=${encodeURIComponent(trimmedQuery)}`;
   }
 
-  function applyQuickSearch(value: string) {
-    setQuery(value);
-  }
-
   return (
     <>
       <header className="site-header-exact site-header-polished">
-        <div className="home-container header-inner-exact header-inner-polished">
+        <div className={`home-container header-inner-exact header-inner-polished${searchOpen ? ' is-search-open' : ''}`}>
           <Link href="/" className="brand-exact" aria-label="Bullmet">
-            <img src="/logo-shield-check.svg" alt="" className="brand-mark" />
-            <span className="brand-text"><b>{siteControl?.general?.logoText || 'BULLMET'}</b><small>{siteControl?.general?.tagline || 'металл с элементами дерева'}</small></span>
+            <img src="/bullmet-logo-mark.png" alt="" className="brand-mark brand-mark--bullmet" />
+            <span className="brand-text"><b>{siteControl?.general?.logoText || 'BULLMET'}</b></span>
           </Link>
 
-          <nav className="nav-exact nav-polished">
-            {nav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
-          </nav>
+          {searchOpen ? (
+            <div className="header-search-area">
+              <form onSubmit={submitSearch} className="header-search-form">
+                <Icon name="search" />
+                <input ref={searchInputRef} aria-label="Поиск по каталогу" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по каталогу" />
+                <button className="header-search-close" type="button" onClick={() => setSearchOpen(false)} aria-label="Закрыть поиск">×</button>
+              </form>
+              {(loading || trimmedQuery.length >= 2) && (
+                <div className="header-search-results">
+                  {loading && <span>Ищу товары...</span>}
+                  {!loading && !hasResults && <span>Ничего не найдено. Попробуйте другой запрос.</span>}
+                  {!loading && hasResults && results.map((product) => (
+                    <Link href={`/product/${product.slug}`} key={product.slug} onClick={() => setSearchOpen(false)}>
+                      <img src={product.image} alt="" />
+                      <div><b>{product.title}</b><span>{product.short || product.category || 'Каталог'}</span></div>
+                      <strong>от {money(product.price)} BYN</strong>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <nav className="nav-exact nav-polished">
+              {nav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+            </nav>
+          )}
 
           <div className="header-actions-exact header-actions-polished">
-            <button aria-label="Поиск" className="icon-btn" type="button" onClick={() => setSearchOpen(true)}><Icon name="search" /></button>
+            {!searchOpen && <button aria-label="Поиск" className="icon-btn" type="button" onClick={() => setSearchOpen(true)}><Icon name="search" /></button>}
             <Link href="/cart" className="cart-mini" aria-label="Корзина"><Icon name="cart" />{cartCount > 0 && <span>{cartCount}</span>}</Link>
             <Link href={accountHref} className={accountEmail ? 'login-btn login-btn--active' : 'login-btn'} title={accountEmail ? `Личный кабинет: ${accountEmail}` : 'Войти в аккаунт'}><Icon name="user" /><span>{accountLabel}</span></Link>
-            <Link href="/contacts" className="calc-btn">Заказать расчёт</Link>
             <button className={mobileOpen ? 'mobile-menu-btn is-open' : 'mobile-menu-btn'} type="button" onClick={() => setMobileOpen((value) => !value)} aria-label="Меню"><span /><span /><span /></button>
           </div>
         </div>
@@ -270,8 +288,8 @@ export function Header() {
           <div className="mobile-menu-panel">
             <div className="mobile-menu-head">
               <Link href="/" className="mobile-menu-brand" onClick={() => setMobileOpen(false)}>
-                <img src="/logo-shield-check.svg" alt="" className="mobile-menu-brand-mark" />
-                <span className="mobile-menu-brand-text"><b>{siteControl?.general?.logoText || 'BULLMET'}</b><small>{siteControl?.general?.tagline || 'металл с элементами дерева'}</small></span>
+                <img src="/bullmet-logo-mark.png" alt="" className="mobile-menu-brand-mark mobile-menu-brand-mark--bullmet" />
+                <span className="mobile-menu-brand-text"><b>{siteControl?.general?.logoText || 'BULLMET'}</b></span>
               </Link>
               <button ref={mobileCloseRef} type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть">×</button>
             </div>
@@ -286,40 +304,6 @@ export function Header() {
                 <Link href="/contacts" onClick={() => setMobileOpen(false)}>Контакты</Link>
                 <Link href="/catalog" onClick={() => setMobileOpen(false)}>Каталог</Link>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {searchOpen && (
-        <div ref={searchDialogRef} className="site-search-modal site-search-modal--polished" role="dialog" aria-modal="true" aria-label="Поиск по каталогу" tabIndex={-1}>
-          <button className="site-search-backdrop" type="button" onClick={() => setSearchOpen(false)} aria-label="Закрыть поиск" />
-          <div className="site-search-card site-search-card--polished">
-            <button className="site-search-close" type="button" onClick={() => setSearchOpen(false)} aria-label="Закрыть">×</button>
-            <div className="site-search-head">
-              <span>Поиск по каталогу</span>
-              <h2>Что ищем?</h2>
-              <p>Введите название или тематику часов: римские, кофе, классика, кухня.</p>
-            </div>
-            <form onSubmit={submitSearch} className="site-search-form-polished">
-              <Icon name="search" />
-              <input ref={searchInputRef} aria-label="Поиск по каталогу" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: римские, кофе, классика, кухня" />
-              <button type="submit">Найти</button>
-            </form>
-            <div className="site-search-quick">
-              {quickSearches.map((item) => <button key={item} type="button" onClick={() => applyQuickSearch(item)}>{item}</button>)}
-            </div>
-            <div className="site-search-results site-search-results--polished">
-              {loading && <span>Ищу товары...</span>}
-              {!loading && trimmedQuery.length < 2 && <span>Начните вводить минимум 2 символа или выберите быстрый запрос.</span>}
-              {!loading && trimmedQuery.length >= 2 && !hasResults && <span>Ничего не найдено. Попробуйте другой запрос.</span>}
-              {hasResults && results.map((product) => (
-                <Link href={`/product/${product.slug}`} key={product.slug} onClick={() => setSearchOpen(false)}>
-                  <img src={product.image} alt="" />
-                  <div><b>{product.title}</b><span>{product.short || product.category || 'Каталог'}</span></div>
-                  <strong>от {money(product.price)} BYN</strong>
-                </Link>
-              ))}
             </div>
           </div>
         </div>
