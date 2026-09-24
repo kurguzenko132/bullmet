@@ -1,6 +1,6 @@
 # Bullmet Store
 
-Стартовый проект интернет-магазина Bullmet: быстрый SEO-сайт на Next.js + TypeScript + Tailwind CSS с макетом админки и подготовкой под Supabase.
+Next.js-магазин Bullmet с Supabase. Единственный поддерживаемый package manager — pnpm.
 
 ## Что внутри
 
@@ -19,8 +19,8 @@
 ## Запуск
 
 ```bash
-npm install
-npm run dev
+pnpm install --frozen-lockfile
+pnpm run dev
 ```
 
 Открыть:
@@ -28,14 +28,25 @@ npm run dev
 ```bash
 http://localhost:3000
 http://localhost:3000/admin
+http://localhost:3000/studio
 ```
+
+## Контентная CMS Sanity
+
+Публичный контент постепенно переносится в Sanity; операции магазина (товары, заказы, клиенты и доставка) остаются в Supabase. Studio встроена в приложение и доступна по `/studio`. Настройка входа, datasets, ролей и CORS описана в [docs/SANITY_STUDIO.md](docs/SANITY_STUDIO.md). До SAN-05 публикации в Studio не меняют витрину.
 
 ## Подключение Supabase
 
-1. Создать проект в Supabase.
-2. Открыть SQL Editor.
-3. Вставить код из `supabase-schema.sql` и выполнить.
-4. Скопировать URL и anon key в `.env.local`.
+Подробный порядок установки и обновления приведён в [database/MIGRATIONS.md](database/MIGRATIONS.md).
+
+Коротко для нового проекта:
+
+1. Создать проект Supabase.
+2. Выполнить `database/supabase-schema.sql`.
+3. Затем последовательно выполнить миграции из раздела «Новый проект» в `database/MIGRATIONS.md`.
+4. Скопировать переменные из `.env.example` в `.env.local`.
+
+Файл `supabase-schema.sql` в корне репозитория устарел и несовместим с текущим API. Не применяйте его.
 
 Пример `.env.local`:
 
@@ -43,6 +54,7 @@ http://localhost:3000/admin
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
 ```
 
 ## Дальше нужно реализовать
@@ -67,10 +79,4 @@ plugins: {
 }
 ```
 
-Если до этого уже запускали `npm install` и появилась ошибка про `@tailwindcss/postcss`, выполните:
-
-```bash
-rm -rf node_modules package-lock.json
-npm install
-npm run dev
-```
+Используйте только `pnpm`; `package-lock.json` не является поддерживаемым lockfile.

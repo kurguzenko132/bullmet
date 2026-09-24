@@ -6,28 +6,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { defaultAdminPath, isStaffRole, normalizeAdminRole } from '@/lib/adminAccess';
+import { syncServerSession } from '@/lib/authSession';
 
 type Mode = 'login' | 'register';
 
-function getAdminEmails() {
-  return [
-    process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-    process.env.NEXT_PUBLIC_ADMIN_EMAILS
-  ]
-    .filter(Boolean)
-    .flatMap((value) => String(value).split(','))
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-
-
 async function getUserAdminRole(userId?: string, email?: string) {
-  const cleanEmail = String(email || '').toLowerCase();
-  const adminEmails = getAdminEmails();
-
   if (!supabase || !userId) {
-    return adminEmails.includes(cleanEmail) ? 'admin' : 'customer';
+    return 'customer';
   }
 
   try {
@@ -37,11 +22,10 @@ async function getUserAdminRole(userId?: string, email?: string) {
       .eq('id', userId)
       .maybeSingle();
 
-    if (data?.status === 'blocked') return 'customer';
-    const profileRole = normalizeAdminRole(data?.role);
-    return adminEmails.includes(cleanEmail) && profileRole === 'customer' ? 'admin' : profileRole;
+    if (!data || data.status === 'blocked') return 'customer';
+    return normalizeAdminRole(data.role);
   } catch {
-    return adminEmails.includes(cleanEmail) ? 'admin' : 'customer';
+    return 'customer';
   }
 }
 
@@ -168,6 +152,8 @@ export function AuthForm() {
       });
 
       if (signInError) throw signInError;
+      if (!data.session?.access_token) throw new Error('Не удалось получить защищённую сессию.');
+      await syncServerSession(data.session.access_token);
 
       try {
         window.localStorage.setItem('bullmet_account_last_email', cleanEmail);
@@ -180,6 +166,7 @@ export function AuthForm() {
       const hasAdminAccess = isStaffRole(userRole);
 
       if (nextUrl.startsWith('/admin') && !hasAdminAccess) {
+        await syncServerSession();
         await supabase.auth.signOut();
         setError('У этой учётной записи нет доступа к запрошенной странице.');
         setLoading(false);

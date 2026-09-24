@@ -1,11 +1,14 @@
 'use client';
 
-import { ChangeEvent, CSSProperties, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from './Icon';
-import type { CatalogProduct } from '@/lib/products';
+import { productAvailability, type ProductAvailability, type CatalogProduct } from '@/lib/products';
 import { getImagePreset } from '@/lib/imageDisplay';
 import { supabase } from '@/lib/supabase';
+import { hydrateFavorites, readFavorites, toggleFavorite as toggleFavoriteItem } from '@/lib/favorites';
+import { useAccessibleDialog } from '@/lib/useAccessibleDialog';
+import type { ReviewControlSettings } from '@/lib/reviewControl';
 
 type ProductReview = {
   id: string;
@@ -14,6 +17,9 @@ type ProductReview = {
   rating: number;
   comment: string;
   photo_urls?: string[] | null;
+  admin_reply?: string | null;
+  admin_reply_at?: string | null;
+  verified_purchase?: boolean;
   created_at?: string | null;
   status?: string | null;
 };
@@ -35,6 +41,12 @@ function reviewWord(count: number) {
   return 'отзывов';
 }
 
+function reviewSummary(product: CatalogProduct, settings: Pick<ReviewControlSettings, 'productRating' | 'productCount'>) {
+  const count = product.reviewsCount || 0;
+  if (!count) return settings.productCount ? 'Нет отзывов' : '';
+  return [settings.productRating ? `★ ${(product.rating || 0).toFixed(1)}` : '', settings.productCount ? `${count} ${reviewWord(count)}` : ''].filter(Boolean).join(' · ');
+}
+
 function RatingStars({ value, onChange, onPreview, readOnly = false, size = 'normal' }: { value: number; onChange?: (value: number) => void; onPreview?: (value: number | null) => void; readOnly?: boolean; size?: 'normal' | 'small' }) {
   const parsedValue = Number(value);
   const normalizedValue = Number.isFinite(parsedValue) ? Math.min(5, Math.max(0, parsedValue)) : 0;
@@ -51,20 +63,12 @@ function RatingStars({ value, onChange, onPreview, readOnly = false, size = 'nor
             type="button"
             className={`rating-stars__star ${state}`}
             disabled={readOnly}
-            onMouseMove={(event) => {
-              const bounds = event.currentTarget.getBoundingClientRect();
-              const isHalf = event.clientX - bounds.left < bounds.width / 2;
-              onPreview?.(Math.min(5, Math.max(0.5, star - (isHalf ? 0.5 : 0))));
-            }}
+            onMouseEnter={() => onPreview?.(star)}
             onMouseLeave={() => onPreview?.(null)}
             onFocus={() => onPreview?.(star)}
             onBlur={() => onPreview?.(null)}
-            onClick={(event) => {
-              const bounds = event.currentTarget.getBoundingClientRect();
-              const isHalf = event.clientX - bounds.left < bounds.width / 2;
-              onChange?.(Math.min(5, Math.max(0.5, star - (isHalf ? 0.5 : 0))));
-            }}
-            aria-label={`Поставить ${star - 0.5} или ${star} звёзд`}
+            onClick={() => onChange?.(star)}
+            aria-label={`Поставить ${star} звёзд`}
           >
             <span style={{ '--rating-fill': `${fill * 100}%` } as CSSProperties}>★</span>
           </button>
@@ -120,7 +124,9 @@ function productSpecRows(product: CatalogProduct) {
   });
 }
 
-export function ProductDetailsClient({ product, related, colorVariants }: { product: CatalogProduct; related: CatalogProduct[]; colorVariants: CatalogProduct[] }) {
+export function ProductDetailsClient({ product, related, colorVariants, reviewSettings }: { product: CatalogProduct; related: CatalogProduct[]; colorVariants: CatalogProduct[]; reviewSettings: ReviewControlSettings }) {
+  const availability = productAvailability(product);
+  const canPurchase = availability !== 'unavailable';
   const images = useMemo(() => normalizeImages(product), [product]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeSize, setActiveSize] = useState(product.sizes?.[0] || 'Под заказ');
@@ -141,8 +147,13 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   const [reviewFilter, setReviewFilter] = useState<'all' | 'photo'>('all');
   const [reviewSort, setReviewSort] = useState<'new' | 'old' | 'high' | 'low'>('new');
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
-  const [reviewVotes, setReviewVotes] = useState<Record<string, 'up' | 'down' | undefined>>({});
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
   const reviewFormRef = useRef<HTMLElement | null>(null);
+  const productLightboxRef = useRef<HTMLDivElement>(null);
+  const productLightboxCloseRef = useRef<HTMLButtonElement>(null);
+  const reviewPhotoDialogRef = useRef<HTMLDivElement>(null);
+  const reviewPhotoCloseRef = useRef<HTMLButtonElement>(null);
   const activeImage = images[activeIndex] || product.image;
   const activeImageSettings = getImagePreset(product, activeImage, 'product');
   const activeModalSettings = getImagePreset(product, activeImage, 'modal');
@@ -182,45 +193,40 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   }, [product.slug, product.sizes]);
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem('bullmet_favorites');
-      const favorites = raw ? JSON.parse(raw) : [];
-      setFavorite(Array.isArray(favorites) && favorites.some((item) => item?.slug === product.slug));
-    } catch {
-      setFavorite(false);
-    }
+    let mounted = true;
+    const sync = async () => {
+      const result = await hydrateFavorites();
+      if (mounted) setFavorite(result.items.some((item) => item.slug === product.slug));
+    };
+    void sync();
+    const onUpdate = () => { if (mounted) setFavorite(readFavorites().some((item) => item.slug === product.slug)); };
+    window.addEventListener('bullmet-favorites-updated', onUpdate);
+    window.addEventListener('storage', onUpdate);
+    return () => { mounted = false; window.removeEventListener('bullmet-favorites-updated', onUpdate); window.removeEventListener('storage', onUpdate); };
   }, [product.slug]);
 
   useEffect(() => {
     let mounted = true;
     async function loadReviews() {
-      if (!supabase) return;
-      const { data, error } = await supabase
-        .from('product_reviews')
-        .select('id, user_name, user_email, rating, comment, photo_urls, created_at, status')
-        .eq('product_slug', product.slug)
-        .in('status', ['published'])
-        .order('created_at', { ascending: false });
-      if (!error && mounted) setReviews((data || []) as ProductReview[]);
+      const response = await fetch(`/api/reviews?product=${encodeURIComponent(product.slug)}`, { cache: 'no-store' });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.ok && mounted) setReviews(data.reviews as ProductReview[]);
     }
     loadReviews();
     return () => { mounted = false; };
   }, [product.slug]);
 
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setLightboxOpen(false);
+  useAccessibleDialog({
+    open: lightboxOpen,
+    onClose: () => setLightboxOpen(false),
+    dialogRef: productLightboxRef,
+    initialFocusRef: productLightboxCloseRef,
+    onKeyDown: (event) => {
       if (event.key === 'ArrowLeft') prevImage();
       if (event.key === 'ArrowRight') nextImage();
-    };
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [lightboxOpen, images.length]);
+    }
+  });
+  useAccessibleDialog({ open: Boolean(reviewPhotoLightbox), onClose: () => setReviewPhotoLightbox(null), dialogRef: reviewPhotoDialogRef, initialFocusRef: reviewPhotoCloseRef });
 
   function prevImage() {
     setActiveIndex((value) => (value - 1 + images.length) % images.length);
@@ -237,12 +243,20 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
     setTouchStartX(null);
   }
 
+  function onMainPhotoKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setLightboxOpen(true);
+    }
+  }
+
   function scrollToReviewForm() {
     setReviewMessage('');
     requestAnimationFrame(() => reviewFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
   }
 
-  function pushToCart(cartItem: { slug: string; title: string; price: number; image: string; material?: string; size?: string; quantity: number }) {
+  function pushToCart(cartItem: { productId?: string; slug: string; title: string; price: number; oldPrice?: number; image: string; material?: string; size?: string; availability: ProductAvailability; quantity: number }) {
     try {
       const raw = window.localStorage.getItem('bullmet_cart');
       const current = raw ? JSON.parse(raw) : [];
@@ -259,42 +273,49 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   }
 
   function handleAddToCart() {
+    if (!canPurchase) {
+      setCartMessage('Этот товар временно недоступен к покупке.');
+      return;
+    }
     pushToCart({
+      productId: product.id,
       slug: product.slug,
       title: product.title,
       price: product.price,
+      oldPrice: product.oldPrice,
       image: activeImage || product.image,
       material: product.material,
       size: activeSize,
+      availability,
       quantity: qty
     });
   }
 
   function handleAddRelatedToCart(item: CatalogProduct) {
+    const itemAvailability = productAvailability(item);
+    if (itemAvailability === 'unavailable') {
+      setCartMessage('Этот товар временно недоступен к покупке.');
+      return;
+    }
     const relatedImages = normalizeImages(item);
     pushToCart({
+      productId: item.id,
       slug: item.slug,
       title: item.title,
       price: item.price,
+      oldPrice: item.oldPrice,
       image: relatedImages[0] || item.image,
       material: item.material,
       size: item.sizes?.[0] || 'Под заказ',
+      availability: itemAvailability,
       quantity: 1
     });
   }
 
-  function toggleFavorite() {
-    try {
-      const raw = window.localStorage.getItem('bullmet_favorites');
-      const current = raw ? JSON.parse(raw) : [];
-      const list = Array.isArray(current) ? current : [];
-      const exists = list.some((item) => item?.slug === product.slug);
-      const next = exists
-        ? list.filter((item) => item?.slug !== product.slug)
-        : [...list, { slug: product.slug, title: product.title, price: product.price, image: product.image, short: product.short, category: product.category }];
-      window.localStorage.setItem('bullmet_favorites', JSON.stringify(next));
-      setFavorite(!exists);
-    } catch {}
+  async function toggleFavorite() {
+    const result = await toggleFavoriteItem({ slug: product.slug, title: product.title, price: product.price, image: product.image, short: product.short, category: product.category });
+    setFavorite(result.favorite);
+    if (result.error) setCartMessage(result.error);
   }
 
 
@@ -320,12 +341,12 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
   }
 
   async function uploadReviewPhotos(userId: string) {
-    if (!supabase || !reviewPhotos.length) return [] as string[];
+    if (!supabase || !reviewPhotos.length) return { urls: [] as string[], paths: [] as string[], bucket: '' };
 
     const bucket = process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_IMAGES_BUCKET || 'product-images';
-    const uploaded: string[] = [];
+    const urls: string[] = []; const paths: string[] = [];
 
-    for (const file of reviewPhotos) {
+    try { for (const file of reviewPhotos) {
       const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
       const path = `reviews/${product.slug}/${userId}/${safeName}`;
@@ -338,25 +359,21 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
       if (error) throw error;
 
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-      if (data.publicUrl) uploaded.push(data.publicUrl);
+      if (data.publicUrl) { urls.push(data.publicUrl); paths.push(path); }
+    } } catch (error) {
+      if (paths.length) await supabase.storage.from(bucket).remove(paths);
+      throw error;
     }
 
-    return uploaded;
+    return { urls, paths, bucket };
   }
 
   async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setReviewMessage('');
 
-    if (!supabase) {
-      setReviewMessage('Supabase не подключен. Отзыв пока нельзя отправить.');
-      return;
-    }
-
-    const { data: sessionData } = await supabase.auth.getSession();
-    const session = sessionData.session;
-
-    if (!session) {
+    const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+    if (!session && !reviewSettings.allowGuest) {
       setReviewMessage('Чтобы оставить отзыв, войдите в аккаунт.');
       return;
     }
@@ -378,35 +395,29 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
 
     setReviewSubmitting(true);
 
+    let uploadedPhotos = { urls: [] as string[], paths: [] as string[], bucket: '' };
     try {
-      const uploadedPhotoUrls = await uploadReviewPhotos(session.user.id);
-
-      const { data, error } = await supabase.from('product_reviews').insert({
-        product_slug: product.slug,
-        user_id: session.user.id,
-        user_email: session.user.email,
-        user_name: session.user.email?.split('@')[0] || 'Покупатель',
-        rating: reviewRating,
-        comment: reviewComment.trim(),
-        photo_urls: uploadedPhotoUrls,
-        status: 'published'
-      }).select('id, user_name, user_email, rating, comment, photo_urls, created_at, status').single();
-
-      if (error) throw error;
-
-      setReviews((current) => {
-        const nextReview = data as ProductReview;
-        return [nextReview, ...current.filter((item) => item.id !== nextReview.id)];
+      uploadedPhotos = reviewSettings.allowPhotos ? await uploadReviewPhotos(session?.user.id || 'guest') : uploadedPhotos;
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+        body: JSON.stringify({ productSlug: product.slug, rating: Math.round(reviewRating), comment: reviewComment.trim(), photoUrls: uploadedPhotos.urls, guestName, guestEmail })
       });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Не удалось отправить отзыв.');
 
-      setReviewMessage('Отзыв опубликован. Он уже отображается на странице товара.');
+      if (data.published) setReviews((current) => [data.review as ProductReview, ...current.filter((item) => item.id !== data.review.id)]);
+      setReviewMessage(data.published ? 'Отзыв опубликован. Он уже отображается на странице товара.' : 'Спасибо! Отзыв отправлен на модерацию.');
       setReviewComment('');
       setReviewRating(0);
       setReviewPhotos([]);
       reviewPhotoPreviews.forEach((url) => URL.revokeObjectURL(url));
       setReviewPhotoPreviews([]);
       setReviewConfirmed(false);
+      setGuestName('');
+      setGuestEmail('');
     } catch (error) {
+      if (supabase && uploadedPhotos.paths.length) await supabase.storage.from(uploadedPhotos.bucket).remove(uploadedPhotos.paths);
       setReviewMessage(error instanceof Error ? error.message : 'Не удалось отправить отзыв.');
     } finally {
       setReviewSubmitting(false);
@@ -437,6 +448,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               onClick={() => setLightboxOpen(true)}
               onTouchStart={(event) => setTouchStartX(event.changedTouches[0]?.clientX ?? null)}
               onTouchEnd={(event) => onTouchEnd(event.changedTouches[0]?.clientX ?? 0)}
+              onKeyDown={onMainPhotoKeyDown}
               role="button"
               tabIndex={0}
               aria-label="Открыть фото товара"
@@ -493,11 +505,11 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             </div>
 
             <div className="product-stock-row">
-              <span className={product.inStock ? 'stock-dot stock-dot--ok' : 'stock-dot'} />
-              <b>{product.inStock ? 'В наличии / под заказ' : 'Под заказ'}</b>
+              <span className={availability === 'unavailable' ? 'stock-dot' : 'stock-dot stock-dot--ok'} />
+              <b>{availability === 'in_stock' ? 'В наличии' : availability === 'made_to_order' ? 'Под заказ · изготовим за 5–7 дней' : 'Недоступен к покупке'}</b>
               {product.isNew && <em>Новинка</em>}
               {product.isPopular && <em>Популярное</em>}
-              <em className="product-review-link">{reviews.length ? `★ ${averageRating.toFixed(1)} · ${reviewsLabel}` : 'Нет отзывов'}</em>
+              {(reviewSettings.productRating || reviewSettings.productCount) && <em className="product-review-link">{reviews.length ? [reviewSettings.productRating ? `★ ${averageRating.toFixed(1)}` : '', reviewSettings.productCount ? reviewsLabel : ''].filter(Boolean).join(' · ') : reviewSettings.productCount ? 'Нет отзывов' : ''}</em>}
             </div>
 
             <div className="product-price-row product-price-row--fixed">
@@ -569,7 +581,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             </div>
 
             <div className="product-actions-row">
-              <button className="button-main" type="button" onClick={handleAddToCart}>В корзину</button>
+              <button className="button-main" type="button" onClick={handleAddToCart} disabled={!canPurchase}>{canPurchase ? 'В корзину' : 'Недоступно'}</button>
             </div>
 
             {cartMessage && <div className="product-cart-message">{cartMessage}</div>}
@@ -581,9 +593,9 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <div className="product-reviews-market__content">
           <header className="product-reviews-market__head">
             <h2>Отзывы и оценки</h2>
-            <button type="button" onClick={scrollToReviewForm}>{reviews.length} {reviewWord(reviews.length)} <span>›</span></button>
+            {reviewSettings.productCount && <button type="button" onClick={scrollToReviewForm}>{reviews.length} {reviewWord(reviews.length)} <span>›</span></button>}
           </header>
-          <section className="product-reviews-market__summary">
+          {reviewSettings.productRating && <section className="product-reviews-market__summary">
             <div className="product-reviews-market__score">
               <b>{reviews.length ? averageRating.toFixed(1) : '—'}</b>
               <RatingStars value={roundedRating} readOnly />
@@ -594,7 +606,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                 <div key={rating}><span>{rating} ★</span><i><b style={{ width: reviews.length ? `${(count / reviews.length) * 100}%` : '0%' }} /></i><em>{count}</em></div>
               ))}
             </div>
-          </section>
+          </section>}
           <div className="product-reviews-market__tools">
             <div><button className={reviewFilter === 'all' ? 'is-active' : ''} type="button" onClick={() => setReviewFilter('all')}>Все отзывы ({reviews.length})</button><button className={reviewFilter === 'photo' ? 'is-active' : ''} type="button" onClick={() => setReviewFilter('photo')}>С фото ({reviews.filter((review) => review.photo_urls?.length).length})</button></div>
   <div className="product-reviews-market__sort"><select value={reviewSort} onChange={(event) => setReviewSort(event.target.value as typeof reviewSort)} aria-label="Сортировка отзывов"><option value="new">Сначала новые</option><option value="old">Сначала старые</option><option value="high">С высокой оценкой</option><option value="low">С низкой оценкой</option></select><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 7 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
@@ -602,25 +614,11 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <div className="product-reviews-market__list">
             {visibleReviews.length ? visibleReviews.map((review) => {
               const author = review.user_name || review.user_email?.split('@')[0] || 'Покупатель';
-              const vote = reviewVotes[review.id];
-              const helpfulVotes = vote === 'up' ? 1 : 0;
-              const unhelpfulVotes = vote === 'down' ? 1 : 0;
               return <article key={review.id} className="product-review-market-card">
                 <div className="product-review-market-card__avatar">{author.charAt(0).toUpperCase()}</div>
                 <div className="product-review-market-card__body">
-        <header><div><div className="product-review-market-card__author"><b>{author}</b><RatingStars value={review.rating} readOnly size="small" /></div><span>{review.created_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : 'Отзыв покупателя'}</span></div></header>
-        <div className="product-review-market-card__content"><div className="product-review-market-card__main"><p>{review.comment}</p>{!!review.photo_urls?.length && <div className="product-review-market-card__photos">{review.photo_urls.map((url) => <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)}><img src={url} alt="Фото отзыва" /></button>)}</div>}</div></div>
-                  <footer>
-                    <span>Полезен отзыв?</span>
-                    <button className={`product-review-vote ${vote === 'up' ? 'is-active' : ''}`} type="button" aria-label="Отметить отзыв полезным" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'up' ? undefined : 'up' }))}>
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v10H4V10h3Zm2 10V10l4-6c.7-.9 2.2-.4 2.2.8V8h3.3c1.3 0 2.3 1.2 2 2.5L19.1 18a2.5 2.5 0 0 1-2.4 2H9Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      <b>{helpfulVotes}</b>
-                    </button>
-                    <button className={`product-review-vote product-review-vote--down ${vote === 'down' ? 'is-active' : ''}`} type="button" aria-label="Отметить отзыв неполезным" onClick={() => setReviewVotes((current) => ({ ...current, [review.id]: current[review.id] === 'down' ? undefined : 'down' }))}>
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(180 12 12)"><path d="M7 10v10H4V10h3Zm2 10V10l4-6c.7-.9 2.2-.4 2.2.8V8h3.3c1.3 0 2.3 1.2 2 2.5L19.1 18a2.5 2.5 0 0 1-2.4 2H9Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></g></svg>
-                      <b>{unhelpfulVotes}</b>
-                    </button>
-                  </footer>
+        <header><div><div className="product-review-market-card__author"><b>{author}</b>{reviewSettings.productRating && <RatingStars value={review.rating} readOnly size="small" />}</div><span>{review.created_at ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : 'Отзыв покупателя'}</span></div></header>
+        <div className="product-review-market-card__content"><div className="product-review-market-card__main"><p>{review.comment}</p>{review.admin_reply && <div className="product-review-market-card__reply"><b>Ответ Bullmet</b><p>{review.admin_reply}</p></div>}{!!review.photo_urls?.length && <div className="product-review-market-card__photos">{review.photo_urls.map((url) => <button key={url} type="button" onClick={() => setReviewPhotoLightbox(url)}><img src={url} alt="Фото отзыва" /></button>)}</div>}</div></div>
                 </div>
               </article>;
             }) : <div className="product-reviews-market__empty"><b>{reviewFilter === 'photo' ? 'Отзывов с фото пока нет' : 'Отзывов пока нет'}</b><span>Станьте первым, кто поделится впечатлением о товаре.</span><button type="button" onClick={scrollToReviewForm}>Оставить отзыв</button></div>}
@@ -638,9 +636,10 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               </div>
             </div>
             <form onSubmit={submitReview}>
-              <label className="product-review-form-card__rating"><b>Ваша оценка <i>*</i></b><div><RatingStars value={reviewRatingPreview ?? reviewRating} onChange={setReviewRating} onPreview={setReviewRatingPreview} /><span>{(reviewRatingPreview ?? reviewRating) ? `${(reviewRatingPreview ?? reviewRating).toFixed(1)} — ${(reviewRatingPreview ?? reviewRating) >= 4.5 ? 'Отлично!' : (reviewRatingPreview ?? reviewRating) >= 3.5 ? 'Хорошо' : (reviewRatingPreview ?? reviewRating) >= 2.5 ? 'Нормально' : 'Есть что улучшить'}` : 'Выберите оценку'}</span></div></label>
+              {reviewSettings.allowGuest && <div className="product-review-form-card__guest"><label><b>Ваше имя</b><input value={guestName} onChange={(event) => setGuestName(event.target.value)} minLength={2} maxLength={80} /></label><label><b>Email</b><input type="email" value={guestEmail} onChange={(event) => setGuestEmail(event.target.value)} maxLength={254} /></label></div>}
+              <label className="product-review-form-card__rating"><b>Ваша оценка <i>*</i></b><div><RatingStars value={reviewRatingPreview ?? reviewRating} onChange={setReviewRating} onPreview={setReviewRatingPreview} /><span>{(reviewRatingPreview ?? reviewRating) ? `${reviewRatingPreview ?? reviewRating} — ${(reviewRatingPreview ?? reviewRating) >= 4 ? 'Отлично!' : (reviewRatingPreview ?? reviewRating) >= 3 ? 'Хорошо' : (reviewRatingPreview ?? reviewRating) >= 2 ? 'Нормально' : 'Есть что улучшить'}` : 'Выберите оценку'}</span></div></label>
               <label className="product-review-form-card__comment"><b>Комментарий <i>*</i></b><textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} maxLength={1000} minLength={10} placeholder="Расскажите о товаре: качество, удобство использования, внешний вид и т.д." /><small>{reviewComment.length}/1000</small></label>
-              <div className="product-review-form-card__photos"><b>Фотографии <span>(до 5)</span></b><div>{reviewPhotoPreviews.map((url, index) => <div className="product-review-preview" key={url}><img src={url} alt={`Новое фото ${index + 1}`} /><button type="button" onClick={() => removeReviewPhoto(index)} aria-label="Удалить фото">×</button></div>)}{reviewPhotoPreviews.length < 5 && <label className="product-review-upload"><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={chooseReviewPhotos} /><span>⌁</span><small>Добавить фото</small></label>}{Array.from({ length: Math.max(0, 4 - reviewPhotoPreviews.length) }).map((_, index) => <span aria-hidden="true" className="product-review-photo-placeholder" key={index}>+</span>)}</div><small>JPG, PNG или WEBP, до 10 МБ на файл.</small></div>
+              {reviewSettings.allowPhotos && <div className="product-review-form-card__photos"><b>Фотографии <span>(до 5)</span></b><div>{reviewPhotoPreviews.map((url, index) => <div className="product-review-preview" key={url}><img src={url} alt={`Новое фото ${index + 1}`} /><button type="button" onClick={() => removeReviewPhoto(index)} aria-label="Удалить фото">×</button></div>)}{reviewPhotoPreviews.length < 5 && <label className="product-review-upload"><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={chooseReviewPhotos} /><span>⌁</span><small>Добавить фото</small></label>}{Array.from({ length: Math.max(0, 4 - reviewPhotoPreviews.length) }).map((_, index) => <span aria-hidden="true" className="product-review-photo-placeholder" key={index}>+</span>)}</div><small>JPG, PNG или WEBP, до 10 МБ на файл.</small></div>}
               <label className="product-review-form-card__confirm"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} /><span>Я подтверждаю, что мой отзыв основан на реальном опыте использования товара.</span></label>
               {reviewMessage && <p className="review-message">{reviewMessage}</p>}
               <button className="product-review-form-card__submit" type="submit" disabled={reviewSubmitting}>{reviewSubmitting ? 'Публикуем…' : 'Опубликовать отзыв'}</button>
@@ -656,6 +655,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
             {related.map((item) => {
               const itemImageSettings = getImagePreset(item, item.image, 'catalog');
               const itemDiscount = discountPercent(item.price, item.oldPrice);
+              const itemAvailability = productAvailability(item);
 
               return (
           <article className="catalog-card-market related-catalog-card" key={item.slug}>
@@ -664,7 +664,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
               {itemDiscount && <span className="catalog-sale-market">-{itemDiscount}%</span>}
             </Link>
             <div className="catalog-card-body-market related-catalog-body">
-              <div className="catalog-card-rating-market"><small>Нет отзывов</small></div>
+              <div className="catalog-card-rating-market"><small>{reviewSummary(item, reviewSettings)}</small></div>
               <h3><Link href={`/product/${item.slug}`}>{item.title}</Link></h3>
               <p>{item.material || item.short}</p>
               <p className="catalog-card-color-market">Цвет: <span>{item.colorName || 'не указан'}</span></p>
@@ -673,7 +673,7 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
                   <b>от {money(item.price)} BYN</b>
                   {item.oldPrice && item.oldPrice > item.price && <del>{money(item.oldPrice)} BYN</del>}
                 </div>
-                      <button type="button" aria-label={`Добавить в корзину: ${item.title}`} onClick={() => handleAddRelatedToCart(item)}>
+                      <button type="button" disabled={itemAvailability === 'unavailable'} aria-label={itemAvailability === 'unavailable' ? `${item.title} недоступен` : `Добавить в корзину: ${item.title}`} onClick={() => handleAddRelatedToCart(item)}>
                         <Icon name="cart" />
                       </button>
                     </div>
@@ -690,19 +690,19 @@ export function ProductDetailsClient({ product, related, colorVariants }: { prod
           <span>Цена</span>
           <b>от {money(product.price)} BYN</b>
         </div>
-        <button type="button" onClick={handleAddToCart}>В корзину</button>
+        <button type="button" onClick={handleAddToCart} disabled={!canPurchase}>{canPurchase ? 'В корзину' : 'Недоступно'}</button>
       </div>
 
       {reviewPhotoLightbox && (
-        <div className="review-photo-lightbox" role="dialog" aria-modal="true" onClick={() => setReviewPhotoLightbox(null)}>
-          <button type="button" onClick={() => setReviewPhotoLightbox(null)} aria-label="Закрыть фото">×</button>
+        <div ref={reviewPhotoDialogRef} className="review-photo-lightbox" role="dialog" aria-modal="true" aria-label="Фото из отзыва" tabIndex={-1} onClick={() => setReviewPhotoLightbox(null)}>
+          <button ref={reviewPhotoCloseRef} type="button" onClick={() => setReviewPhotoLightbox(null)} aria-label="Закрыть фото">×</button>
           <img src={reviewPhotoLightbox} alt="Фото из отзыва" onClick={(event) => event.stopPropagation()} />
         </div>
       )}
 
       {lightboxOpen && (
-        <div className="product-lightbox" role="dialog" aria-modal="true">
-          <button className="lightbox-close" type="button" onClick={() => setLightboxOpen(false)} aria-label="Закрыть">×</button>
+        <div ref={productLightboxRef} className="product-lightbox" role="dialog" aria-modal="true" aria-label={`Фото товара: ${product.title}`} tabIndex={-1}>
+          <button ref={productLightboxCloseRef} className="lightbox-close" type="button" onClick={() => setLightboxOpen(false)} aria-label="Закрыть">×</button>
           {images.length > 1 && <button className="lightbox-arrow lightbox-arrow--prev" type="button" onClick={prevImage} aria-label="Предыдущее фото">‹</button>}
           <div className="lightbox-stage" onTouchStart={(event) => setTouchStartX(event.changedTouches[0]?.clientX ?? null)} onTouchEnd={(event) => onTouchEnd(event.changedTouches[0]?.clientX ?? 0)}>
             <img src={activeImage} alt={product.title} style={activeModalSettings.style} />

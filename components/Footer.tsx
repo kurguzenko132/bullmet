@@ -1,16 +1,47 @@
+'use client';
+
 import Link from 'next/link';
-import { getSiteControlSettings, visibleDirections, visibleNavigation } from '@/lib/siteControl';
+import { useEffect, useMemo, useState } from 'react';
 import { Icon } from './Icon';
 
-export async function Footer() {
-  const settings = await getSiteControlSettings();
-  const directions = visibleDirections(settings);
-  const rawFooterLinks = visibleNavigation(settings, 'footer').filter((item) => item.href !== '/about');
-  const companyLinks = rawFooterLinks.length ? rawFooterLinks.slice(0, 4) : [
+type FooterSettings = {
+  general: { logoText: string; tagline: string };
+  contacts: { phone: string; email?: string; address: string; hours: string; telegram?: string; instagram?: string };
+  directions: Array<{ key: string; title: string; href: string; visible: boolean; order: number }>;
+  navigation: Array<{ href: string; label: string; location: string; visible: boolean; order: number }>;
+};
+
+const defaultSettings: FooterSettings = {
+  general: { logoText: 'BULLMET', tagline: 'металл с элементами дерева' },
+  contacts: { phone: '+375 29 802 70 61', email: 'info@bullmet.by', address: 'Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А', hours: 'ПН–ПТ: 9:00–18:00', telegram: '', instagram: '' },
+  directions: [{ key: 'clocks', title: 'Настенные часы', href: '/catalog', visible: true, order: 1 }],
+  navigation: []
+};
+
+export function Footer() {
+  const [settings, setSettings] = useState<FooterSettings>(defaultSettings);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/site-control')
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => { if (active && data?.settings) { setSettings(data.settings); setSettingsLoaded(true); } })
+      .catch(() => null);
+    return () => { active = false; };
+  }, []);
+
+  const directions = useMemo(() => settings.directions.filter((item) => item.visible).sort((a, b) => a.order - b.order), [settings.directions]);
+  const rawFooterLinks = useMemo(() => settings.navigation.filter((item) => item.location === 'footer' && item.visible).sort((a, b) => a.order - b.order), [settings.navigation]);
+  const companyLinks = settingsLoaded ? rawFooterLinks.slice(0, 4) : [
     { href: '/production', label: 'Производство' },
     { href: '/contacts', label: 'Контакты' }
   ];
   const catalogLinks = (directions.length ? directions : settings.directions.filter((item) => item.key === 'clocks')).slice(0, 4);
+  const hasServices = directions.some((item) => item.key !== 'clocks');
+  const phoneHref = `tel:${settings.contacts.phone.replace(/[^+\d]/g, '')}`;
+  const telegramHref = String(settings.contacts.telegram || '').trim();
+  const instagramHref = String(settings.contacts.instagram || '').trim();
 
   return (
     <footer className="footer-exact">
@@ -22,7 +53,11 @@ export async function Footer() {
             <span className="brand-text"><b>{settings.general.logoText}</b><small>{settings.general.tagline}</small></span>
           </Link>
           <p className="footer-description">Собственное производство изделий из металла и дерева с 2017 года</p>
-          <div className="socials footer-socials"><span aria-label="Instagram"><Icon name="instagram" /></span><span aria-label="Telegram"><Icon name="telegram" /></span><span aria-label="Email"><Icon name="mail" /></span></div>
+          <div className="socials footer-socials">
+            {instagramHref && <a href={instagramHref} target="_blank" rel="noreferrer" aria-label="Instagram"><Icon name="instagram" /></a>}
+            {telegramHref && <a href={telegramHref} target="_blank" rel="noreferrer" aria-label="Telegram"><Icon name="telegram" /></a>}
+            {settings.contacts.email && <a href={`mailto:${settings.contacts.email}`} aria-label="Email"><Icon name="mail" /></a>}
+          </div>
         </div>
         <nav className="footer-column" aria-label="Каталог">
           <h4>КАТАЛОГ</h4>
@@ -30,12 +65,12 @@ export async function Footer() {
             <Link href={item.href} key={item.key}>{item.title}</Link>
           ))}
         </nav>
-        <nav className="footer-column" aria-label="Услуги">
+        {hasServices && <nav className="footer-column" aria-label="Услуги">
           <h4>УСЛУГИ</h4>
           <Link href="/services#laser">Резка металла</Link>
           <Link href="/services#wood">Резка дерева</Link>
           <Link href="/contacts">Изделия на заказ</Link>
-        </nav>
+        </nav>}
         <nav className="footer-column" aria-label="Компания">
           <h4>КОМПАНИЯ</h4>
           {companyLinks.map((item) => (
@@ -44,8 +79,8 @@ export async function Footer() {
         </nav>
         <div className="footer-contacts footer-contacts-column">
           <h4>КОНТАКТЫ</h4>
-          <p><Icon name="phone" /><span>{settings.contacts.phone}</span></p>
-          {settings.contacts.email && <p><Icon name="mail" /><span>{settings.contacts.email}</span></p>}
+          <p><Icon name="phone" /><a href={phoneHref}>{settings.contacts.phone}</a></p>
+          {settings.contacts.email && <p><Icon name="mail" /><a href={`mailto:${settings.contacts.email}`}>{settings.contacts.email}</a></p>}
           <p><Icon name="pin" /><span>{settings.contacts.address}</span></p>
           <p><Icon name="clock" /><span>{settings.contacts.hours}</span></p>
         </div>

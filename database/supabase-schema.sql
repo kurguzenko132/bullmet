@@ -166,6 +166,7 @@ alter table public.products enable row level security;
 alter table public.orders enable row level security;
 alter table public.requests enable row level security;
 alter table public.profiles add column if not exists phone text;
+alter table public.profiles add column if not exists notification_preferences boolean not null default true;
 
 alter table public.profiles enable row level security;
 

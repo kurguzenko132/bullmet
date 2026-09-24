@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSupabase } from '@/lib/serverSupabase';
 import { requestStatuses } from '@/lib/adminCommerce';
+import { logAdminActivity } from '@/lib/adminActivity';
 
 export const dynamic = 'force-dynamic';
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     if (!serverSupabase) {
       return NextResponse.json({ ok: false, message: 'Supabase не подключен.' }, { status: 500 });
@@ -12,6 +14,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     const body = await request.json();
     const update: Record<string, string | null> = {};
+    const { data: before, error: beforeError } = await serverSupabase.from('requests').select('*').eq('id', id).maybeSingle();
+    if (beforeError) return NextResponse.json({ ok: false, message: beforeError.message }, { status: 500 });
+    if (!before) return NextResponse.json({ ok: false, message: 'Заявка не найдена.' }, { status: 404 });
 
     if (typeof body.status === 'string' && requestStatuses.includes(body.status)) {
       update.status = body.status;
@@ -37,21 +42,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       return NextResponse.json({ ok: false, message: 'Нет данных для обновления.' }, { status: 400 });
     }
 
-    const { error } = await serverSupabase.from('requests').update(update).eq('id', params.id);
+    const { data, error } = await serverSupabase.from('requests').update(update).eq('id', id).select('*').single();
 
     if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
-    await serverSupabase
-      .from('admin_activity_log')
-      .insert({
-        action: 'requests_update',
-        entity: 'requests',
-        entity_id: params.id,
-        payload: { patch: update }
-      })
-      .then(() => null);
+    const warning = await logAdminActivity(request, { action: 'requests_update', entity: 'requests', entityId: id, before, after: data, payload: { changedFields: Object.keys(update) } });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, warning: warning ? `Заявка обновлена, но запись в журнал не добавлена: ${warning}` : undefined });
   } catch (error) {
     return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : 'Не удалось обновить заявку.' }, { status: 500 });
   }

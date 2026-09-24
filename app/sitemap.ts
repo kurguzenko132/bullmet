@@ -1,9 +1,11 @@
 import type { MetadataRoute } from 'next';
-import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catalogControl';
-import { getCatalogProducts, isPublicClockProduct } from '@/lib/products';
+import { getCatalogControlSettings, isProductCategoryPublic, visibleCatalogCategories } from '@/lib/catalogControl';
+import { getCatalogProducts, isPublicCatalogProduct } from '@/lib/products';
 import { getSiteUrl } from '@/lib/siteUrl';
-import { getSiteControlSettings, visibleDirections } from '@/lib/siteControl';
+import { getSiteControlSettings, isClocksOnly, visibleDirections } from '@/lib/siteControl';
 import { getPublishedSitePages } from '@/lib/sitePages';
+
+export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
@@ -46,8 +48,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const productPages = products
-    .filter(isPublicClockProduct)
-    .filter((product) => !catalog.enabled || !visibleCategoryValues.size || visibleCategoryValues.has(product.category || '') || visibleCategoryValues.has(product.clockTheme || ''))
+    .filter((product) => isPublicCatalogProduct(product, { clocksOnly: isClocksOnly(site), categoryPublic: isProductCategoryPublic(catalog, product) }))
+    .filter((product) => !catalog.enabled || !visibleCategoryValues.size || visibleCategoryValues.has(product.category || '') || visibleCategoryValues.has(product.clockTheme || '') || !isClocksOnly(site))
     .map((product) => ({
       url: `${siteUrl}/product/${product.slug}`,
       lastModified: new Date(),

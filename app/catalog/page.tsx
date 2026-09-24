@@ -3,28 +3,36 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { CatalogClient } from '@/components/CatalogClient';
-import { getCatalogProducts, getProductReviewStats } from '@/lib/products';
-import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catalogControl';
-import { getSiteControlSettings } from '@/lib/siteControl';
+import { HomePromoBanners } from '@/components/HomePromoBanners';
+import { getCatalogProducts, getProductReviewStats, isPublicCatalogProduct } from '@/lib/products';
+import { filterableCatalogCategories, getCatalogControlSettings, isProductCategoryPublic } from '@/lib/catalogControl';
+import { getSiteControlSettings, isClocksOnly } from '@/lib/siteControl';
+import { getReviewControlSettings } from '@/lib/reviewControl';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata(): Promise<Metadata> {
-  const site = await getSiteControlSettings();
+export async function generateMetadata({ searchParams }: { searchParams?: Promise<{ category?: string; q?: string; search?: string; priceFrom?: string; priceTo?: string; material?: string; sort?: string }> }): Promise<Metadata> {
+  const [site, catalog, query] = await Promise.all([getSiteControlSettings(), getCatalogControlSettings(), searchParams]);
+  const categorySlug = String(query?.category || '');
+  const category = catalog.enabled ? filterableCatalogCategories(catalog, 'clock').find((item) => item.slug === categorySlug) : undefined;
+  const hasExtraQuery = Boolean(query?.q || query?.search || query?.priceFrom || query?.priceTo || query?.material || query?.sort || (categorySlug && !category));
+  const title = category?.seoTitle || (category ? `${category.title} — каталог Bullmet` : site.seo.defaultTitle || 'Каталог настенных часов Bullmet');
+  const description = category?.seoDescription || category?.description || site.seo.defaultDescription || 'Каталог Bullmet: настенные часы из металла с элементами дерева собственного производства.';
   return {
-    title: site.seo.defaultTitle || 'Каталог настенных часов Bullmet',
-    description: site.seo.defaultDescription || 'Каталог Bullmet: настенные часы из металла с элементами дерева собственного производства.',
-    robots: site.seo.robotsIndex ? { index: true, follow: true } : { index: false, follow: false },
+    title,
+    description,
+    alternates: { canonical: category ? `/catalog?category=${encodeURIComponent(category.slug)}` : '/catalog' },
+    robots: site.seo.robotsIndex && !hasExtraQuery ? { index: true, follow: true } : { index: false, follow: false },
     openGraph: {
-      title: site.seo.defaultTitle,
-      description: site.seo.defaultDescription,
-      images: site.seo.ogImage ? [site.seo.ogImage] : undefined
+      title,
+      description,
+      images: category?.ogImage ? [category.ogImage] : site.seo.ogImage ? [site.seo.ogImage] : undefined
     }
   };
 }
 
 export default async function CatalogPage({ searchParams }: {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     search?: string;
     category?: string;
@@ -32,15 +40,18 @@ export default async function CatalogPage({ searchParams }: {
     priceTo?: string;
     material?: string;
     sort?: string;
-  };
+  }>;
 }) {
-  const [allProducts, categorySettings] = await Promise.all([
+  const query = await searchParams;
+  const [allProducts, categorySettings, site, reviewSettings] = await Promise.all([
     getCatalogProducts(),
-    getCatalogControlSettings()
+    getCatalogControlSettings(),
+    getSiteControlSettings(),
+    getReviewControlSettings()
   ]);
 
-  const visibleClockCategories = visibleCatalogCategories(categorySettings, 'clock');
-  const products = allProducts.filter((product) => product.status !== 'hidden');
+  const visibleClockCategories = filterableCatalogCategories(categorySettings, 'clock');
+  const products = allProducts.filter((product) => isPublicCatalogProduct(product, { clocksOnly: isClocksOnly(site), categoryPublic: isProductCategoryPublic(categorySettings, product) }));
 
   const reviewStats = await getProductReviewStats(products.map((product) => product.slug));
   const categories = Array.from(new Set([
@@ -60,16 +71,18 @@ export default async function CatalogPage({ searchParams }: {
           </nav>
 
           <h1 className="catalog-title">Каталог товаров</h1>
+          <HomePromoBanners placement="catalog_top" />
           <CatalogClient
             products={products}
             reviewStats={reviewStats}
+            reviewSettings={reviewSettings}
             categories={categories}
-            initialQuery={searchParams?.search || searchParams?.q || ''}
-            initialCategory={searchParams?.category || ''}
-            initialMaterial={searchParams?.material || ''}
-            initialPriceFrom={searchParams?.priceFrom || ''}
-            initialPriceTo={searchParams?.priceTo || ''}
-            initialSort={searchParams?.sort || 'popular'}
+            initialQuery={query?.search || query?.q || ''}
+            initialCategory={query?.category || ''}
+            initialMaterial={query?.material || ''}
+            initialPriceFrom={query?.priceFrom || ''}
+            initialPriceTo={query?.priceTo || ''}
+            initialSort={query?.sort || 'popular'}
           />
         </div>
       </main>

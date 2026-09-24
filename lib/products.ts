@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { getCatalogControlSettings, isProductCategoryPublic } from './catalogControl';
+import { getSiteControlSettings, isClocksOnly } from './siteControl';
 
 export type ImageFit = 'cover' | 'contain';
 
@@ -49,6 +51,7 @@ export type ImageDisplaySettings = {
 };
 
 export type ProductStatus = 'active' | 'draft' | 'hidden' | 'out_of_stock';
+export type ProductAvailability = 'in_stock' | 'made_to_order' | 'unavailable';
 
 export type CatalogProduct = {
   id?: string;
@@ -70,6 +73,7 @@ export type CatalogProduct = {
   seoDescription?: string;
   sortOrder?: number;
   inStock: boolean;
+  availability?: ProductAvailability;
   isPopular?: boolean;
   isNew?: boolean;
   catalogImageFit?: ImageFit;
@@ -83,6 +87,12 @@ export type CatalogProduct = {
   rating?: number;
   reviewsCount?: number;
 };
+
+export function productAvailability(product: Pick<CatalogProduct, 'inStock' | 'status' | 'sizes' | 'availability'>): ProductAvailability {
+  if (product.availability) return product.availability;
+  if (product.inStock === false || product.status === 'out_of_stock') return 'unavailable';
+  return (product.sizes || []).some((size) => /под заказ/i.test(size)) ? 'made_to_order' : 'in_stock';
+}
 
 export const clockCatalogCategories = [
   'Авто-мир',
@@ -349,6 +359,7 @@ function normalizeRichProduct(row: RichProductRow): CatalogProduct | null {
     seoDescription: row.seo_description || undefined,
     sortOrder: parseNumber(row.sort_order, 0),
     inStock: row.in_stock !== false && row.status !== 'draft' && row.status !== 'hidden' && row.status !== 'out_of_stock',
+    availability: row.in_stock === false || row.status === 'out_of_stock' ? 'unavailable' : (sizes.some((size) => /под заказ/i.test(size)) ? 'made_to_order' : 'in_stock'),
     isPopular: Boolean(row.is_popular),
     isNew: Boolean(row.is_new),
     catalogImageFit: normalizeFit(row.catalog_image_fit, 'cover'),
@@ -391,6 +402,7 @@ function normalizeLegacyProduct(row: LegacyProductRow): CatalogProduct | null {
     specs: defaultSpecs(category, material),
     status: (row.status || 'active') as ProductStatus,
     inStock: row.status !== 'draft' && row.status !== 'hidden' && row.status !== 'out_of_stock',
+    availability: row.status === 'out_of_stock' ? 'unavailable' : (defaultSizes(category).some((size) => /под заказ/i.test(size)) ? 'made_to_order' : 'in_stock'),
     productImageFit: 'contain',
     productImagePosition: 'center center',
     catalogImageFit: 'cover',
@@ -422,6 +434,15 @@ async function fetchLegacyProducts() {
 
 
 export type ProductReviewStats = Record<string, { average: number; count: number }>;
+
+export function withProductReviewStats(products: CatalogProduct[], reviewStats: ProductReviewStats): CatalogProduct[] {
+  return products.map((product) => {
+    const stats = reviewStats[product.slug];
+    return stats
+      ? { ...product, rating: stats.average, reviewsCount: stats.count }
+      : { ...product, rating: 0, reviewsCount: 0 };
+  });
+}
 
 export async function getProductReviewStats(slugs: string[]): Promise<ProductReviewStats> {
   const uniqueSlugs = Array.from(new Set(slugs.filter(Boolean)));
@@ -457,52 +478,59 @@ export function isPublicClockProduct(product: CatalogProduct) {
   return text.includes('час') || Boolean(product.clockTheme);
 }
 
+export function isPublicCatalogProduct(product: CatalogProduct, input: { clocksOnly: boolean; categoryPublic: boolean }) {
+  return product.status !== 'hidden' && product.status !== 'draft' && product.status !== 'out_of_stock'
+    && input.categoryPublic
+    && (!input.clocksOnly || isPublicClockProduct(product));
+}
+
 export async function getCatalogProducts(): Promise<CatalogProduct[]> {
-  if (!supabase) return localFallbackProducts;
+  if (!supabase) return [];
 
   const rich = await fetchRichProducts(false);
   if (!rich.error && rich.data) {
     const normalized = (rich.data as RichProductRow[]).map(normalizeRichProduct).filter(Boolean) as CatalogProduct[];
-    if (normalized.length) return normalized;
+    return normalized;
   }
 
   const legacy = await fetchLegacyProducts();
   if (!legacy.error && legacy.data) {
     const normalized = (legacy.data as LegacyProductRow[]).map(normalizeLegacyProduct).filter(Boolean) as CatalogProduct[];
-    if (normalized.length) return normalized;
+    return normalized;
   }
 
   console.error('Supabase products load failed:', rich.error?.message || legacy.error?.message);
-  return localFallbackProducts;
+  return [];
 }
 
 
 export async function getAdminCatalogProducts(): Promise<CatalogProduct[]> {
-  if (!supabase) return localFallbackProducts;
+  if (!supabase) return [];
 
   const rich = await fetchRichProducts(true);
   if (!rich.error && rich.data) {
     const normalized = (rich.data as RichProductRow[]).map(normalizeRichProduct).filter(Boolean) as CatalogProduct[];
-    if (normalized.length) return normalized;
+    return normalized;
   }
 
   const legacy = await fetchLegacyProducts();
   if (!legacy.error && legacy.data) {
     const normalized = (legacy.data as LegacyProductRow[]).map(normalizeLegacyProduct).filter(Boolean) as CatalogProduct[];
-    if (normalized.length) return normalized;
+    return normalized;
   }
 
-  return localFallbackProducts;
+  return [];
 }
 
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | null> {
-  const products = await getCatalogProducts();
+  const [products, site, catalog] = await Promise.all([getCatalogProducts(), getSiteControlSettings(), getCatalogControlSettings()]);
   const product = products.find((item) => item.slug === slug) || null;
-  return product && isPublicClockProduct(product) ? product : null;
+  return product && isPublicCatalogProduct(product, { clocksOnly: isClocksOnly(site), categoryPublic: isProductCategoryPublic(catalog, product) }) ? product : null;
 }
 
 export async function getProductPageData(slug: string): Promise<{ product: CatalogProduct | null; related: CatalogProduct[]; colorVariants: CatalogProduct[] }> {
-  const products = (await getCatalogProducts()).filter(isPublicClockProduct);
+  const [allProducts, site, catalog] = await Promise.all([getCatalogProducts(), getSiteControlSettings(), getCatalogControlSettings()]);
+  const products = allProducts.filter((item) => isPublicCatalogProduct(item, { clocksOnly: isClocksOnly(site), categoryPublic: isProductCategoryPublic(catalog, item) }));
   const product = products.find((item) => item.slug === slug) || null;
   if (!product) return { product: null, related: [], colorVariants: [] };
 
@@ -519,5 +547,13 @@ export async function getProductPageData(slug: string): Promise<{ product: Catal
     })
     .slice(0, 5);
 
-  return { product, related, colorVariants };
+  const reviewStats = await getProductReviewStats([product.slug, ...related.map((item) => item.slug), ...colorVariants.map((item) => item.slug)]);
+  const enrichedProducts = withProductReviewStats([product, ...related, ...colorVariants], reviewStats);
+  const productBySlug = new Map(enrichedProducts.map((item) => [item.slug, item]));
+
+  return {
+    product: productBySlug.get(product.slug) || product,
+    related: related.map((item) => productBySlug.get(item.slug) || item),
+    colorVariants: colorVariants.map((item) => productBySlug.get(item.slug) || item)
+  };
 }

@@ -11,26 +11,31 @@ function makeRequestId(kind: string) {
   return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
+function validPhone(value: string) {
+  return /^[+()\-\s\d]{7,24}$/.test(value) && /\d/.test(value);
+}
+
+function validEmail(value: string) {
+  return !value || (value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+}
+
 async function uploadFiles(files: File[], requestId: string) {
   if (!serverSupabase || !files.length) return [] as string[];
   const bucket = process.env.NEXT_PUBLIC_SUPABASE_REQUEST_FILES_BUCKET || 'request-files';
-  const urls: string[] = [];
+  const paths: string[] = [];
 
   for (const file of files) {
     const safeName = file.name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ._-]+/g, '-');
     const path = `${requestId}/${Date.now()}-${safeName}`;
     const arrayBuffer = await file.arrayBuffer();
     const { error } = await serverSupabase.storage.from(bucket).upload(path, Buffer.from(arrayBuffer), {
-      upsert: true,
+      upsert: false,
       contentType: file.type || 'application/octet-stream'
     });
-    if (!error) {
-      const { data } = serverSupabase.storage.from(bucket).getPublicUrl(path);
-      if (data.publicUrl) urls.push(data.publicUrl);
-    }
+    if (!error) paths.push(path);
   }
 
-  return urls;
+  return paths;
 }
 
 export async function POST(request: NextRequest) {
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
       raw = Object.fromEntries(formData.entries());
       files = formData.getAll('files').filter((item): item is File => item instanceof File && item.size > 0);
     } else {
-      raw = await request.json();
+      raw = await request.json().catch(() => ({}));
     }
 
     const kind = cleanText(raw.kind) || 'calculation';
@@ -55,11 +60,15 @@ export async function POST(request: NextRequest) {
       email: cleanText(raw.email || raw.customerEmail)
     };
 
-    if (!customer.name || !customer.phone) {
-      return NextResponse.json({ ok: false, message: 'Укажите имя и телефон.' }, { status: 400 });
+    if (!['calculation', 'quick_order', 'contact', 'service'].includes(kind) || customer.name.length > 120 || !validPhone(customer.phone) || !validEmail(customer.email)) {
+      return NextResponse.json({ ok: false, message: 'Укажите корректные имя, телефон, email и тип заявки.' }, { status: 400 });
     }
+    if ([raw.comment, raw.message, raw.sizes, raw.size, raw.type, raw.material, raw.productTitle].some((value) => cleanText(value).length > 2_000)) return NextResponse.json({ ok: false, message: 'Одно из полей заявки слишком длинное.' }, { status: 400 });
+    if (raw.quantity != null && raw.quantity !== '' && (!Number.isInteger(Number(raw.quantity)) || Number(raw.quantity) < 1 || Number(raw.quantity) > 50)) return NextResponse.json({ ok: false, message: 'Укажите корректное количество.' }, { status: 400 });
+    if (raw.productPrice != null && raw.productPrice !== '' && (!Number.isFinite(Number(raw.productPrice)) || Number(raw.productPrice) < 0 || Number(raw.productPrice) > 10_000_000)) return NextResponse.json({ ok: false, message: 'Укажите корректную цену.' }, { status: 400 });
+    if (!serverSupabase) return NextResponse.json({ ok: false, message: 'Приём заявок временно недоступен. Данные формы сохраните и повторите попытку позже.' }, { status: 503 });
 
-    const fileUrls = await uploadFiles(files, id);
+    const filePaths = await uploadFiles(files, id);
     const payload = {
       id,
       customer,
@@ -75,22 +84,14 @@ export async function POST(request: NextRequest) {
       product_price: raw.productPrice ? Number(raw.productPrice) : null,
       quantity: raw.quantity ? Number(raw.quantity) : null,
       file_name: files.map((file) => file.name).join(', '),
-      file_urls: fileUrls,
+      file_urls: filePaths,
       status: 'Новая'
     };
 
-    let savedToSupabase = false;
-    let supabaseWarning = '';
-
-    if (serverSupabase) {
-      const { error } = await serverSupabase.from('requests').insert(payload);
-      if (error) {
-        supabaseWarning = `Supabase не сохранил заявку: ${error.message}`;
-      } else {
-        savedToSupabase = true;
-      }
-    } else {
-      supabaseWarning = 'Supabase не подключен, заявка не сохранена в базе. Проверьте уведомления в настройках.';
+    const { error: persistenceError } = await serverSupabase.from('requests').insert(payload);
+    if (persistenceError) {
+      console.error('Request persistence error:', persistenceError.message);
+      return NextResponse.json({ ok: false, message: 'Не удалось сохранить заявку. Повторите попытку позже.' }, { status: 503 });
     }
 
     const telegramResult = await notifyTelegram({
@@ -105,18 +106,17 @@ export async function POST(request: NextRequest) {
         payload.sizes && `Размер/вариант: ${payload.sizes}`,
         payload.quantity && `Количество: ${payload.quantity}`,
         payload.comment && `Комментарий: ${payload.comment}`,
-        fileUrls.length && `Файлы: ${fileUrls.join(', ')}`,
-        supabaseWarning && `Внимание: ${supabaseWarning}`
+        filePaths.length && `Вложений: ${filePaths.length}`,
       ]
     });
 
     return NextResponse.json({
       ok: true,
       id,
-      fileUrls,
-      savedToSupabase,
+      attachmentsCount: filePaths.length,
+      savedToSupabase: true,
       telegramSent: telegramResult.ok,
-      warning: supabaseWarning || (telegramResult.ok ? undefined : telegramResult.reason)
+      warning: telegramResult.ok ? undefined : telegramResult.reason
     });
   } catch (error) {
     return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : 'Не удалось отправить заявку.' }, { status: 500 });

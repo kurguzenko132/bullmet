@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createBackup, createBackupDownloadUrl, deleteBackup, getBackupDashboard, updateBackupRecord, updateBackupSettings, type BackupKind } from '@/lib/adminBackup';
+import { createBackup, createBackupDownloadUrl, deleteBackup, getBackupDashboard, updateBackupRecord, type BackupKind } from '@/lib/adminBackup';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,13 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'settings') {
-      const settings = await updateBackupSettings({
-        enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
-        frequency: body.frequency === 'weekly' ? 'weekly' : body.frequency === 'daily' ? 'daily' : undefined,
-        time: typeof body.time === 'string' ? body.time : undefined,
-        retentionCount: typeof body.retentionCount === 'number' ? body.retentionCount : undefined
-      });
-      return NextResponse.json({ ok: true, settings, message: 'Настройки резервного копирования сохранены.' });
+      return NextResponse.json({ ok: false, message: 'Расписание резервных копий пока не реализовано. В проекте доступны только ручные снимки.' }, { status: 409 });
     }
 
     if (action === 'download') {
@@ -53,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'restore') {
-      return NextResponse.json({ ok: false, message: 'Восстановление доступно только через контролируемую серверную процедуру с отдельным подтверждением администратора системы.' }, { status: 409 });
+      return NextResponse.json({ ok: false, message: 'Восстановление резервных копий в этом проекте не реализовано. Не используйте архив как проверенный план восстановления до отдельного тестового прогона.' }, { status: 501 });
     }
 
     return NextResponse.json({ ok: false, message: 'Неизвестное действие.' }, { status: 400 });

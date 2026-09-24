@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, ChevronRight, ExternalLink, LogOut, Menu, Search, UserRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { syncServerSession } from '@/lib/authSession';
 import { useAdminAccess } from './AdminAccessContext';
 
 const pageTitles: Array<[string, string]> = [
@@ -163,6 +164,7 @@ export function AdminTopbar() {
     try {
       window.localStorage.removeItem('bullmet_account_last_email');
       window.localStorage.removeItem('bullmet_account_last_login_at');
+      await syncServerSession();
       await supabase?.auth.signOut();
     } finally {
       window.location.assign('/login?next=/admin');

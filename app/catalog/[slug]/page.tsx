@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
-export default function LegacyCatalogProductRedirect({ params }: { params: { slug: string } }) {
-  redirect(`/product/${params.slug}`);
+export default async function LegacyCatalogProductRedirect({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  redirect(`/product/${slug}`);
 }

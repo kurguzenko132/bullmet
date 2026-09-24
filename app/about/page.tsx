@@ -4,6 +4,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Icon } from '@/components/Icon';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'О компании Bullmet — производство металлоизделий',
   description: 'Bullmet — производство металлоизделий в Беларуси. Первый публичный запуск сайта сфокусирован на настенных часах из металла с элементами дерева.'

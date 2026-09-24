@@ -448,7 +448,7 @@ export function AdminPagesClient({ initialPages, supabaseConfigured }: { initial
         setForm(next);
         setActiveSectionId(next.sections[0]?.id || activeSectionId);
       }
-      setMessage('Страница сохранена.');
+      setMessage(data.warning || 'Страница сохранена.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось сохранить страницу.');
     } finally {

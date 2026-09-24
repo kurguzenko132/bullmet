@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: invitation, error: invitationError } = await serverSupabase.auth.admin.inviteUserByEmail(email, {
-      data: { full_name: fullName, phone, role }
+      data: { full_name: fullName, phone, role },
+      redirectTo: `${request.nextUrl.origin}/reset-password?mode=invite`
     });
     if (invitationError || !invitation.user) {
       return NextResponse.json({ ok: false, message: invitationError?.message || 'Не удалось отправить приглашение.' }, { status: 400 });

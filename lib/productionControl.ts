@@ -1,4 +1,5 @@
 import { serverSupabase } from './serverSupabase';
+import { withSiteSettingsRevision } from './siteSettingsConcurrency';
 
 export type ProductionFact = { id: string; icon: 'shield' | 'layers' | 'check'; title: string; text: string; visible: boolean; order: number };
 export type ProductionPoint = { id: string; icon: 'layers' | 'paint' | 'box' | 'clock' | 'tools'; title: string; text: string; visible: boolean; order: number };
@@ -69,8 +70,8 @@ export function mergeProductionControl(value: unknown): ProductionControlSetting
 
 export async function getProductionControlSettings(): Promise<ProductionControlSettings> {
   if (!serverSupabase) return defaultProductionControl;
-  const { data, error } = await serverSupabase.from('site_settings').select('value').eq('key', productionControlKey).maybeSingle();
-  return error || !data?.value ? defaultProductionControl : mergeProductionControl(data.value);
+  const { data, error } = await serverSupabase.from('site_settings').select('value, updated_at').eq('key', productionControlKey).maybeSingle();
+  return error || !data?.value ? defaultProductionControl : withSiteSettingsRevision(mergeProductionControl(data.value), data.updated_at);
 }
 
 export function visibleProductionItems<T extends { visible: boolean; order: number }>(items: T[]) { return items.filter((item) => item.visible).sort((a, b) => a.order - b.order); }

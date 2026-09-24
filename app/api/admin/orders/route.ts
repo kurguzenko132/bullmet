@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminOrders } from '@/lib/adminCommerce';
 import { isSupabaseConfigured, serverSupabase } from '@/lib/serverSupabase';
+import { logAdminActivity } from '@/lib/adminActivity';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,6 @@ export async function POST(request: NextRequest) {
   const order = { id, customer: { name, phone, email: String(body?.customer?.email || '').trim() }, delivery: String(body?.delivery || 'Самовывоз'), delivery_address: String(body?.delivery_address || '').trim(), payment_method: String(body?.payment_method || 'При получении'), source: String(body?.source || 'admin'), comment: String(body?.comment || '').trim(), admin_note: '', items: normalized, total, status: 'Новый', priority: 'normal', status_history: [{ status: 'Новый', created_at: now, author: 'Администратор', note: 'Заказ создан вручную' }] };
   const { data, error } = await serverSupabase.from('orders').insert(order).select('*').single();
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
-  await serverSupabase.from('admin_activity_log').insert({ action: 'order_create', entity: 'orders', entity_id: id, payload: { source: 'admin', total } }).then(() => null);
-  return NextResponse.json({ ok: true, order: data });
+  const activityWarning = await logAdminActivity(request, { action: 'order_create', entity: 'orders', entityId: id, after: data, payload: { source: 'admin', total } });
+  return NextResponse.json({ ok: true, order: data, warning: activityWarning ? `Заказ сохранён, но запись в журнал не добавлена: ${activityWarning}` : undefined });
 }

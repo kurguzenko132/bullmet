@@ -1,5 +1,6 @@
 import { serverSupabase } from './serverSupabase';
 import { getSiteControlSettings, siteControlKey, type SiteNavigationItem } from './siteControl';
+import { getSiteSettingsRevision, saveSiteSettings } from './siteSettingsConcurrency';
 
 export type SitePageStatus = 'published' | 'draft' | 'hidden';
 export type SitePageSectionType = 'hero' | 'text' | 'image_text' | 'cards' | 'faq' | 'cta';
@@ -53,24 +54,6 @@ export type SitePageInput = {
   sort_order?: number;
 };
 
-const reservedSlugs = new Set([
-  'admin',
-  'api',
-  'catalog',
-  'cart',
-  'checkout',
-  'contacts',
-  'login',
-  'order-success',
-  'product',
-  'services',
-  'production',
-  'about',
-  'account',
-  'sitemap.xml',
-  'robots.txt'
-]);
-
 export function normalizePageSlug(value: string) {
   return value
     .trim()
@@ -82,11 +65,38 @@ export function normalizePageSlug(value: string) {
     .replace(/^-|-$/g, '');
 }
 
+const reservedSlugs = new Set([
+  'about',
+  'account',
+  'admin',
+  'api',
+  'auth',
+  'cabinet',
+  'cart',
+  'catalog',
+  'checkout',
+  'contacts',
+  'favicon.ico',
+  'forgot-password',
+  'lk',
+  'login',
+  'maintenance',
+  'order-success',
+  'product',
+  'production',
+  'profile',
+  'reset-password',
+  'robots.txt',
+  'services',
+  'sitemap.xml'
+].map(normalizePageSlug));
+
 export function validateSitePageInput(input: Partial<SitePageInput>) {
-  const slug = normalizePageSlug(String(input.slug || ''));
+  const rawSlug = String(input.slug || '').trim().replace(/^\/+|\/+$/g, '');
+  const slug = normalizePageSlug(rawSlug);
   if (!slug) return 'Укажите slug страницы.';
-  if (slug.includes('/')) return 'Slug страницы должен быть одним словом без символа “/”.';
-  if (reservedSlugs.has(slug.split('/')[0])) return `Slug “${slug}” зарезервирован системной страницей.`;
+  if (rawSlug.includes('/')) return 'Slug страницы должен быть одним словом без символа “/”.';
+  if (reservedSlugs.has(slug)) return `Slug “${slug}” зарезервирован системной страницей.`;
   if (!String(input.title || '').trim()) return 'Укажите название страницы.';
   if (!['published', 'draft', 'hidden'].includes(String(input.status || ''))) return 'Некорректный статус страницы.';
   return '';
@@ -207,8 +217,62 @@ export async function getPublishedSitePageBySlug(slug: string): Promise<SitePage
   return normalizeSitePage(data);
 }
 
-export async function syncSitePageNavigation(page: SitePage, menu?: Partial<SitePageMenuSettings>, previousSlug?: string) {
-  if (!serverSupabase || !menu) return;
+export async function getPublishedSitePageRedirect(slug: string): Promise<string | null> {
+  if (!serverSupabase) return null;
+
+  let currentSlug = normalizePageSlug(slug);
+  const seen = new Set<string>();
+
+  for (let depth = 0; currentSlug && depth < 5; depth += 1) {
+    if (seen.has(currentSlug)) return null;
+    seen.add(currentSlug);
+
+    const { data, error } = await serverSupabase
+      .from('site_page_redirects')
+      .select('new_slug')
+      .eq('old_slug', currentSlug)
+      .maybeSingle();
+
+    if (error || !data?.new_slug) return null;
+
+    const nextSlug = normalizePageSlug(data.new_slug);
+    if (!nextSlug || seen.has(nextSlug)) return null;
+
+    const page = await getPublishedSitePageBySlug(nextSlug);
+    if (page) return page.slug;
+    currentSlug = nextSlug;
+  }
+
+  return null;
+}
+
+export async function preserveSitePageSlugRedirect(previousSlug: string, nextSlug: string): Promise<string | null> {
+  if (!serverSupabase) return 'Supabase не подключен.';
+
+  const oldSlug = normalizePageSlug(previousSlug);
+  const newSlug = normalizePageSlug(nextSlug);
+  if (!oldSlug || !newSlug || oldSlug === newSlug) return null;
+
+  const { error: releaseError } = await serverSupabase
+    .from('site_page_redirects')
+    .delete()
+    .eq('old_slug', newSlug);
+  if (releaseError) return releaseError.message;
+
+  const { error: updateError } = await serverSupabase
+    .from('site_page_redirects')
+    .update({ new_slug: newSlug, updated_at: new Date().toISOString() })
+    .eq('new_slug', oldSlug);
+  if (updateError) return updateError.message;
+
+  const { error: redirectError } = await serverSupabase
+    .from('site_page_redirects')
+    .upsert({ old_slug: oldSlug, new_slug: newSlug, updated_at: new Date().toISOString() }, { onConflict: 'old_slug' });
+  return redirectError?.message || null;
+}
+
+export async function syncSitePageNavigation(page: SitePage, menu?: Partial<SitePageMenuSettings>, previousSlug?: string): Promise<string | null> {
+  if (!serverSupabase || !menu) return null;
 
   const settings = await getSiteControlSettings();
   const currentHref = sitePageHref(page.slug);
@@ -250,13 +314,11 @@ export async function syncSitePageNavigation(page: SitePage, menu?: Partial<Site
     });
   }
 
-  await serverSupabase
-    .from('site_settings')
-    .upsert({
-      key: siteControlKey,
-      value: { ...settings, navigation },
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'key' });
+  const result = await saveSiteSettings(siteControlKey, { ...settings, navigation }, getSiteSettingsRevision(settings));
+  if (result.ok) return null;
+  return result.conflict
+    ? 'Навигация уже изменена в другой вкладке; обновите страницу и повторите сохранение.'
+    : result.message;
 }
 
 export async function getPageMetadata(slug: string) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getExportData, toCsv, type ExportType } from '@/lib/adminBackup';
+import { logAdminActivity } from '@/lib/adminActivity';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,21 +20,26 @@ export async function GET(request: NextRequest) {
     const type = safeType(url.searchParams.get('type'));
     const format = url.searchParams.get('format') === 'csv' ? 'csv' : 'json';
     const data = await getExportData(type);
+    const activityWarning = await logAdminActivity(request, {
+      action: 'data_export', entity: 'export', payload: { type, format }
+    });
 
     if (format === 'csv') {
       const csv = toCsv(data);
       return new NextResponse('\ufeff' + csv, {
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': `attachment; filename="bullmet-${type}-${timestamp()}.csv"`
+          'Content-Disposition': `attachment; filename="bullmet-${type}-${timestamp()}.csv"`,
+          ...(activityWarning ? { 'X-Admin-Activity-Warning': activityWarning } : {})
         }
       });
     }
 
     return new NextResponse(JSON.stringify(data, null, 2), {
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Content-Disposition': `attachment; filename="bullmet-${type}-${timestamp()}.json"`
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Content-Disposition': `attachment; filename="bullmet-${type}-${timestamp()}.json"`,
+          ...(activityWarning ? { 'X-Admin-Activity-Warning': activityWarning } : {})
       }
     });
   } catch (error) {

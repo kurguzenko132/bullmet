@@ -1,10 +1,13 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Bell, ChevronRight, Edit3, Heart, Home, LogOut, MapPin, Package, Plus, UserRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { syncServerSession } from '@/lib/authSession';
+import { activateAccountStorage, persistAccountStorage, readAccountAddresses, readAccountNotifications, writeAccountAddresses, writeAccountNotifications } from '@/lib/accountStorage';
+import { hydrateFavorites, readFavorites, type FavoriteItem, toggleFavorite as toggleFavoriteItem } from '@/lib/favorites';
 import { Icon } from './Icon';
 
 type AccountStatus = 'loading' | 'ready' | 'config-error';
@@ -19,6 +22,7 @@ type AccountUser = {
 type Profile = {
   full_name?: string | null;
   phone?: string | null;
+  notification_preferences?: boolean | null;
 };
 
 type CartItem = {
@@ -29,15 +33,6 @@ type CartItem = {
   image?: string;
   size?: string;
   material?: string;
-};
-
-type FavoriteItem = {
-  slug: string;
-  title: string;
-  price: number;
-  image?: string;
-  short?: string;
-  category?: string;
 };
 
 type OrderRow = {
@@ -127,40 +122,10 @@ function readCart() {
   return readJsonList<CartItem>('bullmet_cart');
 }
 
-function readFavorites() {
-  return readJsonList<FavoriteItem>('bullmet_favorites');
-}
-
 function readLocalOrders() {
   return readJsonList<OrderRow>('bullmet_local_orders')
     .map((order) => ({ ...order, created_at: order.created_at || (order as { createdAt?: string }).createdAt }))
     .filter((order) => order.id);
-}
-
-function writeFavorites(items: FavoriteItem[]) {
-  try {
-    window.localStorage.setItem('bullmet_favorites', JSON.stringify(items));
-  } catch {}
-}
-
-function readRememberedAccount() {
-  if (typeof window === 'undefined') return null as null | { email: string; createdAt?: string };
-  try {
-    const email = String(window.localStorage.getItem('bullmet_account_last_email') || '').trim().toLowerCase();
-    const loginAt = Number(window.localStorage.getItem('bullmet_account_last_login_at') || 0);
-    const fresh = loginAt && Date.now() - loginAt < 1000 * 60 * 60 * 24 * 30;
-    if (!email || !fresh) return null;
-    return { email, createdAt: new Date(loginAt).toISOString() };
-  } catch {
-    return null;
-  }
-}
-
-function rememberAccount(email: string) {
-  try {
-    window.localStorage.setItem('bullmet_account_last_email', email.toLowerCase());
-    window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
-  } catch {}
 }
 
 function clearRememberedAccount() {
@@ -168,20 +133,6 @@ function clearRememberedAccount() {
     window.localStorage.removeItem('bullmet_account_last_email');
     window.localStorage.removeItem('bullmet_account_last_login_at');
   } catch {}
-}
-
-function normalizeFavorite(item: any): FavoriteItem | null {
-  const slug = String(item?.product_slug || item?.slug || '').trim();
-  const title = String(item?.title || '').trim();
-  if (!slug || !title) return null;
-  return {
-    slug,
-    title,
-    price: Number(item?.price || 0),
-    image: item?.image || '',
-    short: item?.short || '',
-    category: item?.category || ''
-  };
 }
 
 async function getSessionWithRetry() {
@@ -215,6 +166,8 @@ export function AccountClient() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [ordersExpanded, setOrdersExpanded] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [dataMessage, setDataMessage] = useState('');
@@ -223,35 +176,16 @@ export function AccountClient() {
   const [addresses, setAddresses] = useState<string[]>([]);
   const [addressDraft, setAddressDraft] = useState('');
   const [addingAddress, setAddingAddress] = useState(false);
+  const activeAccountId = useRef<string | null>(null);
 
   const adminEmails = useMemo(() => getAdminEmails(), []);
   const isAdmin = !!user?.email && adminEmails.includes(user.email.toLowerCase());
   const displayName = profile.full_name || profileDraft.fullName || user?.email?.split('@')[0] || 'клиент';
-
-  useEffect(() => {
-    try {
-      const storedNotifications = window.localStorage.getItem('bullmet_account_notifications');
-      const storedAddresses = readJsonList<string>('bullmet_account_addresses');
-      setNotificationsEnabled(storedNotifications !== 'false');
-      setAddresses(storedAddresses.filter(Boolean));
-    } catch {}
-  }, []);
+  const visibleOrders = ordersExpanded ? orders : orders.slice(0, 3);
+  const selectedOrder = orders.find((order) => order.id === selectedOrderId) || null;
 
   useEffect(() => {
     let active = true;
-
-    function openLocalIfPossible() {
-      const remembered = readRememberedAccount();
-      if (!remembered || !active) return false;
-
-      setUser({ id: 'local-account', email: remembered.email, createdAt: remembered.createdAt, source: 'local' });
-      setStatus('ready');
-      setCart(readCart());
-      setFavorites(readFavorites());
-      setOrders(readLocalOrders());
-      setDataMessage('Кабинет открыт. Данные заказов подтянутся после восстановления Supabase-сессии.');
-      return true;
-    }
 
     async function initAccount() {
       setCart(readCart());
@@ -259,19 +193,15 @@ export function AccountClient() {
       setOrders(readLocalOrders());
 
       if (!supabase) {
-        if (openLocalIfPossible()) return;
         if (active) setStatus('config-error');
         return;
       }
-
-      // Сначала показываем кабинет по локальному признаку входа, чтобы не было 404/цикла редиректа.
-      openLocalIfPossible();
 
       const session = await getSessionWithRetry();
       if (!active) return;
 
       if (!session) {
-        if (openLocalIfPossible()) return;
+        clearRememberedAccount();
         router.replace('/login?next=/account');
         return;
       }
@@ -283,7 +213,13 @@ export function AccountClient() {
         source: 'supabase'
       };
 
-      rememberAccount(nextUser.email);
+      activeAccountId.current = nextUser.id;
+      activateAccountStorage(nextUser.id);
+      setCart(readCart());
+      setFavorites(readFavorites());
+      setOrders(readLocalOrders());
+      setAddresses(readAccountAddresses(nextUser.id));
+      setNotificationsEnabled(readAccountNotifications(nextUser.id));
       setUser(nextUser);
       setStatus('ready');
       setDataMessage('');
@@ -292,15 +228,32 @@ export function AccountClient() {
 
     initAccount();
 
-    const { data } = supabase?.auth.onAuthStateChange((_event, session) => {
-      if (!active || !session) return;
+    const { data } = supabase?.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
+      if (!session) {
+        if (activeAccountId.current) persistAccountStorage(activeAccountId.current, true);
+        activeAccountId.current = null;
+        clearRememberedAccount();
+        setUser(null);
+        setOrders([]);
+        setRequests([]);
+        setDataMessage('Сессия завершена. Войдите снова, чтобы открыть личный кабинет.');
+        if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') router.replace('/login?next=/account');
+        return;
+      }
       const nextUser: AccountUser = {
         id: session.user.id,
         email: session.user.email || '',
         createdAt: session.user.created_at,
         source: 'supabase'
       };
-      rememberAccount(nextUser.email);
+      activeAccountId.current = nextUser.id;
+      activateAccountStorage(nextUser.id);
+      setCart(readCart());
+      setFavorites(readFavorites());
+      setOrders(readLocalOrders());
+      setAddresses(readAccountAddresses(nextUser.id));
+      setNotificationsEnabled(readAccountNotifications(nextUser.id));
       setUser(nextUser);
       setStatus('ready');
       setDataMessage('');
@@ -311,11 +264,13 @@ export function AccountClient() {
       setCart(readCart());
       setFavorites(readFavorites());
       setOrders((current) => [...readLocalOrders(), ...current].filter((order, index, arr) => arr.findIndex((item) => item.id === order.id) === index));
+      if (activeAccountId.current) persistAccountStorage(activeAccountId.current);
     };
 
     window.addEventListener('storage', syncLocal);
     window.addEventListener('bullmet-cart-updated', syncLocal);
     window.addEventListener('bullmet-orders-updated', syncLocal);
+    window.addEventListener('bullmet-favorites-updated', syncLocal);
 
     return () => {
       active = false;
@@ -323,6 +278,7 @@ export function AccountClient() {
       window.removeEventListener('storage', syncLocal);
       window.removeEventListener('bullmet-cart-updated', syncLocal);
       window.removeEventListener('bullmet-orders-updated', syncLocal);
+      window.removeEventListener('bullmet-favorites-updated', syncLocal);
     };
   }, [router]);
 
@@ -336,7 +292,7 @@ export function AccountClient() {
 
     try {
       try {
-        const withPhone = await supabase.from('profiles').select('full_name, phone').eq('id', currentUser.id).maybeSingle();
+        const withPhone = await supabase.from('profiles').select('full_name, phone, notification_preferences').eq('id', currentUser.id).maybeSingle();
         const profileResult = withPhone.error
           ? await supabase.from('profiles').select('full_name').eq('id', currentUser.id).maybeSingle()
           : withPhone;
@@ -345,21 +301,18 @@ export function AccountClient() {
           const nextProfile = profileResult.data as Profile;
           setProfile(nextProfile);
           setProfileDraft({ fullName: nextProfile.full_name || '', phone: nextProfile.phone || '' });
+          if (typeof nextProfile.notification_preferences === 'boolean') {
+            setNotificationsEnabled(nextProfile.notification_preferences);
+            writeAccountNotifications(currentUser.id, nextProfile.notification_preferences);
+          }
         }
       } catch {
         warnings += 1;
       }
 
-      try {
-        const favoritesResult = await supabase.from('favorites').select('product_slug, title, price, image, short, category, created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
-        if (!favoritesResult.error && favoritesResult.data && active) {
-          const fromDb = favoritesResult.data.map(normalizeFavorite).filter(Boolean) as FavoriteItem[];
-          const fromLocal = readFavorites();
-          setFavorites([...fromDb, ...fromLocal].filter((item, index, arr) => arr.findIndex((x) => x.slug === item.slug) === index));
-        }
-      } catch {
-        warnings += 1;
-      }
+      const favoritesResult = await hydrateFavorites();
+      if (active) setFavorites(favoritesResult.items);
+      if (favoritesResult.error) warnings += 1;
 
       try {
         const ordersResult = await supabase.from('orders').select('id, created_at, customer, items, total, status, delivery').order('created_at', { ascending: false }).limit(40);
@@ -393,8 +346,11 @@ export function AccountClient() {
 
   async function signOut() {
     setSigningOut(true);
+    if (user?.source === 'supabase') persistAccountStorage(user.id, true);
+    activeAccountId.current = null;
     clearRememberedAccount();
     try { window.dispatchEvent(new Event('bullmet-auth-updated')); } catch {}
+    await syncServerSession();
     await supabase?.auth.signOut();
     window.location.assign('/login?next=/account');
   }
@@ -433,13 +389,13 @@ export function AccountClient() {
     }
   }
 
-  function removeFavorite(slug: string) {
-    const next = favorites.filter((item) => item.slug !== slug);
-    setFavorites(next);
-    writeFavorites(next);
-    if (supabase && user?.source === 'supabase') {
-      void supabase.from('favorites').delete().eq('user_id', user.id).eq('product_slug', slug);
-    }
+  async function removeFavorite(slug: string) {
+    const item = favorites.find((candidate) => candidate.slug === slug);
+    if (!item) return;
+    const result = await toggleFavoriteItem(item);
+    setFavorites(result.items);
+    if (user?.source === 'supabase') persistAccountStorage(user.id);
+    if (result.error) setDataMessage(result.error);
   }
 
   function addFavoriteToCart(item: FavoriteItem) {
@@ -460,15 +416,19 @@ export function AccountClient() {
 
     window.localStorage.setItem('bullmet_cart', JSON.stringify(current));
     window.dispatchEvent(new Event('bullmet-cart-updated'));
+    if (user?.source === 'supabase') persistAccountStorage(user.id);
     setCart(current);
   }
 
   function toggleNotifications() {
-    setNotificationsEnabled((current) => {
-      const next = !current;
-      try { window.localStorage.setItem('bullmet_account_notifications', String(next)); } catch {}
-      return next;
-    });
+    const next = !notificationsEnabled;
+    setNotificationsEnabled(next);
+    if (user?.source !== 'supabase') return;
+    writeAccountNotifications(user.id, next);
+    void supabase?.from('profiles').upsert({ id: user.id, email: user.email, notification_preferences: next })
+      .then(({ error }) => {
+        if (error) setDataMessage('Настройка уведомлений сохранена локально. Выполните миграцию профиля в Supabase, чтобы синхронизировать её между устройствами.');
+      });
   }
 
   function addAddress(event: FormEvent<HTMLFormElement>) {
@@ -479,7 +439,7 @@ export function AccountClient() {
     setAddresses(next);
     setAddressDraft('');
     setAddingAddress(false);
-    try { window.localStorage.setItem('bullmet_account_addresses', JSON.stringify(next)); } catch {}
+    if (user?.source === 'supabase') writeAccountAddresses(user.id, next);
   }
 
   if (status === 'loading') {
@@ -487,7 +447,7 @@ export function AccountClient() {
       <section className="account-state-card account-state-card--rich">
         <div className="account-loader" />
         <h1>Открываем личный кабинет</h1>
-        <p>Проверяем вход. Если вы уже входили, кабинет откроется без повторного ввода пароля.</p>
+        <p>Проверяем защищённую сессию.</p>
       </section>
     );
   }
@@ -553,16 +513,16 @@ export function AccountClient() {
 
           <div className="account-dashboard-main-grid">
             <section className="account-dashboard-card account-dashboard-orders" id="orders">
-              <div className="account-dashboard-card-head"><h2>Последние заказы</h2><Link href="/account/orders">Все заказы <ArrowRight /></Link></div>
-              {orders.length ? <div className="account-dashboard-order-list">{orders.slice(0, 3).map((order) => {
+              <div className="account-dashboard-card-head"><h2>{ordersExpanded ? 'Мои заказы' : 'Последние заказы'}</h2>{orders.length > 3 && <button type="button" onClick={() => setOrdersExpanded((current) => !current)}>{ordersExpanded ? 'Свернуть' : 'Все заказы'} <ArrowRight /></button>}</div>
+              {orders.length ? <div className="account-dashboard-order-list">{visibleOrders.map((order) => {
                 const item = order.items?.[0];
-                return <Link className="account-dashboard-order" href={`/account/orders/${order.id}`} key={order.id}>
+                return <button className="account-dashboard-order" type="button" aria-expanded={selectedOrderId === order.id} onClick={() => setSelectedOrderId((current) => current === order.id ? null : order.id)} key={order.id}>
                   <span className="account-dashboard-order-image">{item?.image ? <img src={item.image} alt="" /> : <Package />}</span>
                   <span className="account-dashboard-order-info"><b>Заказ №{String(order.id).replace(/^#/, '')}</b><small>{dateLabel(order.created_at)}</small></span>
                   <em className={`account-status ${statusClass(order.status)}`}>{friendlyStatus(order.status)}</em>
                   <strong>{money(Number(order.total || 0))} BYN</strong><ArrowRight />
-                </Link>;
-              })}</div> : <div className="account-dashboard-empty"><Package /><p>Заказов пока нет. Перейдите в каталог, чтобы выбрать часы.</p><Link href="/catalog">Перейти в каталог</Link></div>}
+                </button>;
+              })}{selectedOrder && <section className="account-dashboard-order-details" aria-label={`Детали заказа ${selectedOrder.id}`}><header><b>Заказ №{String(selectedOrder.id).replace(/^#/, '')}</b><button type="button" onClick={() => setSelectedOrderId(null)} aria-label="Закрыть детали заказа">×</button></header><p>{friendlyStatus(selectedOrder.status)} · {dateLabel(selectedOrder.created_at)}</p><p>{selectedOrder.delivery || 'Способ получения уточняется'}</p><ul>{(selectedOrder.items || []).map((item, index) => <li key={`${item.slug || item.title}-${index}`}><span>{item.title}{item.size ? ` · ${item.size}` : ''} × {item.quantity || 1}</span><b>{money(Number(item.price || 0) * Number(item.quantity || 1))} BYN</b></li>)}</ul><strong>Итого: {money(Number(selectedOrder.total || 0))} BYN</strong></section>}</div> : <div className="account-dashboard-empty"><Package /><p>Заказов пока нет. Перейдите в каталог, чтобы выбрать часы.</p><Link href="/catalog">Перейти в каталог</Link></div>}
             </section>
 
             <section className="account-dashboard-card account-dashboard-profile" id="profile">

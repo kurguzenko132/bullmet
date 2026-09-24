@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { getPageMetadata, getPublishedSitePageBySlug, getPublishedSitePages, type SitePageSection } from '@/lib/sitePages';
+import { getPageMetadata, getPublishedSitePageBySlug, getPublishedSitePageRedirect, getPublishedSitePages, type SitePageSection } from '@/lib/sitePages';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +12,9 @@ export async function generateStaticParams() {
   return pages.map((page) => ({ slug: page.slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const metadata = await getPageMetadata(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const metadata = await getPageMetadata(slug);
   if (!metadata) return {};
   return metadata;
 }
@@ -113,9 +114,14 @@ function Section({ section }: { section: SitePageSection }) {
   );
 }
 
-export default async function DynamicSitePage({ params }: { params: { slug: string } }) {
-  const page = await getPublishedSitePageBySlug(params.slug);
-  if (!page) notFound();
+export default async function DynamicSitePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const page = await getPublishedSitePageBySlug(slug);
+  if (!page) {
+    const redirectSlug = await getPublishedSitePageRedirect(slug);
+    if (redirectSlug) permanentRedirect(`/${redirectSlug}`);
+    notFound();
+  }
 
   const sections = page.sections?.length ? page.sections : [{
     id: 'default-text',

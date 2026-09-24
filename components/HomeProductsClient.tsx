@@ -3,8 +3,9 @@
 import { KeyboardEvent, MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from './Icon';
-import type { CatalogProduct } from '@/lib/products';
+import { productAvailability, type CatalogProduct } from '@/lib/products';
 import { getImagePreset } from '@/lib/imageDisplay';
+import type { ReviewControlSettings } from '@/lib/reviewControl';
 
 function money(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
@@ -24,13 +25,14 @@ function reviewWord(count: number) {
 }
 
 function addToCart(product: CatalogProduct) {
+  if (productAvailability(product) === 'unavailable') return;
   try {
     const raw = window.localStorage.getItem('bullmet_cart');
     const cart = raw ? JSON.parse(raw) : [];
     const list = Array.isArray(cart) ? cart : [];
     const size = product.sizes?.[0] || 'Под заказ';
     const index = list.findIndex((item) => item.slug === product.slug && item.size === size);
-    const item = { slug: product.slug, title: product.title, price: product.price, image: product.image, material: product.material, size, quantity: 1 };
+    const item = { productId: product.id, slug: product.slug, title: product.title, price: product.price, oldPrice: product.oldPrice, image: product.image, material: product.material, size, availability: productAvailability(product), quantity: 1 };
     const next = index >= 0
       ? list.map((cartItem, i) => i === index ? { ...cartItem, quantity: Number(cartItem.quantity || 1) + 1 } : cartItem)
       : [...list, item];
@@ -39,7 +41,7 @@ function addToCart(product: CatalogProduct) {
   } catch {}
 }
 
-export function HomeProductsClient({ products }: { products: CatalogProduct[] }) {
+export function HomeProductsClient({ products, reviewSettings }: { products: CatalogProduct[]; reviewSettings: Pick<ReviewControlSettings, 'productRating' | 'productCount'> }) {
   const router = useRouter();
 
   function open(slug: string) {
@@ -47,6 +49,7 @@ export function HomeProductsClient({ products }: { products: CatalogProduct[] })
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>, slug: string) {
+    if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       open(slug);
@@ -64,6 +67,7 @@ export function HomeProductsClient({ products }: { products: CatalogProduct[] })
       {products.map((product) => {
         const imageSettings = getImagePreset(product, product.image, 'catalog');
         const discount = discountPercent(product.price, product.oldPrice);
+        const availability = productAvailability(product);
         const reviewsCount = product.reviewsCount || 0;
         const rating = product.rating || 0;
         const reviewsLabel = reviewsCount ? `${reviewsCount} ${reviewWord(reviewsCount)}` : 'Нет отзывов';
@@ -85,11 +89,12 @@ export function HomeProductsClient({ products }: { products: CatalogProduct[] })
 
             <div className="catalog-card-body-market">
               <div className="catalog-card-rating-market">
-                {reviewsCount ? <><span>★ {rating.toFixed(1)}</span><small>· {reviewsLabel}</small></> : <small>{reviewsLabel}</small>}
+                {reviewsCount ? <>{reviewSettings.productRating && <span>★ {rating.toFixed(1)}</span>}{reviewSettings.productCount && <small>{reviewSettings.productRating ? '· ' : ''}{reviewsLabel}</small>}</> : reviewSettings.productCount && <small>{reviewsLabel}</small>}
               </div>
 
               <h3>{product.title}</h3>
               <p>{product.material || product.short}</p>
+              <small>{availability === 'in_stock' ? 'В наличии' : availability === 'made_to_order' ? 'Под заказ · 5–7 дней' : 'Недоступен к покупке'}</small>
               <p className="catalog-card-color-market">Цвет: <span>{product.colorName || 'не указан'}</span></p>
 
               <div className="catalog-card-bottom-market">
@@ -97,7 +102,7 @@ export function HomeProductsClient({ products }: { products: CatalogProduct[] })
                   <b>от {money(product.price)} BYN</b>
                   {product.oldPrice && product.oldPrice > product.price && <del>{money(product.oldPrice)} BYN</del>}
                 </div>
-                <button type="button" aria-label={`Добавить в корзину: ${product.title}`} onClick={(event) => onCartClick(event, product)}><Icon name="cart" /></button>
+                <button type="button" disabled={availability === 'unavailable'} aria-label={availability === 'unavailable' ? `${product.title} недоступен` : `Добавить в корзину: ${product.title}`} onClick={(event) => onCartClick(event, product)}><Icon name="cart" /></button>
               </div>
             </div>
           </article>

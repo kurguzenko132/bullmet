@@ -1,4 +1,5 @@
 import { serverSupabase } from './serverSupabase';
+import { withSiteSettingsRevision } from './siteSettingsConcurrency';
 
 export type CatalogCategoryKind = 'clock' | 'product' | 'service';
 export type CatalogCategoryStatus = 'active' | 'hidden' | 'archived';
@@ -60,7 +61,8 @@ function asObject(value: unknown) {
 
 export function mergeCatalogControl(value: unknown): CatalogControlSettings {
   const incoming = asObject(value);
-  const incomingCategories = Array.isArray(incoming.categories) ? incoming.categories : [];
+  const hasSavedCategories = Array.isArray(incoming.categories);
+  const incomingCategories = hasSavedCategories ? incoming.categories as unknown[] : defaultCatalogControl.categories;
 
   const normalizeCategory = (item: CatalogCategory) => {
     const rawStatus = item.status;
@@ -79,18 +81,16 @@ export function mergeCatalogControl(value: unknown): CatalogControlSettings {
     } as CatalogCategory;
   };
 
-  const categories = defaultCatalogControl.categories.map((item) => {
-    const match = incomingCategories.find((category: any) => category?.id === item.id);
-    return normalizeCategory({ ...item, ...asObject(match) } as CatalogCategory);
-  });
-
-  const customCategories = incomingCategories
-    .filter((category: any) => category?.id && !categories.some((item) => item.id === category.id))
-    .map((category: any) => normalizeCategory({ ...defaultCatalogControl.categories[0], ...asObject(category) } as CatalogCategory));
+  const categories = incomingCategories
+    .filter((category: any) => category?.id)
+    .map((category: any) => {
+      const base = defaultCatalogControl.categories.find((item) => item.id === category.id) || defaultCatalogControl.categories[0];
+      return normalizeCategory({ ...base, ...asObject(category) } as CatalogCategory);
+    });
 
   return {
     enabled: typeof incoming.enabled === 'boolean' ? incoming.enabled : defaultCatalogControl.enabled,
-    categories: [...categories, ...customCategories].sort((a, b) => a.order - b.order)
+    categories: categories.sort((a, b) => a.order - b.order)
   };
 }
 
@@ -99,16 +99,28 @@ export async function getCatalogControlSettings(): Promise<CatalogControlSetting
 
   const { data, error } = await serverSupabase
     .from('site_settings')
-    .select('value')
+    .select('value, updated_at')
     .eq('key', catalogControlKey)
     .maybeSingle();
 
   if (error || !data?.value) return defaultCatalogControl;
-  return mergeCatalogControl(data.value);
+  return withSiteSettingsRevision(mergeCatalogControl(data.value), data.updated_at);
 }
 
 export function visibleCatalogCategories(settings: CatalogControlSettings, kind?: CatalogCategoryKind) {
   return settings.categories
-    .filter((item) => item.visible && item.status !== 'archived' && item.showInCatalog !== false && item.showInFilter !== false && (!kind || item.kind === kind))
+    .filter((item) => item.visible && item.status !== 'archived' && item.showInCatalog !== false && (!kind || item.kind === kind))
     .sort((a, b) => a.order - b.order);
+}
+
+export function filterableCatalogCategories(settings: CatalogControlSettings, kind?: CatalogCategoryKind) {
+  return visibleCatalogCategories(settings, kind)
+    .filter((item) => item.showInFilter !== false);
+}
+
+export function isProductCategoryPublic(settings: CatalogControlSettings, product: { category?: string; clockTheme?: string }) {
+  if (!settings.enabled) return true;
+  const values = [product.category, product.clockTheme].filter(Boolean).map(String);
+  const matchingCategories = settings.categories.filter((category) => values.includes(category.slug) || values.includes(category.title));
+  return !matchingCategories.length || matchingCategories.some((category) => category.visible && category.status !== 'archived');
 }

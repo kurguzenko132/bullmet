@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Icon } from './Icon';
+import { useAccessibleDialog } from '@/lib/useAccessibleDialog';
 
 
 type SiteControlLite = {
@@ -24,6 +25,8 @@ type SiteControlLite = {
     order: number;
   }[];
 };
+
+type ServiceNavigationItem = { id: string; title: string; href: string };
 
 function iconForNavItem(id: string, href: string) {
   if (href === '/') return 'factory' as const;
@@ -61,19 +64,6 @@ function readCartCount() {
 
 const quickSearches = ['римские', 'кофе', 'классика', 'кухня', 'настенные часы'];
 
-
-function readRememberedAccountEmail() {
-  if (typeof window === 'undefined') return '';
-  try {
-    const email = String(window.localStorage.getItem('bullmet_account_last_email') || '').trim().toLowerCase();
-    const loginAt = Number(window.localStorage.getItem('bullmet_account_last_login_at') || 0);
-    const fresh = loginAt && Date.now() - loginAt < 1000 * 60 * 60 * 24 * 30;
-    return email && fresh ? email : '';
-  } catch {
-    return '';
-  }
-}
-
 export function Header() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
@@ -84,29 +74,38 @@ export function Header() {
   const [loading, setLoading] = useState(false);
   const [accountEmail, setAccountEmail] = useState('');
   const [siteControl, setSiteControl] = useState<SiteControlLite | null>(null);
+  const [serviceNavigation, setServiceNavigation] = useState<ServiceNavigationItem[]>([]);
+  const mobileDialogRef = useRef<HTMLDivElement>(null);
+  const mobileCloseRef = useRef<HTMLButtonElement>(null);
+  const searchDialogRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const trimmedQuery = query.trim();
   const hasResults = results.length > 0;
 
   const nav = useMemo(() => {
-    const fromSettings = siteControl?.navigation
-      ?.filter((item) => item.location === 'header' && item.visible && item.href !== '/about')
+    const fromSettings = siteControl
+      ? siteControl.navigation
+      ?.filter((item) => item.location === 'header' && item.visible)
       .sort((a, b) => a.order - b.order)
-      .map((item) => ({ href: item.href, label: item.label })) || [];
+      .map((item) => ({ href: item.href, label: item.label })) || []
+      : null;
 
-    return fromSettings.length ? fromSettings : [
+    const base = fromSettings || [
       { href: '/catalog', label: 'Каталог' },
       { href: '/production', label: 'Производство' },
       { href: '/contacts', label: 'Контакты' }
     ];
-  }, [siteControl]);
+    return [...base, ...serviceNavigation.filter((service) => !base.some((item) => item.href === service.href)).map((service) => ({ href: service.href, label: service.title }))];
+  }, [siteControl, serviceNavigation]);
 
   const accountHref = accountEmail ? '/account' : '/login?next=/account';
   const accountLabel = accountEmail ? 'Личный кабинет' : 'Войти в аккаунт';
 
   const bottomNav = useMemo(() => {
-    const fromSettings = siteControl?.navigation
-      ?.filter((item) => item.location === 'mobile' && item.visible && item.href !== '/about')
+    const fromSettings = siteControl
+      ? siteControl.navigation
+      ?.filter((item) => item.location === 'mobile' && item.visible)
       .sort((a, b) => a.order - b.order)
       .map((item) => {
         const href = item.id === 'profile_mobile' ? accountHref : item.href;
@@ -115,9 +114,10 @@ export function Header() {
           label: item.id === 'profile_mobile' ? (accountEmail ? 'Личный кабинет' : 'Войти') : item.label,
           icon: iconForNavItem(item.id, href)
         };
-      }) || [];
+      }) || []
+      : null;
 
-    return fromSettings.length ? fromSettings : [
+    return fromSettings || [
       { href: '/', label: 'Главная', icon: 'factory' as const },
       { href: '/catalog', label: 'Каталог', icon: 'search' as const },
       { href: '/cart', label: 'Корзина', icon: 'cart' as const },
@@ -142,6 +142,15 @@ export function Header() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    fetch('/api/services')
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => { if (active) setServiceNavigation(Array.isArray(data?.services) ? data.services : []); })
+      .catch(() => null);
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     const update = () => setCartCount(readCartCount());
     update();
     window.addEventListener('storage', update);
@@ -156,43 +165,30 @@ export function Header() {
     let active = true;
 
     const updateAccount = async () => {
-      const remembered = readRememberedAccountEmail();
-      if (active) setAccountEmail(remembered);
-
-      if (!supabase) return;
+      if (!supabase) {
+        if (active) setAccountEmail('');
+        return;
+      }
 
       const { data } = await supabase.auth.getSession();
-      const email = data.session?.user?.email?.toLowerCase() || remembered;
+      const email = data.session?.user?.email?.toLowerCase() || '';
       if (!active) return;
 
       setAccountEmail(email);
-      if (email) {
-        try {
-          window.localStorage.setItem('bullmet_account_last_email', email);
-          window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
-        } catch {}
-      }
     };
 
     void updateAccount();
 
     const { data } = supabase?.auth.onAuthStateChange((event, session) => {
       const email = session?.user?.email?.toLowerCase() || '';
-      setAccountEmail(email || readRememberedAccountEmail());
-
-      if (email) {
-        try {
-          window.localStorage.setItem('bullmet_account_last_email', email);
-          window.localStorage.setItem('bullmet_account_last_login_at', String(Date.now()));
-        } catch {}
-      }
+      setAccountEmail(email);
 
       if (event === 'SIGNED_OUT') {
         setAccountEmail('');
       }
     }) || { data: null };
 
-    const onStorage = () => setAccountEmail(readRememberedAccountEmail());
+    const onStorage = () => { void updateAccount(); };
     window.addEventListener('storage', onStorage);
     window.addEventListener('bullmet-auth-updated', onStorage);
 
@@ -204,21 +200,8 @@ export function Header() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!searchOpen && !mobileOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setSearchOpen(false);
-        setMobileOpen(false);
-      }
-    };
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [searchOpen, mobileOpen]);
+  useAccessibleDialog({ open: mobileOpen, onClose: () => setMobileOpen(false), dialogRef: mobileDialogRef, initialFocusRef: mobileCloseRef });
+  useAccessibleDialog({ open: searchOpen, onClose: () => setSearchOpen(false), dialogRef: searchDialogRef, initialFocusRef: searchInputRef });
 
   useEffect(() => {
     if (!searchOpen || trimmedQuery.length < 2) {
@@ -254,7 +237,7 @@ export function Header() {
     window.location.href = `/catalog?q=${encodeURIComponent(trimmedQuery)}`;
   }
 
-  function useQuickSearch(value: string) {
+  function applyQuickSearch(value: string) {
     setQuery(value);
   }
 
@@ -282,7 +265,7 @@ export function Header() {
       </header>
 
       {mobileOpen && (
-        <div className="mobile-menu-overlay" role="dialog" aria-modal="true">
+        <div ref={mobileDialogRef} className="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="Мобильное меню" tabIndex={-1}>
           <button className="mobile-menu-backdrop" type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть меню" />
           <div className="mobile-menu-panel">
             <div className="mobile-menu-head">
@@ -290,7 +273,7 @@ export function Header() {
                 <img src="/logo-shield-check.svg" alt="" className="mobile-menu-brand-mark" />
                 <span className="mobile-menu-brand-text"><b>{siteControl?.general?.logoText || 'BULLMET'}</b><small>{siteControl?.general?.tagline || 'металл с элементами дерева'}</small></span>
               </Link>
-              <button type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть">×</button>
+              <button ref={mobileCloseRef} type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть">×</button>
             </div>
             <button className="mobile-menu-search" type="button" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}><Icon name="search" /> Поиск по каталогу</button>
             <nav>
@@ -309,7 +292,7 @@ export function Header() {
       )}
 
       {searchOpen && (
-        <div className="site-search-modal site-search-modal--polished" role="dialog" aria-modal="true">
+        <div ref={searchDialogRef} className="site-search-modal site-search-modal--polished" role="dialog" aria-modal="true" aria-label="Поиск по каталогу" tabIndex={-1}>
           <button className="site-search-backdrop" type="button" onClick={() => setSearchOpen(false)} aria-label="Закрыть поиск" />
           <div className="site-search-card site-search-card--polished">
             <button className="site-search-close" type="button" onClick={() => setSearchOpen(false)} aria-label="Закрыть">×</button>
@@ -320,11 +303,11 @@ export function Header() {
             </div>
             <form onSubmit={submitSearch} className="site-search-form-polished">
               <Icon name="search" />
-              <input aria-label="Поиск по каталогу" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: римские, кофе, классика, кухня" />
+              <input ref={searchInputRef} aria-label="Поиск по каталогу" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: римские, кофе, классика, кухня" />
               <button type="submit">Найти</button>
             </form>
             <div className="site-search-quick">
-              {quickSearches.map((item) => <button key={item} type="button" onClick={() => useQuickSearch(item)}>{item}</button>)}
+              {quickSearches.map((item) => <button key={item} type="button" onClick={() => applyQuickSearch(item)}>{item}</button>)}
             </div>
             <div className="site-search-results site-search-results--polished">
               {loading && <span>Ищу товары...</span>}

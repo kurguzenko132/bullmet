@@ -1,4 +1,5 @@
 import { serverSupabase } from './serverSupabase';
+import { withSiteSettingsRevision } from './siteSettingsConcurrency';
 
 export type SiteDirectionKey =
   | 'clocks'
@@ -304,32 +305,24 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
     deliverySettings
   };
 
-  const incomingDirections = Array.isArray(incoming.directions) ? incoming.directions : [];
-  const directions = defaultSiteControl.directions.map((direction) => {
-    const match = incomingDirections.find((item: any) => item?.key === direction.key);
-    return { ...direction, ...asObject(match) } as SiteDirection;
-  }).sort((a, b) => a.order - b.order);
-  const hasVisibleServices = directions.some((direction) => direction.key !== 'clocks' && direction.visible);
-
-  const incomingNavigation = Array.isArray(incoming.navigation) ? incoming.navigation : [];
-  const defaultNavigation = defaultSiteControl.navigation.map((item) => {
-    const match = incomingNavigation.find((nav: any) => nav?.id === item.id);
-    const merged = { ...item, ...asObject(match) } as SiteNavigationItem;
-
-    if (merged.href === '/about' || merged.id === 'about' || merged.id === 'about_mobile') {
-      return { ...merged, visible: false };
-    }
-
-    if (merged.href === '/services' || merged.id === 'services' || merged.id === 'services_mobile') {
-      return { ...merged, visible: Boolean(merged.visible && hasVisibleServices), order: merged.location === 'header' ? 3 : 3 };
-    }
-
-    return merged;
-  });
-
-  const customNavigation = incomingNavigation
-    .filter((item: any) => item?.id && !defaultNavigation.some((nav) => nav.id === item.id))
+  const hasSavedDirections = Array.isArray(incoming.directions);
+  const incomingDirections: any[] = hasSavedDirections ? incoming.directions as any[] : defaultSiteControl.directions;
+  const directions = incomingDirections
+    .filter((candidate: any) => candidate?.key)
+    .map((candidate: any) => {
+      const base = defaultSiteControl.directions.find((direction) => direction.key === candidate.key)
+        || defaultSiteControl.directions[0];
+      return { ...base, ...asObject(candidate) } as SiteDirection;
+    })
+    .sort((a, b) => a.order - b.order);
+  const hasSavedNavigation = Array.isArray(incoming.navigation);
+  const incomingNavigation: any[] = hasSavedNavigation ? incoming.navigation as any[] : defaultSiteControl.navigation;
+  const navigation = incomingNavigation
+    .filter((item: any) => item?.id)
     .map((item: any, index) => {
+      const base = defaultSiteControl.navigation.find((nav) => nav.id === item.id);
+      if (base) return { ...base, ...asObject(item) } as SiteNavigationItem;
+
       const location = ['header', 'mobile', 'footer'].includes(item.location) ? item.location : 'header';
       const href = String(item.href || '').trim();
       const label = String(item.label || '').trim();
@@ -343,13 +336,7 @@ export function mergeSiteControl(value: unknown): SiteControlSettings {
       } as SiteNavigationItem;
     })
     .filter((item) => item.label && item.href)
-    .map((item) => {
-      if (item.href === '/services') return { ...item, visible: Boolean(item.visible && hasVisibleServices) };
-      if (item.href === '/about') return { ...item, visible: false };
-      return item;
-    });
-
-  const navigation = [...defaultNavigation, ...customNavigation].sort((a, b) => a.order - b.order);
+    .sort((a, b) => a.order - b.order);
 
   return { general, contacts, directions, navigation, seo, commerce, adminSettings };
 }
@@ -359,23 +346,27 @@ export async function getSiteControlSettings(): Promise<SiteControlSettings> {
 
   const { data, error } = await serverSupabase
     .from('site_settings')
-    .select('value')
+    .select('value, updated_at')
     .eq('key', siteControlKey)
     .maybeSingle();
 
   if (error || !data?.value) return defaultSiteControl;
-  return mergeSiteControl(data.value);
+  return withSiteSettingsRevision(mergeSiteControl(data.value), data.updated_at);
 }
 
 export function visibleNavigation(settings: SiteControlSettings, location: SiteNavigationItem['location']) {
   return settings.navigation
-    .filter((item) => item.location === location && item.visible)
+    .filter((item) => item.location === location && item.visible && !(isClocksOnly(settings) && item.href === '/services'))
     .sort((a, b) => a.order - b.order);
+}
+
+export function isClocksOnly(settings: SiteControlSettings) {
+  return settings.general.launchMode === 'clocks_only';
 }
 
 export function visibleDirections(settings: SiteControlSettings) {
   return settings.directions
-    .filter((item) => item.visible)
+    .filter((item) => item.visible && (!isClocksOnly(settings) || item.key === 'clocks'))
     .sort((a, b) => a.order - b.order);
 }
 

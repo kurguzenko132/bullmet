@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useAccessibleDialog } from '@/lib/useAccessibleDialog';
 import {
   BriefcaseBusiness,
   ChevronDown,
@@ -38,6 +39,7 @@ type CatalogFilterSidebarProps = {
   selectedMaterial: string;
   priceFrom: string;
   priceTo: string;
+  priceError?: string;
   activeFiltersCount: number;
   resultsCount: number;
   isOpen: boolean;
@@ -96,6 +98,7 @@ export function CatalogFilterSidebar({
   selectedMaterial,
   priceFrom,
   priceTo,
+  priceError,
   activeFiltersCount,
   resultsCount,
   isOpen,
@@ -105,6 +108,10 @@ export function CatalogFilterSidebar({
   onPriceApply,
   onReset
 }: CatalogFilterSidebarProps) {
+  const drawerRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  useAccessibleDialog({ open: isOpen, onClose, dialogRef: drawerRef, initialFocusRef: closeButtonRef });
+
   function reset() {
     onReset();
   }
@@ -112,11 +119,11 @@ export function CatalogFilterSidebar({
   return (
     <>
       <div className={isOpen ? 'catalog-filter-drawer-backdrop is-open' : 'catalog-filter-drawer-backdrop'} onClick={onClose} aria-hidden="true" />
-      <aside className={isOpen ? 'catalog-filter-modern is-open' : 'catalog-filter-modern'} aria-label="Фильтры каталога">
+      <aside ref={drawerRef} className={isOpen ? 'catalog-filter-modern is-open' : 'catalog-filter-modern'} role={isOpen ? 'dialog' : undefined} aria-modal={isOpen || undefined} aria-label="Фильтры каталога" tabIndex={-1}>
         <header className="catalog-filter-modern-head">
           <b>Фильтры</b>
           <SlidersHorizontal aria-hidden="true" />
-          <button className="catalog-filter-modern-close" type="button" onClick={onClose} aria-label="Закрыть фильтры"><X /></button>
+          <button ref={closeButtonRef} className="catalog-filter-modern-close" type="button" onClick={onClose} aria-label="Закрыть фильтры"><X /></button>
         </header>
 
         <div className="catalog-filter-modern-scroll">
@@ -154,6 +161,7 @@ export function CatalogFilterSidebar({
               <span>—</span>
               <input className="catalog-price-input" type="number" min="0" value={priceTo} onChange={(event) => onPriceApply(priceFrom, event.target.value)} placeholder="до" aria-label="Цена до" />
             </div>
+            {priceError && <p className="catalog-filter-price-error" role="alert">{priceError}</p>}
           </FilterSection>
 
           <FilterSection icon={Layers3} title="Материал">

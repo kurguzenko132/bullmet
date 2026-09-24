@@ -1,6 +1,7 @@
 export type TelegramPayload = {
   title: string;
   lines: Array<string | number | null | undefined | false>;
+  enabled?: boolean;
 };
 
 type TelegramSendResult = {
@@ -55,6 +56,16 @@ function buildTelegramText(payload: TelegramPayload) {
 }
 
 export async function notifyTelegram(payload: TelegramPayload) {
+  if (payload.enabled === false) {
+    return {
+      ok: false,
+      configured: false,
+      sent: 0,
+      failed: 0,
+      reason: 'Уведомления Telegram выключены в настройках сайта.',
+      results: [] as TelegramSendResult[]
+    };
+  }
   const token = process.env.TELEGRAM_BOT_TOKEN || '';
   const chatIds = getTelegramChatIds();
 

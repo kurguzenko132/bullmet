@@ -1,4 +1,5 @@
 import { serverSupabase } from './serverSupabase';
+import { withSiteSettingsRevision } from './siteSettingsConcurrency';
 
 export type ServiceStatus = 'published' | 'draft' | 'hidden' | 'archived';
 export type ServicePrice = { enabled: boolean; type: 'from' | 'fixed' | 'agreement'; amount?: number; currency: 'BYN' };
@@ -67,5 +68,6 @@ function normalizeService(service: ServiceCard, fallback?: ServiceCard, index = 
 }
 function mergeList<T extends { id: string; order: number }>(defaults: T[], value: unknown) { if (!Array.isArray(value)) return defaults; return value.filter((item: any) => item?.id).map((item: any, index) => ({ ...(defaults.find((base) => base.id === item.id) || {}), ...object(item), order: Number(item.order || index + 1) } as T)).sort((a, b) => a.order - b.order); }
 export function mergeServicesControl(value: unknown): ServicesControlSettings { const input = object(value); const rawServices = Array.isArray(input.services) ? input.services : defaultServicesControl.services; return { hero: { ...defaultServicesControl.hero, ...object(input.hero) }, services: rawServices.filter((item: any) => item?.id).map((item: any, index) => normalizeService({ ...object(item) } as ServiceCard, defaultServicesControl.services.find((base) => base.id === item.id), index)).sort((a, b) => a.order - b.order), steps: mergeList(defaultServicesControl.steps, input.steps), examples: Array.isArray(input.examples) ? input.examples.map(String).filter(Boolean) : defaultServicesControl.examples }; }
-export async function getServicesControlSettings() { if (!serverSupabase) return defaultServicesControl; const { data, error } = await serverSupabase.from('site_settings').select('value').eq('key', servicesControlKey).maybeSingle(); return error || !data?.value ? defaultServicesControl : mergeServicesControl(data.value); }
+export async function getServicesControlSettings() { if (!serverSupabase) return defaultServicesControl; const { data, error } = await serverSupabase.from('site_settings').select('value, updated_at').eq('key', servicesControlKey).maybeSingle(); return error || !data?.value ? defaultServicesControl : withSiteSettingsRevision(mergeServicesControl(data.value), data.updated_at); }
 export function visibleServicesItems<T extends { visible: boolean; order: number; status?: ServiceStatus }>(items: T[]) { return items.filter((item) => item.visible && (!item.status || item.status === 'published')).sort((a, b) => a.order - b.order); }
+export function getPublishedServiceBySlug(settings: ServicesControlSettings, slug: string) { return visibleServicesItems(settings.services).find((service) => service.slug === slug); }

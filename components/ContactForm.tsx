@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 
@@ -51,7 +52,7 @@ export function ContactForm() {
       </label>
       {message && <p className="contact-form-message">{message}</p>}
       <button disabled={loading}><span>{loading ? 'Отправляем...' : 'Отправить'}</span><ArrowRight aria-hidden="true" /></button>
-      <p className="contact-form-consent">Нажимая «Отправить», вы соглашаетесь с <a href="/privacy">политикой конфиденциальности</a>.</p>
+      <p className="contact-form-consent">Нажимая «Отправить», вы соглашаетесь с <Link href="/privacy">политикой конфиденциальности</Link>.</p>
     </form>
   );
 }

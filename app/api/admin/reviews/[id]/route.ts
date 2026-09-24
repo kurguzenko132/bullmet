@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSupabase } from '@/lib/serverSupabase';
+import { logAdminActivity } from '@/lib/adminActivity';
 
 export const dynamic = 'force-dynamic';
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     if (!serverSupabase) return NextResponse.json({ ok: false, message: 'Supabase не подключен.' }, { status: 500 });
 
     const body = await request.json();
     const update: Record<string, unknown> = {};
+    const { data: before, error: beforeError } = await serverSupabase.from('product_reviews').select('*').eq('id', id).maybeSingle();
+    if (beforeError) return NextResponse.json({ ok: false, message: beforeError.message }, { status: 500 });
+    if (!before) return NextResponse.json({ ok: false, message: 'Отзыв не найден.' }, { status: 404 });
 
     if (typeof body.status === 'string' && ['pending', 'published', 'hidden', 'rejected'].includes(body.status)) {
       update.status = body.status;
@@ -27,37 +32,34 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       return NextResponse.json({ ok: false, message: 'Нет данных для обновления.' }, { status: 400 });
     }
 
-    const { error } = await serverSupabase.from('product_reviews').update(update).eq('id', params.id);
+    const { data, error } = await serverSupabase.from('product_reviews').update(update).eq('id', id).select('*').single();
     if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
-    await serverSupabase.from('admin_activity_log').insert({
+    const warning = await logAdminActivity(request, {
       action: body.action || (body.status === 'published' ? 'review_publish' : body.status === 'hidden' ? 'review_hide' : body.status === 'rejected' ? 'review_reject' : body.admin_reply !== undefined ? 'review_reply' : 'review_update'),
-      entity: 'product_reviews',
-      entity_id: params.id,
-      payload: { patch: update }
-    }).then(() => null);
+      entity: 'product_reviews', entityId: id, before, after: data, payload: { changedFields: Object.keys(update) }
+    });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, warning: warning ? `Отзыв обновлён, но запись в журнал не добавлена: ${warning}` : undefined });
   } catch (error) {
     return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : 'Не удалось обновить отзыв.' }, { status: 500 });
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     if (!serverSupabase) return NextResponse.json({ ok: false, message: 'Supabase не подключен.' }, { status: 500 });
 
-    const { error } = await serverSupabase.from('product_reviews').delete().eq('id', params.id);
+    const { data: before, error: beforeError } = await serverSupabase.from('product_reviews').select('*').eq('id', id).maybeSingle();
+    if (beforeError) return NextResponse.json({ ok: false, message: beforeError.message }, { status: 500 });
+    if (!before) return NextResponse.json({ ok: false, message: 'Отзыв не найден.' }, { status: 404 });
+    const { error } = await serverSupabase.from('product_reviews').delete().eq('id', id);
     if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
-    await serverSupabase.from('admin_activity_log').insert({
-      action: 'review_delete',
-      entity: 'product_reviews',
-      entity_id: params.id,
-      payload: {}
-    }).then(() => null);
+    const warning = await logAdminActivity(request, { action: 'review_delete', entity: 'product_reviews', entityId: id, before });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, warning: warning ? `Отзыв удалён, но запись в журнал не добавлена: ${warning}` : undefined });
   } catch (error) {
     return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : 'Не удалось удалить отзыв.' }, { status: 500 });
   }

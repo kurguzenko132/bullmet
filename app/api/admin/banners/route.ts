@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bannerControlKey, defaultBannerControl, getBannerControlSettings, mergeBannerControl } from '@/lib/adminContent';
 import { serverSupabase } from '@/lib/serverSupabase';
+import { getSiteSettingsRevision, saveSiteSettings, siteSettingsConflictResponse, withSiteSettingsRevision } from '@/lib/siteSettingsConcurrency';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,16 +17,9 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null);
   const settings = mergeBannerControl(body?.settings || body || defaultBannerControl);
+  const result = await saveSiteSettings(bannerControlKey, settings, getSiteSettingsRevision(body?.settings || body));
 
-  const { error } = await serverSupabase
-    .from('site_settings')
-    .upsert({
-      key: bannerControlKey,
-      value: settings,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'key' });
-
-  if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+  if (!result.ok) return NextResponse.json(result.conflict ? siteSettingsConflictResponse() : { ok: false, message: result.message, error: result.message }, { status: result.conflict ? 409 : 500 });
 
   await serverSupabase.from('admin_activity_log').insert({
     action: 'banner_control_update',
@@ -34,5 +28,5 @@ export async function POST(request: NextRequest) {
     payload: { banners: settings.banners.length, enabled: settings.enabled }
   }).then(() => null);
 
-  return NextResponse.json({ ok: true, settings });
+  return NextResponse.json({ ok: true, settings: withSiteSettingsRevision(settings, result.revision) });
 }

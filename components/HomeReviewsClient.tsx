@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useAccessibleDialog } from '@/lib/useAccessibleDialog';
 
 export type HomeReview = {
   id: string;
@@ -12,6 +13,7 @@ export type HomeReview = {
   comment: string;
   photo_urls?: string[] | null;
   verified_purchase?: boolean;
+  admin_reply?: string | null;
   created_at?: string | null;
 };
 
@@ -33,6 +35,9 @@ function Stars({ rating }: { rating: number }) {
 
 export function HomeReviewsClient({ eyebrow, title, reviews }: { eyebrow: string; title: string; reviews: HomeReview[] }) {
   const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  useAccessibleDialog({ open: Boolean(lightbox), onClose: () => setLightbox(null), dialogRef: lightboxRef, initialFocusRef: closeButtonRef });
 
   return <section className="home-container home-reviews" aria-labelledby="home-reviews-title">
     <header className="home-reviews__head">
@@ -50,14 +55,15 @@ export function HomeReviewsClient({ eyebrow, title, reviews }: { eyebrow: string
             <time>{formatDate(review.created_at)}</time>
           </header>
           <p className="home-review-card__text">{review.comment}</p>
+          {review.admin_reply && <div className="home-review-card__reply"><b>Ответ Bullmet</b><p>{review.admin_reply}</p></div>}
           {!!photos.length && <div className={`home-review-gallery is-${photos.length}`}>
             {photos.map((photo, index) => <button type="button" key={photo} onClick={() => setLightbox({ photos: review.photo_urls || photos, index })} aria-label={`Открыть фото ${index + 1} из отзыва ${name}`}><img src={photo} alt={`Фото отзыва ${name}`} />{index === 2 && (review.photo_urls?.length || 0) > 3 && <b>+{(review.photo_urls?.length || 0) - 3}</b>}</button>)}
           </div>}
         </article>;
       })}
     </div>
-    {lightbox && <div className="home-review-lightbox" role="dialog" aria-modal="true" aria-label="Фотографии отзыва" onClick={() => setLightbox(null)}>
-      <button className="home-review-lightbox__close" type="button" onClick={() => setLightbox(null)} aria-label="Закрыть"><X /></button>
+    {lightbox && <div ref={lightboxRef} className="home-review-lightbox" role="dialog" aria-modal="true" aria-label="Фотографии отзыва" tabIndex={-1} onClick={() => setLightbox(null)}>
+      <button ref={closeButtonRef} className="home-review-lightbox__close" type="button" onClick={() => setLightbox(null)} aria-label="Закрыть"><X /></button>
       <button type="button" onClick={(event) => { event.stopPropagation(); setLightbox((current) => current ? { ...current, index: (current.index - 1 + current.photos.length) % current.photos.length } : current); }} aria-label="Предыдущее фото"><ChevronLeft /></button>
       <img src={lightbox.photos[lightbox.index]} alt="Фотография из отзыва" onClick={(event) => event.stopPropagation()} />
       <button type="button" onClick={(event) => { event.stopPropagation(); setLightbox((current) => current ? { ...current, index: (current.index + 1) % current.photos.length } : current); }} aria-label="Следующее фото"><ChevronRight /></button>

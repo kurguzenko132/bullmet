@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminMediaFiles } from '@/lib/adminContent';
 import { isSupabaseConfigured, serverSupabase } from '@/lib/serverSupabase';
+import { logAdminActivity } from '@/lib/adminActivity';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,6 @@ export async function POST(request: NextRequest) {
   };
   const { data, error } = await serverSupabase.from('media_files').upsert(payload, { onConflict: 'url' }).select('*').single();
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
-  await serverSupabase.from('admin_activity_log').insert({ action: 'media_upload', entity: 'media_files', entity_id: data.id, payload: { title: data.title, size: data.size_bytes } }).then(() => null);
-  return NextResponse.json({ ok: true, file: data });
+  const warning = await logAdminActivity(request, { action: 'media_upload', entity: 'media_files', entityId: data.id, after: data, payload: { title: data.title, size: data.size_bytes } });
+  return NextResponse.json({ ok: true, file: data, warning: warning ? `Файл сохранён, но запись в журнал не добавлена: ${warning}` : undefined });
 }

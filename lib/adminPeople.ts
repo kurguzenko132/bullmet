@@ -1,4 +1,5 @@
 import { serverSupabase } from './serverSupabase';
+import { getAllAdminRows } from './adminPagination';
 export { adminRoles, type AdminRole, roleLabel, roleClass, actionLabel, isStaffRole } from './adminAccess';
 
 export type AdminProfile = {
@@ -50,47 +51,31 @@ export type AdminCustomerNote = {
 export async function getAdminProfiles() {
   if (!serverSupabase) return [] as AdminProfile[];
 
-  const { data, error } = await serverSupabase
-    .from('profiles')
-    .select('id, email, full_name, phone, role, status, created_at, updated_at')
-    .order('created_at', { ascending: false })
-    .limit(500);
-
-  if (error) {
-    console.error('Admin profiles load error:', error.message);
+  try {
+    return await getAllAdminRows<AdminProfile>('profiles', 'id, email, full_name, phone, role, status, created_at, updated_at');
+  } catch (error) {
+    console.error('Admin profiles load error:', error instanceof Error ? error.message : error);
     return [];
   }
-
-  return (data || []) as AdminProfile[];
 }
 
 export async function getAdminCustomerRecords() {
   if (!serverSupabase) return [] as AdminCustomerRecord[];
-  const { data, error } = await serverSupabase
-    .from('crm_customers')
-    .select('id, user_id, full_name, phone, normalized_phone, email, city, address, status, source, tags, created_at, updated_at')
-    .order('updated_at', { ascending: false })
-    .limit(1000);
-  if (error) {
-    console.error('Admin customer records load error:', error.message);
+  try {
+    return await getAllAdminRows<AdminCustomerRecord>('crm_customers', 'id, user_id, full_name, phone, normalized_phone, email, city, address, status, source, tags, created_at, updated_at', 'updated_at');
+  } catch (error) {
+    console.error('Admin customer records load error:', error instanceof Error ? error.message : error);
     return [];
   }
-  return (data || []) as AdminCustomerRecord[];
 }
 
 export async function getAdminActivityLog() {
   if (!serverSupabase) return [] as AdminActivityItem[];
 
-  const { data, error } = await serverSupabase
-    .from('admin_activity_log')
-    .select('id, created_at, actor_email, action, entity, entity_id, payload')
-    .order('created_at', { ascending: false })
-    .limit(500);
-
-  if (error) {
-    console.error('Admin activity log load error:', error.message);
+  try {
+    return await getAllAdminRows<AdminActivityItem>('admin_activity_log', 'id, created_at, actor_email, action, entity, entity_id, payload');
+  } catch (error) {
+    console.error('Admin activity log load error:', error instanceof Error ? error.message : error);
     return [];
   }
-
-  return (data || []) as AdminActivityItem[];
 }

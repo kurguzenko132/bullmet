@@ -1,20 +1,23 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Factory, Heart, MessageCircle, Minus, Plus, ShieldCheck, ShoppingCart, Trash2, Ticket, X } from 'lucide-react';
 import { Icon } from './Icon';
-import type { CatalogProduct } from '@/lib/products';
+import { productAvailability, type ProductAvailability, type CatalogProduct } from '@/lib/products';
+import { hydrateFavorites, readFavorites, toggleFavorite } from '@/lib/favorites';
 
 type CartItem = {
   productId?: string;
   slug: string;
   title: string;
   price: number;
+  oldPrice?: number;
   image: string;
   material?: string;
   size?: string;
   color?: string;
+  availability?: ProductAvailability;
   quantity: number;
 };
 
@@ -35,19 +38,33 @@ function money(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
 }
 
+function itemAvailability(item: CartItem): ProductAvailability {
+  if (item.availability) return item.availability;
+  return String(item.size || '').toLowerCase().includes('под заказ') ? 'made_to_order' : 'in_stock';
+}
+
 export function CartClient({ recommendations }: { recommendations: CatalogProduct[] }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [promoCode, setPromoCode] = useState('');
-  const [coupon, setCoupon] = useState<{ code: string; discount: number; message: string } | null>(null);
+  const [coupon, setCoupon] = useState<{ code: string; discount: number; message: string; isEstimate?: boolean } | null>(null);
   const [promoMessage, setPromoMessage] = useState('');
   const [checkingCoupon, setCheckingCoupon] = useState(false);
+  const [favoriteSlugs, setFavoriteSlugs] = useState<Set<string>>(new Set());
+  const [favoriteMessage, setFavoriteMessage] = useState('');
+  const initializedSelection = useRef(false);
 
   useEffect(() => {
     const sync = () => {
       const next = readCart();
       setItems(next);
-      setSelected(new Set(next.map(keyOf)));
+      setSelected((current) => {
+        if (!initializedSelection.current) {
+          initializedSelection.current = true;
+          return new Set(next.filter((item) => itemAvailability(item) !== 'unavailable').map(keyOf));
+        }
+        return new Set([...current].filter((key) => next.some((item) => keyOf(item) === key)));
+      });
     };
     sync();
     try { const saved = JSON.parse(window.localStorage.getItem('bullmet_coupon') || 'null'); if (saved?.code) { setCoupon(saved); setPromoCode(saved.code); } } catch {}
@@ -59,10 +76,36 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
     };
   }, []);
 
-  const selectedItems = useMemo(() => items.filter((item) => selected.has(keyOf(item))), [items, selected]);
+  useEffect(() => {
+    let mounted = true;
+    const sync = async () => {
+      const result = await hydrateFavorites();
+      if (mounted) setFavoriteSlugs(new Set(result.items.map((item) => item.slug)));
+    };
+    void sync();
+    const onUpdate = () => { if (mounted) setFavoriteSlugs(new Set(readFavorites().map((item) => item.slug))); };
+    window.addEventListener('bullmet-favorites-updated', onUpdate);
+    return () => { mounted = false; window.removeEventListener('bullmet-favorites-updated', onUpdate); };
+  }, []);
+
+  async function toggleRecommendedFavorite(product: CatalogProduct) {
+    const result = await toggleFavorite({ slug: product.slug, title: product.title, price: product.price, image: product.image, short: product.short, category: product.category });
+    setFavoriteSlugs(new Set(result.items.map((item) => item.slug)));
+    setFavoriteMessage(result.error);
+  }
+
+  useEffect(() => {
+    try {
+      if (selected.size) window.localStorage.setItem('bullmet_checkout_selection', JSON.stringify([...selected]));
+      else window.localStorage.removeItem('bullmet_checkout_selection');
+    } catch {}
+  }, [selected]);
+
+  const selectedItems = useMemo(() => items.filter((item) => itemAvailability(item) !== 'unavailable' && selected.has(keyOf(item))), [items, selected]);
   const total = useMemo(() => selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [selectedItems]);
   const totalQty = useMemo(() => selectedItems.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [selectedItems]);
-  const allSelected = items.length > 0 && selected.size === items.length;
+  const selectableItems = useMemo(() => items.filter((item) => itemAvailability(item) !== 'unavailable'), [items]);
+  const allSelected = selectableItems.length > 0 && selected.size === selectableItems.length;
   const discountedTotal = Math.max(0, total - Number(coupon?.discount || 0));
 
   async function applyCoupon() {
@@ -73,7 +116,7 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
       const response = await fetch('/api/coupons/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, items: selectedItems }) });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'Промокод не найден.');
-      const next = { code: data.code || code, discount: Number(data.discount || 0), message: String(data.message || 'Промокод применён.') };
+      const next = { code: data.code || code, discount: Number(data.discount || 0), message: String(data.message || 'Промокод применён.'), isEstimate: Boolean(data.isEstimate) };
       setCoupon(next); setPromoCode(next.code); window.localStorage.setItem('bullmet_coupon', JSON.stringify(next));
     } catch (error) { setCoupon(null); window.localStorage.removeItem('bullmet_coupon'); setPromoMessage(error instanceof Error ? error.message : 'Не удалось применить промокод.'); }
     finally { setCheckingCoupon(false); }
@@ -89,6 +132,7 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
   }
 
   function toggle(item: CartItem) {
+    if (itemAvailability(item) === 'unavailable') return;
     const key = keyOf(item);
     setSelected((current) => {
       const next = new Set(current);
@@ -98,7 +142,7 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
   }
 
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(items.map(keyOf)));
+    setSelected(allSelected ? new Set() : new Set(selectableItems.map(keyOf)));
   }
 
   function setQty(item: CartItem, quantity: number) {
@@ -117,13 +161,14 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
   }
 
   function addRecommendation(product: CatalogProduct) {
+    if (productAvailability(product) === 'unavailable') return;
     const current = readCart();
     const existing = current.find((item) => item.slug === product.slug);
     const next = existing
       ? current.map((item) => item.slug === product.slug ? { ...item, quantity: item.quantity + 1 } : item)
-      : [...current, { productId: product.id, slug: product.slug, title: product.title, price: product.price, image: product.image, material: product.material, size: product.sizes[0], color: product.colorName, quantity: 1 }];
+      : [...current, { productId: product.id, slug: product.slug, title: product.title, price: product.price, oldPrice: product.oldPrice, image: product.image, material: product.material, size: product.sizes[0], color: product.colorName, availability: productAvailability(product), quantity: 1 }];
     save(next);
-    setSelected(new Set(next.map(keyOf)));
+    setSelected(new Set(next.filter((item) => itemAvailability(item) !== 'unavailable').map(keyOf)));
   }
 
   const recommendationItems = recommendations.filter((product) => !items.some((item) => item.slug === product.slug)).slice(0, 4);
@@ -136,7 +181,8 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
         <p>Добавьте понравившиеся часы из каталога.</p>
         <Link href="/catalog">Перейти в каталог</Link>
       </section>
-      <CartRecommendations products={recommendationItems} onAdd={addRecommendation} />
+      <CartRecommendations products={recommendationItems} onAdd={addRecommendation} favoriteSlugs={favoriteSlugs} onToggleFavorite={toggleRecommendedFavorite} />
+      {favoriteMessage && <p className="cart-favorite-message" role="status">{favoriteMessage}</p>}
     </>;
   }
 
@@ -144,22 +190,22 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
     <div className="cart-layout-v3">
       <section className="cart-items-v3">
         <div className="cart-select-all-v3">
-          <label><input type="checkbox" checked={allSelected} onChange={toggleAll} /><span>Выбрать все ({items.length})</span></label>
+          <label><input type="checkbox" checked={allSelected} onChange={toggleAll} disabled={!selectableItems.length} /><span>Выбрать все ({selectableItems.length})</span></label>
           <button type="button" onClick={removeSelected} disabled={!selected.size}><Trash2 aria-hidden="true" />Удалить выбранные</button>
         </div>
         <div className="cart-items-list-v3">
           {items.map((item) => {
             const isSelected = selected.has(keyOf(item));
-            const madeToOrder = String(item.size || '').toLowerCase().includes('под заказ');
+            const availability = itemAvailability(item);
             return <article className="cart-item-v3" key={keyOf(item)}>
-              <label className="cart-item-check-v3"><input type="checkbox" checked={isSelected} onChange={() => toggle(item)} aria-label={`Выбрать ${item.title}`} /><span /></label>
+              <label className="cart-item-check-v3"><input type="checkbox" checked={isSelected} disabled={availability === 'unavailable'} onChange={() => toggle(item)} aria-label={`Выбрать ${item.title}`} /><span /></label>
               <Link href={`/product/${item.slug}`} className="cart-item-image-v3"><img src={item.image} alt={item.title} /></Link>
               <div className="cart-item-info-v3">
                 <Link href={`/product/${item.slug}`}>{item.title}</Link>
                 <span>Артикул: {item.slug.toUpperCase()}</span>
                 <p>{item.size && <>Размер: {item.size}</>}{item.size && (item.color || item.material) && ' · '}{item.color ? <>Цвет: {item.color}</> : item.material ? <>Материал: {item.material}</> : null}</p>
               </div>
-              <span className={madeToOrder ? 'cart-status-v3 cart-status-v3--order' : 'cart-status-v3'}>{madeToOrder ? 'Изготовим за 5–7 дней' : 'В наличии'}</span>
+              <span className={availability === 'made_to_order' ? 'cart-status-v3 cart-status-v3--order' : availability === 'unavailable' ? 'cart-status-v3 cart-status-v3--unavailable' : 'cart-status-v3'}>{availability === 'in_stock' ? 'В наличии' : availability === 'made_to_order' ? 'Изготовим за 5–7 дней' : 'Недоступен к покупке'}</span>
               <b className="cart-item-price-v3">{money(item.price * item.quantity)} BYN</b>
               <div className="cart-quantity-v3"><button type="button" onClick={() => setQty(item, item.quantity - 1)} disabled={item.quantity <= 1} aria-label="Уменьшить количество"><Minus /></button><span>{item.quantity}</span><button type="button" onClick={() => setQty(item, item.quantity + 1)} aria-label="Увеличить количество"><Plus /></button></div>
               <button type="button" className="cart-remove-v3" onClick={() => remove(item)} aria-label={`Удалить ${item.title}`}><Trash2 /></button>
@@ -171,7 +217,7 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
       <aside className="cart-summary-v3">
         <div className="cart-summary-sticky-v3">
           <h2>Итого</h2>
-          <div className="cart-promo-v4"><label><Ticket size={17}/><input value={promoCode} onChange={(event) => setPromoCode(event.target.value.toUpperCase())} placeholder="Введите промокод"/><button type="button" disabled={checkingCoupon || !promoCode.trim() || !selectedItems.length} onClick={() => void applyCoupon()}>{checkingCoupon ? 'Проверяем...' : 'Применить'}</button></label>{coupon && <p><b>{coupon.code}</b><span>{coupon.message}</span><button type="button" onClick={removeCoupon} aria-label="Удалить промокод"><X size={15}/></button></p>}{promoMessage && <small>{promoMessage}</small>}</div>
+          <div className="cart-promo-v4"><label><Ticket size={17}/><input value={promoCode} onChange={(event) => setPromoCode(event.target.value.toUpperCase())} placeholder="Введите промокод"/><button type="button" disabled={checkingCoupon || !promoCode.trim() || !selectedItems.length} onClick={() => void applyCoupon()}>{checkingCoupon ? 'Проверяем...' : 'Применить'}</button></label>{coupon && <p><b>{coupon.code}</b><span>{coupon.message}</span><button type="button" onClick={removeCoupon} aria-label="Удалить промокод"><X size={15}/></button></p>}{coupon?.isEstimate && <small>Предварительный расчёт: правила промокода и цены повторно проверяются сервером при оформлении.</small>}{promoMessage && <small>{promoMessage}</small>}</div>
           <div className="cart-summary-lines-v3"><div><span>Товары ({totalQty})</span><b>{money(total)} BYN</b></div>{coupon && <div className="cart-discount-line-v4"><span>Скидка {coupon.code}</span><b>−{money(coupon.discount)} BYN</b></div>}<div><span>Доставка</span><span>Способ получения уточняется</span></div></div>
           <div className="cart-summary-total-v3"><span>Итого</span><strong>{money(discountedTotal)} BYN</strong></div>
           <Link href={selected.size ? '/checkout' : '#'} className={!selected.size ? 'is-disabled' : ''} onClick={(event) => { if (!selected.size) event.preventDefault(); }}>Оформить заказ <span>→</span></Link>
@@ -180,12 +226,13 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
         </div>
       </aside>
     </div>
-    <CartRecommendations products={recommendationItems} onAdd={addRecommendation} />
-    <div className="cart-mobile-checkout-v3"><span>Итого: <b>{money(discountedTotal)} BYN</b></span><Link href={selected.size ? '/checkout' : '#'} className={!selected.size ? 'is-disabled' : ''}>Оформить</Link></div>
+    <CartRecommendations products={recommendationItems} onAdd={addRecommendation} favoriteSlugs={favoriteSlugs} onToggleFavorite={toggleRecommendedFavorite} />
+    {favoriteMessage && <p className="cart-favorite-message" role="status">{favoriteMessage}</p>}
+    <div className="cart-mobile-checkout-v3"><span>Итого: <b>{money(discountedTotal)} BYN</b></span><Link href={selected.size ? '/checkout' : '#'} className={!selected.size ? 'is-disabled' : ''} onClick={(event) => { if (!selected.size) event.preventDefault(); }}>Оформить</Link></div>
   </>;
 }
 
-function CartRecommendations({ products, onAdd }: { products: CatalogProduct[]; onAdd: (product: CatalogProduct) => void }) {
+function CartRecommendations({ products, onAdd, favoriteSlugs, onToggleFavorite }: { products: CatalogProduct[]; onAdd: (product: CatalogProduct) => void; favoriteSlugs: Set<string>; onToggleFavorite: (product: CatalogProduct) => void }) {
   if (!products.length) return null;
   return <section className="cart-recommendations-v3">
     <div className="cart-recommendations-content-v3">
@@ -195,8 +242,10 @@ function CartRecommendations({ products, onAdd }: { products: CatalogProduct[]; 
           <Link href="/catalog">Перейти в каталог <span>→</span></Link>
         </div>
         <div className="catalog-grid-market cart-recommendation-grid-v3">
-          {products.map((product) => <article className="catalog-card-market" key={product.slug}>
-            <button className="cart-heart-v3" type="button" aria-label={`Добавить ${product.title} в избранное`}><Heart /></button>
+          {products.map((product) => {
+            const availability = productAvailability(product);
+            return <article className="catalog-card-market" key={product.slug}>
+            <button className={favoriteSlugs.has(product.slug) ? 'cart-heart-v3 is-active' : 'cart-heart-v3'} type="button" aria-pressed={favoriteSlugs.has(product.slug)} aria-label={favoriteSlugs.has(product.slug) ? `Удалить ${product.title} из избранного` : `Добавить ${product.title} в избранное`} onClick={() => onToggleFavorite(product)}><Heart fill={favoriteSlugs.has(product.slug) ? 'currentColor' : 'none'} /></button>
             <Link href={`/product/${product.slug}`} className="catalog-card-image-market" aria-label={`Открыть товар: ${product.title}`}>
               <img src={product.image} alt={product.title} />
             </Link>
@@ -204,10 +253,11 @@ function CartRecommendations({ products, onAdd }: { products: CatalogProduct[]; 
               <h3>{product.title}</h3>
               <div className="catalog-card-bottom-market">
                 <b>{money(product.price)} BYN</b>
-                <button type="button" aria-label={`Добавить в корзину: ${product.title}`} onClick={() => onAdd(product)}>В корзину</button>
+                <button type="button" disabled={availability === 'unavailable'} aria-label={availability === 'unavailable' ? `${product.title} недоступен` : `Добавить в корзину: ${product.title}`} onClick={() => onAdd(product)}>{availability === 'unavailable' ? 'Недоступно' : 'В корзину'}</button>
               </div>
             </div>
-          </article>)}
+          </article>;
+          })}
         </div>
       </div>
       <aside className="cart-custom-promo-v3">

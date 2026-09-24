@@ -1,21 +1,10 @@
 'use client';
 
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { canAccessAdminPath, defaultAdminPath, isStaffRole, normalizeAdminRole, roleLabel } from '@/lib/adminAccess';
 import { AdminAccessProvider, type AdminAccessProfile } from './AdminAccessContext';
-
-function getAdminEmails() {
-  return [
-    process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-    process.env.NEXT_PUBLIC_ADMIN_EMAILS
-  ]
-    .filter(Boolean)
-    .flatMap((value) => String(value).split(','))
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
 
 type GuardState =
   | { status: 'loading' }
@@ -28,14 +17,11 @@ export function AdminGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [state, setState] = useState<GuardState>({ status: 'loading' });
-  const adminEmails = useMemo(() => getAdminEmails(), []);
 
   useEffect(() => {
     let active = true;
 
     async function loadProfile(userId: string, email: string) {
-      const fallbackRole = adminEmails.includes(email) ? 'admin' : 'customer';
-
       try {
         const { data } = await supabase!
           .from('profiles')
@@ -43,8 +29,8 @@ export function AdminGuard({ children }: { children: ReactNode }) {
           .eq('id', userId)
           .maybeSingle();
 
-        const profileRole = normalizeAdminRole(data?.role || fallbackRole);
-        const resolvedRole = adminEmails.includes(email) && profileRole === 'customer' ? 'admin' : profileRole;
+        if (!data) throw new Error('Профиль пользователя не найден.');
+        const resolvedRole = normalizeAdminRole(data.role);
 
         return {
           id: userId,
@@ -57,8 +43,8 @@ export function AdminGuard({ children }: { children: ReactNode }) {
         return {
           id: userId,
           email,
-          role: normalizeAdminRole(fallbackRole),
-          status: 'active',
+          role: 'customer',
+          status: 'blocked',
           fullName: ''
         } satisfies AdminAccessProfile;
       }
@@ -109,7 +95,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
       active = false;
       data?.subscription?.unsubscribe();
     };
-  }, [adminEmails, pathname, router]);
+  }, [pathname, router]);
 
   if (state.status === 'allowed') {
     return <AdminAccessProvider profile={state.profile}>{children}</AdminAccessProvider>;

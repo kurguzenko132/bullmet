@@ -33,6 +33,14 @@ export async function POST(request: NextRequest) {
       sort_order: Number(body.sort_order || 100)
     };
 
+    const { data: existingPage, error: existingPageError } = await serverSupabase
+      .from('site_pages')
+      .select('id')
+      .eq('slug', payload.slug)
+      .maybeSingle();
+    if (existingPageError) return NextResponse.json({ ok: false, message: existingPageError.message }, { status: 500 });
+    if (existingPage) return NextResponse.json({ ok: false, message: 'Страница с таким slug уже существует.' }, { status: 409 });
+
     const { data, error } = await serverSupabase
       .from('site_pages')
       .insert(payload)
@@ -42,7 +50,7 @@ export async function POST(request: NextRequest) {
     if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
     const page = normalizeSitePage(data);
-    await syncSitePageNavigation(page, body.menu);
+    const navigationWarning = await syncSitePageNavigation(page, body.menu);
 
     await serverSupabase.from('admin_activity_log').insert({
       action: 'site_page_create',
@@ -51,7 +59,11 @@ export async function POST(request: NextRequest) {
       payload: { slug: data.slug, title: data.title, status: data.status }
     }).then(() => null);
 
-    return NextResponse.json({ ok: true, page: { ...page, menu: body.menu || page.menu } });
+    return NextResponse.json({
+      ok: true,
+      page: { ...page, menu: body.menu || page.menu },
+      warning: navigationWarning ? `Страница создана, но ссылка в навигации не синхронизирована: ${navigationWarning}` : undefined
+    });
   } catch (error) {
     return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : 'Не удалось создать страницу.' }, { status: 500 });
   }

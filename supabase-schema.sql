@@ -1,3 +1,6 @@
+-- LEGACY / DO NOT APPLY.
+-- This starter schema is incompatible with the current application API.
+-- Use database/supabase-schema.sql and database/MIGRATIONS.md instead.
 -- Bullmet starter schema for Supabase PostgreSQL
 create table if not exists categories (
   id uuid primary key default gen_random_uuid(),

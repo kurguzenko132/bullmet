@@ -1,4 +1,5 @@
 import { serverSupabase } from './serverSupabase';
+import { withSiteSettingsRevision } from './siteSettingsConcurrency';
 
 export type HomeIcon =
   | 'search'
@@ -407,16 +408,14 @@ function asObject(value: unknown) {
 }
 
 function mergeArray<T extends { id: string; order: number }>(defaults: T[], incoming: unknown): T[] {
-  const list = Array.isArray(incoming) ? incoming : [];
-  const configured = defaults.map((item) => {
-    const match = list.find((candidate: any) => candidate?.id === item.id);
-    return { ...item, ...asObject(match) } as T;
-  });
-  const additions = list
-    .filter((candidate: any) => candidate?.id && !defaults.some((item) => item.id === candidate.id))
-    .map((candidate) => asObject(candidate) as T);
-
-  return [...configured, ...additions].sort((a, b) => a.order - b.order);
+  if (!Array.isArray(incoming)) return defaults;
+  return incoming
+    .filter((candidate: any) => candidate?.id)
+    .map((candidate: any) => {
+      const base = defaults.find((item) => item.id === candidate.id) || defaults[0];
+      return { ...base, ...asObject(candidate) } as T;
+    })
+    .sort((a, b) => a.order - b.order);
 }
 
 export function mergeHomepageControl(value: unknown): HomeControlSettings {
@@ -469,12 +468,12 @@ export async function getHomepageControlSettings(): Promise<HomeControlSettings>
 
   const { data, error } = await serverSupabase
     .from('site_settings')
-    .select('value')
+    .select('value, updated_at')
     .eq('key', homepageControlKey)
     .maybeSingle();
 
   if (error || !data?.value) return defaultHomepageControl;
-  return mergeHomepageControl(data.value);
+  return withSiteSettingsRevision(mergeHomepageControl(data.value), data.updated_at);
 }
 
 export function visibleHomeItems<T extends { visible: boolean; order: number }>(items: T[]) {

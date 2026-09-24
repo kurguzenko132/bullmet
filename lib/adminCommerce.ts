@@ -1,4 +1,5 @@
 import { serverSupabase } from './serverSupabase';
+import { getAllAdminRows } from './adminPagination';
 
 export type AdminOrderItem = {
   slug?: string;
@@ -89,33 +90,34 @@ export function statusClass(status?: string) {
 export async function getAdminOrders() {
   if (!serverSupabase) return [] as AdminOrder[];
 
-  const { data, error } = await serverSupabase
-    .from('orders')
-    .select('id, created_at, customer, delivery, delivery_address, payment_method, source, comment, admin_note, priority, follow_up_at, manager, items, total, status, status_history')
-    .order('created_at', { ascending: false })
-    .limit(200);
-
-  if (error) {
-    console.error('Admin orders load error:', error.message);
+  try {
+    return await getAllAdminRows<AdminOrder>('orders', 'id, created_at, customer, delivery, delivery_address, payment_method, source, comment, admin_note, priority, follow_up_at, manager, items, total, status, status_history');
+  } catch (error) {
+    console.error('Admin orders load error:', error instanceof Error ? error.message : error);
     return [];
   }
-
-  return (data || []) as AdminOrder[];
 }
 
 export async function getAdminRequests() {
   if (!serverSupabase) return [] as AdminRequest[];
+  const db = serverSupabase;
 
-  const { data, error } = await serverSupabase
-    .from('requests')
-    .select('id, created_at, customer, kind, contact_method, type, material, sizes, comment, admin_note, priority, follow_up_at, manager, product_slug, product_title, product_image, product_price, quantity, file_name, file_urls, status')
-    .order('created_at', { ascending: false })
-    .limit(200);
-
-  if (error) {
-    console.error('Admin requests load error:', error.message);
+  let data: AdminRequest[];
+  try {
+    data = await getAllAdminRows<AdminRequest>('requests', 'id, created_at, customer, kind, contact_method, type, material, sizes, comment, admin_note, priority, follow_up_at, manager, product_slug, product_title, product_image, product_price, quantity, file_name, file_urls, status');
+  } catch (error) {
+    console.error('Admin requests load error:', error instanceof Error ? error.message : error);
     return [];
   }
 
-  return (data || []) as AdminRequest[];
+  const bucket = process.env.NEXT_PUBLIC_SUPABASE_REQUEST_FILES_BUCKET || 'request-files';
+  return Promise.all(data.map(async (request) => {
+    const paths = Array.isArray(request.file_urls) ? request.file_urls.filter((value): value is string => typeof value === 'string') : [];
+    const privatePaths = paths.filter((value) => !/^https?:\/\//i.test(value));
+    const { data: signed } = privatePaths.length
+      ? await db.storage.from(bucket).createSignedUrls(privatePaths, 60 * 10)
+      : { data: [] as Array<{ signedUrl?: string | null } | null> };
+    const signedUrls = (signed || []).flatMap((item) => item?.signedUrl ? [item.signedUrl] : []);
+    return { ...request, file_urls: signedUrls } as AdminRequest;
+  }));
 }

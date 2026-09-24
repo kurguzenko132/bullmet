@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSupabase } from '@/lib/serverSupabase';
 import { defaultSiteControl, mergeSiteControl, siteControlKey } from '@/lib/siteControl';
+import { getSiteSettingsRevision, saveSiteSettings, siteSettingsConflictResponse, withSiteSettingsRevision } from '@/lib/siteSettingsConcurrency';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export async function GET() {
 
   const { data, error } = await serverSupabase
     .from('site_settings')
-    .select('value')
+    .select('value, updated_at')
     .eq('key', siteControlKey)
     .maybeSingle();
 
@@ -20,7 +21,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    settings: mergeSiteControl(data?.value || defaultSiteControl),
+    settings: withSiteSettingsRevision(mergeSiteControl(data?.value || defaultSiteControl), data?.updated_at),
     source: data?.value ? 'database' : 'defaults',
     configured: true
   });
@@ -33,18 +34,9 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null);
   const settings = mergeSiteControl(body?.settings || body || defaultSiteControl);
+  const result = await saveSiteSettings(siteControlKey, settings, getSiteSettingsRevision(body?.settings || body));
 
-  const { error } = await serverSupabase
-    .from('site_settings')
-    .upsert({
-      key: siteControlKey,
-      value: settings,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'key' });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (!result.ok) return NextResponse.json(result.conflict ? siteSettingsConflictResponse() : { ok: false, message: result.message, error: result.message }, { status: result.conflict ? 409 : 500 });
 
   await serverSupabase
     .from('admin_activity_log')
@@ -56,5 +48,5 @@ export async function POST(request: NextRequest) {
     })
     .then(() => null);
 
-  return NextResponse.json({ ok: true, settings });
+  return NextResponse.json({ ok: true, settings: withSiteSettingsRevision(settings, result.revision) });
 }

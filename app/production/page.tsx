@@ -5,6 +5,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getProductionControlSettings, visibleProductionItems, type ProductionFact, type ProductionPoint } from '@/lib/productionControl';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: 'Производство Bullmet — настенные часы из металла и дерева', description: 'Как создаются настенные часы Bullmet: металл, дерево, резка, обработка, покраска, сборка и контроль качества.' };
 
 const factIcons = { shield: ShieldCheck, layers: Layers3, check: CheckCircle2 };

@@ -212,6 +212,7 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pendingUploadPaths, setPendingUploadPaths] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState('');
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [selectedCropContext, setSelectedCropContext] = useState<ImageDisplayContext>('catalog');
@@ -362,7 +363,7 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
       return;
     }
     setUploading(true);
-    const uploaded: string[] = [];
+    const uploaded: string[] = []; const uploadedPaths: string[] = [];
     for (const file of files) {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '-');
       const path = `${form.slug || slugify(form.title) || 'product'}/${Date.now()}-${safeName}`;
@@ -372,11 +373,12 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
         continue;
       }
       const { data } = supabase.storage.from(process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_IMAGES_BUCKET || 'product-images').getPublicUrl(path);
-      if (data.publicUrl) uploaded.push(data.publicUrl);
+      if (data.publicUrl) { uploaded.push(data.publicUrl); uploadedPaths.push(path); }
     }
     const nextImages = [...form.images, ...uploaded];
     patchImages(nextImages);
     if (!selectedImage && nextImages[0]) setSelectedImage(nextImages[0]);
+    if (uploadedPaths.length) setPendingUploadPaths((current) => [...current, ...uploadedPaths]);
     setUploading(false);
     setMessage(uploaded.length ? `Загружено фото: ${uploaded.length}` : 'Фото не загрузились. Проверь политики Storage.');
   }
@@ -432,17 +434,25 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
       color_name: form.color_name.trim() || null,
       color_hex: form.color_hex || null
     };
-    const request = form.id
-      ? supabase.from('products').update(payload).eq('id', form.id)
-      : supabase.from('products').insert(payload).select('id').single();
-    const { error, data } = await request as any;
+    const response = await fetch(form.id ? `/api/admin/products/${encodeURIComponent(form.id)}` : '/api/admin/products', {
+      method: form.id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json().catch(() => ({}));
     setLoading(false);
-    if (error) {
-      setMessage(error.message.includes('seo_title') || error.message.includes('sort_order') ? `${error.message}. Выполни SQL database/admin-products-full-control.sql.` : error.message.includes('image_settings') ? `${error.message}. Выполни SQL-миграцию из database/product-image-settings-migration.sql.` : error.message);
+    if (!response.ok || !result.ok) {
+      if (pendingUploadPaths.length) {
+        await supabase.storage.from(process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_IMAGES_BUCKET || 'product-images').remove(pendingUploadPaths);
+        setPendingUploadPaths([]);
+      }
+      const errorMessage = String(result.message || 'Не удалось сохранить товар.');
+      setMessage(errorMessage.includes('seo_title') || errorMessage.includes('sort_order') ? `${errorMessage}. Выполни SQL database/admin-products-full-control.sql.` : errorMessage.includes('image_settings') ? `${errorMessage}. Выполни SQL-миграцию из database/product-image-settings-migration.sql.` : errorMessage);
       return;
     }
-    if (data?.id) setForm((current) => ({ ...current, id: data.id, slug: normalizedSlug }));
-    setMessage('Товар сохранен. Фото, кадрирование, цветовые варианты и характеристики обновлены.');
+    if (result.product?.id) setForm((current) => ({ ...current, id: result.product.id, slug: normalizedSlug }));
+    setPendingUploadPaths([]);
+    setMessage(result.warning || 'Товар сохранен. Фото, кадрирование, цветовые варианты и характеристики обновлены.');
     await reload();
   }
 
@@ -454,10 +464,11 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
       in_stock: status === 'out_of_stock' ? false : product.inStock !== false
     };
 
-    const { error } = await supabase.from('products').update(payload).eq('id', product.id);
-    if (error) setMessage(error.message);
+    const response = await fetch(`/api/admin/products/${encodeURIComponent(product.id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) setMessage(result.message || 'Не удалось изменить статус товара.');
     else {
-      setMessage(`Статус товара “${product.title}” изменен: ${productStatusLabel(status)}.`);
+      setMessage(result.warning || `Статус товара “${product.title}” изменен: ${productStatusLabel(status)}.`);
       await reload();
     }
   }
@@ -465,10 +476,11 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Cata
   async function remove(product: CatalogProduct) {
     if (!supabase || !product.id) return;
     if (!confirm(`Удалить товар “${product.title}”?`)) return;
-    const { error } = await supabase.from('products').delete().eq('id', product.id);
-    if (error) setMessage(error.message);
+    const response = await fetch(`/api/admin/products/${encodeURIComponent(product.id)}`, { method: 'DELETE' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) setMessage(result.message || 'Не удалось удалить товар.');
     else {
-      setMessage('Товар удален.');
+      setMessage(result.warning || 'Товар удален.');
       await reload();
     }
   }

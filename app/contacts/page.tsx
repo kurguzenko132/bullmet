@@ -6,6 +6,8 @@ import { Footer } from '@/components/Footer';
 import { ContactForm } from '@/components/ContactForm';
 import { ContactsFaq } from '@/components/ContactsFaq';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Контакты Bullmet — настенные часы собственного производства',
   description: 'Контакты Bullmet: телефон, адрес производства, режим работы и консультация по настенным часам.'

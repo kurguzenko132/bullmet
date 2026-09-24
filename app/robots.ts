@@ -2,6 +2,8 @@ import type { MetadataRoute } from 'next';
 import { getSiteUrl } from '@/lib/siteUrl';
 import { getSiteControlSettings, visibleDirections } from '@/lib/siteControl';
 
+export const dynamic = 'force-dynamic';
+
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const siteUrl = getSiteUrl();
   const site = await getSiteControlSettings();
@@ -21,7 +23,9 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         allow: '/',
         disallow: [
           '/admin/',
+          '/admin',
           '/account/',
+          '/account',
           '/login',
           ...(hasServices ? [] : ['/services'])
         ]

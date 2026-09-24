@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { CalendarClock, Mail, Phone, Send, UserRound } from 'lucide-react';
 import type { AdminRequest } from '@/lib/adminCommerce';
@@ -141,7 +142,7 @@ export function AdminRequestsClient({ initialRequests, supabaseConfigured }: { i
         <div className="admin-head-actions">
           <button type="button" onClick={refreshRequests} disabled={refreshing}>{refreshing ? 'Обновляем...' : 'Обновить'}</button>
           <a href="/contacts" target="_blank">Тест заявки ↗</a>
-          <a href="/admin/orders">Заказы</a>
+          <Link href="/admin/orders">Заказы</Link>
         </div>
       </div>
 
