@@ -59,7 +59,7 @@ export default async function HomePage() {
     getCatalogControlSettings()
   ]);
 
-  const selectedProducts = allProducts.slice(0, 3);
+  const selectedProducts = allProducts.slice(0, 6);
   const products = withProductReviewStats(selectedProducts, await getProductReviewStats(selectedProducts.map((product) => product.slug)));
 
   const featureItems = visibleHomeItems(home.features);

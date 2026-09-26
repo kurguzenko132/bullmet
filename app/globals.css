@@ -21080,6 +21080,23 @@ body:not(.admin-body) .home-final-hero .hero-actions .btn-outline {
   text-transform: uppercase;
 }
 
+/* The home selection uses the same product cards as the catalogue, with a denser responsive grid. */
+body:not(.admin-body) .home-products-section .catalog-grid-market {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+@media (max-width: 767px) {
+  body:not(.admin-body) .home-products-section .catalog-grid-market {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  body:not(.admin-body) .home-products-section .catalog-grid-market {
+    grid-template-columns: 1fr;
+  }
+}
+
 body:not(.admin-body) .home-categories-final .category-card__content {
   position: relative;
   display: flex;
