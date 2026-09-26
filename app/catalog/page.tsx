@@ -4,6 +4,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { CatalogClient } from '@/components/CatalogClient';
 import { HomePromoBanners } from '@/components/HomePromoBanners';
+import { Container } from '@/components/layout/Container';
+import { SectionHeader } from '@/components/layout/SectionHeader';
 import { getCatalogProducts, getProductReviewStats, isPublicCatalogProduct } from '@/lib/products';
 import { filterableCatalogCategories, getCatalogControlSettings, isProductCategoryPublic } from '@/lib/catalogControl';
 import { getSiteControlSettings, isClocksOnly } from '@/lib/siteControl';
@@ -54,23 +56,20 @@ export default async function CatalogPage({ searchParams }: {
   const products = allProducts.filter((product) => isPublicCatalogProduct(product, { clocksOnly: isClocksOnly(site), categoryPublic: isProductCategoryPublic(categorySettings, product) }));
 
   const reviewStats = await getProductReviewStats(products.map((product) => product.slug));
-  const categories = Array.from(new Set([
-    ...products.map((product) => product.category),
-    ...(categorySettings.enabled ? visibleClockCategories.map((category) => category.slug) : [])
-  ].filter((item): item is string => Boolean(item))));
+  const categories = Array.from(new Set(products.flatMap((product) => [product.category, product.clockTheme]).filter((item): item is string => Boolean(item))));
 
   return (
     <>
       <Header />
       <main className="catalog-page catalog-page--improved">
-        <div className="catalog-container">
+        <Container className="catalog-container">
           <nav className="catalog-breadcrumbs" aria-label="Хлебные крошки">
             <Link href="/">Главная</Link>
             <span>›</span>
             <span>Каталог</span>
           </nav>
 
-          <h1 className="catalog-title">Каталог товаров</h1>
+          <SectionHeader eyebrow="Каталог Bullmet" headingLevel="h1" title="Каталог настенных часов" description="Изделия из металла с элементами дерева собственного производства." />
           <HomePromoBanners placement="catalog_top" />
           <CatalogClient
             products={products}
@@ -84,7 +83,7 @@ export default async function CatalogPage({ searchParams }: {
             initialPriceTo={query?.priceTo || ''}
             initialSort={query?.sort || 'popular'}
           />
-        </div>
+        </Container>
       </main>
       <Footer />
     </>

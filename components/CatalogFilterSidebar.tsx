@@ -7,7 +7,6 @@ import {
   ChevronDown,
   Circle,
   Coffee,
-  Cross,
   Fish,
   Heart,
   Landmark,
@@ -58,8 +57,7 @@ const categoryIcons: Record<string, typeof LayoutGrid> = {
   'романтика': Heart,
   'рыбалка, охота': Fish,
   'рыбалка и охота': Fish,
-  'спорт': Trophy,
-  'христианские': Cross
+  'спорт': Trophy
 };
 
 function categoryIcon(label: string) {
@@ -134,7 +132,7 @@ export function CatalogFilterSidebar({
                 <span>Все товары</span>
                 <b className="catalog-filter-count">{productsCount}</b>
               </button>
-              {categories.map((item) => {
+              {categories.filter((item) => item.count > 0).map((item) => {
                 const CategoryIcon = categoryIcon(item.label);
                 const isActive = selectedCategory === item.id;
                 const isDisabled = item.count === 0;

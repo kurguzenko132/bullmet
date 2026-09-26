@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Icon } from './Icon';
 import { useAccessibleDialog } from '@/lib/useAccessibleDialog';
+import { Container } from './layout/Container';
 
 
 type SiteControlLite = {
@@ -25,8 +26,6 @@ type SiteControlLite = {
     order: number;
   }[];
 };
-
-type ServiceNavigationItem = { id: string; title: string; href: string };
 
 function iconForNavItem(id: string, href: string) {
   if (href === '/') return 'factory' as const;
@@ -72,7 +71,6 @@ export function Header() {
   const [loading, setLoading] = useState(false);
   const [accountEmail, setAccountEmail] = useState('');
   const [siteControl, setSiteControl] = useState<SiteControlLite | null>(null);
-  const [serviceNavigation, setServiceNavigation] = useState<ServiceNavigationItem[]>([]);
   const mobileDialogRef = useRef<HTMLDivElement>(null);
   const mobileCloseRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -93,11 +91,11 @@ export function Header() {
       { href: '/production', label: 'Производство' },
       { href: '/contacts', label: 'Контакты' }
     ];
-    return [...base, ...serviceNavigation.filter((service) => !base.some((item) => item.href === service.href)).map((service) => ({ href: service.href, label: service.title }))];
-  }, [siteControl, serviceNavigation]);
+    return base;
+  }, [siteControl]);
 
   const accountHref = accountEmail ? '/account' : '/login?next=/account';
-  const accountLabel = accountEmail ? 'Личный кабинет' : 'Войти в аккаунт';
+  const accountLabel = 'Личный кабинет';
 
   const bottomNav = useMemo(() => {
     const fromSettings = siteControl
@@ -136,15 +134,6 @@ export function Header() {
     return () => {
       active = false;
     };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    fetch('/api/services')
-      .then((response) => response.ok ? response.json() : null)
-      .then((data) => { if (active) setServiceNavigation(Array.isArray(data?.services) ? data.services : []); })
-      .catch(() => null);
-    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -204,7 +193,7 @@ export function Header() {
   }, [searchOpen]);
 
   useEffect(() => {
-    if (!searchOpen || trimmedQuery.length < 2) {
+    if (trimmedQuery.length < 2) {
       setResults([]);
       setLoading(false);
       return;
@@ -240,46 +229,42 @@ export function Header() {
   return (
     <>
       <header className="site-header-exact site-header-polished">
-        <div className={`home-container header-inner-exact header-inner-polished${searchOpen ? ' is-search-open' : ''}`}>
+        <Container className={`header-inner-exact header-inner-polished${searchOpen ? ' is-search-open' : ''}`}>
           <Link href="/" className="brand-exact" aria-label="Bullmet">
             <img src="/bullmet-logo-mark.png" alt="" className="brand-mark brand-mark--bullmet" />
             <span className="brand-text"><b>{siteControl?.general?.logoText || 'BULLMET'}</b></span>
           </Link>
 
-          {searchOpen ? (
-            <div className="header-search-area">
-              <form onSubmit={submitSearch} className="header-search-form">
-                <Icon name="search" />
-                <input ref={searchInputRef} aria-label="Поиск по каталогу" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по каталогу" />
-                <button className="header-search-close" type="button" onClick={() => setSearchOpen(false)} aria-label="Закрыть поиск">×</button>
-              </form>
-              {(loading || trimmedQuery.length >= 2) && (
-                <div className="header-search-results">
-                  {loading && <span>Ищу товары...</span>}
-                  {!loading && !hasResults && <span>Ничего не найдено. Попробуйте другой запрос.</span>}
-                  {!loading && hasResults && results.map((product) => (
-                    <Link href={`/product/${product.slug}`} key={product.slug} onClick={() => setSearchOpen(false)}>
-                      <img src={product.image} alt="" />
-                      <div><b>{product.title}</b><span>{product.short || product.category || 'Каталог'}</span></div>
-                      <strong>от {money(product.price)} BYN</strong>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <nav className="nav-exact nav-polished">
-              {nav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
-            </nav>
-          )}
+          <nav className="nav-exact nav-polished">
+            {nav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+          </nav>
+
+          <div className="header-search-area header-search-area--persistent">
+            <form onSubmit={submitSearch} className="header-search-form">
+              <input ref={searchInputRef} aria-label="Поиск по каталогу" value={query} onFocus={() => setSearchOpen(true)} onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }} placeholder="Поиск часов..." />
+              <button className="header-search-submit" type="submit" aria-label="Искать"><Icon name="search" /></button>
+            </form>
+            {searchOpen && (loading || trimmedQuery.length >= 2) && (
+              <div className="header-search-results">
+                {loading && <span>Ищу товары...</span>}
+                {!loading && !hasResults && <span>Ничего не найдено. Попробуйте другой запрос.</span>}
+                {!loading && hasResults && results.map((product) => (
+                  <Link href={`/product/${product.slug}`} key={product.slug} onClick={() => setSearchOpen(false)}>
+                    <img src={product.image} alt="" />
+                    <div><b>{product.title}</b><span>{product.short || product.category || 'Каталог'}</span></div>
+                    <strong>от {money(product.price)} BYN</strong>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="header-actions-exact header-actions-polished">
-            {!searchOpen && <button aria-label="Поиск" className="icon-btn" type="button" onClick={() => setSearchOpen(true)}><Icon name="search" /></button>}
             <Link href="/cart" className="cart-mini" aria-label="Корзина"><Icon name="cart" />{cartCount > 0 && <span>{cartCount}</span>}</Link>
             <Link href={accountHref} className={accountEmail ? 'login-btn login-btn--active' : 'login-btn'} title={accountEmail ? `Личный кабинет: ${accountEmail}` : 'Войти в аккаунт'}><Icon name="user" /><span>{accountLabel}</span></Link>
             <button className={mobileOpen ? 'mobile-menu-btn is-open' : 'mobile-menu-btn'} type="button" onClick={() => setMobileOpen((value) => !value)} aria-label="Меню"><span /><span /><span /></button>
           </div>
-        </div>
+        </Container>
       </header>
 
       {mobileOpen && (
@@ -296,7 +281,7 @@ export function Header() {
             <button className="mobile-menu-search" type="button" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}><Icon name="search" /> Поиск по каталогу</button>
             <nav>
               {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}<span>→</span></Link>)}
-              <Link href={accountHref} onClick={() => setMobileOpen(false)}>{accountEmail ? 'Личный кабинет' : 'Войти в аккаунт'}<span>→</span></Link>
+              <Link href={accountHref} onClick={() => setMobileOpen(false)}>Личный кабинет<span>→</span></Link>
             </nav>
             <div className="mobile-menu-contact">
               <span>Нужна консультация? {siteControl?.contacts?.phone || ''}</span>

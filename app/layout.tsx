@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getSiteUrl } from '@/lib/siteUrl';
 import { getSiteControlSettings } from '@/lib/siteControl';
 import './globals.css';
+import './design-system.css';
 
 export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteControlSettings();

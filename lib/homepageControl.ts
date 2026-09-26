@@ -221,9 +221,9 @@ export const defaultHomepageControl: HomeControlSettings = {
   hero: {
     enabled: true,
     kicker: 'Производство металлоизделий Bullmet',
-    title: 'Изделия из металла с элементами дерева',
-    text: 'Изготавливаем: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.',
-    image: '/assets/hero-bullmet.png',
+    title: 'Настенные часы из металла с элементами дерева',
+    text: 'Создаём дизайнерские настенные часы на собственном производстве: металл, дерево, порошковая покраска и внимательная сборка каждой модели.',
+    image: '/assets/hero-bullmet-production.png',
     imageAlt: 'Станок режет металл',
     primaryLabel: 'Перейти в каталог',
     primaryHref: '/catalog'
@@ -232,9 +232,9 @@ export const defaultHomepageControl: HomeControlSettings = {
     {
       id: 'hero-main',
       kicker: 'Производство металлоизделий Bullmet',
-      title: 'Изделия из металла с элементами дерева',
-      text: 'Изготавливаем: садовую мебель, мебель для дома в стиле лофт, качели, навесы, малые архитектурные формы, а также выполняем художественную лазерную резку из листового металла.',
-      image: '/assets/hero-bullmet.png',
+      title: 'Настенные часы из металла с элементами дерева',
+      text: 'Создаём дизайнерские настенные часы на собственном производстве: металл, дерево, порошковая покраска и внимательная сборка каждой модели.',
+      image: '/assets/hero-bullmet-production.png',
       imageAlt: 'Станок режет металл',
       primaryLabel: 'Перейти в каталог',
       primaryHref: '/catalog',
@@ -247,7 +247,7 @@ export const defaultHomepageControl: HomeControlSettings = {
     description: 'Настенные часы и изделия из металла с элементами дерева собственного производства Bullmet.',
     ogTitle: 'Bullmet — изделия из металла и дерева',
     ogDescription: 'Собственное производство изделий Bullmet.',
-    ogImage: '/assets/hero-bullmet.png',
+    ogImage: '/assets/hero-bullmet-production.png',
     canonical: 'https://bullmet.by/',
     robotsIndex: true
   },
@@ -275,18 +275,17 @@ export const defaultHomepageControl: HomeControlSettings = {
   ],
   directionsSection: {
     enabled: true,
-    eyebrow: 'главные переходы',
-    title: 'Направления Bullmet',
-    text: 'Сейчас клиентам открыт каталог настенных часов Bullmet.',
+    eyebrow: 'Коллекции часов',
+    title: 'Подберите часы под интерьер',
+    text: 'Выберите стиль, который дополнит пространство и станет выразительной деталью интерьера.',
     buttonLabel: 'Смотреть каталог',
     buttonHref: '/catalog'
   },
   directions: [
-    { id: 'clocks', title: 'Настенные\nчасы', img: '/mockup/cat-clock.jpg', href: '/catalog?category=Настенные часы', visible: true, order: 1 },
-    { id: 'garden', title: 'Садовая\nмебель', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель', visible: true, order: 2 },
-    { id: 'loft', title: 'Мебель для дома\nв стиле лофт', img: '/mockup/cat-custom.jpg', href: '/services', visible: true, order: 3 },
-    { id: 'laser', title: 'Лазерная\nрезка', img: '/mockup/cat-metal.jpg', href: '/services#laser', visible: true, order: 4 },
-    { id: 'wholesale', title: 'Мелкий опт\nметаллопроката', img: '/mockup/service-metal.jpg', href: '/contacts', visible: true, order: 5 }
+    { id: 'classic', title: 'Классика', img: '/assets/prod-clock-classic.jpg', href: '/catalog?category=Классика', visible: true, order: 1 },
+    { id: 'loft', title: 'Лофт', img: '/assets/prod-clock-loft.jpg', href: '/catalog?category=Графика', visible: true, order: 2 },
+    { id: 'coffee', title: 'Кофе и\nкухня', img: '/mockup/prod-clock-1.jpg', href: '/catalog?category=Кофе%20и%20кухня', visible: true, order: 3 },
+    { id: 'wood', title: 'С элементами\nдерева', img: '/mockup/prod-clock-2.jpg', href: '/catalog?material=Металл%20с%20элементами%20дерева', visible: true, order: 4 }
   ],
   productsSection: {
     enabled: true,
@@ -318,14 +317,14 @@ export const defaultHomepageControl: HomeControlSettings = {
     eyebrow: 'производство металлоизделий',
     title: 'Собственное производство Bullmet',
     text: 'Делаем настенные часы Bullmet на собственном производстве: металл, элементы дерева, порошковая покраска и контроль качества перед выдачей.',
-    image: '/mockup/prod-workshop.jpg',
+    image: '/assets/production-workshop.png',
     buttonLabel: 'О производстве',
     buttonHref: '/production'
   },
   productionBenefits: [
-    { id: 'own-clocks', icon: 'clock', text: 'Настенные часы\nсобственного изготовления', visible: true, order: 1 },
+    { id: 'own-clocks', icon: 'factory', text: 'Настенные часы\nсобственного изготовления', visible: true, order: 1 },
     { id: 'metal-wood', icon: 'materials', text: 'Металл\nс элементами дерева', visible: true, order: 2 },
-    { id: 'size-design', icon: 'tools', text: 'Подбор размера\nи оформления', visible: true, order: 3 },
+    { id: 'size-design', icon: 'ruler', text: 'Подбор размера\nи оформления', visible: true, order: 3 },
     { id: 'quality', icon: 'shield', text: 'Контроль качества\nперед выдачей', visible: true, order: 4 }
   ],
   stepsSection: {

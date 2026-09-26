@@ -1,29 +1,12 @@
 'use client';
 
-import { KeyboardEvent, MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from './Icon';
 import { CatalogFilterSidebar } from './CatalogFilterSidebar';
+import { ProductCard } from './ProductCard';
 import { productAvailability, type CatalogProduct, type ProductReviewStats } from '@/lib/products';
-import { getImagePreset } from '@/lib/imageDisplay';
 import type { ReviewControlSettings } from '@/lib/reviewControl';
-
-function money(value: number) {
-  return new Intl.NumberFormat('ru-RU').format(value);
-}
-
-function discountPercent(price: number, oldPrice?: number) {
-  if (!oldPrice || oldPrice <= price) return null;
-  return Math.round(((oldPrice - price) / oldPrice) * 100);
-}
-
-function reviewWord(count: number) {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return 'отзыв';
-  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'отзыва';
-  return 'отзывов';
-}
 
 function addToCart(product: CatalogProduct) {
   if (productAvailability(product) === 'unavailable') return;
@@ -203,21 +186,7 @@ export function CatalogClient({
     setPriceError('');
   }
 
-  function openProduct(slug: string) {
-    router.push(`/product/${slug}`);
-  }
-
-  function onCardKeyDown(event: KeyboardEvent<HTMLElement>, slug: string) {
-    if (event.target !== event.currentTarget) return;
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      openProduct(slug);
-    }
-  }
-
-  function onCartClick(event: MouseEvent<HTMLButtonElement>, product: CatalogProduct) {
-    event.preventDefault();
-    event.stopPropagation();
+  function handleAddToCart(product: CatalogProduct) {
     addToCart(product);
     setNotice(`${product.title} добавлен в корзину`);
     window.setTimeout(() => setNotice(''), 2200);
@@ -288,49 +257,12 @@ export function CatalogClient({
 
         <div className="catalog-grid-market">
           {filteredProducts.map((product) => {
-            const imageSettings = getImagePreset(product, product.image, 'catalog');
-            const discount = discountPercent(product.price, product.oldPrice);
-            const availability = productAvailability(product);
             const storedStats = reviewStats[product.slug] || { average: 0, count: 0 };
             const stats = {
               count: storedStats.count || product.reviewsCount || 0,
               average: storedStats.count ? storedStats.average : (product.rating || 0)
             };
-            const ratingLabel = stats.average.toFixed(1);
-            const reviewsLabel = stats.count ? `${stats.count} ${reviewWord(stats.count)}` : 'Нет отзывов';
-
-            return (
-              <article
-                className="catalog-card-market"
-                key={product.slug}
-                role="link"
-                tabIndex={0}
-                onClick={() => openProduct(product.slug)}
-                onKeyDown={(event) => onCardKeyDown(event, product.slug)}
-                aria-label={`Открыть товар: ${product.title}`}
-              >
-                <div className="catalog-card-image-market">
-                  <img src={product.image} alt={product.title} style={imageSettings.style} />
-                  {discount && <span className="catalog-sale-market">-{discount}%</span>}
-                </div>
-                <div className="catalog-card-body-market">
-                  <div className="catalog-card-rating-market">
-                    {stats.count ? <>{reviewSettings.productRating && <span>★ {ratingLabel}</span>}{reviewSettings.productCount && <small>{reviewSettings.productRating ? '· ' : ''}{reviewsLabel}</small>}</> : reviewSettings.productCount && <small>{reviewsLabel}</small>}
-                  </div>
-                  <h3>{product.title}</h3>
-                  <p>{product.material || product.short}</p>
-                  <small>{availability === 'in_stock' ? 'В наличии' : availability === 'made_to_order' ? 'Под заказ · 5–7 дней' : 'Недоступен к покупке'}</small>
-                  <p className="catalog-card-color-market">Цвет: <span>{product.colorName || 'не указан'}</span></p>
-                  <div className="catalog-card-bottom-market">
-                    <div>
-                      <b>от {money(product.price)} BYN</b>
-                      {product.oldPrice && product.oldPrice > product.price && <del>{money(product.oldPrice)} BYN</del>}
-                    </div>
-                    <button type="button" disabled={availability === 'unavailable'} aria-label={availability === 'unavailable' ? `${product.title} недоступен` : `Добавить в корзину: ${product.title}`} onClick={(event) => onCartClick(event, product)}><Icon name="cart" /></button>
-                  </div>
-                </div>
-              </article>
-            );
+            return <ProductCard key={product.slug} product={product} reviewSettings={reviewSettings} rating={stats.average} reviewsCount={stats.count} onAddToCart={handleAddToCart} />;
           })}
         </div>
 

@@ -18,7 +18,7 @@ export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGEle
       {name === 'user' && <><circle cx="12" cy="8" r="4" {...common}/><path d="M4.5 21a7.5 7.5 0 0 1 15 0" {...common}/></>}
       {name === 'factory' && <><path d="M3 21V9l6 4V9l6 4V6h6v15H3Z" {...common}/><path d="M7 17h2m4 0h2m4 0h1" {...common}/></>}
       {name === 'custom' && <><path d="M4 18 16.5 5.5a2.2 2.2 0 0 1 3.1 3.1L7 21H4v-3Z" {...common}/><path d="m14.5 7.5 3 3" {...common}/></>}
-      {name === 'materials' && <><path d="M5 19 19 5M5 5l14 14" {...common}/><path d="M8 3h8M8 21h8" {...common}/></>}
+      {name === 'materials' && <><path d="m4 8 8-4 8 4-8 4-8-4Z" {...common}/><path d="m4 12 8 4 8-4" {...common}/><path d="m4 16 8 4 8-4" {...common}/></>}
       {name === 'truck' && <><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z" {...common}/><circle cx="7" cy="18" r="2" {...common}/><circle cx="18" cy="18" r="2" {...common}/></>}
       {name === 'arrow' && <><path d="M5 12h14M13 6l6 6-6 6" {...common}/></>}
       {name === 'shield' && <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" {...common}/><path d="m9 12 2 2 4-5" {...common}/></>}

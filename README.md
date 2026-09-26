@@ -28,12 +28,7 @@ pnpm run dev
 ```bash
 http://localhost:3000
 http://localhost:3000/admin
-http://localhost:3000/studio
 ```
-
-## Контентная CMS Sanity
-
-Публичный контент постепенно переносится в Sanity; операции магазина (товары, заказы, клиенты и доставка) остаются в Supabase. Studio встроена в приложение и доступна по `/studio`. Настройка входа, datasets, ролей и CORS описана в [docs/SANITY_STUDIO.md](docs/SANITY_STUDIO.md). До SAN-05 публикации в Studio не меняют витрину.
 
 ## Подключение Supabase
 

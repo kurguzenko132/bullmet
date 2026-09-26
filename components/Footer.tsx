@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from './Icon';
+import { Container } from './layout/Container';
 
 type FooterSettings = {
   general: { logoText: string; tagline: string };
@@ -31,21 +32,18 @@ export function Footer() {
     return () => { active = false; };
   }, []);
 
-  const directions = useMemo(() => settings.directions.filter((item) => item.visible).sort((a, b) => a.order - b.order), [settings.directions]);
   const rawFooterLinks = useMemo(() => settings.navigation.filter((item) => item.location === 'footer' && item.visible).sort((a, b) => a.order - b.order), [settings.navigation]);
   const companyLinks = settingsLoaded ? rawFooterLinks.slice(0, 4) : [
     { href: '/production', label: 'Производство' },
     { href: '/contacts', label: 'Контакты' }
   ];
-  const catalogLinks = (directions.length ? directions : settings.directions.filter((item) => item.key === 'clocks')).slice(0, 4);
-  const hasServices = directions.some((item) => item.key !== 'clocks');
   const phoneHref = `tel:${settings.contacts.phone.replace(/[^+\d]/g, '')}`;
   const telegramHref = String(settings.contacts.telegram || '').trim();
   const instagramHref = String(settings.contacts.instagram || '').trim();
 
   return (
     <footer className="footer-exact">
-      <div className="footer-container">
+      <Container className="footer-container">
         <div className="footer-grid-exact footer-grid-launch">
         <div className="footer-brand-column">
           <Link href="/" className="brand-exact footer-brand">
@@ -61,16 +59,9 @@ export function Footer() {
         </div>
         <nav className="footer-column" aria-label="Каталог">
           <h4>КАТАЛОГ</h4>
-          {catalogLinks.map((item) => (
-            <Link href={item.href} key={item.key}>{item.title}</Link>
-          ))}
+          <Link href="/catalog">Настенные часы</Link>
+          <Link href="/catalog">Все товары</Link>
         </nav>
-        {hasServices && <nav className="footer-column" aria-label="Услуги">
-          <h4>УСЛУГИ</h4>
-          <Link href="/services#laser">Резка металла</Link>
-          <Link href="/services#wood">Резка дерева</Link>
-          <Link href="/contacts">Изделия на заказ</Link>
-        </nav>}
         <nav className="footer-column" aria-label="Компания">
           <h4>КОМПАНИЯ</h4>
           {companyLinks.map((item) => (
@@ -85,7 +76,8 @@ export function Footer() {
           <p><Icon name="clock" /><span>{settings.contacts.hours}</span></p>
         </div>
         </div>
-      </div>
+        <div className="footer-bottom"><span>© Bullmet 2026</span><span>Собственное производство изделий из металла с элементами дерева.</span></div>
+      </Container>
     </footer>
   );
 }

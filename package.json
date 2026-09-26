@@ -13,25 +13,21 @@
     "check": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "dependencies": {
-    "@portabletext/sanity-bridge": "1.2.14",
-    "@sanity/client": "7.13.2",
     "@supabase/supabase-js": "^2.45.6",
     "lucide-react": "^0.468.0",
     "next": "15.5.24",
-    "next-sanity": "11.6.13",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "recharts": "^2.13.3",
-    "sanity": "4.22.0",
     "server-only": "0.0.1",
     "styled-components": "^6.1.19",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
     "@types/node": "^22.10.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@eslint/eslintrc": "^3.3.3",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.39.1",
     "eslint-config-next": "15.5.24",

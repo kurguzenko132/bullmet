@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
     return allowed ? NextResponse.next() : denied(request, 403);
   }
 
-  if (pathname === '/maintenance' || pathname.startsWith('/studio') || pathname.startsWith('/login') || pathname.startsWith('/auth/') || pathname.startsWith('/reset-password')) return nextWithRobots(pathname);
+  if (pathname === '/maintenance' || pathname.startsWith('/login') || pathname.startsWith('/auth/') || pathname.startsWith('/reset-password')) return nextWithRobots(pathname);
 
   const settings = await getSiteControlSettings();
   if (!settings.adminSettings.site.maintenance) return nextWithRobots(pathname);

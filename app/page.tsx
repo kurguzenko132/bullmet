@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import type { CSSProperties } from 'react';
 import type { Metadata } from 'next';
 import { Factory, PaintBucket, Palette, Truck } from 'lucide-react';
 import { Header } from '@/components/Header';
@@ -11,11 +10,15 @@ import { HomePromoBanners } from '@/components/HomePromoBanners';
 import { HomeReviewsClient, type HomeReview } from '@/components/HomeReviewsClient';
 import { HomeFaqClient } from '@/components/HomeFaqClient';
 import { HomeCustomOptions } from '@/components/HomeCustomOptions';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { FeatureCard } from '@/components/cards/FeatureCard';
+import { HomeCategoryCarousel } from '@/components/HomeCategoryCarousel';
 import { getHomepageControlSettings, visibleHomeItems } from '@/lib/homepageControl';
 import { getCatalogProducts, getProductReviewStats, withProductReviewStats } from '@/lib/products';
 import { getPublishedReviews } from '@/lib/publicReviews';
 import { getReviewControlSettings } from '@/lib/reviewControl';
 import { getSiteControlSettings } from '@/lib/siteControl';
+import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catalogControl';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,26 +50,28 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [home, allProducts, allReviews, site, reviewSettings] = await Promise.all([
+  const [home, allProducts, allReviews, site, reviewSettings, catalogControl] = await Promise.all([
     getHomepageControlSettings(),
     getCatalogProducts(),
     getPublishedReviews(),
     getSiteControlSettings(),
-    getReviewControlSettings()
+    getReviewControlSettings(),
+    getCatalogControlSettings()
   ]);
 
   const selectedProducts = allProducts.slice(0, 3);
   const products = withProductReviewStats(selectedProducts, await getProductReviewStats(selectedProducts.map((product) => product.slug)));
 
   const featureItems = visibleHomeItems(home.features);
-  const categories = [
-    { id: 'clocks', title: 'Настенные\nчасы', img: '/mockup/cat-clock.jpg', href: '/catalog?category=Настенные часы' },
-    { id: 'garden', title: 'Садовая\nмебель', img: '/mockup/cat-swing.jpg', href: '/catalog?category=Садовая мебель' },
-    { id: 'loft', title: 'Мебель для дома\nв стиле лофт', img: '/mockup/cat-custom.jpg', href: '/services' },
-    { id: 'laser', title: 'Лазерная\nрезка', img: '/mockup/cat-metal.jpg', href: '/services#laser' },
-    { id: 'wholesale', title: 'Мелкий опт\nметаллопроката', img: '/mockup/service-metal.jpg', href: '/contacts' }
-  ];
-  const collections = visibleHomeItems(home.collections);
+  const categories = visibleCatalogCategories(catalogControl, 'clock').map((category) => ({
+    id: category.id,
+    title: category.title,
+    description: category.description,
+    img: category.id === 'clock-auto' && (!category.image || category.image === '/mockup/cat-clock.jpg')
+      ? '/assets/category-auto-world.png'
+      : category.image || '/mockup/cat-clock.jpg',
+    href: `/catalog?category=${encodeURIComponent(category.slug)}`
+  }));
   const productionBenefits = visibleHomeItems(home.productionBenefits);
   const productionGallery = visibleHomeItems(home.gallery);
   const steps = visibleHomeItems(home.steps);
@@ -104,30 +109,14 @@ export default async function HomePage() {
 
         {sectionVisible('directions', home.directionsSection.enabled) && !!categories.length && (
           <section className="home-container home-categories-final" style={sectionStyle('directions', 2)}>
-            <div className="home-section-title-row">
-              <div>
-                <p className="eyebrow">{home.directionsSection.eyebrow}</p>
-                <h2>{home.directionsSection.title}</h2>
-                <span>{home.directionsSection.text}</span>
-              </div>
-              <Link href={home.directionsSection.buttonHref}>{home.directionsSection.buttonLabel}</Link>
-            </div>
-
-            <div className="category-grid-exact category-grid-final" style={{ '--directions-count': categories.length } as CSSProperties}>
-              {categories.map((item) => (
-                <Link href={item.href} className="category-tile" key={item.id}>
-                  <img src={item.img} alt={item.title.replace(/\n/g, ' ')} />
-                  <span className="tile-title"><Lines value={item.title} /></span>
-                  <span className="tile-arrow"><Icon name="arrow" /></span>
-                </Link>
-              ))}
-            </div>
+            <HomeCategoryCarousel categories={categories} />
           </section>
         )}
 
         {sectionVisible('production', home.productionSection.enabled) && (
-          <section className="home-container production-section production-section-final" id="production" style={sectionStyle('production', 3)}>
+          <section className="home-container production-section production-section-final" id="production" style={sectionStyle('production', 5)}>
             <div className="production-text">
+              {home.productionSection.eyebrow && <p className="production-section__eyebrow">{home.productionSection.eyebrow}</p>}
               <h2>{home.productionSection.title}</h2>
               <p className="body-text">{home.productionSection.text}</p>
               <Link href={home.productionSection.buttonHref} className="small-orange">{home.productionSection.buttonLabel}</Link>
@@ -142,42 +131,9 @@ export default async function HomePage() {
         )}
 
         {sectionVisible('products', home.productsSection.enabled) && (
-          <section className="home-container home-shop-final" style={sectionStyle('products', 4)}>
-            <div className="products-services products-services-final">
-              <div className="popular-block">
-                <h2 className="products-services-title">Популярные товары</h2>
-                <HomeProductsClient products={products} reviewSettings={reviewSettings} />
-              </div>
-              <aside className="services-block services-block-final">
-                <h2 className="products-services-title">Услуги резки</h2>
-                <div className="service-row-exact service-row-final">
-                  <article>
-                    <img src="/mockup/service-metal.jpg" alt="Резка металла" />
-                    <div><h4>Резка металла</h4><p>Для декора, деталей, табличек, конструкций и других изделий.</p><Link href="/contacts">Заказать расчёт</Link></div>
-                  </article>
-                  <article>
-                    <img src="/mockup/service-wood.jpg" alt="Резка дерева" />
-                    <div><h4>Резка дерева</h4><p>Для интерьерных элементов, вывесок, подарков, мебели и других изделий.</p><Link href="/contacts">Заказать расчёт</Link></div>
-                  </article>
-                </div>
-              </aside>
-            </div>
-          </section>
-        )}
-
-        {home.collectionsSection.enabled && collections.length > 0 && (
-          <section className="home-container home-collections" aria-labelledby="home-collections-title" style={{ order: layoutOrder('steps', 5) * 10 - 2 }}>
-            <header className="home-collections__head">
-              <div><h2 id="home-collections-title">{home.collectionsSection.title}</h2></div>
-            </header>
-            <div className="home-collections__grid">
-              {collections.map((item) => <Link className="home-collection-card" href={item.href} key={item.id}>
-                <img src={item.img} alt={item.title} />
-                <span className="home-collection-card__shade" aria-hidden="true" />
-                <span className="home-collection-card__copy"><b>{item.title}</b><small><Lines value={item.description} /></small></span>
-                <span className="home-collection-card__arrow" aria-hidden="true">→</span>
-              </Link>)}
-            </div>
+          <section className="home-container home-products-section" style={sectionStyle('products', 3)}>
+            <SectionHeader eyebrow="Популярные модели" title="Настенные часы Bullmet" description="Выберите готовую модель или обратитесь к нам за индивидуальным исполнением." />
+            <HomeProductsClient products={products} reviewSettings={reviewSettings} />
           </section>
         )}
 
@@ -213,26 +169,10 @@ export default async function HomePage() {
             <span>Собственное производство, качественные материалы и внимание к деталям на каждом этапе – надёжные решения для вашего интерьера.</span>
           </div>
           <div className="bullmet-advantages__grid">
-            <article>
-              <div className="bullmet-advantages__icon"><Factory aria-hidden="true" /></div>
-              <h3>Собственное производство</h3>
-              <p>Изготавливаем часы сами и контролируем качество на каждом этапе.</p>
-            </article>
-            <article>
-              <div className="bullmet-advantages__icon"><Palette aria-hidden="true" /></div>
-              <h3>Выбор размера и цвета</h3>
-              <p>Для большинства моделей можно подобрать подходящий размер и цвет исполнения.</p>
-            </article>
-            <article>
-              <div className="bullmet-advantages__icon"><PaintBucket aria-hidden="true" /></div>
-              <h3>Порошковая покраска</h3>
-              <p>Стойкое покрытие помогает сохранить внешний вид металлических деталей.</p>
-            </article>
-            <article>
-              <div className="bullmet-advantages__icon"><Truck aria-hidden="true" /></div>
-              <h3>Доставка по Беларуси</h3>
-              <p>Согласуем удобный способ получения заказа по Беларуси.</p>
-            </article>
+            <FeatureCard icon={Factory} title="Собственное производство" text="Изготавливаем часы сами и контролируем качество на каждом этапе." />
+            <FeatureCard icon={Palette} title="Выбор размера и цвета" text="Для большинства моделей можно подобрать подходящий размер и цвет исполнения." />
+            <FeatureCard icon={PaintBucket} title="Порошковая покраска" text="Стойкое покрытие помогает сохранить внешний вид металлических деталей." />
+            <FeatureCard icon={Truck} title="Доставка по Беларуси" text="Согласуем удобный способ получения заказа по Беларуси." />
           </div>
         </section>
 

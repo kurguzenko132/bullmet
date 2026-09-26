@@ -40,7 +40,7 @@ export function HomeHeroCarousel({ slides, features, autoplay, interval, showDot
     <div className="home-container hero-inner">
       <div className="hero-copy">
         <span className="home-hero-kicker">{slide.kicker}</span><h1>{slide.title}</h1><p>{slide.text}</p>
-        <div className="hero-actions"><Link href={slide.primaryHref} className="btn-orange">{slide.primaryLabel}</Link></div>
+        <div className="hero-actions"><Link href={slide.primaryHref} className="btn-orange">{slide.primaryLabel}</Link><Link href="/production" className="btn-outline">О производстве</Link></div>
         {safeSlides.length > 1 && <div className="home-hero-carousel-controls" aria-label="Навигация по слайдам">
           {showArrows && <button type="button" onClick={() => setActive((active - 1 + safeSlides.length) % safeSlides.length)} aria-label="Предыдущий слайд">‹</button>}
           {showDots && safeSlides.map((item, index) => <button type="button" key={item.id} className={index === active ? 'is-active' : ''} onClick={() => setActive(index)} aria-label={`Слайд ${index + 1}`} aria-current={index === active ? 'true' : undefined} />)}
