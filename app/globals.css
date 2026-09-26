@@ -21085,7 +21085,7 @@ body:not(.admin-body) .home-products-carousel { position: relative; }
 
 body:not(.admin-body) .home-products-section .catalog-grid-market {
   display: flex;
-  gap: 16px 12px !important;
+  gap: 16px 8px !important;
   margin-top: 0;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -21095,7 +21095,7 @@ body:not(.admin-body) .home-products-section .catalog-grid-market {
 body:not(.admin-body) .home-products-section .catalog-grid-market::-webkit-scrollbar { display: none; }
 
 body:not(.admin-body) .home-products-section .catalog-card-market {
-  flex: 0 0 280px;
+  flex: 0 0 calc((100% - 40px) / 6);
   scroll-snap-align: start;
 }
 
