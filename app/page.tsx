@@ -132,7 +132,7 @@ export default async function HomePage() {
 
         {sectionVisible('products', home.productsSection.enabled) && (
           <section className="home-container home-products-section" style={sectionStyle('products', 3)}>
-            <SectionHeader eyebrow="Популярные модели" title="Настенные часы Bullmet" description="Выберите готовую модель или обратитесь к нам за индивидуальным исполнением." />
+            <SectionHeader title="Популярные модели" description="Самые востребованные часы среди наших покупателей." />
             <HomeProductsClient products={products} reviewSettings={reviewSettings} />
           </section>
         )}
