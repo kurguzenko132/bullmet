@@ -21321,15 +21321,15 @@ body:not(.admin-body) .home-products-section .catalog-card-rating-market {
   min-height: 17px;
   margin-bottom: 5px;
   color: #706d68;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 16px;
+  line-height: 22px;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market h3 {
-  min-height: 20px;
-  font-size: 19px;
+  min-height: 29px;
+  font-size: 24px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 29px;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
