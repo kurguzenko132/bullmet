@@ -21080,21 +21080,66 @@ body:not(.admin-body) .home-final-hero .hero-actions .btn-outline {
   text-transform: uppercase;
 }
 
-/* The home selection uses the same product cards as the catalogue, with a denser responsive grid. */
+/* The home selection uses catalogue-size cards in a horizontal carousel. */
+body:not(.admin-body) .home-products-carousel { position: relative; }
+
 body:not(.admin-body) .home-products-section .catalog-grid-market {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: flex;
+  gap: 18px;
+  margin-top: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+body:not(.admin-body) .home-products-section .catalog-grid-market::-webkit-scrollbar { display: none; }
+
+body:not(.admin-body) .home-products-section .catalog-card-market {
+  flex: 0 0 calc((100% - 54px) / 4);
+  scroll-snap-align: start;
+}
+
+body:not(.admin-body) .home-products-controls {
+  position: absolute;
+  top: -72px;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+}
+
+body:not(.admin-body) .home-products-controls button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #e7dfd4;
+  border-radius: 50%;
+  background: #fffdf8;
+  color: #252321;
+  cursor: pointer;
+  transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+
+body:not(.admin-body) .home-products-controls button:hover {
+  border-color: #f56600;
+  background: #fff4eb;
+  color: #f56600;
+}
+
+body:not(.admin-body) .home-products-controls svg { width: 19px; height: 19px; }
+
+@media (max-width: 980px) {
+  body:not(.admin-body) .home-products-section .catalog-card-market { flex-basis: calc((100% - 36px) / 3); }
 }
 
 @media (max-width: 767px) {
-  body:not(.admin-body) .home-products-section .catalog-grid-market {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  body:not(.admin-body) .home-products-section .catalog-card-market { flex-basis: min(72vw, 300px); }
+  body:not(.admin-body) .home-products-controls { top: -66px; }
 }
 
-@media (max-width: 420px) {
-  body:not(.admin-body) .home-products-section .catalog-grid-market {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 500px) {
+  body:not(.admin-body) .home-products-controls { display: none; }
 }
 
 body:not(.admin-body) .home-categories-final .category-card__content {

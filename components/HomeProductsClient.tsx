@@ -1,5 +1,7 @@
 'use client';
 
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useRef } from 'react';
 import { ProductCard } from './ProductCard';
 import { productAvailability, type CatalogProduct } from '@/lib/products';
 import type { ReviewControlSettings } from '@/lib/reviewControl';
@@ -26,9 +28,25 @@ function addToCart(product: CatalogProduct) {
 }
 
 export function HomeProductsClient({ products, reviewSettings }: { products: CatalogProduct[]; reviewSettings: Pick<ReviewControlSettings, 'productRating' | 'productCount'> }) {
+  const railRef = useRef<HTMLDivElement>(null);
+
+  function scroll(direction: -1 | 1) {
+    const rail = railRef.current;
+    if (!rail) return;
+    const firstCard = rail.querySelector<HTMLElement>('.catalog-card-market');
+    const gap = Number.parseFloat(window.getComputedStyle(rail).gap) || 0;
+    rail.scrollBy({ left: direction * ((firstCard?.offsetWidth || 280) + gap), behavior: 'smooth' });
+  }
+
   return (
-    <div className="catalog-grid-market">
-      {products.map((product) => <ProductCard key={product.slug} product={product} reviewSettings={reviewSettings} rating={product.rating || 0} reviewsCount={product.reviewsCount || 0} onAddToCart={addToCart} />)}
+    <div className="home-products-carousel">
+      <div className="home-products-controls" aria-label="Прокрутка популярных моделей">
+        <button type="button" onClick={() => scroll(-1)} aria-label="Предыдущие модели"><ArrowLeft aria-hidden="true" /></button>
+        <button type="button" onClick={() => scroll(1)} aria-label="Следующие модели"><ArrowRight aria-hidden="true" /></button>
+      </div>
+      <div className="catalog-grid-market" ref={railRef}>
+        {products.map((product) => <ProductCard key={product.slug} product={product} reviewSettings={reviewSettings} rating={product.rating || 0} reviewsCount={product.reviewsCount || 0} onAddToCart={addToCart} />)}
+      </div>
     </div>
   );
 }
