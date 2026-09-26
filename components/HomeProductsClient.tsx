@@ -27,7 +27,7 @@ function addToCart(product: CatalogProduct) {
 
 export function HomeProductsClient({ products, reviewSettings }: { products: CatalogProduct[]; reviewSettings: Pick<ReviewControlSettings, 'productRating' | 'productCount'> }) {
   return (
-    <div className="catalog-grid-market home-popular-catalog-grid">
+    <div className="catalog-grid-market">
       {products.map((product) => <ProductCard key={product.slug} product={product} reviewSettings={reviewSettings} rating={product.rating || 0} reviewsCount={product.reviewsCount || 0} onAddToCart={addToCart} />)}
     </div>
   );
