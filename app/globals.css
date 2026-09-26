@@ -21099,6 +21099,89 @@ body:not(.admin-body) .home-products-section .catalog-card-market {
   scroll-snap-align: start;
 }
 
+/* Keep the header controls on the same horizontal grid as the home sections. */
+body:not(.admin-body) .header-inner-exact {
+  width: min(1400px, calc(100% - 70px)) !important;
+  padding-inline: 0 !important;
+}
+
+@media (max-width: 1439px) {
+  body:not(.admin-body) .header-inner-exact { width: min(1400px, calc(100% - 48px)) !important; }
+}
+
+@media (max-width: 1199px) {
+  body:not(.admin-body) .header-inner-exact { width: min(1400px, calc(100% - 40px)) !important; }
+}
+
+@media (max-width: 767px) {
+  body:not(.admin-body) .header-inner-exact { width: min(1400px, calc(100% - 32px)) !important; }
+}
+
+/* Mobile product cards: compact product information without an oversized photo. */
+@media (max-width: 640px) {
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-market {
+    min-height: 0 !important;
+    height: auto !important;
+    border-radius: 16px !important;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-image-market {
+    height: 260px !important;
+    flex-basis: 260px !important;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market {
+    padding: 18px 24px 16px !important;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-rating-market {
+    min-height: 19px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market h3 {
+    min-height: 0;
+    font-size: 23px;
+    line-height: 29px;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market > p,
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market > small {
+    margin-top: 12px;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-color-market {
+    margin-top: 8px !important;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-bottom-market {
+    min-height: 58px;
+    margin-top: 8px;
+    padding-top: 12px;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-bottom-market b {
+    font-size: 25px;
+    line-height: 30px;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-bottom-market button {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+    border-radius: 14px;
+  }
+
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-bottom-market button svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
 body:not(.admin-body) .home-products-controls {
   position: absolute;
   top: -72px;
