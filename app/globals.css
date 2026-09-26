@@ -21321,22 +21321,22 @@ body:not(.admin-body) .home-products-section .catalog-card-rating-market {
   min-height: 17px;
   margin-bottom: 5px;
   color: #706d68;
-  font-size: 12px;
-  line-height: 17px;
+  font-size: 14px;
+  line-height: 20px;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market h3 {
   min-height: 20px;
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
-  line-height: 20px;
+  line-height: 1.2;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
 body:not(.admin-body) .home-products-section .catalog-card-body-market > small {
   margin-top: 6px;
-  font-size: 12px;
-  line-height: 17px;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-color-market {
@@ -21351,9 +21351,9 @@ body:not(.admin-body) .home-products-section .catalog-card-bottom-market {
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-bottom-market b {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
-  line-height: 20px;
+  line-height: 1.2;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-bottom-market button {
@@ -21378,9 +21378,10 @@ body:not(.admin-body) .home-products-section .catalog-card-bottom-market button:
     padding: 14px !important;
   }
 
-  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 16px; line-height: 20px; }
+  body:not(.admin-body) .home-products-section .catalog-card-rating-market { font-size: 11px; line-height: 16px; }
+  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 14px; line-height: 1.2; }
   body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
-  body:not(.admin-body) .home-products-section .catalog-card-body-market > small { margin-top: 5px; font-size: 12px; line-height: 17px; }
-  body:not(.admin-body) .home-products-section .catalog-card-bottom-market b { font-size: 16px; line-height: 20px; }
+  body:not(.admin-body) .home-products-section .catalog-card-body-market > small { margin-top: 5px; font-size: 11px; line-height: 1.4; }
+  body:not(.admin-body) .home-products-section .catalog-card-bottom-market b { font-size: 14px; line-height: 1.2; }
   body:not(.admin-body) .home-products-section .catalog-card-bottom-market button { width: 36px; height: 36px; flex-basis: 36px; border-radius: 50%; }
 }
