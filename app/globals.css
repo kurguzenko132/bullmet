@@ -21276,3 +21276,111 @@ body:not(.admin-body) .home-categories-final .category-card:hover .category-card
   body:not(.admin-body) .home-categories-final .category-card__content small { font-size: 11px; }
   body:not(.admin-body) .home-categories-final .category-card__arrow { width: 32px; height: 32px; }
 }
+
+/* Popular models use the same calm card language as the category carousel,
+   while retaining the full product information and add-to-cart action. */
+body:not(.admin-body) .home-products-section .catalog-card-market {
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: hidden;
+  border: 1px solid #e4ded5 !important;
+  border-radius: 12px !important;
+  background: #fffdf8 !important;
+  box-shadow: none !important;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-market:hover {
+  transform: none;
+  border-color: rgba(245, 102, 0, .55) !important;
+  box-shadow: none !important;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-image-market {
+  height: auto !important;
+  flex: 0 0 auto !important;
+  aspect-ratio: 1 / .92;
+  background: #f2efea !important;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-image-market img {
+  padding: 0 !important;
+  transition: transform .22s ease;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-market:hover .catalog-card-image-market img {
+  transform: scale(1.035) !important;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-body-market {
+  min-height: 180px;
+  padding: 15px 15px 14px !important;
+  background: #fffdf8;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-rating-market {
+  min-height: 17px;
+  margin-bottom: 5px;
+  color: #706d68;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-body-market h3 {
+  min-height: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
+body:not(.admin-body) .home-products-section .catalog-card-body-market > small {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-color-market {
+  margin-top: 4px !important;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-bottom-market {
+  min-height: 38px;
+  margin-top: auto;
+  border-top: 0;
+  padding-top: 8px;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-bottom-market b {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-bottom-market button {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  border: 1px solid #e4ded5;
+  border-radius: 50%;
+  background: transparent;
+  color: #f56600;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-bottom-market button:hover {
+  border-color: #f56600;
+  background: #f56600;
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  body:not(.admin-body) .home-products-section .catalog-card-body-market {
+    min-height: 172px;
+    padding: 14px !important;
+  }
+
+  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 16px; line-height: 20px; }
+  body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
+  body:not(.admin-body) .home-products-section .catalog-card-body-market > small { margin-top: 5px; font-size: 12px; line-height: 17px; }
+  body:not(.admin-body) .home-products-section .catalog-card-bottom-market b { font-size: 16px; line-height: 20px; }
+  body:not(.admin-body) .home-products-section .catalog-card-bottom-market button { width: 36px; height: 36px; flex-basis: 36px; border-radius: 50%; }
+}
