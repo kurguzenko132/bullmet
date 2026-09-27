@@ -42,7 +42,7 @@ export function HomeProductsClient({ products, reviewSettings }: { products: Cat
   return (
     <div className="home-products-carousel">
       <div className="home-products-controls" aria-label="Прокрутка популярных моделей">
-        <Link href="/catalog" className="home-products-catalog-link">Перейти в каталог <ArrowRight aria-hidden="true" /></Link>
+        <Link href="/catalog" className="home-products-catalog-link">Перейти в каталог <span aria-hidden="true">→</span></Link>
         <span className="home-products-controls__arrows">
           <button type="button" onClick={() => scroll(-1)} aria-label="Предыдущие модели"><ArrowLeft aria-hidden="true" /></button>
           <button type="button" onClick={() => scroll(1)} aria-label="Следующие модели"><ArrowRight aria-hidden="true" /></button>

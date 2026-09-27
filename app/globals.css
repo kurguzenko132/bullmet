@@ -21195,7 +21195,7 @@ body:not(.admin-body) .home-products-controls {
 body:not(.admin-body) .home-products-catalog-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-right: 14px;
   color: #f56600;
   font-size: 14px;
@@ -21205,7 +21205,12 @@ body:not(.admin-body) .home-products-catalog-link {
   white-space: nowrap;
 }
 
-body:not(.admin-body) .home-products-catalog-link svg { width: 18px; height: 18px; }
+body:not(.admin-body) .home-products-catalog-link span {
+  display: inline-block;
+  font-size: 22px;
+  line-height: 1;
+  transform: translateY(-1px);
+}
 body:not(.admin-body) .home-products-catalog-link:hover { color: #d95f00; }
 
 body:not(.admin-body) .home-products-controls__arrows {
