@@ -22,14 +22,6 @@ import { getCatalogControlSettings, visibleCatalogCategories } from '@/lib/catal
 
 export const dynamic = 'force-dynamic';
 
-function ProcessArrow() {
-  return (
-    <span className="process-arrow" aria-hidden="true">
-      <svg viewBox="0 0 24 40"><path d="M4 3 20 20 4 37" /></svg>
-    </span>
-  );
-}
-
 function Lines({ value }: { value: string }) {
   return <>{value.split('\n').map((line) => <span key={line}>{line}</span>)}</>;
 }
@@ -74,7 +66,6 @@ export default async function HomePage() {
   }));
   const productionBenefits = visibleHomeItems(home.productionBenefits);
   const productionGallery = visibleHomeItems(home.gallery);
-  const steps = visibleHomeItems(home.steps);
   const featuredReviews = allReviews.some((review) => review.show_on_homepage) ? allReviews.filter((review) => review.show_on_homepage) : allReviews;
   const homeReviews = (home.reviewsSection.mode === 'manual'
     ? home.reviewsSection.selectedIds.map((id) => allReviews.find((review) => review.id === id)).filter(Boolean)
@@ -134,32 +125,6 @@ export default async function HomePage() {
           <section className="home-container home-products-section" style={sectionStyle('products', 3)}>
             <SectionHeader title="Популярные модели" />
             <HomeProductsClient products={products} reviewSettings={reviewSettings} />
-          </section>
-        )}
-
-        {sectionVisible('steps', home.stepsSection.enabled) && (
-          <section className="home-container work-process" style={sectionStyle('steps', 5)}>
-            <h2 className="work-process__title">{home.stepsSection.title}</h2>
-            {home.stepsSection.text && <p className="body-text">{home.stepsSection.text}</p>}
-            <div className="work-process__panel">
-              <div className="work-process__steps">
-                {steps.map((step, index) => (
-                  <div className="work-process__item" key={step.id}>
-                    <article className="process-step">
-                      <div className="process-step__visual">
-                        <Icon name={step.icon} className="process-step__icon" />
-                        <span className="process-step__number">{step.num}</span>
-                      </div>
-                      <div className="process-step__copy">
-                        <h3 className="process-step__title">{step.title}</h3>
-                        <p className="process-step__description">{step.desc}</p>
-                      </div>
-                    </article>
-                    {index < steps.length - 1 && <ProcessArrow />}
-                  </div>
-                ))}
-              </div>
-            </div>
           </section>
         )}
 

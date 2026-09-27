@@ -21432,6 +21432,15 @@ body:not(.admin-body) .work-process__title {
   text-transform: none !important;
 }
 
+body:not(.admin-body) .bullmet-advantages__intro > p {
+  color: #191918 !important;
+  font-size: clamp(30px, 3vw, 42px) !important;
+  font-weight: 600 !important;
+  letter-spacing: -.045em !important;
+  line-height: 1.04 !important;
+  text-transform: none !important;
+}
+
 body:not(.admin-body) .work-process > .body-text {
   max-width: 680px;
   margin: 0 0 28px !important;
@@ -21507,6 +21516,7 @@ body:not(.admin-body) .process-arrow svg {
 @media (max-width: 640px) {
   body:not(.admin-body) .work-process { margin-top: 56px !important; margin-bottom: 56px !important; }
   body:not(.admin-body) .work-process__title { font-size: clamp(28px, 8vw, 36px) !important; }
+  body:not(.admin-body) .bullmet-advantages__intro > p { font-size: clamp(28px, 8vw, 36px) !important; }
   body:not(.admin-body) .work-process > .body-text { margin-bottom: 20px !important; font-size: 16px !important; }
   body:not(.admin-body) .work-process__panel { padding: 20px !important; }
 }
