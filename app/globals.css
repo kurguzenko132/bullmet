@@ -21378,8 +21378,8 @@ body:not(.admin-body) .home-products-section .catalog-card-bottom-market button:
     padding: 14px !important;
   }
 
-  body:not(.admin-body) .home-products-section .catalog-card-rating-market { font-size: 11px; line-height: 16px; }
-  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 14px; line-height: 1.2; }
+  body:not(.admin-body) .home-products-section .catalog-card-rating-market { font-size: 14px; line-height: 20px; }
+  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 19px; line-height: 23px; }
   body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
   body:not(.admin-body) .home-products-section .catalog-card-body-market > small { margin-top: 5px; font-size: 11px; line-height: 1.4; }
   body:not(.admin-body) .home-products-section .catalog-card-bottom-market b { font-size: 14px; line-height: 1.2; }
