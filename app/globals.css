@@ -21350,20 +21350,27 @@ body:not(.admin-body) .home-products-section .catalog-card-body-market > p:not(.
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-color-market {
-  margin-top: 4px !important;
+  margin-top: 6px !important;
+  font-size: 16px !important;
+  line-height: 22px !important;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-color-market span {
+  font-size: 16px !important;
+  line-height: 22px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-bottom-market {
   min-height: 38px;
-  margin-top: auto;
-  border-top: 0;
-  padding-top: 8px;
+  margin-top: 10px;
+  border-top: 1px solid #eee8e1 !important;
+  padding-top: 10px;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-bottom-market b {
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 26px;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-bottom-market button {
