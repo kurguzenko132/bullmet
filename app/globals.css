@@ -21345,6 +21345,10 @@ body:not(.admin-body) .home-products-section .catalog-card-body-market > small {
   line-height: 1.4;
 }
 
+body:not(.admin-body) .home-products-section .catalog-card-body-market > p:not(.catalog-card-color-market) {
+  display: none;
+}
+
 body:not(.admin-body) .home-products-section .catalog-card-color-market {
   margin-top: 4px !important;
 }
