@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import { useRef } from 'react';
 import { ProductCard } from './ProductCard';
 import { productAvailability, type CatalogProduct } from '@/lib/products';
@@ -41,8 +42,11 @@ export function HomeProductsClient({ products, reviewSettings }: { products: Cat
   return (
     <div className="home-products-carousel">
       <div className="home-products-controls" aria-label="Прокрутка популярных моделей">
-        <button type="button" onClick={() => scroll(-1)} aria-label="Предыдущие модели"><ArrowLeft aria-hidden="true" /></button>
-        <button type="button" onClick={() => scroll(1)} aria-label="Следующие модели"><ArrowRight aria-hidden="true" /></button>
+        <Link href="/catalog" className="home-products-catalog-link">Перейти в каталог <ArrowRight aria-hidden="true" /></Link>
+        <span className="home-products-controls__arrows">
+          <button type="button" onClick={() => scroll(-1)} aria-label="Предыдущие модели"><ArrowLeft aria-hidden="true" /></button>
+          <button type="button" onClick={() => scroll(1)} aria-label="Следующие модели"><ArrowRight aria-hidden="true" /></button>
+        </span>
       </div>
       <div className="catalog-grid-market" ref={railRef}>
         {products.map((product) => <ProductCard key={product.slug} product={product} reviewSettings={reviewSettings} rating={product.rating || 0} reviewsCount={product.reviewsCount || 0} onAddToCart={addToCart} />)}
