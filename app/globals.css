@@ -21312,37 +21312,37 @@ body:not(.admin-body) .home-products-section .catalog-card-market:hover .catalog
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market {
-  min-height: 180px;
-  padding: 15px 15px 14px !important;
+  min-height: 176px;
+  padding: 14px 15px 13px !important;
   background: #fffdf8;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-rating-market {
-  min-height: 17px;
-  margin-bottom: 5px;
+  min-height: 16px;
+  margin-bottom: 6px;
   color: #706d68;
-  font-size: 14px !important;
-  line-height: 20px !important;
+  font-size: 12px !important;
+  line-height: 16px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-rating-market small,
 body:not(.admin-body) .home-products-section .catalog-card-rating-market span {
-  font-size: 14px !important;
-  line-height: 20px !important;
+  font-size: 12px !important;
+  line-height: 16px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market h3 {
-  min-height: 23px !important;
-  font-size: 19px !important;
+  min-height: 22px !important;
+  font-size: 18px !important;
   font-weight: 600 !important;
-  line-height: 23px !important;
+  line-height: 22px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
 body:not(.admin-body) .home-products-section .catalog-card-body-market > small {
-  margin-top: 6px;
-  font-size: 14px;
-  line-height: 1.4;
+  margin-top: 10px;
+  font-size: 14px !important;
+  line-height: 20px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market > p:not(.catalog-card-color-market) {
@@ -21351,26 +21351,26 @@ body:not(.admin-body) .home-products-section .catalog-card-body-market > p:not(.
 
 body:not(.admin-body) .home-products-section .catalog-card-color-market {
   margin-top: 6px !important;
-  font-size: 16px !important;
-  line-height: 22px !important;
+  font-size: 13px !important;
+  line-height: 18px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-color-market span {
-  font-size: 16px !important;
-  line-height: 22px !important;
+  font-size: 13px !important;
+  line-height: 18px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-bottom-market {
   min-height: 38px;
-  margin-top: 10px;
+  margin-top: 12px;
   border-top: 1px solid #eee8e1 !important;
-  padding-top: 10px;
+  padding-top: 9px;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-bottom-market b {
-  font-size: 22px;
+  font-size: 18px !important;
   font-weight: 600;
-  line-height: 26px;
+  line-height: 22px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-bottom-market button {
@@ -21397,8 +21397,8 @@ body:not(.admin-body) .home-products-section .catalog-card-bottom-market button:
 
   body:not(.admin-body) .home-products-section .catalog-card-rating-market,
   body:not(.admin-body) .home-products-section .catalog-card-rating-market small,
-  body:not(.admin-body) .home-products-section .catalog-card-rating-market span { font-size: 14px !important; line-height: 20px !important; }
-  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 19px !important; line-height: 23px !important; }
+  body:not(.admin-body) .home-products-section .catalog-card-rating-market span { font-size: 12px !important; line-height: 16px !important; }
+  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 18px !important; line-height: 22px !important; }
   body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
   body:not(.admin-body) .home-products-section .catalog-card-body-market > small { margin-top: 5px; font-size: 11px; line-height: 1.4; }
   body:not(.admin-body) .home-products-section .catalog-card-bottom-market b { font-size: 14px; line-height: 1.2; }
