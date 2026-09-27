@@ -132,7 +132,7 @@ export default async function HomePage() {
 
         {sectionVisible('products', home.productsSection.enabled) && (
           <section className="home-container home-products-section" style={sectionStyle('products', 3)}>
-            <SectionHeader title="Популярные модели" description="Самые востребованные часы среди наших покупателей." />
+            <SectionHeader title="Популярные модели" />
             <HomeProductsClient products={products} reviewSettings={reviewSettings} />
           </section>
         )}
