@@ -21321,15 +21321,21 @@ body:not(.admin-body) .home-products-section .catalog-card-rating-market {
   min-height: 17px;
   margin-bottom: 5px;
   color: #706d68;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 14px !important;
+  line-height: 20px !important;
+}
+
+body:not(.admin-body) .home-products-section .catalog-card-rating-market small,
+body:not(.admin-body) .home-products-section .catalog-card-rating-market span {
+  font-size: 14px !important;
+  line-height: 20px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market h3 {
-  min-height: 23px;
-  font-size: 19px;
-  font-weight: 600;
-  line-height: 23px;
+  min-height: 23px !important;
+  font-size: 19px !important;
+  font-weight: 600 !important;
+  line-height: 23px !important;
 }
 
 body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
@@ -21378,8 +21384,10 @@ body:not(.admin-body) .home-products-section .catalog-card-bottom-market button:
     padding: 14px !important;
   }
 
-  body:not(.admin-body) .home-products-section .catalog-card-rating-market { font-size: 14px; line-height: 20px; }
-  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 19px; line-height: 23px; }
+  body:not(.admin-body) .home-products-section .catalog-card-rating-market,
+  body:not(.admin-body) .home-products-section .catalog-card-rating-market small,
+  body:not(.admin-body) .home-products-section .catalog-card-rating-market span { font-size: 14px !important; line-height: 20px !important; }
+  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 19px !important; line-height: 23px !important; }
   body:not(.admin-body) .home-products-section .catalog-card-body-market > p,
   body:not(.admin-body) .home-products-section .catalog-card-body-market > small { margin-top: 5px; font-size: 11px; line-height: 1.4; }
   body:not(.admin-body) .home-products-section .catalog-card-bottom-market b { font-size: 14px; line-height: 1.2; }
