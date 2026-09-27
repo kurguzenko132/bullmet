@@ -21416,6 +21416,101 @@ body:not(.admin-body) .home-products-section .catalog-card-bottom-market button:
   color: #fff;
 }
 
+/* A spacious, legible process strip matching the home page section scale. */
+body:not(.admin-body) .work-process {
+  margin-top: 72px !important;
+  margin-bottom: 72px !important;
+}
+
+body:not(.admin-body) .work-process__title {
+  margin: 0 0 12px !important;
+  color: #191918 !important;
+  font-size: clamp(30px, 3vw, 42px) !important;
+  font-weight: 600 !important;
+  letter-spacing: -.045em !important;
+  line-height: 1.04 !important;
+  text-transform: none !important;
+}
+
+body:not(.admin-body) .work-process > .body-text {
+  max-width: 680px;
+  margin: 0 0 28px !important;
+  color: #706d68 !important;
+  font-size: 18px !important;
+  line-height: 1.45 !important;
+}
+
+body:not(.admin-body) .work-process__panel {
+  height: 154px !important;
+  padding: 24px !important;
+  border: 1px solid #e4ded5 !important;
+  border-radius: 12px !important;
+  background: #fffdf8 !important;
+}
+
+body:not(.admin-body) .work-process__steps {
+  height: 106px !important;
+}
+
+body:not(.admin-body) .work-process__item { gap: 10px; }
+body:not(.admin-body) .work-process__item:last-child { flex: 1 1 0; }
+
+body:not(.admin-body) .process-step {
+  grid-template-columns: 58px minmax(0, 1fr) !important;
+  column-gap: 13px !important;
+  height: 106px !important;
+}
+
+body:not(.admin-body) .process-step__visual {
+  width: 58px;
+  height: 74px;
+}
+
+body:not(.admin-body) .process-step__icon {
+  width: 50px !important;
+  height: 50px !important;
+  color: #282522 !important;
+}
+
+body:not(.admin-body) .process-step__number {
+  color: #f56600;
+  font-size: 15px;
+  line-height: 18px;
+}
+
+body:not(.admin-body) .process-step__title {
+  margin: 0 0 7px !important;
+  font-size: 15px !important;
+  line-height: 19px !important;
+}
+
+body:not(.admin-body) .process-step__description {
+  font-size: 13px !important;
+  line-height: 18px !important;
+}
+
+body:not(.admin-body) .process-arrow {
+  flex-basis: 30px;
+  width: 30px;
+  color: #f56600;
+}
+
+body:not(.admin-body) .process-arrow svg {
+  width: 22px;
+  height: 38px;
+}
+
+@media (max-width: 1023px) {
+  body:not(.admin-body) .work-process__panel { height: auto !important; }
+}
+
+@media (max-width: 640px) {
+  body:not(.admin-body) .work-process { margin-top: 56px !important; margin-bottom: 56px !important; }
+  body:not(.admin-body) .work-process__title { font-size: clamp(28px, 8vw, 36px) !important; }
+  body:not(.admin-body) .work-process > .body-text { margin-bottom: 20px !important; font-size: 16px !important; }
+  body:not(.admin-body) .work-process__panel { padding: 20px !important; }
+}
+
 @media (max-width: 640px) {
   body:not(.admin-body) .home-products-section .catalog-card-body-market {
     min-height: 172px;
