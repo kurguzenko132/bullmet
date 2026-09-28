@@ -40,7 +40,7 @@ export function HomeHeroCarousel({ slides, features, autoplay, interval, showDot
     <div className="home-container hero-inner">
       <div className="hero-copy">
         <span className="home-hero-kicker">{slide.kicker}</span><h1>{slide.title}</h1><p>{slide.text}</p>
-        <div className="hero-actions"><Link href={slide.primaryHref} className="btn-orange">{slide.primaryLabel}</Link><Link href="/production" className="btn-outline">О производстве</Link></div>
+        <div className="hero-actions hero-actions--desktop"><Link href={slide.primaryHref} className="btn-orange">{slide.primaryLabel}</Link><Link href="/production" className="btn-outline">О производстве</Link></div>
         {safeSlides.length > 1 && <div className="home-hero-carousel-controls" aria-label="Навигация по слайдам">
           {showArrows && <button type="button" onClick={() => setActive((active - 1 + safeSlides.length) % safeSlides.length)} aria-label="Предыдущий слайд">‹</button>}
           {showDots && safeSlides.map((item, index) => <button type="button" key={item.id} className={index === active ? 'is-active' : ''} onClick={() => setActive(index)} aria-label={`Слайд ${index + 1}`} aria-current={index === active ? 'true' : undefined} />)}
@@ -48,6 +48,7 @@ export function HomeHeroCarousel({ slides, features, autoplay, interval, showDot
         </div>}
       </div>
       {!!features.length && <div className="hero-features" aria-label="Преимущества Bullmet">{features.map((item) => <div className="feature-item" key={item.id}><Icon name={item.icon as any} /><p><Lines value={item.text} /></p></div>)}</div>}
+      <div className="hero-actions hero-actions--mobile"><Link href={slide.primaryHref} className="btn-orange">{slide.primaryLabel}</Link><Link href="/production" className="btn-outline">О производстве</Link></div>
     </div>
   </section>;
 }
