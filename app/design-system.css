@@ -585,6 +585,9 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
 @media (max-width: 640px) {
   body:not(.admin-body) .home-categories-final .home-categories-actions { display: none !important; }
   body:not(.admin-body) .home-categories-final .home-categories-head { box-sizing: border-box; padding-left: 16px; }
+  body:not(.admin-body) .home-categories-final .category-card__content { min-height: 122px; }
+  body:not(.admin-body) .home-categories-final .category-card__title { font-size: 20px; line-height: 1.2; }
+  body:not(.admin-body) .home-categories-final .category-card__content small { font-size: 15px; line-height: 1.35; }
   .home-products-section { margin-top: var(--space-section-mobile); }
   body:not(.admin-body) .home-faq { grid-template-columns: 1fr; gap: 28px; width: 100% !important; padding-inline: 16px !important; margin-top: var(--space-section-mobile) !important; margin-bottom: var(--space-section-mobile) !important; }
   body:not(.admin-body) .home-faq__title { font-size: clamp(30px, 9vw, 38px); }
