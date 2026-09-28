@@ -589,6 +589,7 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   body:not(.admin-body) .home-categories-final .category-card__title { font-size: 20px; line-height: 1.2; }
   body:not(.admin-body) .home-categories-final .category-card__content small { font-size: 15px; line-height: 1.35; }
   body:not(.admin-body) .home-products-section .ui-section-header h2 { font-size: clamp(28px, 8vw, 36px) !important; line-height: 1.04 !important; }
+  body:not(.admin-body) .home-products-section .catalog-card-market { flex: 0 0 min(64vw, 280px) !important; }
   body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 24px !important; line-height: 1.16 !important; }
   body:not(.admin-body) .home-products-section .catalog-card-rating-market,
   body:not(.admin-body) .home-products-section .catalog-card-rating-market small,
