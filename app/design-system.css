@@ -589,11 +589,14 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   body:not(.admin-body) .home-categories-final .category-card__title { font-size: 20px; line-height: 1.2; }
   body:not(.admin-body) .home-categories-final .category-card__content small { font-size: 15px; line-height: 1.35; }
   body:not(.admin-body) .home-products-section .ui-section-header h2 { font-size: clamp(28px, 8vw, 36px) !important; line-height: 1.04 !important; }
-  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 22px !important; line-height: 1.18 !important; }
+  body:not(.admin-body) .home-products-section .catalog-card-body-market h3 { font-size: 24px !important; line-height: 1.16 !important; }
+  body:not(.admin-body) .home-products-section .catalog-card-rating-market,
+  body:not(.admin-body) .home-products-section .catalog-card-rating-market small,
+  body:not(.admin-body) .home-products-section .catalog-card-rating-market span { font-size: 15px !important; line-height: 1.3 !important; }
   body:not(.admin-body) .home-products-section .catalog-card-body-market > small,
   body:not(.admin-body) .home-products-section .catalog-card-color-market,
-  body:not(.admin-body) .home-products-section .catalog-card-color-market span { font-size: 15px !important; line-height: 1.35 !important; }
-  body:not(.admin-body) .home-products-section .catalog-card-bottom-market b { font-size: 20px !important; line-height: 1.2 !important; }
+  body:not(.admin-body) .home-products-section .catalog-card-color-market span { font-size: 16px !important; line-height: 1.35 !important; }
+  body:not(.admin-body) .home-products-section .catalog-card-bottom-market b { font-size: 22px !important; line-height: 1.2 !important; }
   body:not(.admin-body) .production-section-final { width: calc(100% - 16px) !important; }
   body:not(.admin-body) .production-section-final { position: relative; overflow: hidden; background: #fffdf8 !important; }
   body:not(.admin-body) .production-section-final::before { position: absolute; z-index: 1; inset: 0; content: ''; background: linear-gradient(90deg, rgba(255, 253, 248, .97) 0%, rgba(255, 253, 248, .91) 56%, rgba(255, 253, 248, .46) 100%); pointer-events: none; }
