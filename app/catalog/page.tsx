@@ -56,7 +56,9 @@ export default async function CatalogPage({ searchParams }: {
   const products = allProducts.filter((product) => isPublicCatalogProduct(product, { clocksOnly: isClocksOnly(site), categoryPublic: isProductCategoryPublic(categorySettings, product) }));
 
   const reviewStats = await getProductReviewStats(products.map((product) => product.slug));
-  const categories = Array.from(new Set(products.flatMap((product) => [product.category, product.clockTheme]).filter((item): item is string => Boolean(item))));
+  const categories = visibleClockCategories.length
+    ? visibleClockCategories.map((category) => category.slug)
+    : Array.from(new Set(products.flatMap((product) => [product.category, product.clockTheme]).filter((item): item is string => Boolean(item))));
 
   return (
     <>
@@ -69,7 +71,7 @@ export default async function CatalogPage({ searchParams }: {
             <span>Каталог</span>
           </nav>
 
-          <SectionHeader eyebrow="Каталог Bullmet" headingLevel="h1" title="Каталог настенных часов" description="Изделия из металла с элементами дерева собственного производства." />
+          <SectionHeader headingLevel="h1" title="Каталог настенных часов" description="Изделия из металла с элементами дерева собственного производства." />
           <HomePromoBanners placement="catalog_top" />
           <CatalogClient
             products={products}

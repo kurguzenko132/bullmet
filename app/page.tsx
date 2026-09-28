@@ -13,8 +13,9 @@ import { HomeCustomOptions } from '@/components/HomeCustomOptions';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { FeatureCard } from '@/components/cards/FeatureCard';
 import { HomeCategoryCarousel } from '@/components/HomeCategoryCarousel';
+import { HomeInteriorGallery } from '@/components/HomeInteriorGallery';
 import { getHomepageControlSettings, visibleHomeItems } from '@/lib/homepageControl';
-import { getCatalogProducts, getProductReviewStats, withProductReviewStats } from '@/lib/products';
+import { getCatalogProducts, getProductReviewStats, localFallbackProducts, withProductReviewStats } from '@/lib/products';
 import { getPublishedReviews } from '@/lib/publicReviews';
 import { getReviewControlSettings } from '@/lib/reviewControl';
 import { getSiteControlSettings } from '@/lib/siteControl';
@@ -53,6 +54,7 @@ export default async function HomePage() {
 
   const selectedProducts = allProducts.slice(0, 6);
   const products = withProductReviewStats(selectedProducts, await getProductReviewStats(selectedProducts.map((product) => product.slug)));
+  const galleryProducts = products.length ? products : localFallbackProducts;
 
   const featureItems = visibleHomeItems(home.features);
   const categories = visibleCatalogCategories(catalogControl, 'clock').map((category) => ({
@@ -65,7 +67,6 @@ export default async function HomePage() {
     href: `/catalog?category=${encodeURIComponent(category.slug)}`
   }));
   const productionBenefits = visibleHomeItems(home.productionBenefits);
-  const productionGallery = visibleHomeItems(home.gallery);
   const featuredReviews = allReviews.some((review) => review.show_on_homepage) ? allReviews.filter((review) => review.show_on_homepage) : allReviews;
   const homeReviews = (home.reviewsSection.mode === 'manual'
     ? home.reviewsSection.selectedIds.map((id) => allReviews.find((review) => review.id === id)).filter(Boolean)
@@ -141,29 +142,11 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <div style={{ order: layoutOrder('gallery', 6) * 10 + 3 }}><HomeInteriorGallery products={galleryProducts} /></div>
+
         {reviewSettings.homepage && home.reviewsSection.enabled && homeReviews.length > 0 && <div style={{ order: layoutOrder('gallery', 6) * 10 + 4 }}><HomeReviewsClient eyebrow={home.reviewsSection.eyebrow} title={home.reviewsSection.title} reviews={homeReviews} /></div>}
 
         {home.faqSection.enabled && <div style={{ order: layoutOrder('gallery', 6) * 10 + 6 }}><HomeFaqClient title={home.faqSection.title} text={home.faqSection.text} image={home.faqSection.image} items={visibleHomeItems(home.faqItems).slice(0, 6)} /></div>}
-
-        {sectionVisible('gallery', home.gallerySection.enabled) && !!productionGallery.length && (
-          <section className="home-container production-simple production-simple-final" style={{ order: layoutOrder('cta', 7) * 10 - 1 }}>
-            <div className="production-simple-head">
-              <div><h2>{home.gallerySection.title}</h2></div>
-            </div>
-
-            <div className="production-simple-grid">
-              {productionGallery.slice(0, 6).map((item) => (
-                <article className="production-simple-card" key={item.id}>
-                  <img src={item.src} alt={item.title} />
-                  <div className="production-simple-card-copy">
-                    <h4>{item.title}</h4>
-                    <p>{item.note}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
 
         {sectionVisible('cta', home.cta.enabled) && (
           <div style={sectionStyle('cta', 7)}><HomeCustomOptions {...home.cta} benefits={visibleHomeItems(home.cta.benefits)} /></div>

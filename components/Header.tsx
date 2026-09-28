@@ -66,6 +66,7 @@ export function Header() {
   const [cartCount, setCartCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileMenuMounted, setMobileMenuMounted] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchProduct[]>([]);
   const [loading, setLoading] = useState(false);
@@ -186,7 +187,22 @@ export function Header() {
     };
   }, []);
 
-  useAccessibleDialog({ open: mobileOpen, onClose: () => setMobileOpen(false), dialogRef: mobileDialogRef, initialFocusRef: mobileCloseRef });
+  useAccessibleDialog({ open: mobileOpen, onClose: () => setMobileMenu(false), dialogRef: mobileDialogRef, initialFocusRef: mobileCloseRef });
+
+  useEffect(() => {
+    if (mobileOpen || !mobileMenuMounted) return;
+    const timer = window.setTimeout(() => setMobileMenuMounted(false), 260);
+    return () => window.clearTimeout(timer);
+  }, [mobileMenuMounted, mobileOpen]);
+
+  function setMobileMenu(open: boolean) {
+    if (open) {
+      setMobileMenuMounted(true);
+      window.requestAnimationFrame(() => setMobileOpen(true));
+      return;
+    }
+    setMobileOpen(false);
+  }
 
   useEffect(() => {
     if (searchOpen) searchInputRef.current?.focus();
@@ -262,31 +278,31 @@ export function Header() {
           <div className="header-actions-exact header-actions-polished">
             <Link href="/cart" className="cart-mini" aria-label="Корзина"><Icon name="cart" />{cartCount > 0 && <span>{cartCount}</span>}</Link>
             <Link href={accountHref} className={accountEmail ? 'login-btn login-btn--active' : 'login-btn'} title={accountEmail ? `Личный кабинет: ${accountEmail}` : 'Войти в аккаунт'}><Icon name="user" /><span>{accountLabel}</span></Link>
-            <button className={mobileOpen ? 'mobile-menu-btn is-open' : 'mobile-menu-btn'} type="button" onClick={() => setMobileOpen((value) => !value)} aria-label="Меню"><span /><span /><span /></button>
+            <button className={mobileOpen ? 'mobile-menu-btn is-open' : 'mobile-menu-btn'} type="button" onClick={() => setMobileMenu(!mobileOpen)} aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'} aria-expanded={mobileOpen}><span /><span /><span /></button>
           </div>
         </Container>
       </header>
 
-      {mobileOpen && (
-        <div ref={mobileDialogRef} className="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="Мобильное меню" tabIndex={-1}>
-          <button className="mobile-menu-backdrop" type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть меню" />
+      {mobileMenuMounted && (
+        <div ref={mobileDialogRef} className={`mobile-menu-overlay${mobileOpen ? ' is-open' : ''}`} role="dialog" aria-modal="true" aria-label="Мобильное меню" tabIndex={-1}>
+          <button className="mobile-menu-backdrop" type="button" onClick={() => setMobileMenu(false)} aria-label="Закрыть меню" />
           <div className="mobile-menu-panel">
             <div className="mobile-menu-head">
-              <Link href="/" className="mobile-menu-brand" onClick={() => setMobileOpen(false)}>
+              <Link href="/" className="mobile-menu-brand" onClick={() => setMobileMenu(false)}>
                 <img src="/bullmet-logo-mark.png" alt="" className="mobile-menu-brand-mark mobile-menu-brand-mark--bullmet" />
                 <span className="mobile-menu-brand-text"><b>{siteControl?.general?.logoText || 'BULLMET'}</b></span>
               </Link>
-              <button ref={mobileCloseRef} type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть">×</button>
+              <button ref={mobileCloseRef} type="button" onClick={() => setMobileMenu(false)} aria-label="Закрыть">×</button>
             </div>
             <nav>
-              {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}<span>→</span></Link>)}
-              <Link href={accountHref} onClick={() => setMobileOpen(false)}>Личный кабинет<span>→</span></Link>
+              {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileMenu(false)}>{item.label}<span>→</span></Link>)}
+              <Link href={accountHref} onClick={() => setMobileMenu(false)}>Личный кабинет<span>→</span></Link>
             </nav>
             <div className="mobile-menu-contact">
               <span>Нужна консультация? {siteControl?.contacts?.phone || ''}</span>
               <div className="mobile-menu-contact-actions">
-                <Link href="/contacts" onClick={() => setMobileOpen(false)}>Контакты</Link>
-                <Link href="/catalog" onClick={() => setMobileOpen(false)}>Каталог</Link>
+                <Link href="/contacts" onClick={() => setMobileMenu(false)}>Контакты</Link>
+                <Link href="/catalog" onClick={() => setMobileMenu(false)}>Каталог</Link>
               </div>
             </div>
           </div>

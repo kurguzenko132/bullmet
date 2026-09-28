@@ -3,19 +3,12 @@
 import { useRef, useState } from 'react';
 import { useAccessibleDialog } from '@/lib/useAccessibleDialog';
 import {
-  BriefcaseBusiness,
+  Check,
   ChevronDown,
-  Circle,
-  Coffee,
-  Fish,
-  Heart,
-  Landmark,
-  Layers3,
   LayoutGrid,
-  Music2,
+  Palette,
   SlidersHorizontal,
   Tag,
-  Trophy,
   X
 } from 'lucide-react';
 
@@ -34,6 +27,7 @@ type CatalogFilterSidebarProps = {
   categories: FilterCategory[];
   materials: FilterMaterial[];
   productsCount: number;
+  clockProductsCount: number;
   selectedCategory: string;
   selectedMaterial: string;
   priceFrom: string;
@@ -48,21 +42,6 @@ type CatalogFilterSidebarProps = {
   onPriceApply: (priceFrom: string, priceTo: string) => void;
   onReset: () => void;
 };
-
-const categoryIcons: Record<string, typeof LayoutGrid> = {
-  'классика': Landmark,
-  'кофе и кухня': Coffee,
-  'музыка': Music2,
-  'профессии': BriefcaseBusiness,
-  'романтика': Heart,
-  'рыбалка, охота': Fish,
-  'рыбалка и охота': Fish,
-  'спорт': Trophy
-};
-
-function categoryIcon(label: string) {
-  return categoryIcons[label.toLowerCase()] || LayoutGrid;
-}
 
 function FilterSection({
   icon: SectionIcon,
@@ -92,6 +71,7 @@ export function CatalogFilterSidebar({
   categories,
   materials,
   productsCount,
+  clockProductsCount,
   selectedCategory,
   selectedMaterial,
   priceFrom,
@@ -108,10 +88,30 @@ export function CatalogFilterSidebar({
 }: CatalogFilterSidebarProps) {
   const drawerRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [clockCategoriesOpen, setClockCategoriesOpen] = useState(false);
   useAccessibleDialog({ open: isOpen, onClose, dialogRef: drawerRef, initialFocusRef: closeButtonRef });
 
   function reset() {
     onReset();
+  }
+
+  const selectedClockCategories = selectedCategory.split('||').filter((item) => item && item !== '__all_clocks__');
+  const allClocksSelected = selectedCategory === '__all_clocks__';
+
+  function toggleClockCategory(category: string) {
+    const next = new Set(allClocksSelected ? [] : selectedClockCategories);
+    if (next.has(category)) next.delete(category);
+    else next.add(category);
+    onCategoryChange(Array.from(next).join('||'));
+  }
+
+  const selectedColors = selectedMaterial.split('||').filter(Boolean);
+
+  function toggleColor(color: string) {
+    const next = new Set(selectedColors);
+    if (next.has(color)) next.delete(color);
+    else next.add(color);
+    onMaterialChange(Array.from(next).join('||'));
   }
 
   return (
@@ -128,28 +128,42 @@ export function CatalogFilterSidebar({
           <FilterSection icon={LayoutGrid} title="Категории">
             <div className="catalog-filter-list catalog-filter-list--categories">
               <button className={selectedCategory ? 'catalog-filter-option' : 'catalog-filter-option is-active'} type="button" onClick={() => onCategoryChange('')}>
-                <span className="catalog-filter-option-icon"><LayoutGrid /></span>
+                <span className="catalog-filter-option-check" aria-hidden="true">{!selectedCategory && <Check />}</span>
                 <span>Все товары</span>
                 <b className="catalog-filter-count">{productsCount}</b>
               </button>
-              {categories.filter((item) => item.count > 0).map((item) => {
-                const CategoryIcon = categoryIcon(item.label);
-                const isActive = selectedCategory === item.id;
-                const isDisabled = item.count === 0;
-                return (
-                  <button
-                    className={`catalog-filter-option${isActive ? ' is-active' : ''}${isDisabled ? ' is-disabled' : ''}`}
-                    type="button"
-                    key={item.id}
-                    onClick={() => onCategoryChange(item.id)}
-                    aria-pressed={isActive}
-                  >
-                    <span className="catalog-filter-option-icon"><CategoryIcon /></span>
-                    <span>{item.label}</span>
-                    <b className="catalog-filter-count">{item.count}</b>
+              <div className="catalog-filter-clock-group">
+                <div className="catalog-filter-clock-parent">
+                  <button className={allClocksSelected ? 'catalog-filter-option is-active' : 'catalog-filter-option'} type="button" onClick={() => onCategoryChange(allClocksSelected ? '' : '__all_clocks__')} role="checkbox" aria-checked={allClocksSelected}>
+                    <span className="catalog-filter-option-check" aria-hidden="true">{allClocksSelected && <Check />}</span>
+                    <span>Все часы</span>
+                    <b className="catalog-filter-count">{clockProductsCount}</b>
                   </button>
-                );
-              })}
+                  <button className="catalog-filter-clock-toggle" type="button" onClick={() => setClockCategoriesOpen((value) => !value)} aria-label={clockCategoriesOpen ? 'Свернуть категории часов' : 'Показать категории часов'} aria-expanded={clockCategoriesOpen}>
+                    <ChevronDown className={clockCategoriesOpen ? 'is-open' : ''} aria-hidden="true" />
+                  </button>
+                </div>
+                {clockCategoriesOpen && <div className="catalog-filter-clock-children">
+                  {categories.map((item) => {
+                    const isActive = selectedClockCategories.includes(item.id);
+                    const isDisabled = item.count === 0;
+                    return (
+                      <button
+                        className={`catalog-filter-option${isActive ? ' is-active' : ''}${isDisabled ? ' is-disabled' : ''}`}
+                        type="button"
+                        key={item.id}
+                        onClick={() => toggleClockCategory(item.id)}
+                        role="checkbox"
+                        aria-checked={isActive}
+                      >
+                        <span className="catalog-filter-option-check" aria-hidden="true">{isActive && <Check />}</span>
+                        <span>{item.label}</span>
+                        <b className="catalog-filter-count">{item.count}</b>
+                      </button>
+                    );
+                  })}
+                </div>}
+              </div>
             </div>
           </FilterSection>
 
@@ -162,22 +176,23 @@ export function CatalogFilterSidebar({
             {priceError && <p className="catalog-filter-price-error" role="alert">{priceError}</p>}
           </FilterSection>
 
-          <FilterSection icon={Layers3} title="Материал">
-            <div className="catalog-filter-list catalog-filter-list--materials" role="radiogroup" aria-label="Материал">
-              <button className={!selectedMaterial ? 'catalog-material-radio is-active' : 'catalog-material-radio'} type="button" role="radio" aria-checked={!selectedMaterial} onClick={() => onMaterialChange('')}>
-                <Circle aria-hidden="true" /><span>Все материалы</span>
+          <FilterSection icon={Palette} title="Цвет">
+            <div className="catalog-filter-list catalog-filter-list--materials" aria-label="Цвет">
+              <button className={!selectedColors.length ? 'catalog-material-radio is-active' : 'catalog-material-radio'} type="button" onClick={() => onMaterialChange('')} role="checkbox" aria-checked={!selectedColors.length}>
+                <span className="catalog-filter-option-check" aria-hidden="true">{!selectedColors.length && <Check />}</span><span>Все цвета</span>
               </button>
-              {materials.map((item) => (
-                <button className={selectedMaterial === item.id ? 'catalog-material-radio is-active' : 'catalog-material-radio'} type="button" role="radio" aria-checked={selectedMaterial === item.id} key={item.id} onClick={() => onMaterialChange(item.id)}>
-                  <Circle aria-hidden="true" /><span>{item.label}</span>
-                </button>
-              ))}
+              {materials.map((item) => {
+                const isActive = selectedColors.includes(item.id);
+                return <button className={isActive ? 'catalog-material-radio is-active' : 'catalog-material-radio'} type="button" role="checkbox" aria-checked={isActive} key={item.id} onClick={() => toggleColor(item.id)}>
+                  <span className="catalog-filter-option-check" aria-hidden="true">{isActive && <Check />}</span><span>{item.label}</span>
+                </button>;
+              })}
             </div>
           </FilterSection>
         </div>
 
         <footer className="catalog-filter-modern-actions">
-          {activeFiltersCount > 0 && <button className="catalog-filter-reset" type="button" onClick={reset}>Сбросить фильтры</button>}
+          <button className="catalog-filter-reset" type="button" onClick={reset}>Сбросить фильтры</button>
           <button className="catalog-filter-show-results" type="button" onClick={onClose}>Показать товары{resultsCount ? ` (${resultsCount})` : ''}</button>
         </footer>
       </aside>

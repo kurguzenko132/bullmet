@@ -21,19 +21,18 @@ const defaultSettings: FooterSettings = {
 
 export function Footer() {
   const [settings, setSettings] = useState<FooterSettings>(defaultSettings);
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
     fetch('/api/site-control')
       .then((response) => response.ok ? response.json() : null)
-      .then((data) => { if (active && data?.settings) { setSettings(data.settings); setSettingsLoaded(true); } })
+      .then((data) => { if (active && data?.settings) setSettings(data.settings); })
       .catch(() => null);
     return () => { active = false; };
   }, []);
 
   const rawFooterLinks = useMemo(() => settings.navigation.filter((item) => item.location === 'footer' && item.visible).sort((a, b) => a.order - b.order), [settings.navigation]);
-  const companyLinks = settingsLoaded ? rawFooterLinks.slice(0, 4) : [
+  const companyLinks = rawFooterLinks.length ? rawFooterLinks.slice(0, 4) : [
     { href: '/production', label: 'Производство' },
     { href: '/contacts', label: 'Контакты' }
   ];
@@ -47,7 +46,7 @@ export function Footer() {
         <div className="footer-grid-exact footer-grid-launch">
         <div className="footer-brand-column">
           <Link href="/" className="brand-exact footer-brand">
-            <img src="/logo-shield-check.svg" alt="" className="brand-mark" />
+            <img src="/bullmet-logo-mark.png" alt="" className="brand-mark brand-mark--bullmet" />
             <span className="brand-text"><b>{settings.general.logoText}</b><small>{settings.general.tagline}</small></span>
           </Link>
           <p className="footer-description">Собственное производство изделий из металла и дерева с 2017 года</p>

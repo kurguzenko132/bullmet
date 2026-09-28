@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { ArrowDownUp, ChevronDown, SearchX } from 'lucide-react';
 import { Icon } from './Icon';
 import { CatalogFilterSidebar } from './CatalogFilterSidebar';
 import { ProductCard } from './ProductCard';
-import { productAvailability, type CatalogProduct, type ProductReviewStats } from '@/lib/products';
+import { isPublicClockProduct, productAvailability, type CatalogProduct, type ProductReviewStats } from '@/lib/products';
 import type { ReviewControlSettings } from '@/lib/reviewControl';
 
 function addToCart(product: CatalogProduct) {
@@ -145,7 +146,8 @@ export function CatalogClient({
     if (`${pathname}${window.location.search}` !== nextUrl) router.replace(nextUrl, { scroll: false });
   }, [filterKey, pathname, router]);
 
-  const materials = useMemo(() => Array.from(new Set(products.map((product) => product.material).filter(Boolean))), [products]);
+  const colors = ['Черный', 'Серый', 'Белый'];
+  const clockProductsCount = useMemo(() => products.filter(isPublicClockProduct).length, [products]);
   const categoryOptions = useMemo(() => categories.map((item) => ({
     id: item,
     label: item,
@@ -161,8 +163,13 @@ export function CatalogClient({
       .filter((product) => {
         const text = [product.title, product.slug, product.category, product.clockTheme, product.short, product.material, product.description].join(' ').toLowerCase();
         const matchesQuery = !q || text.includes(q);
-        const matchesCategory = !category || product.category === category || product.clockTheme === category || text.includes(category.toLowerCase());
-        const matchesMaterial = !material || product.material === material;
+        const selectedCategories = category.split('||').filter(Boolean);
+        const matchesCategory = !selectedCategories.length
+          || (selectedCategories.includes('__all_clocks__')
+            ? isPublicClockProduct(product)
+            : selectedCategories.some((selected) => product.category === selected || product.clockTheme === selected || text.includes(selected.toLowerCase())));
+        const selectedColors = material.split('||').filter(Boolean);
+        const matchesMaterial = !selectedColors.length || selectedColors.includes(product.colorName || '');
         const matchesPrice = product.price >= min && product.price <= max;
         return matchesQuery && matchesCategory && matchesMaterial && matchesPrice;
       })
@@ -201,8 +208,9 @@ export function CatalogClient({
 
       <CatalogFilterSidebar
         categories={categoryOptions}
-        materials={materials.map((item) => ({ id: item, label: item }))}
+        materials={colors.map((item) => ({ id: item, label: item }))}
         productsCount={products.length}
+        clockProductsCount={clockProductsCount}
         selectedCategory={category}
         selectedMaterial={material}
         priceFrom={minPrice}
@@ -233,13 +241,17 @@ export function CatalogClient({
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Искать часы: римские, кофе, классика..." />
           </label>
 
-          <select aria-label="Сортировка" value={sort} onChange={(event) => setSort(event.target.value)}>
-            <option value="popular">По популярности</option>
-            <option value="price-asc">Сначала дешевле</option>
-            <option value="price-desc">Сначала дороже</option>
-            <option value="new">Новинки</option>
-            <option value="discount">Со скидкой</option>
-          </select>
+          <label className="catalog-sort-market">
+            <ArrowDownUp aria-hidden="true" />
+            <select aria-label="Сортировка" value={sort} onChange={(event) => setSort(event.target.value)}>
+              <option value="popular">По популярности</option>
+              <option value="price-asc">Сначала дешевле</option>
+              <option value="price-desc">Сначала дороже</option>
+              <option value="new">Новинки</option>
+              <option value="discount">Со скидкой</option>
+            </select>
+            <ChevronDown className="catalog-sort-market-chevron" aria-hidden="true" />
+          </label>
 
         </div>
 
@@ -247,8 +259,6 @@ export function CatalogClient({
           <b>Показано {filteredProducts.length ? `1–${filteredProducts.length}` : '0'} из {filteredProducts.length}</b>
           <div className="catalog-active-chips-market">
             {query.trim() && <button type="button" onClick={() => setQuery('')}>Поиск: {query} ×</button>}
-            {category && <button type="button" onClick={() => setCategory('')}>{category} ×</button>}
-            {material && <button type="button" onClick={() => setMaterial('')}>{material} ×</button>}
             {(minPrice || maxPrice) && <button type="button" onClick={() => { setMinPrice(''); setMaxPrice(''); }}>Цена ×</button>}
           </div>
         </div>
@@ -266,7 +276,12 @@ export function CatalogClient({
           })}
         </div>
 
-        {!filteredProducts.length && <div className="catalog-empty-state"><h2>Товары не найдены</h2><p>Попробуйте изменить фильтры или поисковый запрос.</p><button type="button" onClick={reset}>Сбросить фильтры</button></div>}
+        {!filteredProducts.length && <div className="catalog-empty-state">
+          <SearchX aria-hidden="true" />
+          <h2>Товары не найдены</h2>
+          <p>Попробуйте изменить фильтры или поисковый запрос.</p>
+          <button type="button" onClick={reset}>Сбросить фильтры</button>
+        </div>}
       </section>
     </div>
   );
