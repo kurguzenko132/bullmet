@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle2, Mail, MapPin, MessageCircle, Phone, Send, ShieldCheck, Wrench } from 'lucide-react';
+import { CheckCircle2, Mail, MapPin, Phone, Send } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ContactForm } from '@/components/ContactForm';
@@ -20,12 +20,6 @@ const contacts = [
   { icon: MapPin, title: 'Адрес', value: 'Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А', note: 'Производство Bullmet', href: 'https://maps.google.com/?q=Брестская обл., Ивацевичский р-н, д. Булла, ул. Школьная 10А' }
 ];
 
-const benefits = [
-  { icon: MessageCircle, title: 'Быстро отвечаем', text: 'В рабочее время' },
-  { icon: ShieldCheck, title: 'Помогаем с выбором', text: 'Подскажем подходящую модель' },
-  { icon: Wrench, title: 'Индивидуальные вопросы', text: 'Уточним детали по изделию' }
-];
-
 export default function ContactsPage() {
   return (
     <>
@@ -37,9 +31,6 @@ export default function ContactsPage() {
             <p className="contacts-story-kicker">Контакты</p>
             <h1>Будем рады вашему обращению</h1>
             <p className="contacts-story-lead">Ответим на вопросы, поможем с выбором настенных часов и подскажем детали по изделиям Bullmet. Свяжитесь с нами удобным способом.</p>
-            <div className="contacts-story-benefits">
-              {benefits.map(({ icon: Icon, title, text }) => <article key={title}><Icon aria-hidden="true" /><div><h2>{title}</h2><p>{text}</p></div></article>)}
-            </div>
           </div>
           <div className="contacts-story-hero-image">
             <Image src="/assets/contacts-hero-reception.jpg" alt="Ресепшен Bullmet" fill priority sizes="(max-width: 767px) 100vw, 52vw" />

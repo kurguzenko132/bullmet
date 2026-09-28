@@ -278,7 +278,6 @@ export function Header() {
               </Link>
               <button ref={mobileCloseRef} type="button" onClick={() => setMobileOpen(false)} aria-label="Закрыть">×</button>
             </div>
-            <button className="mobile-menu-search" type="button" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}><Icon name="search" /> Поиск по каталогу</button>
             <nav>
               {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setMobileOpen(false)}>{item.label}<span>→</span></Link>)}
               <Link href={accountHref} onClick={() => setMobileOpen(false)}>Личный кабинет<span>→</span></Link>
@@ -294,7 +293,7 @@ export function Header() {
         </div>
       )}
 
-      <nav className="mobile-bottom-nav" aria-label="Быстрая навигация">
+      {!mobileOpen && <nav className="mobile-bottom-nav" aria-label="Быстрая навигация">
         {bottomNav.map((item) => {
           const active = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href.split('#')[0]);
           return (
@@ -305,7 +304,7 @@ export function Header() {
             </Link>
           );
         })}
-      </nav>
+      </nav>}
     </>
   );
 }

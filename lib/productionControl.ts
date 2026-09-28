@@ -24,7 +24,7 @@ export const defaultProductionControl: ProductionControlSettings = {
     { id: 'quality', icon: 'check', title: 'Контроль перед передачей', text: 'Проверяем внешний вид и сборку каждого изделия.', visible: true, order: 3 }
   ],
   structure: {
-    enabled: true, eyebrow: 'Детали', title: 'Из чего состоят наши часы', image: '/assets/production-clock-numeral-clean.png', imageAlt: 'Настенные часы Bullmet с крупными цифрами',
+    enabled: true, eyebrow: 'Из чего состоят наши часы', title: 'Конструкция и материалы', image: '/assets/production-exploded-clock-full.png', imageAlt: 'Объёмный exploded view конструкции настенных часов Bullmet',
     left: [
       { id: 'metal', icon: 'layers', title: 'Металлическая основа', text: 'Прочный металл обеспечивает форму, жёсткость и долговечность.', visible: true, order: 1 },
       { id: 'paint', icon: 'paint', title: 'Покраска', text: 'Порошковое покрытие защищает металл и сохраняет аккуратный внешний вид.', visible: true, order: 2 }
@@ -36,10 +36,10 @@ export const defaultProductionControl: ProductionControlSettings = {
     ]
   },
   process: { enabled: true, title: 'Как создаются наши часы', steps: [
-    { id: 'metal', number: '01', title: 'Металл', text: 'Подбираем металл нужной толщины и качества.', image: '/assets/cat-metal.jpg', visible: true, order: 1 },
-    { id: 'cutting', number: '02', title: 'Резка', text: 'Вырезаем элементы на современном оборудовании.', image: '/assets/hero-machine.jpg', visible: true, order: 2 },
-    { id: 'processing', number: '03', title: 'Обработка', text: 'Шлифуем края, убираем заусенцы и готовим поверхность.', image: '/assets/production.jpg', visible: true, order: 3 },
-    { id: 'painting', number: '04', title: 'Покраска', text: 'Наносим покрытие для ровного цвета и защиты.', image: '/assets/service-metal.jpg', visible: true, order: 4 },
+    { id: 'metal', number: '01', title: 'Разработка дизайна', text: 'Создаём макеты по вашим идеям или предлагаем собственные решения.', image: '/assets/process-design.png', visible: true, order: 1 },
+    { id: 'cutting', number: '02', title: 'Лазерная резка', text: 'Используем лазерные станки с высокой точностью до 0,1 мм.', image: '/assets/process-laser-cutting.png', visible: true, order: 2 },
+    { id: 'processing', number: '03', title: 'Покраска', text: 'Наносим долговечное порошковое покрытие в любой цвет.', image: '/assets/process-painting.png', visible: true, order: 3 },
+    { id: 'painting', number: '04', title: 'Сборка и проверка', text: 'Тщательно собираем, проверяем механизм и внешний вид каждого изделия.', image: '/assets/process-assembly.png', visible: true, order: 4 },
     { id: 'assembly', number: '05', title: 'Сборка', text: 'Соединяем металл, дерево, механизм и стрелки.', image: '/assets/gallery-5.jpg', visible: true, order: 5 },
     { id: 'check', number: '06', title: 'Проверка', text: 'Проверяем ход часов, внешний вид и комплектацию.', image: '/assets/prod-clock-classic.jpg', visible: true, order: 6 }
   ] },
