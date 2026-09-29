@@ -583,7 +583,9 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
 }
 
 @media (max-width: 640px) {
-  body:not(.admin-body) .home-faq__contact-card { box-sizing: border-box; width: calc(100% + 40px); max-width: none; margin-left: -20px; }
+  body:not(.admin-body) .home-interior-gallery__grid { grid-template-columns: 1fr !important; }
+  body:not(.admin-body) .home-interior-gallery__grid .interior-gallery-card:nth-child(n + 2) { display: none; }
+  body:not(.admin-body) .home-faq__contact-card { box-sizing: border-box; width: calc(100vw - 30px); max-width: none; margin-left: -4px; }
   body:not(.admin-body) .home-custom-options__card { position: relative; display: block !important; min-height: 590px; overflow: hidden; background: #f7f5f1; }
   body:not(.admin-body) .home-custom-options__card::before { position: absolute; z-index: 1; inset: 0; content: ''; background: linear-gradient(180deg, rgba(247, 245, 241, .98) 0%, rgba(247, 245, 241, .92) 52%, rgba(247, 245, 241, .58) 100%); pointer-events: none; }
   body:not(.admin-body) .home-custom-options__visual { position: absolute !important; z-index: 0; inset: 0; width: 100%; height: 100% !important; min-height: 0 !important; aspect-ratio: auto !important; }
@@ -627,6 +629,84 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   .contacts-story-hero, .contacts-story-cards, .contacts-story-main, .contacts-story-faq, .contacts-story-cta { width: min(100% - 32px, 1440px); }
   .production-story-hero-copy { width: min(100% - 32px, 1440px); padding: 32px 0 24px; }
   .production-story-hero { min-height: 500px; }
+
+  /* Match the production-page introduction to the mobile production card on the home page. */
+  .production-story-page .production-story-hero {
+    width: calc(100% - 16px) !important;
+    margin-inline: auto;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: #fffdf8;
+  }
+  .production-story-page .production-story-hero-visual { min-height: 340px; }
+  .production-story-page .production-story-hero .production-story-hero-media::after {
+    background: linear-gradient(90deg, rgba(255, 253, 248, .98) 0%, rgba(255, 253, 248, .92) 56%, rgba(255, 253, 248, .45) 100%);
+  }
+  .production-story-page .production-story-hero .production-story-hero-copy {
+    width: calc(100% - 48px);
+    padding: 28px 0 32px;
+  }
+  .production-story-page .production-story-hero h1 {
+    max-width: 330px;
+    color: var(--color-text) !important;
+    font-size: 32px;
+    line-height: 1.08;
+    text-shadow: none;
+  }
+  .production-story-page .production-story-hero .production-story-lead {
+    max-width: 320px;
+    color: var(--color-text-secondary);
+    font-size: 15px;
+    line-height: 1.52;
+    text-shadow: none;
+  }
+  .production-story-page .production-story-hero .production-story-actions { width: 100%; }
+  .production-story-page .production-story-hero .production-story-button {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+  .production-story-page .production-story-hero .production-story-facts {
+    position: static;
+    gap: 0;
+    padding: 10px 24px 10px;
+    background: #fffdf8;
+  }
+  .production-story-page .production-story-hero .production-story-facts article {
+    grid-template-columns: 48px minmax(0, 1fr);
+    align-items: center;
+    min-height: 72px;
+    column-gap: 14px;
+    padding: 12px 0;
+    border: 0;
+    border-top: 1px solid #e8e0d8;
+    border-radius: 0;
+    background: transparent;
+  }
+  .production-story-page .production-story-hero .production-story-facts article:first-child { border-top: 0; }
+  .production-story-page .production-story-hero .production-story-facts article:last-child {
+    min-height: 64px;
+    padding-bottom: 10px;
+  }
+  .production-story-page .production-story-hero .production-story-facts svg {
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+    border-radius: 10px;
+    color: var(--color-primary);
+    background: #fff8f1;
+  }
+  .production-story-page .production-story-hero .production-story-facts h2 {
+    color: var(--color-text);
+    font-size: 16px;
+    line-height: 1.28;
+  }
+  .production-story-page .production-story-hero .production-story-facts p {
+    margin-top: 3px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
   .production-process-dark { padding: 48px 16px; }
   .production-process-head { flex-direction: column; gap: 24px; }
   .production-process-head p { font-size: 15px; }
