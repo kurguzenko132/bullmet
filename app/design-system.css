@@ -997,7 +997,7 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
     justify-content: center;
   }
   body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-bottom-market b {
-    font-size: 20px;
+    font-size: 18px;
   }
 }
 
