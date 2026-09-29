@@ -974,7 +974,32 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   .contacts-faq-list button { min-height: 64px; font-size: 14px; }
   .contacts-faq-list button svg { width: 20px; height: 20px; }
   .contacts-faq-list article p { font-size: 14px; line-height: 1.45; }
+}
+
+@media (min-width: 641px) {
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market {
+    padding-bottom: 12px;
   }
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market h3 {
+    min-height: 0;
+    margin: 5px 0 0;
+  }
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market > p:not(.catalog-card-color-market) {
+    margin-top: 4px;
+  }
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-bottom-market {
+    align-items: center;
+  }
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-bottom-market > div {
+    display: flex;
+    align-self: stretch;
+    flex-direction: column;
+    justify-content: center;
+  }
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-bottom-market b {
+    font-size: 20px;
+  }
+}
 
 /* Reserve visible breathing room beneath the mobile hero actions. */
 @media (max-width: 767px) {
