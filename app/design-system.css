@@ -1056,6 +1056,12 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   body:not(.admin-body) .product-review-form-card { border-color: var(--color-border); border-radius: var(--radius-md); }
 }
 
+@media (min-width: 1440px) {
+  body:not(.admin-body) .catalog-page--improved .catalog-grid-market:not(.catalog-grid-market--list) {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+}
+
 /* Reserve visible breathing room beneath the mobile hero actions. */
 @media (max-width: 767px) {
   body:not(.admin-body) .home-final-page .home-final-hero .hero-features {
