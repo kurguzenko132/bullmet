@@ -54,7 +54,7 @@ export default function ContactsPage() {
 
         <section className="contacts-story-cta">
           <Image src="/assets/contacts-cta-workbench.jpg" alt="Детали производства Bullmet" fill sizes="100vw" />
-          <div className="contacts-story-cta-content"><p className="contacts-story-kicker">Остались вопросы?</p><h2>Мы всегда на связи</h2><p>Напишите нам или позвоните — поможем с выбором, подскажем по наличию и ответим на вопросы.</p><div><a href="https://t.me/bullmet_by" target="_blank" rel="noreferrer"><Send aria-hidden="true" />Написать в Telegram</a><a href="tel:+375298027061"><Phone aria-hidden="true" />Позвонить</a></div></div>
+          <div className="contacts-story-cta-content"><p className="contacts-story-kicker">Остались вопросы?</p><h2>Мы всегда на связи</h2><p>Напишите нам или позвоните — поможем с выбором, подскажем по наличию и ответим на вопросы.</p><div><a href="https://t.me/bullmet_by" target="_blank" rel="noreferrer"><Send aria-hidden="true" />Написать в Telegram</a><a href="mailto:info@bullmet.by"><Mail aria-hidden="true" />Написать на почту</a><a href="tel:+375298027061"><Phone aria-hidden="true" />Позвонить</a></div></div>
           <ul className="contacts-story-cta-list"><li><CheckCircle2 />Консультация по моделям</li><li><CheckCircle2 />Помощь в подборе</li><li><CheckCircle2 />Ответ в кратчайшие сроки</li></ul>
           <p className="contacts-story-cta-signature" aria-hidden="true">Делаем<br />больше, чем часы</p>
         </section>

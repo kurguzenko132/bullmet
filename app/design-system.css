@@ -628,13 +628,59 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   body:not(.admin-body) .home-faq__title { font-size: clamp(30px, 9vw, 38px); }
   .production-story-hero, .production-clock-structure, .production-result-section, .production-brand-strip,
   .contacts-story-hero, .contacts-story-cards, .contacts-story-main, .contacts-story-faq, .contacts-story-cta { width: min(100% - 32px, 1440px); }
+  .contacts-story-page .contacts-story-hero {
+    position: relative;
+    display: block;
+    width: calc(100% - 16px);
+    min-height: 300px;
+    margin: 12px auto 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: #fffdf8;
+  }
+  .contacts-story-page .contacts-story-hero::after {
+    display: block;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(255, 253, 248, .98) 0%, rgba(255, 253, 248, .92) 56%, rgba(255, 253, 248, .45) 100%);
+  }
+  .contacts-story-page .contacts-story-hero-image {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    min-height: 0 !important;
+  }
+  .contacts-story-page .contacts-story-hero-image img { object-position: center; }
+  .contacts-story-page .contacts-story-copy {
+    position: relative;
+    z-index: 2;
+    width: calc(100% - 48px);
+    margin-inline: auto;
+    padding: 28px 0 32px;
+  }
+  .contacts-story-page .contacts-story-breadcrumbs,
+  .contacts-story-page .contacts-story-hero-words { display: none; }
+  .contacts-story-page .contacts-story-copy h1 {
+    max-width: 330px;
+    margin-top: 14px;
+    color: var(--color-text);
+    font-size: 30px;
+    line-height: 1.1;
+  }
+  .contacts-story-page .contacts-story-lead {
+    max-width: 325px;
+    margin-top: 18px !important;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+  }
   .production-story-hero-copy { width: min(100% - 32px, 1440px); padding: 32px 0 24px; }
   .production-story-hero { min-height: 500px; }
 
   /* Match the production-page introduction to the mobile production card on the home page. */
   .production-story-page .production-story-hero {
     width: calc(100% - 16px) !important;
-    margin-inline: auto;
+    margin: 12px auto 0;
     overflow: hidden;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -750,7 +796,7 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
     grid-column: auto;
     margin: 6px 0 0 32px;
   }
-  .production-quality-section { grid-template-columns: 1fr; gap: 12px; width: min(100% - 32px, 1440px); margin-block: 16px 56px; }
+  .production-quality-section { grid-template-columns: 1fr; gap: 12px; width: min(100% - 32px, 1440px); margin-block: 16px 24px; }
   .production-quality-image, .production-materials-copy, .production-quality-copy { min-height: 270px; }
   .production-quality-section > .production-quality-image:first-child { display: none; }
   .production-quality-section > .production-quality-image:last-child { display: none; }
@@ -803,6 +849,29 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   }
   .production-materials-copy { padding: 24px 24px 36px; }
   .production-quality-copy { padding: 24px 24px 36px; }
+  .production-result-section { padding: 24px 0 56px; }
+  .production-result-action {
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    justify-content: center;
+    margin-top: 24px;
+  }
+  .production-brand-strip {
+    gap: 20px;
+    padding: 28px 0;
+    border-top: 0;
+  }
+  .production-brand-intro {
+    align-items: flex-start;
+    max-width: none;
+    gap: 14px;
+  }
+  .production-brand-intro svg { width: 40px; height: 40px; }
+  .production-brand-intro p { font-size: 17px; line-height: 1.45; }
+  .production-brand-features { gap: 16px 12px; }
+  .production-brand-features span { gap: 10px; font-size: 15px; line-height: 1.35; }
+  .production-brand-features svg { width: 30px; height: 30px; }
   .production-quality-section > :nth-child(3) { order: 3; }
   .production-quality-section > :nth-child(4) { order: 4; }
   .production-result-grid { grid-template-columns: 1fr; gap: 28px; }
@@ -811,8 +880,54 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   .contacts-story-cards article { min-height: 184px; padding: 16px; }
   .contacts-story-main { grid-template-areas: 'form' 'map'; grid-template-columns: 1fr; }
   .contacts-story-form { grid-area: form; min-height: 0; padding: 24px 20px; }
-  .contacts-story-map { grid-area: map; min-height: 360px; }
-}
+  .contacts-story-form .contact-form-pro--rich {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .contacts-story-form .contact-form-pro--rich label span { font-size: 13px; }
+  .contacts-story-form .contact-form-pro--rich input,
+  .contacts-story-form .contact-form-pro--rich textarea { font-size: 16px; }
+  .contacts-story-form .contact-form-consent { font-size: 13px; line-height: 1.4; }
+  .contacts-story-map {
+    display: grid;
+    grid-area: map;
+    grid-template-rows: 360px auto;
+    gap: 12px;
+    min-height: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .contacts-story-map-frame {
+    position: relative;
+    grid-row: 1;
+    box-sizing: border-box;
+    width: 100%;
+    height: 360px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+  .contacts-story-map-card {
+    position: relative;
+    top: auto;
+    left: auto;
+    grid-row: 2;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 18px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: none;
+  }
+  .contacts-story-faq { margin-top: 24px; }
+  .contacts-story-cta { margin-top: 24px; }
+  .contacts-faq-list button { min-height: 64px; font-size: 14px; }
+  .contacts-faq-list button svg { width: 20px; height: 20px; }
+  .contacts-faq-list article p { font-size: 14px; line-height: 1.45; }
+  }
 
 /* Reserve visible breathing room beneath the mobile hero actions. */
 @media (max-width: 767px) {
