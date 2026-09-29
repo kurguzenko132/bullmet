@@ -616,6 +616,12 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market {
     padding: 1px 8px 10px !important;
   }
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-rating-market,
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market h3,
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market > p,
+  body:not(.admin-body) .catalog-grid-market:not(.catalog-grid-market--list) .catalog-card-body-market > small {
+    margin: 0 !important;
+  }
   body:not(.admin-body) .production-section-final { width: calc(100% - 16px) !important; }
   body:not(.admin-body) .production-section-final { position: relative; overflow: hidden; background: #fffdf8 !important; }
   body:not(.admin-body) .production-section-final::before { position: absolute; z-index: 1; inset: 0; content: ''; background: linear-gradient(90deg, rgba(255, 253, 248, .97) 0%, rgba(255, 253, 248, .91) 56%, rgba(255, 253, 248, .46) 100%); pointer-events: none; }
