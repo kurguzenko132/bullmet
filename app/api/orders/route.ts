@@ -3,6 +3,7 @@ import { serverSupabase } from '@/lib/serverSupabase';
 import { notifyTelegram } from '@/lib/notifications';
 import { validateCoupon } from '@/lib/couponValidation';
 import { getSiteControlSettings, quoteDelivery } from '@/lib/siteControl';
+import { productPriceForSize } from '@/lib/products';
 
 type OrderItem = {
   productId?: string;
@@ -92,13 +93,18 @@ export async function POST(request: NextRequest) {
       if (!product || product.in_stock === false) return null;
       const sizes = Array.isArray(product.sizes) ? product.sizes.map(String) : [];
       if (item.size && sizes.length && !sizes.includes(item.size)) return null;
-      const priceCents = toCents(product.price);
+      const pricing = productPriceForSize({
+        price: Number(product.price || 0),
+        oldPrice: product.old_price == null ? undefined : Number(product.old_price),
+        sizes
+      }, item.size);
+      const priceCents = toCents(pricing.price);
       return {
         productId: String(product.id),
         slug: String(product.slug),
         title: String(product.title),
         price: fromCents(priceCents),
-        oldPrice: product.old_price == null ? undefined : fromCents(toCents(product.old_price)),
+        oldPrice: pricing.oldPrice == null ? undefined : fromCents(toCents(pricing.oldPrice)),
         categoryId: String(product.category || ''),
         quantity: item.quantity,
         size: item.size,

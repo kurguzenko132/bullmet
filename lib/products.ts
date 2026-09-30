@@ -94,6 +94,29 @@ export function productAvailability(product: Pick<CatalogProduct, 'inStock' | 's
   return (product.sizes || []).some((size) => /под заказ/i.test(size)) ? 'made_to_order' : 'in_stock';
 }
 
+/**
+ * The catalog price is the price for the smallest listed diameter. Larger
+ * diameters add material and production cost, so calculate their price from
+ * the selected size everywhere (product page, cart and order validation).
+ */
+export function productPriceForSize(product: Pick<CatalogProduct, 'price' | 'oldPrice' | 'sizes'>, size?: string) {
+  const sizes = (product.sizes || []).map((item) => String(item || '').trim()).filter(Boolean);
+  const selected = String(size || sizes[0] || '').trim();
+  const parseDiameter = (value: string) => Number(value.match(/\d+(?:[.,]\d+)?/)?.[0]?.replace(',', '.') || 0);
+  const diameters = sizes.map(parseDiameter).filter((value) => value > 0);
+  const smallest = diameters.length ? Math.min(...diameters) : 0;
+  const selectedDiameter = parseDiameter(selected);
+  const index = Math.max(0, sizes.indexOf(selected));
+  const multiplier = smallest > 0 && selectedDiameter > smallest
+    ? 1 + ((selectedDiameter - smallest) / smallest) * .5
+    : 1 + index * .25;
+  const roundToFive = (value: number) => Math.round(value / 5) * 5;
+  const price = roundToFive(Number(product.price || 0) * multiplier);
+  const oldPrice = product.oldPrice ? roundToFive(Number(product.oldPrice) * multiplier) : undefined;
+
+  return { price, oldPrice };
+}
+
 export const clockCatalogCategories = [
   'Авто-мир',
   'Барбершоп, парикмахерская',

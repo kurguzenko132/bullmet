@@ -3,7 +3,7 @@
 import { ChangeEvent, CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from './Icon';
-import { productAvailability, type ProductAvailability, type CatalogProduct } from '@/lib/products';
+import { productAvailability, productPriceForSize, type ProductAvailability, type CatalogProduct } from '@/lib/products';
 import { getImagePreset } from '@/lib/imageDisplay';
 import { supabase } from '@/lib/supabase';
 import { hydrateFavorites, readFavorites, toggleFavorite as toggleFavoriteItem } from '@/lib/favorites';
@@ -157,7 +157,8 @@ export function ProductDetailsClient({ product, related, colorVariants, reviewSe
   const activeImage = images[activeIndex] || product.image;
   const activeImageSettings = getImagePreset(product, activeImage, 'product');
   const activeModalSettings = getImagePreset(product, activeImage, 'modal');
-  const discount = discountPercent(product.price, product.oldPrice);
+  const selectedPricing = useMemo(() => productPriceForSize(product, activeSize), [product, activeSize]);
+  const discount = discountPercent(selectedPricing.price, selectedPricing.oldPrice);
   const averageRating = reviews.length ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length : 0;
   const roundedRating = reviews.length ? Math.round(averageRating) : 0;
   const reviewsLabel = reviews.length ? `${reviews.length} ${reviewWord(reviews.length)}` : 'Нет отзывов';
@@ -281,8 +282,8 @@ export function ProductDetailsClient({ product, related, colorVariants, reviewSe
       productId: product.id,
       slug: product.slug,
       title: product.title,
-      price: product.price,
-      oldPrice: product.oldPrice,
+      price: selectedPricing.price,
+      oldPrice: selectedPricing.oldPrice,
       image: activeImage || product.image,
       material: product.material,
       size: activeSize,
@@ -515,9 +516,10 @@ export function ProductDetailsClient({ product, related, colorVariants, reviewSe
             <div className="product-price-row product-price-row--fixed">
               <div className="product-price-main">
                 <small>Цена</small>
-                <strong>от {money(product.price)} BYN</strong>
+                <strong>{money(selectedPricing.price)} BYN</strong>
               </div>
-              {product.oldPrice && product.oldPrice > product.price && <del>{money(product.oldPrice)} BYN</del>}
+              <b className="product-price-size">{activeSize}</b>
+              {selectedPricing.oldPrice && selectedPricing.oldPrice > selectedPricing.price && <del>{money(selectedPricing.oldPrice)} BYN</del>}
               {discount && <span>-{discount}%</span>}
             </div>
 
