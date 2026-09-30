@@ -1042,11 +1042,11 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   body:not(.admin-body) .product-price-row--fixed { margin-top: 8px !important; padding: 8px 0 !important; border-top: 0 !important; border-bottom: 1px solid var(--color-border) !important; }
   body:not(.admin-body) .product-price-row strong { font-size: 26px; line-height: 1.08; }
   body:not(.admin-body) .product-price-size {
-    padding: 4px 8px;
+    padding: 7px 12px;
     border: 1px solid var(--color-border);
     border-radius: 999px;
     color: var(--color-text-muted);
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1;
     white-space: nowrap;
   }
@@ -1062,7 +1062,14 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   body:not(.admin-body) .size-options button { height: 36px !important; min-height: 36px !important; min-width: 64px; padding: 0 12px !important; }
   body:not(.admin-body) .qty-control,
   body:not(.admin-body) .qty-control button { height: 36px !important; }
+  body:not(.admin-body) .qty-control {
+    grid-template-columns: 36px 44px 36px !important;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 6px;
+  }
   body:not(.admin-body) .qty-control button { width: 36px !important; }
+  body:not(.admin-body) .qty-control span { min-height: 0; }
   body:not(.admin-body) .product-choice-grid,
   body:not(.admin-body) .product-choice-grid > div {
     display: flex !important;
