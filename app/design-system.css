@@ -1230,6 +1230,37 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   }
 }
 
+/* Quantity uses fixed grid tracks so responsive layout rules cannot stretch or clip its cells. */
+body:not(.admin-body) .qty-control {
+  display: grid !important;
+  width: 132px !important;
+  height: 42px !important;
+  grid-template-columns: 42px 48px 42px !important;
+  box-sizing: border-box;
+  overflow: hidden !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 6px;
+}
+body:not(.admin-body) .qty-control button {
+  width: auto !important;
+  height: 40px !important;
+  box-sizing: border-box;
+}
+body:not(.admin-body) .qty-control span {
+  min-height: 40px !important;
+  box-sizing: border-box;
+  border-color: var(--color-border) !important;
+}
+
+body:not(.admin-body) .product-page-restored .product-breadcrumbs {
+  display: none !important;
+}
+
+body:not(.admin-body):has(.product-lightbox) .mobile-bottom-nav,
+body:not(.admin-body):has(.product-lightbox) .mobile-buy-bar {
+  display: none !important;
+}
+
 /* Reserve visible breathing room beneath the mobile hero actions. */
 @media (max-width: 767px) {
   body:not(.admin-body) .home-final-page .home-final-hero .hero-features {
