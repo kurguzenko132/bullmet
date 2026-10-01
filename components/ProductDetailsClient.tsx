@@ -591,7 +591,7 @@ export function ProductDetailsClient({ product, related, colorVariants, reviewSe
         </div>
       </section>
       <section className="product-content-section product-content-section--reviews-only">
-        <article className="product-reviews-market">
+        <article className={`product-reviews-market ${reviews.length ? '' : 'is-empty'}`}>
           <div className="product-reviews-market__content">
           <header className="product-reviews-market__head">
             <h2>Отзывы и оценки</h2>
