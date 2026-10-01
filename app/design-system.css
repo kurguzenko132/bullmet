@@ -523,6 +523,16 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
 .production-process-step-meta span { color: var(--color-text); font-size: 17px; line-height: 1.25; font-weight: 800; }
 .production-process-step h3 { margin: 0; color: var(--color-text) !important; font-size: 17px; line-height: 1.25; }
 .production-process-step p { align-self: start; margin: 0 0 0 32px; color: var(--color-text-secondary); font-size: 14px; line-height: 1.48; }
+
+@media (min-width: 901px) {
+  .production-process-dark { position: relative; }
+  .production-process-dark .production-process-action {
+    position: absolute;
+    top: 72px;
+    right: max(32px, calc((100% - 1440px) / 2));
+    margin-top: 0;
+  }
+}
 .production-quality-section { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: min(1440px, calc(100% - 64px)); margin: 64px auto 80px; }
 .production-quality-image { position: relative; min-height: 350px; overflow: hidden; border-radius: var(--radius-md); background: #e9e2d9; }
 .production-quality-image img { object-fit: cover; }
@@ -1088,6 +1098,47 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
 @media (min-width: 1440px) {
   body:not(.admin-body) .catalog-page--improved .catalog-grid-market:not(.catalog-grid-market--list) {
     grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Related products intentionally use the same generous card composition as the home-page popular models. */
+@media (min-width: 1024px) {
+  body:not(.admin-body) .related-products-section .related-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+  }
+  body:not(.admin-body) .related-products-section .related-catalog-card {
+    min-height: 430px !important;
+    border-radius: 0 !important;
+  }
+  body:not(.admin-body) .related-products-section .related-catalog-image {
+    flex-basis: 218px !important;
+    height: 218px !important;
+  }
+  body:not(.admin-body) .related-products-section .related-catalog-body {
+    padding: 14px 16px 16px !important;
+  }
+  body:not(.admin-body) .related-products-section .related-catalog-body h3 {
+    min-height: 48px !important;
+    margin: 9px 0 0 !important;
+    font-size: 20px !important;
+    line-height: 1.18 !important;
+    font-weight: 950 !important;
+  }
+  body:not(.admin-body) .related-products-section .related-catalog-body p {
+    min-height: 22px !important;
+    margin: 8px 0 0 !important;
+    font-size: 14px !important;
+  }
+  body:not(.admin-body) .related-products-section .related-catalog-body .catalog-card-bottom-market {
+    min-height: 0 !important;
+    border-top: 1px solid #f0e7dd !important;
+    padding-top: 13px !important;
+  }
+  body:not(.admin-body) .related-products-section .related-catalog-body .catalog-card-bottom-market b {
+    font-size: 18px !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
   }
 }
 
