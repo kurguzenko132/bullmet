@@ -1211,6 +1211,25 @@ body:not(.admin-body) .home-faq__answer { padding: 0 20px 20px; color: var(--col
   body:not(.admin-body) .product-review-form-card__submit { min-height: 44px !important; }
 }
 
+/* With no feedback yet, one clear invitation works better than two empty panels. */
+@media (min-width: 1024px) {
+  body:not(.admin-body) .product-reviews-market.is-empty .product-reviews-market__summary { display: none !important; }
+  body:not(.admin-body) .product-reviews-market.is-empty .product-reviews-market__empty {
+    min-height: 220px !important;
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+    align-content: center;
+    gap: 9px !important;
+  }
+  body:not(.admin-body) .product-reviews-market.is-empty .product-reviews-market__empty::before {
+    content: '☆ ☆ ☆ ☆ ☆';
+    color: #e86f0a;
+    font-size: 25px;
+    letter-spacing: 4px;
+    line-height: 1;
+  }
+}
+
 /* Reserve visible breathing room beneath the mobile hero actions. */
 @media (max-width: 767px) {
   body:not(.admin-body) .home-final-page .home-final-hero .hero-features {
