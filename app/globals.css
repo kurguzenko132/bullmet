@@ -21810,28 +21810,29 @@ body:not(.admin-body) .footer-exact .footer-socials {
 
 body:not(.admin-body) .footer-exact .footer-socials :is(a, span) {
   display: grid !important;
-  width: 36px !important;
-  height: 36px !important;
-  flex: 0 0 36px;
+  width: 40px !important;
+  height: 40px !important;
+  flex: 0 0 40px;
   place-items: center;
   margin: 0 !important;
-  border: 1px solid #d9d1c8;
+  border: 0;
   border-radius: 50%;
-  background: transparent;
-  color: #2b2825 !important;
+  background: var(--color-primary);
+  color: #fff !important;
   line-height: 1 !important;
+  box-shadow: 0 6px 14px rgba(244, 115, 0, .18);
 }
 
 body:not(.admin-body) .footer-exact .footer-socials a:hover {
-  border-color: var(--color-primary);
-  background: #fff4eb;
-  color: var(--color-primary) !important;
+  background: #c75d00;
+  color: #fff !important;
+  transform: translateY(-1px);
 }
 
 body:not(.admin-body) .footer-exact .footer-socials :is(a, span) svg {
   display: block;
-  width: 18px !important;
-  height: 18px !important;
+  width: 20px !important;
+  height: 20px !important;
 }
 
 /* The catalogue intentionally spans the full viewport width. */
