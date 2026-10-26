@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { AtSign, Instagram } from 'lucide-react';
 import { Icon } from './Icon';
 import { Container } from './layout/Container';
 
@@ -51,9 +52,11 @@ export function Footer() {
           </Link>
           <p className="footer-description">Собственное производство изделий из металла и дерева с 2017 года</p>
           <div className="socials footer-socials">
-            {instagramHref && <a href={instagramHref} target="_blank" rel="noreferrer" aria-label="Instagram"><Icon name="instagram" /></a>}
+            {instagramHref
+              ? <a href={instagramHref} target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram /></a>
+              : <span aria-label="Instagram"><Instagram /></span>}
             {telegramHref && <a href={telegramHref} target="_blank" rel="noreferrer" aria-label="Telegram"><Icon name="telegram" /></a>}
-            {settings.contacts.email && <a href={`mailto:${settings.contacts.email}`} aria-label="Email"><Icon name="mail" /></a>}
+            {settings.contacts.email && <a href={`mailto:${settings.contacts.email}`} aria-label="Email"><AtSign /></a>}
           </div>
         </div>
         <nav className="footer-column" aria-label="Каталог">
