@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { logAdminActivity } from '@/lib/adminActivity';
 import { serverSupabase } from '@/lib/serverSupabase';
 
@@ -11,6 +12,10 @@ export async function POST(request: NextRequest) {
     const payload = await request.json();
     const { data, error } = await serverSupabase.from('products').insert(payload).select('*').single();
     if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+
+    revalidatePath('/');
+    revalidatePath('/catalog');
+    revalidatePath('/sitemap.xml');
 
     const activityWarning = await logAdminActivity(request, {
       action: 'product_create', entity: 'products', entityId: data.id,

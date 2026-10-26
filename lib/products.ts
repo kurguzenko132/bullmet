@@ -502,8 +502,7 @@ export function isPublicClockProduct(product: CatalogProduct) {
 
 export function isPublicCatalogProduct(product: CatalogProduct, input: { clocksOnly: boolean; categoryPublic: boolean }) {
   return product.status !== 'hidden' && product.status !== 'draft' && product.status !== 'out_of_stock'
-    && input.categoryPublic
-    && (!input.clocksOnly || isPublicClockProduct(product));
+    && input.categoryPublic;
 }
 
 export async function getCatalogProducts(): Promise<CatalogProduct[]> {
