@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { AtSign, Instagram } from 'lucide-react';
+import { Instagram } from 'lucide-react';
 import { Icon } from './Icon';
 import { Container } from './layout/Container';
 
@@ -56,7 +56,7 @@ export function Footer() {
               ? <a href={instagramHref} target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram /></a>
               : <span aria-label="Instagram"><Instagram /></span>}
             {telegramHref && <a href={telegramHref} target="_blank" rel="noreferrer" aria-label="Telegram"><Icon name="telegram" /></a>}
-            {settings.contacts.email && <a href={`mailto:${settings.contacts.email}`} aria-label="Email"><AtSign /></a>}
+            {settings.contacts.email && <a href={`mailto:${settings.contacts.email}`} aria-label="Email"><MailLogo /></a>}
           </div>
         </div>
         <nav className="footer-column" aria-label="Каталог">
@@ -82,4 +82,10 @@ export function Footer() {
       </Container>
     </footer>
   );
+}
+
+function MailLogo() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="currentColor" d="M3.5 6.5A2.5 2.5 0 0 1 6 4h12a2.5 2.5 0 0 1 2.5 2.5v11A2.5 2.5 0 0 1 18 20H6a2.5 2.5 0 0 1-2.5-2.5v-11Zm2.1-.5L12 11.05 18.4 6H5.6Zm13.4 1.58-6.38 5.03a1 1 0 0 1-1.24 0L5 7.58v9.92c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V7.58Z" />
+  </svg>;
 }
