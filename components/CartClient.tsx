@@ -235,16 +235,14 @@ export function CartClient({ recommendations }: { recommendations: CatalogProduc
 function CartRecommendations({ products, onAdd, favoriteSlugs, onToggleFavorite }: { products: CatalogProduct[]; onAdd: (product: CatalogProduct) => void; favoriteSlugs: Set<string>; onToggleFavorite: (product: CatalogProduct) => void }) {
   if (!products.length) return null;
   return <section className="cart-recommendations-v3">
-    <div className="cart-recommendations-content-v3">
-      <div>
-        <div className="cart-section-title-v3">
-          <div><h2>Возможно, вам понравится</h2></div>
-          <Link href="/catalog">Перейти в каталог <span>→</span></Link>
-        </div>
-        <div className="catalog-grid-market cart-recommendation-grid-v3">
-          {products.map((product) => {
-            const availability = productAvailability(product);
-            return <article className="catalog-card-market" key={product.slug}>
+    <div className="cart-section-title-v3">
+      <div><h2>Возможно, вам понравится</h2></div>
+      <Link href="/catalog">Перейти в каталог <span>→</span></Link>
+    </div>
+    <div className="catalog-grid-market cart-recommendation-grid-v3">
+      {products.map((product) => {
+        const availability = productAvailability(product);
+        return <article className="catalog-card-market" key={product.slug}>
             <button className={favoriteSlugs.has(product.slug) ? 'cart-heart-v3 is-active' : 'cart-heart-v3'} type="button" aria-pressed={favoriteSlugs.has(product.slug)} aria-label={favoriteSlugs.has(product.slug) ? `Удалить ${product.title} из избранного` : `Добавить ${product.title} в избранное`} onClick={() => onToggleFavorite(product)}><Heart fill={favoriteSlugs.has(product.slug) ? 'currentColor' : 'none'} /></button>
             <Link href={`/product/${product.slug}`} className="catalog-card-image-market" aria-label={`Открыть товар: ${product.title}`}>
               <img src={product.image} alt={product.title} />
@@ -257,12 +255,7 @@ function CartRecommendations({ products, onAdd, favoriteSlugs, onToggleFavorite 
               </div>
             </div>
           </article>;
-          })}
-        </div>
-      </div>
-      <aside className="cart-custom-promo-v3">
-        <div><h3>Индивидуальные<br />часы под ваш<br />интерьер</h3><p>Реализуем ваши идеи<br />из металла и дерева.</p><Link href="/contacts">Оставить заявку <span>→</span></Link></div>
-      </aside>
+      })}
     </div>
   </section>;
 }
